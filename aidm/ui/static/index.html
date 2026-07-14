@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI DM — D&D 5E 跑团</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0d0d0d;color:#e0e0e0;overflow:hidden;height:100vh}
+h1{font-size:1.1em;color:#d4af37;padding:4px 12px;background:#1a1a1a;border-bottom:1px solid #333}
+/* 主菜单 */
+.menu{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:20px}
+.menu h2{color:#d4af37;font-size:1.5em;margin-bottom:24px}
+.menu-card{width:400px;background:#161616;border:1px solid #333;border-radius:10px;padding:16px;margin:8px 0;cursor:pointer;transition:border-color .2s}
+.menu-card:hover{border-color:#d4af37;background:#1a1a2a}
+.menu-card h3{color:#d4af37;font-size:1.1em;margin-bottom:4px}
+.menu-card p{color:#888;font-size:.8em}
+.menu-card .icon{font-size:1.8em;margin-right:8px}
+/* 表单 */
+.form-box{display:none;padding:20px;max-width:500px;margin:0 auto}
+.form-box h2{color:#d4af37;margin-bottom:12px}
+.form-box label{font-size:.8em;color:#888;display:block;margin:6px 0 2px}
+.form-box input,textarea{width:100%;padding:8px;border:1px solid #333;border-radius:5px;background:#1a1a1a;color:#eee;font-family:inherit;margin-bottom:8px}
+.form-box button{padding:8px 16px;background:#d4af37;color:#1a1a1a;border:none;border-radius:5px;font-weight:bold;cursor:pointer;margin-right:8px}
+.form-box button:hover{background:#e6c068}
+.form-box .back{background:#333;color:#aaa}
+.camp-list{list-style:none}
+.camp-list li{background:#161616;border:1px solid #333;border-radius:6px;padding:10px;margin:4px 0;cursor:pointer}
+.camp-list li:hover{border-color:#d4af37}
+.camp-list .cn{color:#d4af37;font-weight:bold}.camp-list .cs{color:#888;font-size:.78em;margin-top:2px}
+/* 游戏界面 */
+.layout{display:grid;grid-template-columns:240px 1fr 240px;height:calc(100vh - 30px);gap:1px;background:#222;display:none}
+.col{background:#0a0a0a;overflow-y:auto;padding:8px}
+.char h2{color:#d4af37;font-size:.9em;margin-bottom:4px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:6px}
+.stat{text-align:center;background:#161616;border-radius:4px;padding:3px}
+.stat .n{font-size:.65em;color:#888}.stat .v{font-size:1.1em;font-weight:bold;color:#e8c068}.stat .m{font-size:.7em;color:#aaa}
+.hp-bar{background:#1a1a1a;border-radius:4px;height:20px;position:relative;overflow:hidden;margin-bottom:4px}
+.hp-fill{height:100%;border-radius:4px;transition:width .3s}.hp-text{position:absolute;top:1px;width:100%;text-align:center;font-size:.72em;font-weight:bold;color:#fff;text-shadow:0 0 3px #000}
+.char-row{display:flex;justify-content:space-between;font-size:.78em;padding:2px 0;border-bottom:1px solid #1a1a1a}.char-row b{color:#888}.char-row span{color:#e8c068}
+.cond-tag{display:inline-block;background:#3a1a1a;color:#e88;padding:1px 5px;border-radius:3px;font-size:.68em;margin:1px}
+.scene-box{background:#0f0e08;border:1px solid #3a2a10;border-radius:6px;padding:8px;margin-bottom:6px}
+.scene-box h3{color:#d4af37;font-size:.85em;margin-bottom:4px}
+.scene-box .sr{font-size:.75em;color:#aaa;margin:1px 0}.scene-box .sr b{color:#e8c068;min-width:40px;display:inline-block}
+.scene-sit{font-size:.8em;color:#9be;margin-top:4px;font-style:italic}
+.log-box{flex:1;overflow-y:auto;background:#0f0f0f;border:1px solid #222;border-radius:6px;padding:8px;margin-bottom:6px;font-size:.82em;line-height:1.5}
+.dm{color:#9be}.you{color:#d4af37}.dice{color:#8a8;font-size:.8em}.meta{color:#555;font-size:.72em}.other{color:#8c8}
+.choices{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+.choice{flex:1;min-width:100px;background:#1a1a2a;border:1px solid #333;border-radius:6px;padding:7px;cursor:pointer;font-size:.78em;color:#cce}
+.choice:hover{border-color:#d4af37;background:#1a1a3a}
+.input-row{display:flex;gap:6px}
+input[type=text]{flex:1;padding:7px;border:1px solid #333;border-radius:5px;background:#1a1a1a;color:#eee;font-size:.85em;font-family:inherit}
+button.btn{padding:7px 12px;background:#d4af37;color:#1a1a1a;border:none;border-radius:5px;font-weight:bold;cursor:pointer;font-size:.82em}
+button.btn:hover{background:#e6c068}button.btn:disabled{opacity:.4}
+.combat-box{background:#100a0a;border:1px solid #3a1010;border-radius:6px;padding:8px;margin-bottom:6px}
+.combat-box h3{color:#e66;font-size:.85em;margin-bottom:4px}
+.init-row{display:flex;align-items:center;gap:4px;font-size:.72em;padding:2px 0}
+.init-row .iv{color:#e66;font-weight:bold;min-width:16px}.init-row .nm{flex:1;color:#ccc}
+.init-row.current{background:#2a1a1a;border-radius:3px;padding-left:4px}
+.monster-box{background:#0a0f0a;border:1px solid #1a3a1a;border-radius:6px;padding:8px;margin-bottom:6px}
+.monster-box h3{color:#6e6;font-size:.85em}.monster-box pre{font-size:.7em;white-space:pre-wrap;color:#aaa;line-height:1.3}
+.dice-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:999}
+.dice-overlay.show{display:flex}
+.dice-face{width:80px;height:80px;background:linear-gradient(135deg,#fafafa,#d0d0d0);border:2px solid #888;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:2.2em;font-weight:bold;color:#1a1a1a;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+.dice-face.rolling{animation:tm .15s linear infinite}
+.dice-face.hit{border-color:#2a2;background:linear-gradient(135deg,#2a2,#171);color:#fff}
+.dice-face.miss{border-color:#a22;background:linear-gradient(135deg,#a22,#511);color:#fff}
+.dice-face.crit{border-color:#d4af37;background:linear-gradient(135deg,#d4af37,#857018);color:#1a1a1a;animation:cf .5s ease 3}
+.dice-label{text-align:center;margin-top:8px;font-size:.8em;color:#aaa}
+@keyframes tm{0%{transform:rotateX(0) rotateY(0)}25%{transform:rotateX(180deg) rotateY(90deg)}50%{transform:rotateX(360deg) rotateY(180deg)}75%{transform:rotateX(180deg) rotateY(270deg)}100%{transform:rotateX(0) rotateY(360deg)}}
+@keyframes cf{0%,100%{box-shadow:0 0 5px #d4af37}50%{box-shadow:0 0 25px #ffd700}}
+.player-list{font-size:.75em;color:#aaa;margin-bottom:6px}
+.player-list .p{padding:1px 6px;background:#1a2a1a;border-radius:3px;margin:1px;display:inline-block;color:#8c8}
+.turn-ind{font-size:.78em;color:#e66;padding:4px;background:#1a0a0a;border-radius:4px;margin-bottom:6px;text-align:center}
+</style>
+</head>
+<body>
+<h1>🐉 AI DM — D&D 5E 跑团</h1>
+
+<!-- ===== 主菜单 ===== -->
+<div class="menu" id="mainMenu">
+  <h2>选择你的冒险</h2>
+  <div class="menu-card" onclick="showNewGame()">
+    <h3><span class="icon">🎲</span> 开始新游戏</h3>
+    <p>设定世界背景，DM 生成完整开场+场景+3个行动选项</p>
+  </div>
+  <div class="menu-card" onclick="showContinue()">
+    <h3><span class="icon">📖</span> 继续游戏</h3>
+    <p>读取已保存的战役，加载场景/角色/战斗状态，继续冒险</p>
+  </div>
+  <div class="menu-card" onclick="showJoin()">
+    <h3><span class="icon">🚪</span> 加入房间</h3>
+    <p>输入房间号，加入朋友的战役，WebSocket 实时同桌</p>
+  </div>
+</div>
+
+<!-- ===== 开始新游戏表单 ===== -->
+<div class="form-box" id="newGameForm">
+  <h2>🎲 开始新游戏</h2>
+  <label>角色名</label>
+  <input id="ngName" type="text" value="阿拉贡">
+  <label>世界设定（DM 将据此生成开场背景+场景）</label>
+  <textarea id="ngSetting" rows="4" placeholder="如：被诅咒的村庄黑木镇：三周前镇民开始失踪，夜里能听见地底传来的钟声。镇长悬赏冒险者查清真相。村庄北缘有一座废弃神殿，地窖入口半掩在藤蔓下。"></textarea>
+  <div style="margin:6px 0">
+    <button class="btn" onclick="generateWorld()" id="genWorldBtn">✨ AI 生成世界设定</button>
+    <button class="btn back" onclick="backToMenu()">返回</button>
+  </div>
+  <div>
+    <button class="btn" onclick="startNewGame()" id="startGameBtn">🗺️ 开始冒险</button>
+  </div>
+</div>
+
+<!-- ===== 继续游戏列表 ===== -->
+<div class="form-box" id="continueForm">
+  <h2>📖 继续游戏</h2>
+  <ul class="camp-list" id="campList"></ul>
+  <button class="btn back" onclick="backToMenu()">返回</button>
+</div>
+
+<!-- ===== 加入房间表单 ===== -->
+<div class="form-box" id="joinForm">
+  <h2>🚪 加入房间</h2>
+  <label>房间号（Campaign ID）</label>
+  <input id="joinCampId" type="text" placeholder="向房主获取">
+  <label>角色名</label>
+  <input id="joinName" type="text" value="梅莉">
+  <div>
+    <button class="btn" onclick="joinGame()">🚪 加入</button>
+    <button class="btn back" onclick="backToMenu()">返回</button>
+  </div>
+</div>
+
+<!-- ===== 游戏界面（3栏） ===== -->
+<div class="layout" id="gameLayout">
+  <div class="col char">
+    <h2 id="charName">角色</h2>
+    <div class="hp-bar"><div class="hp-fill" id="hpFill" style="width:100%;background:#2a2"></div><div class="hp-text" id="hpText">HP 0/0</div></div>
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="char-row"><b>AC</b><span id="charAC">—</span></div>
+    <div class="char-row"><b>速度</b><span id="charSpeed">—</span></div>
+    <div class="char-row"><b>熟练</b><span id="charProf">—</span></div>
+    <div class="char-row"><b>状态</b><span id="charCond"></span></div>
+  </div>
+  <div class="col" style="display:flex;flex-direction:column">
+    <div class="player-list" id="playerList"></div>
+    <div class="turn-ind" id="turnInd" style="display:none"></div>
+    <div class="scene-box" id="sceneBox" style="display:none">
+      <h3>📍 场景</h3>
+      <div class="sr"><b>地点</b><span id="scLoc">—</span></div>
+      <div class="sr"><b>氛围</b><span id="scAtm">—</span></div>
+      <div class="sr"><b>在场</b><span id="scNpc">—</span></div>
+      <div class="sr"><b>可做</b><span id="scExit">—</span></div>
+      <div class="scene-sit" id="scSit">—</div>
+    </div>
+    <div class="log-box" id="log"></div>
+    <div class="choices" id="choices"></div>
+    <div class="input-row">
+      <input id="inp" type="text" placeholder="输入行动...">
+      <button class="btn" id="sendBtn" onclick="send()">🎲掷骰</button>
+    </div>
+  </div>
+  <div class="col" id="rightPanel" style="display:none">
+    <div class="combat-box" id="combatBox" style="display:none">
+      <h3>⚔️ 战斗</h3>
+      <div style="font-size:.7em;color:#888">第 <span id="cmbRound">0</span> 轮</div>
+      <div id="cmbOrder"></div>
+    </div>
+    <div class="monster-box" id="monsterBox" style="display:none">
+      <h3>👾 怪物</h3>
+      <pre id="monsterData"></pre>
+    </div>
+  </div>
+</div>
+
+<div class="dice-overlay" id="diceOverlay"><div style="text-align:center">
+  <div class="dice-face rolling" id="diceFace">d20</div>
+  <div class="dice-label" id="diceLabel">掷骰中...</div>
+</div></div>
+
+<script>
+const API=location.origin;let campId=null,charId=null,ws=null,myName='';
+function show(s){['mainMenu','newGameForm','continueForm','joinForm'].forEach(i=>document.getElementById(i).style.display='none');document.getElementById(s).style.display='block';}
+function showNewGame(){show('newGameForm')}
+function showJoin(){show('joinForm')}
+async function showContinue(){
+  show('continueForm');
+  const r=await fetch(`${API}/campaigns`).then(r=>r.json());
+  const ul=document.getElementById('campList');ul.innerHTML='';
+  if(!r.campaigns||r.campaigns.length===0){ul.innerHTML='<li style="color:#555">暂无保存的战役</li>';return;}
+  r.campaigns.forEach(c=>{
+    const li=document.createElement('li');li.className='camp-list';
+    li.innerHTML=`<div class="cn">#${c.id} ${c.name}</div><div class="cs">${c.setting||c.summary||'(无摘要)'}</div>`;
+    li.onclick=()=>resumeCampaign(c.id);ul.appendChild(li);
+  });
+}
+function backToMenu(){show('mainMenu')}
+function add(c,t){const d=document.createElement('div');d.className=c;d.innerHTML=t;document.getElementById('log').appendChild(d);d.scrollIntoView();}
+function hpColor(p){return p>50?'#2a2':p>25?'#aa2':'#a22'}
+async function refreshChar(){
+  const c=await fetch(`${API}/character/${charId}`).then(r=>r.json());
+  document.getElementById('charName').textContent=`${c.name} Lv${c.level}`;
+  document.getElementById('hpText').textContent=`HP ${c.hp}/${c.hp_max}`;
+  const pct=c.hp_max?Math.max(0,c.hp/c.hp_max*100):0;const f=document.getElementById('hpFill');
+  f.style.width=pct+'%';f.style.background=hpColor(pct);
+  document.getElementById('charAC').textContent=c.ac;
+  document.getElementById('charSpeed').textContent=c.speed+'尺';
+  document.getElementById('charProf').textContent='+'+c.proficiency;
+  document.getElementById('charCond').innerHTML=(c.conditions||[]).map(x=>`<span class="cond-tag">${x}</span>`).join('');
+  const sg=document.getElementById('statGrid');sg.innerHTML='';
+  for(const[k,v]of Object.entries(c.abilities)){const d=document.createElement('div');d.className='stat';
+    d.innerHTML=`<div class="n">${{str:'力',dex:'敏',con:'体',int:'智',wis:'感',cha:'魅'}[k]||k}</div><div class="v">${v.score}</div><div class="m">${v.mod>=0?'+':''}${v.mod}</div>`;sg.appendChild(d);}
+}
+function startDiceRoll(){const o=document.getElementById('diceOverlay');const f=document.getElementById('diceFace');const l=document.getElementById('diceLabel');
+  o.classList.add('show');f.className='dice-face rolling';f.textContent='d20';l.textContent='掷骰中...';}
+function landDiceRoll(d20,hit,crit){const f=document.getElementById('diceFace');const l=document.getElementById('diceLabel');
+  f.classList.remove('rolling');f.textContent=d20||'?';
+  if(crit){f.classList.add('crit');l.textContent='⚡ 重击!';}
+  else if(hit){f.classList.add('hit');l.textContent='✓ 命中';}
+  else if(hit===false){f.classList.add('miss');l.textContent='✗ 未中';}else l.textContent='结果';
+  setTimeout(()=>{document.getElementById('diceOverlay').classList.remove('show');f.className='dice-face';},1000);}
+function showChoices(opts){const c=document.getElementById('choices');c.innerHTML='';
+  (opts||[]).forEach((o,i)=>{const b=document.createElement('div');b.className='choice';b.innerHTML=`<b>${i+1}.</b> ${o}`;b.onclick=()=>{document.getElementById('inp').value=o;};c.appendChild(b);});}
+function updatePlayers(players){document.getElementById('playerList').innerHTML='玩家: '+players.map(p=>`<span class="p">${p.name}</span>`).join('');}
+function updateTurn(turn){const t=document.getElementById('turnInd');
+  if(turn){t.style.display='block';t.textContent=turn===myName?'轮到你行动!':'等待 '+turn+' 行动...';}else t.style.display='none';}
+function updateScene(s){if(!s||!s.location)return;
+  document.getElementById('scLoc').textContent=s.location;document.getElementById('scAtm').textContent=s.atmosphere||'—';
+  document.getElementById('scNpc').textContent=(s.npcs||[]).map(n=>n.name).join(', ')||'—';
+  document.getElementById('scExit').textContent=(s.exits||[]).join(' / ')||'—';
+  document.getElementById('scSit').textContent=(s.situation||'').slice(0,250);
+  document.getElementById('sceneBox').style.display='block';}
+function updateCombat(c){if(!c||!c.active){document.getElementById('combatBox').style.display='none';return;}
+  document.getElementById('combatBox').style.display='block';document.getElementById('cmbRound').textContent=c.round;
+  const o=document.getElementById('cmbOrder');o.innerHTML='';
+  (c.initiative_order||[]).forEach((p,i)=>{const d=document.createElement('div');
+    d.className='init-row'+(p.name===c.current_turn?' current':'');
+    d.innerHTML=`<span class="iv">${p.initiative}</span><span class="nm">${p.name}(${p.side})</span>`;o.appendChild(d);});
+  document.getElementById('rightPanel').style.display='block';updateTurn(c.current_turn);}
+function enterGame(){
+  document.getElementById('mainMenu').style.display='none';
+  document.getElementById('gameLayout').style.display='grid';
+  refreshChar();
+  fetch(`${API}/scene/${campId}`).then(r=>r.json()).then(updateScene);
+  fetch(`${API}/combat/${campId}`).then(r=>r.json()).then(updateCombat);
+}
+function connectWS(){
+  ws=new WebSocket(`${API.replace('http','ws')}/ws/${campId}?character_id=${charId}&name=${encodeURIComponent(myName)}`);
+  ws.onmessage=(e)=>{const d=JSON.parse(e.data);switch(d.type){
+    case 'join':add('meta',`${d.name} 加入了`);updatePlayers(d.players);break;
+    case 'leave':add('meta',`${d.name} 离开了`);updatePlayers(d.players);break;
+    case 'result':
+      if(d.player!==myName)add('other',`【${d.player}】 ${d.narration}`);else add('dm',d.narration);
+      const dd=d.dice||{};
+      if(dd.d20){if(d.player===myName)landDiceRoll(dd.d20,dd.hit,dd.crit);
+        else add('dice',`[${d.player}] d20=${dd.d20} ${dd.hit?'命中':'未中'}${dd.crit?' 重击':''}${dd.damage?` 伤${dd.damage}`:''}`);}
+      showChoices(d.action_options);refreshChar();break;
+    case 'processing':if(d.player===myName)startDiceRoll();break;
+    case 'player_acting':if(d.player!==myName)add('meta',`⟳ ${d.player} 正在: ${d.action}`);break;
+    case 'scene_update':updateScene(d.scene);break;
+    case 'combat_update':updateCombat(d);break;
+    case 'character_update':document.getElementById('hpText').textContent=`HP ${d.hp}/${d.hp_max}`;
+      const pct=d.hp_max?d.hp/d.hp_max*100:0;document.getElementById('hpFill').style.width=pct+'%';document.getElementById('hpFill').style.background=hpColor(pct);break;
+    case 'turn':updateTurn(d.current);break;
+    case 'error':add('meta','⚠ '+d.message);break;
+  }};
+  ws.onclose=()=>add('meta','(连接断开)');
+}
+// AI 生成世界设定
+async function generateWorld(){
+  const btn=document.getElementById('genWorldBtn');
+  const ta=document.getElementById('ngSetting');
+  btn.disabled=true;btn.textContent='✨ 生成中...';
+  try{
+    const r=await fetch(`${API}/generate_setting`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})}).then(r=>r.json());
+    if(r.setting){ta.value=r.setting;}
+    else{alert('生成失败: '+(r.error||'未知错误'));}
+  }catch(e){alert('请求失败: '+e.message);}
+  btn.disabled=false;btn.textContent='✨ AI 生成世界设定';
+}
+// 开始新游戏
+async function startNewGame(){
+  myName=document.getElementById('ngName').value.trim()||'冒险者';
+  const setting=document.getElementById('ngSetting').value.trim();if(!setting){alert('请输入世界设定');return;}
+  // 显示加载状态
+  const startBtn=document.getElementById('startGameBtn');
+  startBtn.disabled=true;startBtn.textContent='⏳ 创建角色中...';
+  add('meta','(建角色...)');
+  const c=await fetch(`${API}/campaign`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:myName+'的冒险'})}).then(r=>r.json());campId=c.id;
+  const ch=await fetch(`${API}/character`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:myName,char_class:'战士',level:5,abilities:{str:16,dex:10,con:15,int:10,wis:12,cha:10},hp_max:38,ac:18,campaign_id:campId})}).then(r=>r.json());charId=ch.id;
+  startBtn.textContent='⏳ DM 生成开场中...(约10秒)';
+  add('meta','(DM 生成开场...)');
+  const r=await fetch(`${API}/open`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({setting,tone:'',campaign_id:campId,character_id:charId})}).then(r=>r.json());
+  document.getElementById('log').innerHTML='';add('dm',r.narration.replace(/\n/g,'<br>'));showChoices(r.action_options);
+  startBtn.disabled=false;startBtn.textContent='🗺️ 开始冒险';
+  enterGame();connectWS();
+}
+// 继续游戏
+async function resumeCampaign(cid){
+  campId=cid;
+  const st=await fetch(`${API}/campaign/${cid}/state`).then(r=>r.json());
+  if(st.error){alert(st.error);return;}
+  // 选角色（取第一个或让用户选）
+  if(st.characters&&st.characters.length>0){
+    charId=st.characters[0].id;myName=st.characters[0].name;
+  }else{alert('该战役没有角色');return;}
+  document.getElementById('log').innerHTML='';
+  if(st.summary)add('meta','📖 剧情回顾: '+st.summary.slice(0,200)+'...');
+  if(st.scene)updateScene(st.scene);
+  if(st.combat)updateCombat(st.combat);
+  enterGame();connectWS();
+  add('meta',`继续战役 #${cid} (${st.campaign.name})`);
+}
+// 加入房间
+async function joinGame(){
+  campId=parseInt(document.getElementById('joinCampId').value);
+  myName=document.getElementById('joinName').value.trim()||'冒险者';
+  if(!campId){alert('请填房间号');return;}
+  const ch=await fetch(`${API}/join`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:myName,campaign_id:campId})}).then(r=>r.json());
+  if(ch.error){alert(ch.error);return;}
+  charId=ch.character_id;
+  document.getElementById('log').innerHTML='';add('meta',`加入房间 #${campId}`);
+  enterGame();connectWS();
+}
+// 发送行动
+function send(){
+  const t=document.getElementById('inp').value.trim();if(!t||!ws)return;document.getElementById('inp').value='';
+  add('you','&gt; '+t);ws.send(JSON.stringify({type:'action',player_input:t}));
+}
+document.getElementById('inp').addEventListener('keydown',e=>{if(e.key==='Enter')send()});
+</script>
+</body>
+</html>

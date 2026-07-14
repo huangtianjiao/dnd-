@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 跑团全网调研报告</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --surface: #f5f4ef;
+  --border: #e0ddd4;
+  --text: #2c2c2a;
+  --text-muted: #888780;
+  --accent: #534AB7;
+  --accent-light: #EEEDFE;
+  --teal: #0F6E56;
+  --teal-light: #E1F5EE;
+  --blue: #185FA5;
+  --blue-light: #E6F1FB;
+  --coral: #D85A30;
+  --coral-light: #FAECE7;
+  --green: #639922;
+  --green-light: #EAF3DE;
+  --amber: #BA7517;
+  --amber-light: #FAEEDA;
+  --red: #A32D2D;
+  --red-light: #FCEBEB;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+h1 { font-size: 28px; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+h2 { font-size: 20px; font-weight: 600; margin-top: 2.5rem; margin-bottom: 0.75rem; border-bottom: 2px solid var(--border); padding-bottom: 0.3rem; }
+h3 { font-size: 17px; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+h4 { font-size: 15px; font-weight: 600; margin-top: 1rem; margin-bottom: 0.3rem; }
+
+p { margin-bottom: 1rem; font-size: 15px; }
+ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; font-size: 15px; }
+li { margin-bottom: 0.3rem; }
+
+.tag { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-right: 6px; }
+.tag-purple { background: var(--accent-light); color: var(--accent); }
+.tag-teal { background: var(--teal-light); color: var(--teal); }
+.tag-blue { background: var(--blue-light); color: var(--blue); }
+.tag-coral { background: var(--coral-light); color: var(--coral); }
+.tag-green { background: var(--green-light); color: var(--green); }
+.tag-amber { background: var(--amber-light); color: var(--amber); }
+.tag-red { background: var(--red-light); color: var(--red); }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+.card-accent { border-left: 4px solid var(--accent); }
+.card-teal { border-left: 4px solid var(--teal); }
+.card-blue { border-left: 4px solid var(--blue); }
+.card-coral { border-left: 4px solid var(--coral); }
+.card-green { border-left: 4px solid var(--green); }
+.card-amber { border-left: 4px solid var(--amber); }
+.card-red { border-left: 4px solid var(--red); }
+
+.prompt-block { background: #1e1e2e; color: #cdd6f4; padding: 1rem 1.25rem; border-radius: 8px; font-size: 13px; line-height: 1.5; margin: 1rem 0; white-space: pre-wrap; font-family: 'Cascadia Code', 'Fira Code', monospace; overflow-x: auto; }
+
+.comparison-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 14px; }
+.comparison-table th { background: var(--surface); padding: 8px 12px; text-align: left; border-bottom: 2px solid var(--border); font-weight: 600; }
+.comparison-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.comparison-table tr:last-child td { border-bottom: none; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+.section-intro { font-size: 14px; color: var(--text-muted); margin-bottom: 1rem; padding-left: 0.5rem; }
+
+.bad { color: var(--red); }
+.good { color: var(--green); }
+.warn { color: var(--amber); }
+
+.highlight { background: var(--amber-light); padding: 2px 6px; border-radius: 3px; }
+
+.footnote { font-size: 13px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 2rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>AI 跑团全网调研报告</h1>
+<p style="color: var(--text-muted); font-size: 14px;">调研时间: 2026-07-13 | 覆盖: 英文社区 (Reddit, OpenAI Forum, Oracle-RPG, wilds.ai) + 中文社区 (网易, bilibili, 机核, Dicecho) + MCP 生态</p>
+
+<h2>一、核心结论：三条路线</h2>
+<p class="section-intro">全网实践者的共识：AI 跑团能否持续可玩，取决于一个关键节点——<strong>Session 3</strong>。三轮之后，上下文窗口开始溢出、状态追踪开始混乱、叙事开始断裂。三条路线的分化正围绕这个问题展开。</p>
+
+<div class="grid-3">
+  <div class="card card-purple">
+    <h3><span class="tag tag-purple">路线 A</span> 纯 Prompt</h3>
+    <p>直接把 ChatGPT / Claude / Gemini 当 DM，靠系统提示词约束行为。</p>
+    <p><span class="good">优势</span>: 零成本、零部署、任何 LLM 都能用、叙事质量最高</p>
+    <p><span class="bad">致命缺陷</span>: Session 3 后记忆崩塌——Gemini 实测报告显示第一小时完美，一小时后开始<strong>反刍旧对话</strong>并<strong>编造剧情</strong>，40% 的内容脱离模组设定，完全忘记应当触发 SanCheck。ChatGPT 同样在超过 ~6000 词后裁剪早期上下文。</p>
+    <p><span class="warn">适用场景</span>: 一次性短团（1-2 session）、叙事实验、新手入门</p>
+  </div>
+
+  <div class="card card-teal">
+    <h3><span class="tag tag-teal">路线 B</span> 专用平台</h3>
+    <p>Fables.gg、wilds.ai、DungeonsDeep.ai、AIDungeonMaster.ai 等。</p>
+    <p><span class="good">优势</span>: 内置确定性骰子引擎、HP/法术位自动追踪、地图渲染、NPC 好感度持久化。wilds.ai 实测 Session 2 结交的商人在 Session 5 主动提供稀有物品。</p>
+    <p><span class="bad">缺陷</span>: Fables 锁定 5e 且记忆跨 session 不稳定；DungeonsDeep 用自研规则集而非原生 5e；多数平台不支持中文；$9-39/月。</p>
+    <p><span class="warn">适用场景</span>: 英文环境下的长期单人跑团</p>
+  </div>
+
+  <div class="card card-blue">
+    <h3><span class="tag tag-blue">路线 C</span> MCP 工具链</h3>
+    <p>ChatRPG、DnD-MCP 等 MCP Server，作为 AI 的"手"执行确定性操作。</p>
+    <p><span class="good">优势</span>: 30+ 专用 5e 工具（角色创建、战斗管理、骰子、空间计算、法术追踪）全部确定性执行。状态持久化到本地文件。配合规则书 RAG 效果极强。免费。</p>
+    <p><span class="bad">缺陷</span>: 需本地部署 Node.js/Python、ASCII 地图不如可视化 VTT、仍在快速迭代中。DnD-MCP 声称 90+ 工具但文档较新。</p>
+    <p><span class="warn">适用场景</span>: <strong class="highlight">你的最佳路线</strong>——有本地规则书库、有 WorkBuddy 环境、中文可用</p>
+  </div>
+</div>
+
+<h2>二、Gemini 100 万词元实测——AI 跑团的"照妖镜"</h2>
+<div class="card card-coral">
+  <h3>实验概要</h3>
+  <p>一位玩家使用 Gemini 1.5（100 万词元上下文）作为 KP 跑 CoC 模组《我的色彩》。这是目前公开的最详细的 AI 跑团实测记录。</p>
+  <h4>第一小时：完美</h4>
+  <ul>
+    <li>雪山氛围渲染到位，NPC 切换流畅</li>
+    <li>主动要求 SanCheck 和投掷，沉浸感十足</li>
+    <li>根据角色卡调整 NPC 表现——真正"读懂"了模组</li>
+  </ul>
+  <h4>一小时后：全面崩塌</h4>
+  <ul>
+    <li class="bad"><strong>反刍旧对话</strong>: 不断把之前已经完成的剧情重新"解压"到当前回复中，导致对话越来越长越来越乱</li>
+    <li class="bad"><strong>剧情错乱</strong>: 玩家选择独自上山，Gemini 后来认为玩家和警官一起上山。纠正后反而反刍了从出院开始的整段剧情</li>
+    <li class="bad"><strong>遗忘 KP 职责</strong>: 后期完全忘记需要 roll 点和 SanCheck，退化成"故事接龙"</li>
+    <li class="bad"><strong>战斗缺失</strong>: 模组有详细战斗场景，Gemini 从未触发任何战斗</li>
+    <li class="bad"><strong>大剧透</strong>: 将模组高潮直接在半山腰暴露</li>
+    <li class="bad"><strong>放飞自我</strong>: 约 40% 的剧情量没有跟随模组要求</li>
+  </ul>
+  <h4>推测原因</h4>
+  <p>Gemini 可能采用"分幕压缩-解压"策略管理长上下文。这解释了为什么它能定位到早期剧情但会反刍整段——它把历史聊天"压缩打包"，需要时再"解压"，但解压后默认反刍而非精准引用。随着压缩层级增加，"我们在跑团"这个核心身份标签被压缩掉，导致退化。</p>
+</div>
+
+<h2>三、三条长 Campaign 存活的硬指标</h2>
+<p>wilds.ai 的多轮实测（8 session 深度测试）总结出三个"Session 3 后仍可玩"的硬条件：</p>
+
+<div class="grid-3">
+  <div class="card card-green">
+    <h3>1. 确定性机制</h3>
+    <p>骰子掷多少就是多少，AI 不能偷偷改结果。HP 减多少就是多少，不能"忘了"之前扣的伤。</p>
+    <p>违反 = 玩家失去信任 → 退坑</p>
+  </div>
+  <div class="card card-green">
+    <h3>2. 持久记忆</h3>
+    <p>不是"更长上下文窗口"。是<strong>实际持久化</strong>: Session 2 结交的 NPC 在 Session 5 记得你。Session 2 的背叛在 Session 6 引发报复。</p>
+    <p>wilds.ai 用"后果引擎"实现了这一点。</p>
+  </div>
+  <div class="card card-green">
+    <h3>3. 机械状态追踪</h3>
+    <p>HP、法术位、物品栏、任务标记、NPC 声望——如果玩家要手动记这些，那工具就是个聊天框，不是游戏引擎。</p>
+  </div>
+</div>
+
+<p>目前满足全部三条的只有 wilds.ai 和 MCP 方案。Fables 满足 1 和部分 3 但记忆不稳定。纯 Prompt 方案三条都不满足。</p>
+
+<h2>四、Prompt 方案深入——社区精华</h2>
+
+<h3>4.1 最成熟的 Prompt: Oracle-RPG 三合一架构</h3>
+<div class="card card-accent">
+  <p>由 Pite Raubenheimer 在 oracle-rpg.com 发布，是目前最完整、经过最多实战打磨的 5e AI DM prompt。它解决了之前 AI DM 的三大缺陷：</p>
+  <ul>
+    <li><strong>规则管理需外部处理</strong> → 内置规则框架，AI 自动调用检定</li>
+    <li><strong>遭遇生成需掷表</strong> → AI 程序化生成遭遇</li>
+    <li><strong>战斗内容被审核拦截</strong> → 明确"5E 规则集桌面 RPG"框架避免误判</li>
+  </ul>
+  <h4>三合一架构</h4>
+  <div class="grid-3">
+    <div><span class="tag tag-purple">AI DM Emulator</span><br>规则框架 + 技能检定 + 遭遇生成</div>
+    <div><span class="tag tag-teal">描述生成器</span><br>设定 + 沉浸式叙事 + 对话</div>
+    <div><span class="tag tag-blue">冒险生成器</span><br>任务创建 + 角色确认 + 开场选项</div>
+  </div>
+  <h4>关键约束设计</h4>
+  <ul>
+    <li>AI 永远不能替玩家描述行动、说话、思考或感受</li>
+    <li>回复限制 80 词以内——防止反刍膨胀</li>
+    <li>永远不问"你做什么？"——改为场景描述自然引出行动</li>
+    <li>战斗时先要求先攻检定，然后按先攻顺序逐回合推进</li>
+    <li>AI 追踪所有战斗人员 HP，攻击检定需达到或超过 AC 才命中</li>
+    <li>开始前提供三个冒险选项 + 要求角色信息</li>
+  </ul>
+  <h4>记忆管理技巧</h4>
+  <p>定期输入"创建到目前为止所有事件的详细摘要"来"存档"。ChatGPT 的 Memory 功能配合使用: "记住这个角色" / "记住这个事件" / "记住这个摘要"。</p>
+</div>
+
+<h3>4.2 中文社区 Prompt 精华</h3>
+
+<div class="card card-accent">
+  <h4>机核版 (Gcores)</h4>
+  <p>基于 Reddit 玩家提示词翻译整合。特色:</p>
+  <ul>
+    <li>用花括号 {} 表示需要掷骰的动作: <code>{说服}公主和我一起逃走</code></li>
+    <li>用方括号 [] 表示 OOC 交流: <code>[请解释这个规则的判定]</code></li>
+    <li>用引号 "" 表示角色对话</li>
+    <li>用 x,y 二维坐标系绘制战斗地图，以句号表示玩家、数字表示怪物/NPC</li>
+    <li>严格按照 5E 规则书奖励 XP、管理等级进展</li>
+  </ul>
+</div>
+
+<div class="card card-accent">
+  <h4>Bilibili RPG-Bot 版</h4>
+  <p>最结构化的中文 prompt，用 <code>&lt;GAME_MANUAL&gt;</code> XML 标签包裹完整的游戏手册:</p>
+  <ul>
+    <li>定义 GAME / BOOKS / ROLE / THEME / TONALITY / CHARACTER 六层参数</li>
+    <li>每轮必须提供 5 个潜在行动选项（其中一个随机为"疯狂/危险/天才"选项）</li>
+    <li>回复长度约束: 1000-3000 字符</li>
+    <li>NPC 必有"易发现秘密" + "难发现秘密"，驱动动机</li>
+    <li>新一天 / 升级 / 请求时显示角色卡</li>
+    <li>明确要求"虽然手册是英文，但全程用简体中文交互"</li>
+  </ul>
+</div>
+
+<h3>4.3 OpenAI 社区 Comprehensive AI DM Training Framework</h3>
+<div class="card card-accent">
+  <p>这是最"工程化"的 prompt 框架，将 DM 职责拆解为六大模块:</p>
+  <div class="grid-3">
+    <div><span class="tag tag-purple">核心原则</span><br>规则遵守 / 透明掷骰 / 一致性</div>
+    <div><span class="tag tag-teal">NPC 管理</span><br>名称/角色/关系动态更新<br>NPC 物品栏追踪</div>
+    <div><span class="tag tag-blue">时间追踪</span><br>轮(6s)/分钟/小时/天<br>时间敏感事件倒计时</div>
+  </div>
+  <div class="grid-3">
+    <div><span class="tag tag-coral">XP 与升级</span><br>战斗/角色扮演/里程碑<br>HP 增长保底(低于平均取中值)</div>
+    <div><span class="tag tag-green">物品管理</span><br>消耗品/装备/材料/货币<br>缺少物品则拒绝行动</div>
+    <div><span class="tag tag-amber">战斗</span><br>先攻/AC/HP/死亡<br>回合行动约束</div>
+  </div>
+</div>
+
+<h2>五、MCP 方案深入——你的最佳选择</h2>
+
+<h3>5.1 ChatRPG MCP Server</h3>
+<div class="card card-blue">
+  <p>目前最成熟的 D&D 5e MCP Server，30+ 工具覆盖角色/战斗/魔法/空间/世界/骰子六大模块:</p>
+
+  <table class="comparison-table">
+    <tr><th>模块</th><th>核心工具</th><th>特色</th></tr>
+    <tr><td>角色管理</td><td>create_character, level_up, take_rest, manage_spell_slots, roll_check</td><td>自动算属性值; 邪术师 pact magic 支持; 短休/长休 hit dice 消费</td></tr>
+    <tr><td>战斗系统</td><td>create_encounter, execute_action, advance_turn, manage_condition, render_battlefield</td><td>自动条件持续时间递减; 死亡豁免; ASCII 战术地图; 擒抱/推倒/脱离</td></tr>
+    <tr><td>魔法系统</td><td>manage_concentration, manage_aura, use_scroll, synthesize_spell</td><td>专注检定自动算 DC; 灵魂守卫/圣武士灵光; 卷轴成功/失败判定; 猜想魔法奥术检定</td></tr>
+    <tr><td>空间机制</td><td>measure_distance, calculate_aoe, check_line_of_sight, check_cover, calculate_movement</td><td>网格距离含海拔; 球/锥/线/方/柱 AoE 自动目标检测; 半/三四/全掩护; 寻路含地形</td></tr>
+    <tr><td>世界 & Session</td><td>manage_location, move_party, manage_inventory, manage_notes, get_session_context</td><td>地点图导航含锁定/隐藏通道; 物品 give/take/equip/transfer; 标签化笔记; 全局状态快照</td></tr>
+    <tr><td>骰子</td><td>roll_dice</td><td>标准记法(2d6+4, 4d6kh3); 优/劣; 批量同时表达式</td></tr>
+  </table>
+
+  <h4>部署方式</h4>
+  <p>本地 Node.js + Claude Desktop / WorkBuddy MCP 接入:</p>
+  <div class="prompt-block">
+{
+  "mcpServers": {
+    "chatrpg": {
+      "command": "node",
+      "args": ["C:\\path\\to\\ChatRPG\\dist\\index.js"]
+    }
+  }
+}</div>
+  <p>数据持久化到 <code>%APPDATA%\rpg-lite-mcp\</code>，包含 characters/、encounters/、locations/、party/、notes/ 五个子目录。</p>
+</div>
+
+<h3>5.2 DnD-MCP Server</h3>
+<div class="card card-blue">
+  <p>声称 90+ 工具，更全面的 D&D 5e DM 工具集。特色:</p>
+  <ul>
+    <li>确定性骰子掷投 (dice.roll)</li>
+    <li>战役状态管理 + checkpoint 存档 + rewind 回退</li>
+    <li>规则查询 (rules.lookup)——可接入规则书 RAG</li>
+    <li>先攻管理 (initiative.*)、角色管理 (character.*)</li>
+    <li>X-card / lines & veils 安全工具</li>
+    <li>Session 重播 + 时间追踪</li>
+  </ul>
+  <p>需要 <code>DND_STATE_DIR</code> 环境变量配置战役状态目录。部署方式类似 ChatRPG，但用 <code>npx tsx</code> 启动。</p>
+</div>
+
+<h2>六、专用平台评测汇总 (2026)</h2>
+
+<table class="comparison-table">
+  <tr><th>平台</th><th>确定性机制</th><th>持久记忆</th><th>状态追踪</th><th>中文</th><th>价格</th><th>评价</th></tr>
+  <tr><td>wilds.ai</td><td class="good">服务端骰子</td><td class="good">NPC好感持久</td><td class="good">全套</td><td class="bad">否</td><td>$9-39/月</td><td>最完整但非5e原生</td></tr>
+  <tr><td>Fables.gg</td><td class="good">SRD规则引擎</td><td class="warn">跨session不稳</td><td class="warn">部分</td><td class="bad">否</td><td>免费+付费</td><td>5e忠实但记忆差</td></tr>
+  <tr><td>DungeonsDeep</td><td class="good">自研规则集</td><td class="good">平台级持久</td><td class="good">战局网格</td><td class="bad">否</td><td>封闭beta</td><td>最像VTT但非5e</td></tr>
+  <tr><td>AIDungeonMaster.ai</td><td class="warn">5e RAW但无透明骰子</td><td class="bad">3-4session退化</td><td class="warn">法术位/动作</td><td class="bad">否</td><td>免费+付费</td><td>5e纯粹主义选这个</td></tr>
+  <tr><td>RoleForge</td><td class="good">战斗精准</td><td class="bad">短于宣称</td><td class="warn">战斗聚焦</td><td class="bad">否</td><td>免费+付费</td><td>只擅长战斗</td></tr>
+  <tr><td>AI Dungeon</td><td class="bad">无</td><td class="warn">world info可定义</td><td class="bad">无</td><td class="warn">部分</td><td>免费+付费</td><td>自由叙事但不规则</td></tr>
+  <tr><td>ChatGPT/Claude</td><td class="bad">AI可fudge</td><td class="bad">上下文窗口限制</td><td class="bad">玩家手动</td><td class="good">是</td><td>免费-$20</td><td>叙事最佳但session3崩</td></tr>
+</table>
+
+<h2>七、针对你的环境的最佳方案</h2>
+<div class="card card-green">
+  <h3>推荐: 路线 C (MCP) + 5echm 规则书 RAG</h3>
+  <p>你的独特优势:</p>
+  <ul>
+    <li>本地有完整 5echm 中文规则书 (8453 文件)——全网独一无二的资源</li>
+    <li>WorkBuddy 支持 MCP 接入——可以直接挂 ChatRPG / DnD-MCP</li>
+    <li>中文 LLM 对中文叙事质量最高</li>
+    <li>本地部署 = 零费用 + 数据不泄露</li>
+  </ul>
+
+  <h4>实施路线图</h4>
+  <ol>
+    <li><strong>Phase 1: 部署 ChatRPG MCP</strong> — 安装 Node.js 依赖，配置 MCP 接入，验证角色创建和骰子掷投</li>
+    <li><strong>Phase 2: 规则书 RAG</strong> — 将 5echm 核心文件 (战斗流程、法术、状态条件) 建索引，供 AI 实时查询而非靠"记忆"</li>
+    <li><strong>Phase 3: 系统 Prompt 优化</strong> — 融合 Oracle-RPG 三合一架构 + Bilibili RPG-Bot 结构化设计 + 机核语法约定，定制中文版本</li>
+    <li><strong>Phase 4: Session 测试</strong> — 从入门模组 (松溪险境/矿坑) 开始，每 session 结束强制存档 (get_session_context)</li>
+  </ol>
+
+  <h4>关键设计决策</h4>
+  <ul>
+    <li><span class="tag tag-green">确定性优先</span>: 所有掷骰、HP、法术位通过 MCP 工具执行，AI 只负责叙事和判断</li>
+    <li><span class="tag tag-blue">规则书即 RAG</span>: AI 需要查规则时读文件而非凭记忆——彻底消除规则幻觉</li>
+    <li><span class="tag tag-teal">语法约定</span>: {动作} 表示需要检定，[OOC] 表示离场交流，"对话" 表示角色说话</li>
+    <li><span class="tag tag-amber">定期存档</span>: 每个 session 结束调用 get_session_context + 写入 memory 文件</li>
+    <li><span class="tag tag-purple">80 词约束</span>: AI 回复控制在 80 词内，防止反刍膨胀</li>
+  </ul>
+</div>
+
+<h2>八、社区共识的"AI DM 不该做的事"</h2>
+<div class="card card-red">
+  <h3>五条铁律 (来自多源交叉验证)</h3>
+  <ol>
+    <li><strong>绝不替玩家行动</strong> — AI 不能描述玩家角色的行动、说话、思考或感受。这是最频繁的翻车点。</li>
+    <li><strong>绝不透露未发现的信息</strong> — 场景开始时不宣布有埋伏，NPC 不应透露玩家还没发现的秘密。</li>
+    <li><strong>绝不假设行动成功</strong> — 除非经过检定。简单任务自动成功，不可能任务自动失败，其余必须掷骰。</li>
+    <li><strong>绝不强行推进预设剧情</strong> — 优先响应玩家选择，DM 的"剧情计划"只是备选不是强制。</li>
+    <li><strong>绝不跳过时间</strong> — 除非玩家明确要求。AI 的"加速叙事"倾向会让玩家失去控制感。</li>
+  </ol>
+</div>
+
+<h2>九、AI 跑团的已知瓶颈与对策 (综合版)</h2>
+
+<table class="comparison-table">
+  <tr><th>瓶颈</th><th>表现</th><th>Prompt 方案对策</th><th>MCP 方案对策</th></tr>
+  <tr><td>状态遗忘</td><td>忘记 HP/条件/物品栏</td><td>定期摘要存档 + Memory 功能</td><td>get_session_context 自动追踪; advance_turn 自动递减条件</td></tr>
+  <tr><td>规则幻觉</td><td>编造不存在的法术效果</td><td>约束"严格遵循5e规则书"</td><td>规则书 RAG 实时查证; 确定性骰子+AC比对</td></tr>
+  <tr><td>空间感缺失</td><td>距离/掩护误判</td><td>二维坐标系 prompt</td><td>measure_distance + check_cover + render_battlefield</td></tr>
+  <tr><td>难度失控</td><td>遭遇太强或太弱</td><td>手动提醒 CR 平衡</td><td>create_encounter 可指定难度; CR 数据可 RAG</td></tr>
+  <tr><td>叙事断裂</td><td>跨 session 记忆丢失</td><td>每 session 开头粘贴上次摘要</td><td>manage_notes + 持久化状态文件</td></tr>
+  <tr><td>反刍膨胀</td><td>重复旧对话导致回复越来越长</td><td>80 词约束; 永不问"你做什么"</td><td>工具返回结构化数据而非叙事膨胀</td></tr>
+  <tr><td>玩家代理权侵犯</td><td>AI 替玩家做决定</td><td>"永不替玩家行动"铁律</td><td>execute_action 只在玩家触发时执行</td></tr>
+</table>
+
+<h2>十、可用的开源 Prompt 模板索引</h2>
+
+<table class="comparison-table">
+  <tr><th>来源</th><th>语言</th><th>特色</th><th>链接</th></tr>
+  <tr><td>Oracle-RPG 三合一</td><td>英文</td><td>最成熟; 5e专用; 80词约束; 三模块架构</td><td>oracle-rpg.com/2025/05/ai-dm-emulator</td></tr>
+  <tr><td>Bilibili RPG-Bot</td><td>中英混合</td><td>XML标签结构化; 5选项机制; NPC秘密设计</td><td>bilibili.com/read/cv39627567</td></tr>
+  <tr><td>机核版</td><td>中文</td><td>{动作}[OOC]"对话"语法; 二维坐标地图</td><td>gcores.com/talks/538643</td></tr>
+  <tr><td>OpenAI 社区 Framework</td><td>英文</td><td>六大模块拆解; NPC关系追踪; 时间敏感事件</td><td>community.openai.com/t/1105576</td></tr>
+  <tr><td>Gemini 2.5 最佳 Prompt</td><td>英文</td><td>角色+设定+开场场景全指定; 适合长session</td><td>arsturn.com/blog (Gemini专题)</td></tr>
+</table>
+
+<h2>十一、MCP 工具对比</h2>
+
+<table class="comparison-table">
+  <tr><th>特性</th><th>ChatRPG</th><th>DnD-MCP</th></tr>
+  <tr><td>工具数量</td><td>30+</td><td>90+ (声称)</td></tr>
+  <tr><td>角色管理</td><td>完整 CRUD + 升级 + 休息 + 法术位</td><td>character.* 系列</td></tr>
+  <tr><td>战斗</td><td>遭遇/行动/条件/先攻/死亡/地形修改/ASCII地图</td><td>initiative.* + 更全面</td></tr>
+  <tr><td>魔法</td><td>专注/灵光/卷轴/猜想魔法</td><td>未知详情</td></tr>
+  <tr><td>空间</td><td>距离/AoE/视线/掩护/寻路/道具</td><td>基础距离</td></tr>
+  <tr><td>世界</td><td>地点图/旅行/队伍/物品/笔记/全局快照</td><td>state.* + checkpoint</td></tr>
+  <tr><td>持久化</td><td>本地 JSON 文件</td><td>本地文件 + checkpoint + rewind</td></tr>
+  <tr><td>部署</td><td>Node.js npm</td><td>npx tsx</td></tr>
+  <tr><td>状态</td><td>250/250 测试通过; 活跃迭代</td><td>较新; 文档尚不完整</td></tr>
+  <tr><td>安全工具</td><td>无</td><td>X-card / lines & veils</td></tr>
+</table>
+
+<div class="footnote">
+  <p>数据来源: wilds.ai 8-session 深度测试 (2026-04) | Gemini 100 万词元实测 (网易 2024-06) | Oracle-RPG prompt 工程 (2025-05) | ChatRPG MCP 文档 (Glama 2025) | DnD-MCP 文档 (LobeHub 2025) | 机核 Gcores 社区 | bilibili fona1y | OpenAI Community Forum | arsturn Gemini 2.5 评测 | myarchivist.ai prompt 工程</p>
+  <p>本报告生成于 2026-07-13，供 D&D 5e AI 跑团实践参考。所有引用均为公开资源。</p>
+</div>
+
+</div>
+</body>
+</html>

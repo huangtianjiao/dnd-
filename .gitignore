@@ -1,0 +1,49 @@
+# === Secrets / environment ===
+.env
+.env.*
+!.env.example
+
+# === Local agent/tool state ===
+.workbuddy/
+
+# === Dependencies ===
+node_modules/
+
+# === Next.js build output ===
+.next/
+out/
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# === Build / dist ===
+dist/
+build/
+
+# === Runtime data store (regenerable from rules_text via scripts/extract_rules.py) ===
+aidm/data/rules.db/
+
+# === Game save state (personal runtime data) ===
+aidm/data/saves/
+
+# === Logs ===
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === OS files ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Editor / IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo

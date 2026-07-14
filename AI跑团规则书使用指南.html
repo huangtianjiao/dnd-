@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 跑团规则书使用指南</title>
+<style>
+  :root {
+    --bg: #faf9f6;
+    --surface: #ffffff;
+    --border: #e5e3dd;
+    --text: #2c2c2a;
+    --text-muted: #6b6a66;
+    --accent-red: #c0392b;
+    --accent-amber: #b7791f;
+    --accent-blue: #2980b9;
+    --accent-green: #27ae60;
+    --accent-purple: #7f77dd;
+    --code-bg: #f5f4f0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+    padding: 0;
+  }
+  .container { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  h1 {
+    font-size: 28px; font-weight: 700; margin-bottom: 8px;
+    color: var(--text); letter-spacing: -0.5px;
+  }
+  .subtitle { color: var(--text-muted); font-size: 15px; margin-bottom: 32px; }
+
+  h2 {
+    font-size: 20px; font-weight: 600; margin: 40px 0 16px;
+    padding-bottom: 8px; border-bottom: 2px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  h2 .badge {
+    font-size: 12px; font-weight: 500; padding: 2px 10px;
+    border-radius: 4px; color: #fff;
+  }
+  .badge-t1 { background: var(--accent-red); }
+  .badge-t2 { background: var(--accent-amber); }
+  .badge-t3 { background: var(--accent-blue); }
+  .badge-t4 { background: var(--accent-green); }
+
+  h3 { font-size: 16px; font-weight: 600; margin: 24px 0 12px; }
+
+  p { margin-bottom: 12px; }
+  .muted { color: var(--text-muted); font-size: 13px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card-t1 { border-left: 4px solid var(--accent-red); }
+  .card-t2 { border-left: 4px solid var(--accent-amber); }
+  .card-t3 { border-left: 4px solid var(--accent-blue); }
+  .card-t4 { border-left: 4px solid var(--accent-green); }
+
+  .card-title {
+    font-weight: 600; font-size: 16px; margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .file-ref {
+    font-family: "Cascadia Code", "Consolas", monospace;
+    font-size: 12px; color: var(--text-muted);
+    background: var(--code-bg); padding: 2px 8px;
+    border-radius: 4px; border: 1px solid var(--border);
+  }
+  .file-list {
+    margin-top: 8px; padding-left: 0; list-style: none;
+  }
+  .file-list li {
+    font-family: "Cascadia Code", "Consolas", monospace;
+    font-size: 12px; color: var(--text-muted);
+    padding: 3px 0; padding-left: 16px;
+    position: relative;
+  }
+  .file-list li::before {
+    content: "▸"; position: absolute; left: 0; color: var(--accent-blue);
+  }
+
+  .ai-note {
+    background: #fef9e7; border: 1px solid #f5d76e;
+    border-radius: 8px; padding: 14px 18px; margin: 16px 0;
+    font-size: 14px;
+  }
+  .ai-note strong { color: #7d6608; }
+
+  .danger-box {
+    background: #fdedec; border: 1px solid #e74c3c;
+    border-radius: 8px; padding: 14px 18px; margin: 16px 0;
+    font-size: 14px;
+  }
+  .danger-box strong { color: var(--accent-red); }
+
+  .checklist {
+    list-style: none; padding: 0;
+  }
+  .checklist li {
+    padding: 8px 0 8px 28px;
+    position: relative;
+    border-bottom: 1px solid var(--border);
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li::before {
+    content: "☐"; position: absolute; left: 0; top: 8px;
+    font-size: 16px; color: var(--accent-blue);
+  }
+  .checklist li.done::before { content: "☑"; color: var(--accent-green); }
+
+  table {
+    width: 100%; border-collapse: collapse; margin: 16px 0;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left; padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--code-bg); font-weight: 600;
+    font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-muted);
+  }
+  td code {
+    font-family: "Cascadia Code", "Consolas", monospace;
+    font-size: 12px; background: var(--code-bg);
+    padding: 2px 6px; border-radius: 3px;
+  }
+
+  pre {
+    background: #1e1e2e; color: #cdd6f4;
+    border-radius: 8px; padding: 16px 20px;
+    overflow-x: auto; font-size: 13px;
+    line-height: 1.6; margin: 16px 0;
+    font-family: "Cascadia Code", "Consolas", monospace;
+  }
+  pre .comment { color: #6c7086; }
+  pre .key { color: #cba6f7; }
+  pre .str { color: #a6e3a1; }
+
+  .toc {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px 28px; margin-bottom: 32px;
+  }
+  .toc-title { font-weight: 600; margin-bottom: 12px; font-size: 14px; }
+  .toc ol { padding-left: 20px; }
+  .toc li { padding: 3px 0; }
+  .toc a {
+    color: var(--accent-blue); text-decoration: none;
+    font-size: 14px;
+  }
+  .toc a:hover { text-decoration: underline; }
+
+  .stat-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px; margin: 16px 0;
+  }
+  .stat-item {
+    background: var(--code-bg); border-radius: 8px;
+    padding: 12px 16px; text-align: center;
+  }
+  .stat-num { font-size: 24px; font-weight: 700; }
+  .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>AI 跑团规则书使用指南</h1>
+<p class="subtitle">基于 5echm 规则书库 — D&D 5e 中文完整版 · 生成时间 2026-07-13</p>
+
+<div class="stat-grid">
+  <div class="stat-item">
+    <div class="stat-num" style="color:var(--accent-red)">4</div>
+    <div class="stat-label">优先级层次</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" style="color:var(--accent-amber)">12</div>
+    <div class="stat-label">核心职业</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" style="color:var(--accent-blue)">30+</div>
+    <div class="stat-label">冒险模组</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" style="color:var(--accent-green)">5</div>
+    <div class="stat-label">AI 瓶颈点</div>
+  </div>
+</div>
+
+<div class="toc">
+  <div class="toc-title">目录</div>
+  <ol>
+    <li><a href="#t1">T1 — 必须掌握：核心机制循环</a></li>
+    <li><a href="#t2">T2 — 关键数据：角色与世界</a></li>
+    <li><a href="#t3">T3 — DM 工具箱：判断与临场</a></li>
+    <li><a href="#t4">T4 — 扩展内容：锦上添花</a></li>
+    <li><a href="#bottleneck">AI 跑团五大瓶颈与对策</a></li>
+    <li><a href="#checklist">上手检查清单</a></li>
+    <li><a href="#prompt">AI DM 系统提示词模板</a></li>
+    <li><a href="#files">规则书文件索引速查</a></li>
+  </ol>
+</div>
+
+<!-- ==================== T1 ==================== -->
+<h2 id="t1"><span class="badge badge-t1">T1</span> 必须掌握：核心机制循环</h2>
+<p>这是 AI 每一个回合都要执行的东西。如果这些搞错了，跑团体验直接崩。对应你规则书库中的<strong>玩家手册</strong>和<strong>DM速查</strong>。</p>
+
+<div class="card card-t1">
+  <div class="card-title">
+    <span>1. 游戏循环（Play Loop）</span>
+    <span class="file-ref">玩家手册/进行游戏/冒险.html</span>
+  </div>
+  <p>D&D 的核心只有三步循环，AI 必须严格遵循：</p>
+  <ol>
+    <li><strong>DM 描述环境</strong> — AI 用文字呈现场景、感官细节、可交互要素</li>
+    <li><strong>玩家描述行动</strong> — 玩家说"我要做什么"</li>
+    <li><strong>DM 叙述结果</strong> — AI 判定后果（可能涉及掷骰），然后回到第 1 步</li>
+  </ol>
+  <div class="ai-note">
+    <strong>AI 特别注意：</strong>不要跳步。常见错误是 AI 在玩家还没行动时就替玩家做了决定，或者在玩家行动后不回到"描述环境"而是直接进入下一个事件。每次玩家行动后，AI 都应该重新描述当前环境状态。
+  </div>
+</div>
+
+<div class="card card-t1">
+  <div class="card-title">
+    <span>2. 战斗流程（Combat Order）</span>
+    <span class="file-ref">玩家手册/战斗/战斗流程.htm</span>
+  </div>
+  <p>战斗是 D&D 中规则最密集的部分，AI 必须严格按五步走：</p>
+  <ol>
+    <li><strong>判定突袭</strong> — 比较隐匿检定 vs 被动感知</li>
+    <li><strong>决定位置</strong> — 所有参战者的距离和方位</li>
+    <li><strong>掷先攻</strong> — 敏捷检定，高到低排序</li>
+    <li><strong>执行回合</strong> — 每人按先攻顺序行动</li>
+    <li><strong>新一轮</strong> — 所有人行动完后回到第 4 步</li>
+  </ol>
+  <p><strong>每回合可做的事：</strong>移动（等于速度）+ 一个动作 + 一个附赠动作（如有特权）+ 与物件交互（免费）+ 沟通（免费）</p>
+  <ul class="file-list">
+    <li>玩家手册/战斗/战斗动作.htm — 动作选项清单</li>
+    <li>玩家手册/战斗/移动与位置.htm — 移动规则</li>
+    <li>玩家手册/战斗/发起攻击.htm — 攻击判定流程</li>
+    <li>玩家手册/战斗/伤害与治疗.htm — 伤害计算</li>
+    <li>DM速查/战斗速查.htm — 快速参考</li>
+  </ul>
+</div>
+
+<div class="card card-t1">
+  <div class="card-title">
+    <span>3. d20 检定系统</span>
+    <span class="file-ref">DM速查/冒险速查.htm</span>
+  </div>
+  <p>D&D 的核心判定机制，三种用途：</p>
+  <table>
+    <tr><th>类型</th><th>公式</th><th>用途</th></tr>
+    <tr><td>属性检定</td><td>d20 + 属性调整值 + 熟练加值（如有）vs DC</td><td>技能检定、力量检定等</td></tr>
+    <tr><td>攻击检定</td><td>d20 + 属性调整值 + 熟练加值 vs 目标 AC</td><td>近战/远程/法术攻击</td></tr>
+    <tr><td>豁免检定</td><td>d20 + 属性调整值 + 豁免熟练加值（如有）vs DC</td><td>躲避法术/陷阱/毒素</td></tr>
+  </table>
+  <p><strong>优势/劣势：</strong>掷两个 d20 取高（优势）或取低（劣势），不叠加。</p>
+  <p><strong>DC 参考（AI 设 DC 时的指南）：</strong></p>
+  <table>
+    <tr><th>难度</th><th>DC</th><th>示例</th></tr>
+    <tr><td>非常简单</td><td>5</td><td>踢开一扇破旧的门</td></tr>
+    <tr><td>简单</td><td>10</td><td>攀爬有充足支点的墙壁</td></tr>
+    <tr><td>中等</td><td>15</td><td>撬开普通门锁</td></tr>
+    <tr><td>困难</td><td>20</td><td>在激流中游泳</td></tr>
+    <tr><td>非常困难</td><td>25</td><td>徒手攀爬光滑墙壁</td></tr>
+    <tr><td>几乎不可能</td><td>30</td><td>徒手接住射来的箭</td></tr>
+  </table>
+  <div class="ai-note">
+    <strong>AI 特别注意：</strong>不要什么检定都设 DC 15。城主指南/掷骰.html 明确说了三种风格——"以掷骰为本"、"掷骰不如思考"、"掷骰与思考结合"。推荐 AI 用"结合"风格：玩家描述合理时可直接判定成功，只有不确定时才掷骰。
+  </div>
+</div>
+
+<div class="card card-t1">
+  <div class="card-title">
+    <span>4. 状态系统（Conditions）</span>
+    <span class="file-ref">DM速查/状态.htm</span>
+  </div>
+  <p>D&D 5e 有 14 种标准状态，AI 必须能正确追踪和解除：</p>
+  <p>目盲、魅惑、耳聋、恐慌、擒抱、失能、隐形、中毒、倒地、压制、震慑、昏迷、力竭、麻痹</p>
+  <div class="danger-box">
+    <strong>最大风险：</strong>AI 经常忘记追踪状态持续时间。例如"中毒"状态持续到被解毒，"震慑"通常持续到豁免成功。建议 AI 在每回合结束时输出一个状态追踪表。
+  </div>
+</div>
+
+<!-- ==================== T2 ==================== -->
+<h2 id="t2"><span class="badge badge-t2">T2</span> 关键数据：角色与世界</h2>
+<p>AI 需要查表才能正确执行的数据。这些内容不一定要全部记在上下文里，但 AI 需要知道<strong>去哪查</strong>。</p>
+
+<div class="card card-t2">
+  <div class="card-title">
+    <span>5. 职业特性（Class Features）</span>
+    <span class="file-ref">玩家手册/职业/</span>
+  </div>
+  <p>12 个核心职业，每个有子职业分支。AI 需要知道的关键信息：</p>
+  <table>
+    <tr><th>职业</th><th>关键资源</th><th>恢复方式</th><th>核心机制</th></tr>
+    <tr><td>野蛮人</td><td>狂暴次数</td><td>长休</td><td>狂暴：物理伤害优势、抗性</td></tr>
+    <tr><td>吟游诗人</td><td>法术位</td><td>长休</td><td>灵感骰、万能魔法</td></tr>
+    <tr><td>牧师</td><td>法术位</td><td>长休</td><td>引导神力、领域特性</td></tr>
+    <tr><td>德鲁伊</td><td>法术位</td><td>长休</td><td>荒野形态</td></tr>
+    <tr><td>战士</td><td>动作汹涌</td><td>短休</td><td>动作汹涌：一回合多打</td></tr>
+    <tr><td>武僧</td><td>气点</td><td>短休</td><td>疾风连击、散打</td></tr>
+    <tr><td>圣武士</td><td>法术位</td><td>长休</td><td>神圣攻击、誓约</td></tr>
+    <tr><td>游侠</td><td>法术位</td><td>长休</td><td>宿敌、自然探索者</td></tr>
+    <tr><td>游荡者</td><td>—</td><td>—</td><td>偷袭、灵巧动作</td></tr>
+    <tr><td>术士</td><td>法术位、术法点</td><td>长休</td><td>超魔、术法点转换</td></tr>
+    <tr><td>邪术师</td><td>法术位</td><td><strong>短休</strong></td><td>魔契恩赐、邪术祈唤</td></tr>
+    <tr><td>法师</td><td>法术位</td><td>长休</td><td>奥术恢复、法术书</td></tr>
+  </table>
+  <div class="ai-note">
+    <strong>AI 特别注意：</strong>邪术师的法术位在<strong>短休</strong>恢复，这和其他施法者不同。游荡者没有资源系统但偷袭骰每回合只能用一次。这些细节 AI 容易搞混。
+  </div>
+  <ul class="file-list">
+    <li>玩家手册/职业/野蛮人.html ~ 邪术师.html</li>
+    <li>速查/法术速查/吟游诗人法术速查.html ~ 邪术师法术速查.html — 按职业分类的法术速查</li>
+    <li>施法者速查/PHB内容/ — 施法者快速参考</li>
+  </ul>
+</div>
+
+<div class="card card-t2">
+  <div class="card-title">
+    <span>6. 法术系统（Spell System）</span>
+    <span class="file-ref">玩家手册/魔法/</span>
+  </div>
+  <p>法术是 D&D 中最容易让 AI 产生"规则幻觉"的部分。</p>
+  <h3>AI 必须搞清的法术规则：</h3>
+  <ul>
+    <li><strong>法术位：</strong>施法消耗对应等级的法术位，高阶法术位可以施放低阶法术（升阶施法）</li>
+    <li><strong>戏法：</strong>0级法术，不需要法术位，可随意施放</li>
+    <li><strong>准备法术 vs 已知法术：</strong>牧师/德鲁伊/圣武士/法师是"准备"制（每天选），术士/吟游诗人/游侠/邪术师是"已知"制（升级时学）</li>
+    <li><strong>专注：</strong>同一时间只能专注一个法术，受伤害要过体质豁免（DC=10或伤害的一半取高），失败则法术中断</li>
+    <li><strong>施法时间：</strong>1动作（最常见）、1附赠动作、1分钟、10分钟、1小时等</li>
+    <li><strong>效应范围：</strong>参考玩家手册/魔法/效应范围示意图.png</li>
+  </ul>
+  <ul class="file-list">
+    <li>玩家手册/魔法/法术是什么.htm — 基础概念</li>
+    <li>玩家手册/魔法/施展法术.htm — 施法规则</li>
+    <li>玩家手册/魔法/法术列表/ — 按等级和职业分类的法术列表</li>
+    <li>玩家手册/魔法/法术详述/ — 每个法术的详细描述</li>
+    <li>速查/法术速查/5E万法大全.html — 全法术速查</li>
+  </ul>
+</div>
+
+<div class="card card-t2">
+  <div class="card-title">
+    <span>7. 怪物数据（Monster Stats）</span>
+    <span class="file-ref">怪物图鉴/</span>
+  </div>
+  <p>AI 在设计遭遇时必须参考真实怪物数据，不能"编"一个怪物出来。</p>
+  <h3>怪物数据卡的关键字段：</h3>
+  <ul>
+    <li><strong>CR（挑战等级）：</strong>衡量怪物强度的核心指标，用于遭遇平衡计算</li>
+    <li><strong>AC（护甲等级）：</strong>攻击检定需达到的数值</li>
+    <li><strong>HP（生命值）：</strong>通常是一个骰子表达式如 <code>3d8 + 6</code></li>
+    <li><strong>速度：</strong>战斗中的移动能力</li>
+    <li><strong>属性：</strong>六维数值，影响检定和豁免</li>
+    <li><strong>技能/豁免熟练：</strong>标注哪些检定加了熟练加值</li>
+    <li><strong>伤害免疫/抗性/易伤：</strong>影响伤害计算</li>
+    <li><strong>感官：</strong>被动感知、黑暗视觉距离等</li>
+    <li><strong>语言：</strong>决定能否沟通</li>
+    <li><strong>挑战：</strong>CR 和 XP 值</li>
+    <li><strong>动作/传奇动作/反应：</strong>战斗中可做的事</li>
+  </ul>
+  <ul class="file-list">
+    <li>怪物图鉴/怪物清单.html — 全怪物索引</li>
+    <li>怪物图鉴/什么是怪物.htm — 怪物数据卡解读</li>
+    <li>怪物图鉴/按类型分类：不死生物/元素生物/天界生物/巨人/异怪/怪兽/构装生物/植物/泥怪/类人生物/精类/邪魔/野兽/龙类</li>
+    <li>怪物图鉴2025/ — 2024版新怪物图鉴</li>
+    <li>多元宇宙的怪物/ — 扩展怪物</li>
+  </ul>
+</div>
+
+<div class="card card-t2">
+  <div class="card-title">
+    <span>8. 休息与资源管理</span>
+    <span class="file-ref">玩家手册/进行游戏/冒险.html</span>
+  </div>
+  <table>
+    <tr><th></th><th>短休</th><th>长休</th></tr>
+    <tr><td>时间</td><td>1小时以上</td><td>8小时以上（可含2小时值守）</td></tr>
+    <tr><td>生命值</td><td>消耗生命骰恢复</td><td>回满 + 恢复一半生命骰</td></tr>
+    <tr><td>法术位</td><td>仅邪术师恢复</td><td>全部恢复</td></tr>
+    <tr><td>其他</td><td>短休能力（如战士动作汹涌）</td><td>所有资源恢复</td></tr>
+  </table>
+  <p><strong>生命骰：</strong>等于角色等级数，类型由职业决定（d6/d8/d10/d12）。短休时消耗，掷骰+体质调整值恢复对应血量。</p>
+</div>
+
+<!-- ==================== T3 ==================== -->
+<h2 id="t3"><span class="badge badge-t3">T3</span> DM 工具箱：判断与临场</h2>
+<p>这些内容帮助 AI 做更好的"DM 判断"——什么时候该骰、怎么平衡遭遇、怎么设计冒险。</p>
+
+<div class="card card-t3">
+  <div class="card-title">
+    <span>9. 遭遇平衡（Encounter Building）</span>
+    <span class="file-ref">城主指南/规则之主/运作游戏/</span>
+  </div>
+  <p>这是 AI DM 最容易翻车的地方之一。核心是用 CR（挑战等级）和 XP 预算来构建遭遇。</p>
+  <h3>遭遇难度阈值（按角色等级）</h3>
+  <table>
+    <tr><th>难度</th><th>1级</th><th>3级</th><th>5级</th><th>10级</th><th>15级</th><th>说明</th></tr>
+    <tr><td>简单</td><td>25</td><td>75</td><td>250</td><td>600</td><td>1100</td><td>几乎无风险</td></tr>
+    <tr><td>中等</td><td>50</td><td>150</td><td>500</td><td>1200</td><td>2200</td><td>消耗一些资源</td></tr>
+    <tr><td>困难</td><td>75</td><td>225</td><td>750</td><td>1900</td><td>3400</td><td>有死亡风险</td></tr>
+    <tr><td>致命</td><td>100</td><td>400</td><td>1100</td><td>2800</td><td>4900</td><td>很可能团灭</td></tr>
+  </table>
+  <p class="muted">上表为单人 XP 阈值，多人遭遇时累加后乘以遭遇乘数（2只怪物 ×1.5，3-6只 ×2，7-10只 ×2.5，11-14只 ×3）。</p>
+  <div class="ai-note">
+    <strong>AI 建议：</strong>不要只算 CR。一个 CR 3 的怪物打 4 个 3 级角色算"中等"，但如果怪物有范围攻击而队伍挤在一起，实际可能致命。AI 设计时多准备一个"逃跑路线"或"增援延迟"机制。
+  </div>
+</div>
+
+<div class="card card-t3">
+  <div class="card-title">
+    <span>10. 掷骰哲学（Dice Philosophy）</span>
+    <span class="file-ref">城主指南/规则之主/运作游戏/掷骰.html</span>
+  </div>
+  <p>这是城主指南中最适合 AI 参考的一章。三种风格：</p>
+  <ul>
+    <li><strong>以掷骰为本：</strong>所有行动都骰，让运气决定一切。优点：公平。缺点：降低角色扮演兴致。</li>
+    <li><strong>掷骰不如思考：</strong>只在战斗时骰，其他靠 DM 判断。优点：鼓励创新。缺点：DM 可能不中立。</li>
+    <li><strong>掷骰与思考结合（推荐）：</strong>玩家描述合理时直接成功，不确定时才骰。</li>
+  </ul>
+  <div class="ai-note">
+    <strong>关键原则：</strong>"游戏的主宰不是骰子，而是你。"——城主指南原文。AI 作为 DM 应该灵活运用，不要变成规则计算器。
+  </div>
+</div>
+
+<div class="card card-t3">
+  <div class="card-title">
+    <span>11. 冒险结构设计</span>
+    <span class="file-ref">城主指南/冒险之主/</span>
+  </div>
+  <p>城主指南提供了完整的冒险设计框架：</p>
+  <ul>
+    <li><strong>冒险故事结构：</strong>城主指南/冒险之主/冒险故事结构.htm — 起承转合</li>
+    <li><strong>冒险环境：</strong>城主指南/冒险之主/冒险环境.html — 地城/荒野/城镇的不同处理</li>
+    <li><strong>创建冒险：</strong>城主指南/冒险之主/创建冒险.html — 从零开始设计</li>
+    <li><strong>随机地下城：</strong>城主指南/随机地下城.html — 随机生成地城</li>
+    <li><strong>创建 NPC：</strong>城主指南/冒险之主/创建非玩家角色.html — 快速 NPC 生成表</li>
+  </ul>
+  <p>此外还有大量<strong>预置模组</strong>可以直接使用：</p>
+  <ul class="file-list">
+    <li>模组/松溪险境 — 入门级模组，适合第一次跑团</li>
+    <li>模组/矿坑 — 经典地城探索</li>
+    <li>模组/瑞克地城 — 进阶地城</li>
+    <li>模组/冰风谷 — 完整战役</li>
+    <li>模组/施特拉德的诅咒 — 哥特恐怖经典</li>
+    <li>模组/深水城龙金劫 — 城市冒险</li>
+    <li>模组/炼狱机器 — 高等级战役</li>
+    <li>模组/黄金宝库 — 短冒险合集</li>
+  </ul>
+</div>
+
+<!-- ==================== T4 ==================== -->
+<h2 id="t4"><span class="badge badge-t4">T4</span> 扩展内容：锦上添花</h2>
+<p>起步阶段可以全部跳过。等 T1-T3 跑顺了再加载。</p>
+
+<div class="card card-t4">
+  <div class="card-title">
+    <span>12. 扩展职业与种族</span>
+  </div>
+  <p>你的规则书库包含大量扩展内容：</p>
+  <ul>
+    <li><strong>塔莎的万事坩埚：</strong>新子职、自定义种族属性、新法术</li>
+    <li><strong>珊娜萨的万事指南：</strong>扩展子职、新种族、新规则选项</li>
+    <li><strong>剑湾冒险者指南：</strong>被遗忘国度设定 + 新子职</li>
+    <li><strong>费资本的巨龙宝库：</strong>龙类详述 + 龙裔子种族</li>
+    <li><strong>万象无常书：</strong>中文社区自制扩展</li>
+  </ul>
+  <p class="muted">建议：第一次跑团只用玩家手册核心 12 职业和 9 种族，稳定后再加扩展。</p>
+</div>
+
+<div class="card card-t4">
+  <div class="card-title">
+    <span>13. 变体规则</span>
+    <span class="file-ref">城主指南/规则之主/城主工坊/</span>
+  </div>
+  <p>城主工坊提供了大量可选规则，部分对 AI 跑团特别有用：</p>
+  <ul>
+    <li><strong>英雄点数：</strong>城主工坊/英雄点数.htm — 给玩家额外幸运点，降低团灭风险</li>
+    <li><strong>情节点数：</strong>城主工坊/情节点数.htm — 玩家可重骰，AI 更好控场</li>
+    <li><strong>扫荡怪群：</strong>城主工坊/扫荡怪群.htm — 加速清理低 CR 杂兵</li>
+    <li><strong>先攻变体：</strong>城主工坊/先攻变体.htm — 固定先攻，减少掷骰开销</li>
+  </ul>
+</div>
+
+<div class="card card-t4">
+  <div class="card-title">
+    <span>14. 世界观设定集</span>
+  </div>
+  <p>用于丰富世界观和叙事深度：</p>
+  <ul>
+    <li><strong>艾伯伦寻路者指南 / 艾伯伦：从终末战争中崛起：</strong>蒸汽朋克魔法世界</li>
+    <li><strong>塔尔多雷战役设定集：</strong>Critical Role 的 Exandria 世界</li>
+    <li><strong>范·里希腾的鸦阁魔域指南：</strong>哥特恐怖设定</li>
+    <li><strong>荒洲探险家指南：</strong>恐龙 + 热带丛林</li>
+    <li><strong>印记城与外域：</strong>位面冒险</li>
+    <li><strong>莫提的位面游记：</strong>位面详述</li>
+  </ul>
+</div>
+
+<!-- ==================== Bottlenecks ==================== -->
+<h2 id="bottleneck">AI 跑团五大瓶颈与对策</h2>
+<p>AI 做 DM 和人类做 DM 的关键差异——AI 在哪些地方容易翻车，以及怎么补。</p>
+
+<div class="card" style="border-left:4px solid var(--accent-red)">
+  <div class="card-title">瓶颈 1：状态遗忘 <span class="muted" style="font-size:13px;font-weight:400">— 即时性</span></div>
+  <p><strong>问题：</strong>AI 在第 3 轮忘记了第 1 轮施加的"中毒"状态，或者忘记了某个角色的 HP 已经掉到一半以下。</p>
+  <p><strong>对策：</strong>让 AI 在每回合结束时输出一张状态快照表：</p>
+  <pre><span class="comment">// 每回合结束时的状态快照</span>
+<span class="key">回合</span>: 3 | <span class="key">先攻序列</span>: 哥布林(15) > 战士(12) > 法师(8) > 哥布林(5)
+<span class="key">战士</span>: HP 18/30 | <span class="str">中毒(持续到被解毒)</span> | 法术位: N/A
+<span class="key">法师</span>: HP 22/24 | <span class="str">专注: 火球术(无)</span> | 法术位: 1环×2, 2环×1
+<span class="key">哥布林A</span>: HP 7/7 | 状态: 无
+<span class="key">哥布林B</span>: HP 3/7 | <span class="str">恐惧(持续到法师下回合)</span></pre>
+</div>
+
+<div class="card" style="border-left:4px solid var(--accent-red)">
+  <div class="card-title">瓶颈 2：规则幻觉 <span class="muted" style="font-size:13px;font-weight:400">— 即时性</span></div>
+  <p><strong>问题：</strong>AI 编造不存在的法术效果（比如把"火球术"说成需要专注），或者给职业不存在的特性。</p>
+  <p><strong>对策：</strong></p>
+  <ul>
+    <li>核心法术和职业特性提前喂入上下文（不要依赖 AI 的"记忆"）</li>
+    <li>在 AI DM 的系统提示中写明："如果不确定某个法术的具体效果，先查询规则书文件再回答"</li>
+    <li>让 AI 在做出关键规则判定时引用规则书原文</li>
+    <li>利用你规则书库中的<strong>速查</strong>目录——这些文件就是为快速查阅设计的</li>
+  </ul>
+</div>
+
+<div class="card" style="border-left:4px solid #D4537E">
+  <div class="card-title">瓶颈 3：空间感缺失 <span class="muted" style="font-size:13px;font-weight:400">— 即时性</span></div>
+  <p><strong>问题：</strong>AI 无法"看到"地图，容易在距离、掩护、范围效应上出错。比如让法师对 30 尺外的敌人施放需要触及的法术。</p>
+  <p><strong>对策：</strong>用文字坐标网格替代视觉地图：</p>
+  <pre><span class="comment">// 文字地图示例</span>
+<span class="key">地图</span> (每格=5尺)
+     A    B    C    D    E    F
+ 1  [壁] [壁] [壁] [壁] [壁] [壁]
+ 2  [壁] [  ] [  ] [  ] [桌] [壁]
+ 3  [壁] [  ] [<span class="str">战士</span>] [  ] [  ] [壁]
+ 4  [门] [  ] [  ] [<span class="str">哥布A</span>] [  ] [壁]
+ 5  [壁] [  ] [<span class="str">法师</span>] [  ] [<span class="str">哥布B</span>] [壁]
+ 6  [壁] [壁] [壁] [壁] [壁] [壁]
+
+<span class="key">距离</span>: 战士(C3)到哥布A(D4) = 10尺(对角线2格×5=10)
+<span class="key">掩护</span>: 哥布B(E5)对战士(C3)有半掩护(桌椅阻挡)</pre>
+</div>
+
+<div class="card" style="border-left:4px solid #D4537E">
+  <div class="card-title">瓶颈 4：难度失控 <span class="muted" style="font-size:13px;font-weight:400">— 即时性</span></div>
+  <p><strong>问题：</strong>AI 设计的遭遇要么太强导致团灭，要么太弱毫无挑战。</p>
+  <p><strong>对策：</strong></p>
+  <ul>
+    <li>每次设计遭遇都走一遍 CR 计算（参考上面的遭遇难度阈值表）</li>
+    <li>准备 3 档方案：基础版（中等难度）、增援版（如果太简单）、削弱版（如果太难）</li>
+    <li>给怪物设计"逃跑条件"——HP 低于一半时尝试逃跑</li>
+    <li>给玩家设计"撤退路线"——永远留一扇门</li>
+    <li>新手团建议从 CR 1/4 到 CR 1/2 的怪物开始</li>
+  </ul>
+</div>
+
+<div class="card" style="border-left:4px solid var(--accent-green)">
+  <div class="card-title">瓶颈 5：叙事断裂 <span class="muted" style="font-size:13px;font-weight:400">— 跨 session</span></div>
+  <p><strong>问题：</strong>新 session 开始时 AI 忘记了上次发生的事，NPC 行为不一致，剧情线索断裂。</p>
+  <p><strong>对策：</strong>每 session 结束时让 AI 生成一个剧情摘要文件：</p>
+  <pre><span class="comment">// session 结束时自动生成</span>
+{
+  <span class="key">"session"</span>: 3,
+  <span class="key">"date"</span>: <span class="str">"2026-07-13"</span>,
+  <span class="key">"party"</span>: [
+    {<span class="key">"name"</span>: <span class="str">"战士-阿强"</span>, <span class="key">"level"</span>: 3, <span class="key">"hp"</span>: 30, <span class="key">"gold"</span>: 150},
+    {<span class="key">"name"</span>: <span class="str">"法师-小明"</span>, <span class="key">"level"</span>: 3, <span class="key">"hp"</span>: 24, <span class="key">"gold"</span>: 80}
+  ],
+  <span class="key">"key_events"</span>: [
+    <span class="str">"在松溪镇发现了地精营地"</span>,
+    <span class="str">"击败了地精头目格拉什"</span>,
+    <span class="str">"找到了一封来自神秘人的信"</span>
+  ],
+  <span class="key">"active_quests"</span>: [<span class="str">"调查神秘信件来源"</span>],
+  <span class="key">"npcs"</span>: [
+    {<span class="key">"name"</span>: <span class="str">"镇长巴恩"</span>, <span class="key">"attitude"</span>: <span class="str">"感激"</span>, <span class="key">"location"</span>: <span class="str">"松溪镇"</span>}
+  ],
+  <span class="key">"next_hooks"</span>: [<span class="str">"信件提到'黑塔'，镇民似乎知道些什么"</span>]
+}</pre>
+</div>
+
+<!-- ==================== Checklist ==================== -->
+<h2 id="checklist">上手检查清单</h2>
+<p>如果你想立刻开始 AI 跑团，按这个清单走：</p>
+
+<div class="card">
+  <h3>第一步：确定规则范围</h3>
+  <ul class="checklist">
+    <li>确定使用 2014 版还是 2024 版规则（你的库两版都有）</li>
+    <li>确定允许的职业/种族来源（建议第一次只用玩家手册）</li>
+    <li>确定起始等级（建议 1 级或 3 级）</li>
+    <li>确定是否使用变体规则（建议新手开"英雄点数"降低死亡率）</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3>第二步：准备 AI DM 的上下文</h3>
+  <ul class="checklist">
+    <li>加载战斗流程规则（玩家手册/战斗/战斗流程.htm）</li>
+    <li>加载战斗动作清单（玩家手册/战斗/战斗动作.htm）</li>
+    <li>加载状态系统（DM速查/状态.htm）</li>
+    <li>加载 DC 参考表和掷骰哲学（城主指南/规则之主/运作游戏/掷骰.html）</li>
+    <li>加载玩家角色的职业特性（对应职业的 .html 文件）</li>
+    <li>加载角色的已知/准备法术（从法术详述中提取）</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3>第三步：选择冒险内容</h3>
+  <ul class="checklist">
+    <li>新手推荐：模组/松溪险境 或 模组/矿坑</li>
+    <li>进阶推荐：模组/瑞克地城 或 模组/哈欠传送门故事集</li>
+    <li>自定义冒险：参考城主指南/冒险之主/创建冒险.html</li>
+    <li>随机地城：参考城主指南/随机地下城.html</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3>第四步：设定 AI 行为规范</h3>
+  <ul class="checklist">
+    <li>要求 AI 每回合输出状态快照表</li>
+    <li>要求 AI 使用文字坐标网格描述位置</li>
+    <li>要求 AI 在不确定时查询规则书而非编造</li>
+    <li>要求 AI 每次遭遇都走 CR 计算</li>
+    <li>要求 AI 在 session 结束时生成剧情摘要</li>
+  </ul>
+</div>
+
+<!-- ==================== Prompt Template ==================== -->
+<h2 id="prompt">AI DM 系统提示词模板</h2>
+<p>下面是一个可以直接使用的 AI DM 系统提示词框架，把你的规则书文件路径嵌入进去：</p>
+
+<pre><span class="comment"># AI DM 系统提示词</span>
+
+你是一位经验丰富的 D&D 5e 地下城主（DM）。你将全程主持一场跑团 session。
+
+## 核心规则
+- 遵循 D&D 5e 规则（2014版），核心规则文件在以下路径：
+  - 战斗流程: 玩家手册/战斗/战斗流程.htm
+  - 战斗动作: 玩家手册/战斗/战斗动作.htm
+  - 法术系统: 玩家手册/魔法/施展法术.htm
+  - 状态系统: DM速查/状态.htm
+  - 遭遇平衡: 城主指南/规则之主/运作游戏/
+- 不确定规则时，先查询规则书文件再回答，不要编造。
+
+## 游戏循环
+严格遵循三步循环：
+1. 描述环境（感官细节 + 可交互要素）
+2. 等待玩家行动
+3. 叙述结果（如需判定则掷骰），回到第 1 步
+
+## 战斗规范
+- 每回合结束输出状态快照表（角色名/HP/条件/法术位）
+- 用文字坐标网格描述位置（每格=5尺）
+- 先攻顺序固定不变，直到战斗结束
+- 怪物 HP 低于一半时考虑逃跑
+
+## 掷骰哲学
+- 采用"掷骰与思考结合"风格
+- 玩家行动描述合理时可直接判定成功
+- 不确定时才要求掷骰
+- DC 参考: 简单10/中等15/困难20/非常困难25
+
+## 遭遇设计
+- 每次遭遇走 CR 计算
+- 准备 3 档难度（基础/增援/削弱）
+- 永远给玩家留撤退路线
+
+## Session 管理
+- session 结束时生成剧情摘要 JSON
+- 关键 NPC 写入独立档案
+- 未解决的线索记录在 active_quests 中</pre>
+
+<!-- ==================== File Index ==================== -->
+<h2 id="files">规则书文件索引速查</h2>
+<p>按使用频率排序的文件路径索引：</p>
+
+<table>
+  <tr><th>用途</th><th>文件路径</th><th>优先级</th></tr>
+  <tr><td>游戏循环</td><td><code>玩家手册/进行游戏/冒险.html</code></td><td>T1</td></tr>
+  <tr><td>战斗流程</td><td><code>玩家手册/战斗/战斗流程.htm</code></td><td>T1</td></tr>
+  <tr><td>战斗动作</td><td><code>玩家手册/战斗/战斗动作.htm</code></td><td>T1</td></tr>
+  <tr><td>移动与位置</td><td><code>玩家手册/战斗/移动与位置.htm</code></td><td>T1</td></tr>
+  <tr><td>发起攻击</td><td><code>玩家手册/战斗/发起攻击.htm</code></td><td>T1</td></tr>
+  <tr><td>伤害与治疗</td><td><code>玩家手册/战斗/伤害与治疗.htm</code></td><td>T1</td></tr>
+  <tr><td>掩护</td><td><code>玩家手册/战斗/掩护.htm</code></td><td>T1</td></tr>
+  <tr><td>状态系统</td><td><code>DM速查/状态.htm</code></td><td>T1</td></tr>
+  <tr><td>伤害类型</td><td><code>DM速查/伤害类型.htm</code></td><td>T1</td></tr>
+  <tr><td>抗性与易伤</td><td><code>DM速查/抗性与易伤.htm</code></td><td>T1</td></tr>
+  <tr><td>掩护(速查)</td><td><code>DM速查/掩护.htm</code></td><td>T1</td></tr>
+  <tr><td>施法速查</td><td><code>DM速查/施法.htm</code></td><td>T1</td></tr>
+  <tr><td>冒险速查</td><td><code>DM速查/冒险速查.htm</code></td><td>T1</td></tr>
+  <tr><td>战斗速查</td><td><code>DM速查/战斗速查.htm</code></td><td>T1</td></tr>
+  <tr><td>休整期</td><td><code>DM速查/休整期.htm</code></td><td>T1</td></tr>
+  <tr><td>陷阱与毒药</td><td><code>DM速查/陷阱与毒药.htm</code></td><td>T2</td></tr>
+  <tr><td>职业列表</td><td><code>玩家手册/职业/职业.html</code></td><td>T2</td></tr>
+  <tr><td>种族列表</td><td><code>玩家手册/种族/种族.html</code></td><td>T2</td></tr>
+  <tr><td>法术基础</td><td><code>玩家手册/魔法/法术是什么.htm</code></td><td>T2</td></tr>
+  <tr><td>施法规则</td><td><code>玩家手册/魔法/施展法术.htm</code></td><td>T2</td></tr>
+  <tr><td>全法术速查</td><td><code>速查/法术速查/5E万法大全.html</code></td><td>T2</td></tr>
+  <tr><td>怪物清单</td><td><code>怪物图鉴/怪物清单.html</code></td><td>T2</td></tr>
+  <tr><td>怪物数据解读</td><td><code>怪物图鉴/什么是怪物.htm</code></td><td>T2</td></tr>
+  <tr><td>掷骰哲学</td><td><code>城主指南/规则之主/运作游戏/掷骰.html</code></td><td>T3</td></tr>
+  <tr><td>探索</td><td><code>城主指南/规则之主/运作游戏/探索.html</code></td><td>T3</td></tr>
+  <tr><td>战斗(DM)</td><td><code>城主指南/规则之主/运作游戏/战斗.html</code></td><td>T3</td></tr>
+  <tr><td>经验值</td><td><code>城主指南/规则之主/运作游戏/经验值.html</code></td><td>T3</td></tr>
+  <tr><td>追逐</td><td><code>城主指南/规则之主/运作游戏/追逐.html</code></td><td>T3</td></tr>
+  <tr><td>疯狂</td><td><code>城主指南/规则之主/运作游戏/疯狂.html</code></td><td>T3</td></tr>
+  <tr><td>冒险故事结构</td><td><code>城主指南/冒险之主/冒险故事结构.htm</code></td><td>T3</td></tr>
+  <tr><td>创建冒险</td><td><code>城主指南/冒险之主/创建冒险.html</code></td><td>T3</td></tr>
+  <tr><td>创建 NPC</td><td><code>城主指南/冒险之主/创建非玩家角色.html</code></td><td>T3</td></tr>
+  <tr><td>随机地城</td><td><code>城主指南/随机地下城.html</code></td><td>T3</td></tr>
+  <tr><td>城主工坊</td><td><code>城主指南/规则之主/城主工坊/城主工坊.html</code></td><td>T4</td></tr>
+  <tr><td>英雄点数</td><td><code>城主指南/规则之主/城主工坊/英雄点数.htm</code></td><td>T4</td></tr>
+  <tr><td>创作怪物</td><td><code>城主指南/规则之主/城主工坊/创作怪物.html</code></td><td>T4</td></tr>
+  <tr><td>创作法术</td><td><code>城主指南/规则之主/城主工坊/创作法术.html</code></td><td>T4</td></tr>
+  <tr><td>模组目录</td><td><code>模组/</code></td><td>T4</td></tr>
+  <tr><td>新人指南</td><td><code>新人使用指南/</code></td><td>T1</td></tr>
+  <tr><td>如何进行战斗</td><td><code>新人使用指南/如何进行战斗.htm</code></td><td>T1</td></tr>
+  <tr><td>如何进行冒险</td><td><code>新人使用指南/如何进行冒险.htm</code></td><td>T1</td></tr>
+  <tr><td>建立角色卡</td><td><code>新人使用指南/建立角色卡.htm</code></td><td>T2</td></tr>
+</table>
+
+<div style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);text-align:center;color:var(--text-muted);font-size:13px;">
+  基于规则书库 5echm_web · D&D 5e 中文完整版<br>
+  生成时间: 2026-07-13
+</div>
+
+</div>
+</body>
+</html>
