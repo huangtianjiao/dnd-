@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多人同玩架构设计深度调研报告</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --surface: #f5f4ef;
+  --surface2: #efeee8;
+  --border: #e0ddd4;
+  --border-light: #ebe9e2;
+  --text: #2c2c2a;
+  --text-muted: #888780;
+  --text-light: #b0aea6;
+  --accent: #534AB7;
+  --accent-light: #EEEDFE;
+  --accent-dark: #3D35A0;
+  --teal: #0F6E56;
+  --teal-light: #E1F5EE;
+  --blue: #185FA5;
+  --blue-light: #E6F1FB;
+  --coral: #D85A30;
+  --coral-light: #FAECE7;
+  --green: #639922;
+  --green-light: #EAF3DE;
+  --amber: #BA7517;
+  --amber-light: #FAEEDA;
+  --red: #A32D2D;
+  --red-light: #FCEBEB;
+  --gold: #c8a44e;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; }
+.container { max-width: 960px; margin: 0 auto; padding: 0 0 80px; }
+
+/* Hero */
+.hero {
+  background: linear-gradient(135deg, #1a1410 0%, #2d2138 40%, #1a1a2e 100%);
+  color: #f0e6d2;
+  padding: 56px 32px 48px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 30% 0%, rgba(83,74,183,0.2) 0%, transparent 50%),
+              radial-gradient(circle at 70% 100%, rgba(200,164,78,0.12) 0%, transparent 50%);
+}
+.hero h1 {
+  font-size: 32px; font-weight: 700; position: relative; margin-bottom: 8px;
+  background: linear-gradient(180deg, #f5e6c8 0%, #c8a44e 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.hero .subtitle { font-size: 14px; opacity: 0.7; position: relative; letter-spacing: 1px; }
+.hero .meta { display: flex; gap: 20px; justify-content: center; margin-top: 16px; font-size: 12px; opacity: 0.5; position: relative; flex-wrap: wrap; }
+
+h2 { font-size: 22px; font-weight: 700; margin-top: 3rem; margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border); }
+h3 { font-size: 17px; font-weight: 600; margin-top: 2rem; margin-bottom: 0.6rem; }
+h4 { font-size: 15px; font-weight: 600; margin-top: 1.2rem; margin-bottom: 0.4rem; }
+
+p { margin-bottom: 0.85rem; font-size: 15px; }
+ul, ol { margin-bottom: 0.85rem; padding-left: 1.5rem; font-size: 15px; }
+li { margin-bottom: 0.3rem; }
+
+.content { padding: 0 32px; max-width: 960px; margin: 0 auto; }
+
+.tag { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-right: 4px; }
+.tag-purple { background: var(--accent-light); color: var(--accent); }
+.tag-teal { background: var(--teal-light); color: var(--teal); }
+.tag-blue { background: var(--blue-light); color: var(--blue); }
+.tag-coral { background: var(--coral-light); color: var(--coral); }
+.tag-green { background: var(--green-light); color: var(--green); }
+.tag-amber { background: var(--amber-light); color: var(--amber); }
+.tag-red { background: var(--red-light); color: var(--red); }
+.tag-gold { background: #f5ecd6; color: var(--gold); }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+.card-accent { border-left: 4px solid var(--accent); }
+.card-teal { border-left: 4px solid var(--teal); }
+.card-blue { border-left: 4px solid var(--blue); }
+.card-coral { border-left: 4px solid var(--coral); }
+.card-green { border-left: 4px solid var(--green); }
+.card-amber { border-left: 4px solid var(--amber); }
+.card-red { border-left: 4px solid var(--red); }
+
+.comparison-table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 14px; }
+.comparison-table th { background: var(--surface2); padding: 8px 12px; text-align: left; border-bottom: 2px solid var(--border); font-weight: 600; white-space: nowrap; }
+.comparison-table td { padding: 8px 12px; border-bottom: 1px solid var(--border-light); vertical-align: top; }
+.comparison-table tr:last-child td { border-bottom: none; }
+.comparison-table tr:hover td { background: var(--surface); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+@media (max-width: 700px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+.section-intro { font-size: 14px; color: var(--text-muted); margin-bottom: 1rem; padding-left: 0.5rem; }
+.bad { color: var(--red); font-weight: 600; }
+.good { color: var(--green); font-weight: 600; }
+.warn { color: var(--amber); font-weight: 600; }
+.highlight { background: var(--amber-light); padding: 2px 6px; border-radius: 3px; }
+
+.code-block { background: #1e1e2e; color: #cdd6f4; padding: 1rem 1.25rem; border-radius: 8px; font-size: 13px; line-height: 1.55; margin: 1rem 0; white-space: pre-wrap; font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace; overflow-x: auto; }
+.code-inline { background: var(--surface2); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 13px; }
+
+.star-badge { display: inline-flex; align-items: center; gap: 4px; background: #fff3d6; color: #8a6d1b; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+
+.footnote { font-size: 13px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 2rem; }
+
+.diagram { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; overflow-x: auto; }
+.diagram pre { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; line-height: 1.55; text-align: left; display: inline-block; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>多人同玩架构设计深度调研报告</h1>
+  <p class="subtitle">MULTIPLAYER ARCHITECTURE DEEP RESEARCH</p>
+  <div class="meta">
+    <span>调研时间: 2026-07-15</span>
+    <span>项目: AIDM (AI Dungeon Master)</span>
+    <span>技术栈: Python / FastAPI / WebSocket / LangGraph</span>
+  </div>
+</div>
+
+<div class="container">
+<div class="content">
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h2>一、项目现状分析</h2>
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<p class="section-intro">先搞清楚你现在的架构，才能知道该往哪里升级。</p>
+
+<div class="card card-blue">
+  <h3>当前技术栈</h3>
+  <table class="comparison-table">
+    <tr><th>层</th><th>技术</th><th>文件</th></tr>
+    <tr><td>API 层</td><td>FastAPI + WebSocket</td><td><code class="code-inline">api/main.py</code></td></tr>
+    <tr><td>多人连接管理</td><td>自建 ConnectionManager</td><td><code class="code-inline">api/ws.py</code></td></tr>
+    <tr><td>AI DM 大脑</td><td>LangGraph 状态图</td><td><code class="code-inline">brain/graph.py</code></td></tr>
+    <tr><td>规则引擎</td><td>自建 D&D 5e 引擎</td><td><code class="code-inline">engine/*.py</code></td></tr>
+    <tr><td>知识库 RAG</td><td>Qdrant 向量检索</td><td><code class="code-inline">knowledge/*.py</code></td></tr>
+    <tr><td>状态存储</td><td>SQLite (store.py)</td><td><code class="code-inline">stats/store.py</code></td></tr>
+    <tr><td>前端</td><td>静态 HTML/JS</td><td><code class="code-inline">ui/static/</code></td></tr>
+  </table>
+</div>
+
+<div class="card card-amber">
+  <h3>已有多人能力（基础版）</h3>
+  <p>你的 <code class="code-inline">ws.py</code> 已经实现了：</p>
+  <ul>
+    <li><span class="good">✓</span> WebSocket 连接管理 — 多玩家连同一战役</li>
+    <li><span class="good">✓</span> 广播机制 — 一人行动，全员收到结果</li>
+    <li><span class="good">✓</span> 回合协调 — 战斗中检查 <code class="code-inline">is_player_turn()</code></li>
+    <li><span class="good">✓</span> 序列化执行 — <code class="code-inline">asyncio.Lock</code> 保证 graph.run 串行</li>
+    <li><span class="good">✓</span> 玩家列表 — <code class="code-inline">get_players()</code> / <code class="code-inline">current_turn_name()</code></li>
+    <li><span class="good">✓</span> 状态广播 — <code class="code-inline">broadcast_state()</code> 同步场景+战斗+回合</li>
+  </ul>
+</div>
+
+<div class="card card-red">
+  <h3>当前架构的瓶颈</h3>
+  <ul>
+    <li><span class="bad">✗</span> <strong>单进程内存态</strong> — <code class="code-inline">ConnectionManager.campaigns</code> 是内存 dict，重启即丢失，无法水平扩展</li>
+    <li><span class="bad">✗</span> <strong>无重连恢复</strong> — 玩家断线后无法恢复到之前的游戏状态（WebSocket 断 = 退出）</li>
+    <li><span class="bad">✗</span> <strong>无房间生命周期管理</strong> — 房间不会自动创建/销毁，无匹配机制</li>
+    <li><span class="bad">✗</span> <strong>无权限分层</strong> — DM 和普通玩家走同一 WebSocket，没有权限差异</li>
+    <li><span class="bad">✗</span> <strong>无地图/Token 系统</strong> — 纯文本跑团，缺少 VTT 核心的地图可视化</li>
+    <li><span class="bad">✗</span> <strong>全量广播</strong> — 每次广播整个状态，无增量同步，状态变大后带宽压力</li>
+    <li><span class="bad">✗</span> <strong>无离线消息队列</strong> — 玩家离线期间的消息直接丢失</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h2>二、GitHub 10K+ Star 开源框架</h2>
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<p class="section-intro">满足 1 万 star 门槛的项目，按 star 数降序排列。每个都分析了与 AIDM 项目的适配度。</p>
+
+<!-- ── Socket.io ── -->
+<div class="card card-teal">
+  <h3>1. Socket.io <span class="star-badge">⭐ 63,000+</span></h3>
+  <table class="comparison-table">
+    <tr><th style="width:120px">属性</th><th>详情</th></tr>
+    <tr><td>GitHub</td><td><a href="https://github.com/socketio/socket.io">socketio/socket.io</a></td></tr>
+    <tr><td>技术栈</td><td>Node.js / TypeScript</td></tr>
+    <tr><td>协议</td><td>MIT</td></tr>
+    <tr><td>NPM 周下载</td><td>~5,400 万</td></tr>
+    <tr><td>核心机制</td><td>WebSocket + HTTP 长轮询自动降级，事件驱动双向通信</td></tr>
+  </table>
+  <h4>核心特性</h4>
+  <ul>
+    <li><strong>Room 原生支持</strong> — <code class="code-inline">socket.join('campaign_1')</code>，天然匹配"每战役一房间"</li>
+    <li><strong>自动重连</strong> — 内置断线重连 + 消息缓冲，玩家网络波动不丢消息</li>
+    <li><strong>Redis Adapter</strong> — <code class="code-inline">@socket.io/redis-adapter</code> 实现多服务器广播</li>
+    <li><strong>Namespace 隔离</strong> — 不同游戏类型/版本可走不同 namespace</li>
+    <li><strong>Volatility 消息</td> — 不可靠消息（如光标位置）可标记为 volatile，不缓冲</li>
+    <li><strong>WebTransport 实验性支持</td> — 下一代低延迟传输</li>
+  </ul>
+  <h4>适配度分析</h4>
+  <p><span class="warn">⚠️ 语言不匹配</span> — Socket.io 是 Node.js 生态，你的项目是 Python/FastAPI。有两个选择：</p>
+  <ul>
+    <li><strong>方案 A</strong>：前端直接用 <code class="code-inline">socket.io-client</code>（JS），后端用 Python 的 <a href="https://github.com/miguelgrinberg/python-socketio">python-socketio</a> 库（5K star，与 FastAPI 完美集成）</li>
+    <li><strong>方案 B</strong>：保留 FastAPI 原生 WebSocket，前端不用 socket.io-client（但会失去自动重连等能力）</li>
+  </ul>
+  <p><strong>推荐方案 A</strong> — 用 <code class="code-inline">python-socketio</code> 替换当前裸 WebSocket，获得 Room/重连/广播能力，FastAPI 兼容。</p>
+</div>
+
+<!-- ── RxDB ── -->
+<div class="card card-blue">
+  <h3>2. RxDB <span class="star-badge">⭐ 23,000+</span></h3>
+  <table class="comparison-table">
+    <tr><th style="width:120px">属性</th><th>详情</th></tr>
+    <tr><td>GitHub</td><td><a href="https://github.com/pubkey/rxdb">pubkey/rxdb</a></td></tr>
+    <tr><td>技术栈</td><td>TypeScript (前端)</td></tr>
+    <tr><td>协议</td><td>Apache-2.0</td></tr>
+    <tr><td>核心机制</td><td>响应式本地数据库 + 多后端复制（CouchDB/GraphQL/WebSocket/Firebase）</td></tr>
+  </table>
+  <h4>核心特性</h4>
+  <ul>
+    <li><strong>响应式查询</strong> — RxJS Observable，数据变化自动推送 UI</li>
+    <li><strong>多存储层</strong> — IndexedDB / LocalStorage / SQLite / OPFS / Memory</li>
+    <li><strong>多后端复制</strong> — CouchDB / GraphQL / WebSocket / Firebase / Supabase / WebRTC P2P</li>
+    <li><strong>Schema 系统</strong> — 类型安全 + 验证 + 迁移</li>
+    <li><strong>CRDT 插件</strong> — 冲突解决</li>
+    <li><strong>加密 / 附件 / 压缩</strong></li>
+  </ul>
+  <h4>适配度分析</h4>
+  <p><span class="warn">⚠️ 定位不同</span> — RxDB 是前端本地数据库，不是游戏服务器框架。适合做"离线角色卡/战役数据缓存"，但无法替代多人逻辑层。如果未来要做"离线编辑角色卡，上线后自动同步"，RxDB 是最佳选择。</p>
+</div>
+
+<!-- ── Yjs ── -->
+<div class="card card-accent">
+  <h3>3. Yjs <span class="star-badge">⭐ 21,000+</span></h3>
+  <table class="comparison-table">
+    <tr><th style="width:120px">属性</th><th>详情</th></tr>
+    <tr><td>GitHub</td><td><a href="https://github.com/yjs/yjs">yjs/yjs</a></td></tr>
+    <tr><td>技术栈</td><td>TypeScript / JavaScript</td></tr>
+    <tr><td>协议</td><td>MIT</td></tr>
+    <tr><td>NPM 周下载</td><td>~240 万</td></tr>
+    <tr><td>核心机制</td><td>CRDT (YATA 算法) — 无冲突复制数据类型</td></tr>
+    <tr><td>Bundle</td><td>~18KB (gzip，极小)</td></tr>
+  </table>
+  <h4>核心特性</h4>
+  <ul>
+    <li><strong>Shared Types</strong> — Y.Map (角色卡数据)、Y.Array (先攻列表/聊天记录)、Y.Text (叙事文本协作)</li>
+    <li><strong>Awareness Protocol</strong> — 内建"谁在线、在做什么"的实时状态追踪（DND 中可用于"谁在打字、谁选中了哪个 Token"）</li>
+    <li><strong>网络层解耦</strong> — 支持 WebSocket / WebRTC / P2P 任意传输，不绑定特定后端</li>
+    <li><strong>离线优先</strong> — IndexedDB 本地存储，断网可继续编辑，联网自动合并</li>
+    <li><strong>无冲突合并</strong> — 多人同时编辑同一角色卡，CRDT 保证最终一致性</li>
+    <li><strong>Provider 生态丰富</strong> — y-websocket、y-webrtc、y-redis、y-indexeddb</li>
+  </ul>
+  <h4>DND 场景映射</h4>
+  <table class="comparison-table">
+    <tr><th>DND 数据</th><th>Yjs 类型</th><th>用途</th></tr>
+    <tr><td>角色卡</td><td>Y.Map&lt;string, any&gt;</td><td>多字段嵌套：属性/HP/装备/法术位</td></tr>
+    <tr><td>先攻列表</td><td>Y.Array&lt;Combatant&gt;</td><td>战斗顺序，支持插入/删除/重排</td></tr>
+    <tr><td>叙事文本</td><td>Y.Text</td><td>DM 叙事实时同步，多人可标注</td></tr>
+    <tr><td>聊天记录</td><td>Y.Array&lt;Message&gt;</td><td>消息追加，离线不丢</td></tr>
+    <tr><td>地图 Token 位置</td><td>Y.Map&lt;position&gt;</td><td>Token 坐标实时同步</td></tr>
+    <tr><td>玩家状态</td><td>Awareness</td><td>"玩家A正在输入"、"玩家B选中了 Token 3"</td></tr>
+  </table>
+  <h4>适配度分析</h4>
+  <p><span class="good">✓ 高度适配</span> — Yjs 的 CRDT 特性完美解决多人协作编辑角色卡的需求。<code class="code-inline">y-websocket</code> 可以与你的 FastAPI 后端对接（需要用 Node.js 跑一个 y-websocket-server，或用 Python 实现同步协议）。</p>
+  <p><strong>注意</strong>：Yjs 是前端库（JS），需要 <code class="code-inline">y-websocket-server</code> (Node.js) 做中继。如果你不想引入 Node.js，可以用 Python 实现 <a href="https://github.com/yjs/y-protocols">y-protocols</a> 的同步协议（社区有 Python 实现），或者只用 Yjs 做前端协作，后端仍用 FastAPI 做权威状态管理。</p>
+</div>
+
+<!-- ── Nakama ── -->
+<div class="card card-green">
+  <h3>4. Nakama <span class="star-badge">⭐ 12,400+</span></h3>
+  <table class="comparison-table">
+    <tr><th style="width:120px">属性</th><th>详情</th></tr>
+    <tr><td>GitHub</td><td><a href="https://github.com/heroiclabs/nakama">heroiclabs/nakama</a></td></tr>
+    <tr><td>技术栈</td><td>Go (服务器) + 多语言客户端 SDK</td></tr>
+    <tr><td>协议</td><td>Apache-2.0</td></tr>
+    <tr><td>数据库</td><td>CockroachDB / PostgreSQL</td></tr>
+    <tr><td>核心机制</td><td>分布式游戏后端 — 权威服务器 + 实时多人 + 社交系统</td></tr>
+  </table>
+  <h4>核心特性</h4>
+  <ul>
+    <li><strong>权威多人服务器</strong> — 服务器验证所有操作，防作弊</li>
+    <li><strong>Match Handler</strong> — 自定义 Match 生命周期：<code class="code-inline">matchInit</code> / <code class="code-inline">matchJoinAttempt</code> / <code class="code-inline">matchJoin</code> / <code class="code-inline">matchLeave</code> / <code class="code-inline">matchLoop</code></li>
+    <li><strong>实时 + 回合制</strong> — 支持实时、主动回合制、被动回合制三种模式</li>
+    <li><strong>社交系统</strong> — 好友/群组/聊天/通知/在线状态</li>
+    <li><strong>排行榜 + 锦标赛</strong> — 内置竞争系统</li>
+    <li><strong>多语言扩展</strong> — Go / TypeScript / Lua 运行时</li>
+    <li><strong>Matchmaker</strong> — 灵活的匹配算法</li>
+    <li><strong>存储引擎</strong> — NoSQL 集合存储</li>
+    <li><strong>Docker 一键部署</strong></li>
+  </ul>
+  <h4>适配度分析</h4>
+  <p><span class="warn">⚠️ 重量级方案</span> — Nakama 是完整的游戏后端即服务（BaaS），功能远超 DND 跑团所需。但如果你想要"开箱即用"的匹配/社交/排行榜/存储，Nakama 是最强的开源选择。</p>
+  <p><strong>问题</strong>：Go 语言写的，你的 AIDM 是 Python。需要把 AI DM 逻辑通过 Nakama 的 RPC 机制调用 Python 服务，架构变为 Nakama(Go) → RPC → AIDM(Python)，引入额外复杂度。</p>
+  <table class="comparison-table">
+    <tr><th>维度</th><th>Nakama</th><th>自建 FastAPI</th></tr>
+    <tr><td>上手成本</td><td>中高（需学 Go/Lua）</td><td>低（已有 Python 基础）</td></tr>
+    <tr><td>功能完整度</td><td>极高（社交+匹配+排行榜+存储）</td><td>需自建</td></tr>
+    <tr><td>与 AIDM 集成</td><td>需 RPC 桥接</td><td>原生</td></tr>
+    <tr><td>扩展性</td><td>分布式原生支持</td><td>需自建 Redis 扩展</td></tr>
+    <tr><td>AI DM 兼容</td><td>需改造</td><td>完美</td></tr>
+  </table>
+</div>
+
+<!-- ── boardgame.io ── -->
+<div class="card card-coral">
+  <h3>5. boardgame.io <span class="star-badge">⭐ 12,300+</span></h3>
+  <table class="comparison-table">
+    <tr><th style="width:120px">属性</th><th>详情</th></tr>
+    <tr><td>GitHub</td><td><a href="https://github.com/boardgameio/boardgame.io">boardgameio/boardgame.io</a></td></tr>
+    <tr><td>技术栈</td><td>TypeScript / Node.js (Koa + Socket.io)</td></tr>
+    <tr><td>协议</td><td>MIT</td></tr>
+    <tr><td>核心机制</td><td>专为回合制游戏设计的状态管理 + 多人网络框架</td></tr>
+  </table>
+  <h4>核心特性</h4>
+  <ul>
+    <li><strong>声明式状态管理</strong> — <code class="code-inline">G</code> = 游戏状态对象，<code class="code-inline">ctx</code> = 上下文（回合/阶段/当前玩家）</li>
+    <li><strong>Moves 机制</strong> — 每个操作是修改 G 的纯函数，自动处理网络和存储</li>
+    <li><strong>Game Phases</strong> — 阶段化规则（角色创建 → 探索 → 战斗 → 长休）</li>
+    <li><strong>Secret State</strong> — <span class="highlight">对特定玩家隐藏信息</span>（DM 可见的隐藏宝箱、陷阱 DC 等）</li>
+    <li><strong>时间旅行</strong> — 可查看任意历史状态，回溯到某回合</li>
+    <li><strong>AI Bot</strong> — MCTS / 随机 / 自定义 AI（可接你的 LLM DM）</li>
+    <li><strong>Lobby</strong> — 内建匹配和房间管理</li>
+    <li><strong>React 绑定</strong></li>
+  </ul>
+  <h4>适配度分析</h4>
+  <p><span class="good">✓ 回合制完美匹配</span> — DND 5e 的核心就是回合制。boardgame.io 的 Phase/Moves/Secret State 三件套直接对应 DND 的"探索阶段/战斗阶段"和"DM 隐藏信息"。</p>
+  <div class="code-block">// boardgame.io 的 DND 战斗 Phase 示例
+const DnDGame = {
+  name: 'dnd-5e-combat',
+
+  phases: {
+    explore: {
+      moves: { movePlayer, interactObject, rollCheck },
+      next: 'combat',
+    },
+    combat: {
+      onBegin: (G, ctx) => rollInitiative(G, ctx),
+      moves: { attack, castSpell, useItem, dash, disengage },
+      turn: { activePlayers: { currentPlayer: 'action' } },
+      next: 'explore',
+    },
+  },
+
+  // Secret State: DM 可见但玩家不可见
+  playerView: (G, ctx, playerID) => {
+    if (playerID === 'dm') return G;  // DM 看到全部
+    return stripSecrets(G, playerID);  // 玩家看不到隐藏信息
+  },
+};</div>
+  <p><strong>问题</strong>：boardgame.io 是纯 JS/TS 生态。你的 AI DM 逻辑（LangGraph、Qdrant、规则引擎）是 Python。需要将 AI DM 作为"外部 Bot"接入 boardgame.io 服务器。架构变为 boardgame.io(Node.js) → HTTP/WebSocket → AIDM(Python)。</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h2>三、高价值子万星开源项目</h2>
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<p class="section-intro">虽然 star 数不到 1 万，但在 DND/TRPG 场景下极为相关，值得深入研究。</p>
+
+<!-- ── Colyseus ── -->
+<div class="card card-accent">
+  <h3>6. Colyseus <span class="star-badge">⭐ 6,800</span> <span class="tag tag-purple">最推荐研究</span></h3>
+  <table class="comparison-table">
+    <tr><th style="width:120px">属性</th><th>详情</th></tr>
+    <tr><td>GitHub</td><td><a href="https://github.com/colyseus/colyseus">colyseus/colyseus</a></td></tr>
+    <tr><td>技术栈</td><td>Node.js / TypeScript</td></tr>
+    <tr><td>协议</td><td>MIT</td></tr>
+    <tr><td>NPM 总下载</td><td>~759K</td></tr>
+    <tr><td>核心机制</td><td>权威服务器 + Schema 二进制增量序列化 + 房间制</td></tr>
+  </table>
+  <h4>核心特性</h4>
+  <ul>
+    <li><strong>Room 系统</strong> — 每个房间独立状态 + 生命周期（onCreate/onJoin/onLeave/onDispose），完美对应 DND 战役</li>
+    <li><strong>Schema 增量同步</strong> — 定义状态结构，自动计算 diff，只发送变化部分</li>
+    <li><strong>StateView (0.16+)</strong> — 按客户端过滤数据（DM 看全部，玩家看部分）</li>
+    <li><strong>Matchmaking</strong> — 自动房间匹配</li>
+    <li><strong>Redis 扩展</strong> — <code class="code-inline">@colyseus/redis-presence</code> 跨服务器</li>
+    <li><strong>WebTransport 实验性支持</strong></li>
+    <li><strong>多平台 SDK</strong> — JS / Unity / Cocos / Defold</li>
+  </ul>
+  <div class="code-block">// Colyseus 房间定义 — DND 战役房间
+class CampaignRoom extends Room {
+  onCreate(options) {
+    this.setState(new CampaignState());
+    // 玩家行动消息
+    this.onMessage("action", (client, { input }) => {
+      if (!this.isPlayerTurn(client)) return;
+      // 调用 Python AI DM 服务
+      const result = await this.callAIDM(input);
+      this.broadcast("narration", result);
+    });
+  }
+  onJoin(client, options) { /* 玩家加入 */ }
+  onLeave(client) { /* 玩家离开，30秒可重连 */ }
+  onDispose() { /* 持久化到数据库 */ }
+}</div>
+  <h4>适配度分析</h4>
+  <p><span class="good">✓ 架构理念最匹配</span> — Colyseus 的 Room/Schema/增量同步 三件套正是你需要的升级方向。即使不用 Colyseus 本身，也<strong>强烈建议参考其架构设计</strong>来重构你的 <code class="code-inline">ConnectionManager</code>。</p>
+</div>
+
+<!-- ── python-socketio ── -->
+<div class="card card-teal">
+  <h3>7. python-socketio <span class="star-badge">⭐ 3,700</span> <span class="tag tag-teal">Python 原生</span></h3>
+  <table class="comparison-table">
+    <tr><th style="width:120px">属性</th><th>详情</th></tr>
+    <tr><td>GitHub</td><td><a href="https://github.com/miguelgrinberg/python-socketio">miguelgrinberg/python-socketio</a></td></tr>
+    <tr><td>技术栈</td><td>Python（与 FastAPI 完美集成）</td></tr>
+    <tr><td>协议</td><td>MIT</td></tr>
+    <tr><td>核心机制</td><td>Socket.IO 协议的 Python 实现，支持 ASGI</td></tr>
+  </table>
+  <h4>核心特性</h4>
+  <ul>
+    <li><strong>FastAPI 原生集成</strong> — <code class="code-inline">socketio.AsyncServer(asgi_app=app)</code> 直接挂载</li>
+    <li><strong>Room / Namespace</strong> — 与 JS 版 Socket.io 完全兼容的房间概念</li>
+    <li><strong>自动重连</strong> — 客户端断线自动重连</li>
+    <li><strong>Redis 后端</strong> — <code class="code-inline">socketio.AsyncRedisManager</code> 多进程</li>
+    <li><strong>消息缓冲</strong> — 离线消息不丢失</li>
+  </ul>
+  <div class="code-block"># FastAPI + python-socketio 集成示例
+import socketio
+from fastapi import FastAPI
+
+sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
+app = FastAPI()
+combined_app = socketio.ASGIApp(sio, app)
+
+@sio.event
+async def connect(sid, environ):
+    campaign_id = environ.get('QUERY_STRING', '').split('campaign_id=')[1]
+    await sio.enter_room(sid, f'campaign_{campaign_id}')
+
+@sio.on('action')
+async def on_action(sid, data):
+    campaign_id = data['campaign_id']
+    # 序列化执行
+    async with lock:
+        result = await graph.run_async(data['input'], ...)
+    # 广播给同房间所有人
+    await sio.emit('narration', result, room=f'campaign_{campaign_id}')</div>
+  <p><span class="good">✓ 最小改动升级路径</span> — 用 python-socketio 替换你当前的裸 WebSocket，改动集中在 <code class="code-inline">ws.py</code> 一个文件，获得 Room/重连/Redis 扩展能力。</p>
+</div>
+
+<!-- ── Automerge ── -->
+<div class="card card-amber">
+  <h3>8. Automerge <span class="star-badge">⭐ 6,400</span></h3>
+  <table class="comparison-table">
+    <tr><th style="width:120px">属性</th><th>详情</th></tr>
+    <tr><td>GitHub</td><td><a href="https://github.com/automerge/automerge">automerge/automerge</a></td></tr>
+    <tr><td>技术栈</td><td>Rust + WASM (JS/TS 封装)</td></tr>
+    <tr><td>协议</td><td>MIT</td></tr>
+    <tr><td>核心机制</td><td>CRDT (RGA + LWW) + Change-based 版本历史</td></tr>
+  </table>
+  <h4>核心特性</h4>
+  <ul>
+    <li><strong>Git-like 版本历史</strong> — 每次变更是独立 change 对象，支持 branching/merging</li>
+    <li><strong>时间回溯</strong> — 可回到任意历史状态（DND 中"回退到上一回合"）</li>
+    <li><strong>列式存储</strong> — v3 OpSet 列式压缩，10x 内存优化</li>
+    <li><strong>Rust 核心</strong> — 大文档性能优于 Yjs</li>
+    <li><strong>多语言绑定</strong> — JS/TS、Python、Swift、Java、C</li>
+  </ul>
+  <p><span class="good">✓ Python 绑定存在</span> — Automerge 有 <a href="https://github.com/automerge/automerge-py">automerge-py</a>，可以在 Python 后端直接使用。版本历史对 DND 的"回合回溯"极有价值。</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h2>四、VTT (虚拟桌面) 开源项目</h2>
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<p class="section-intro">DND 跑团的核心可视化工具。以下项目展示了地图/Token/先攻追踪器的工程实践。</p>
+
+<table class="comparison-table">
+  <tr>
+    <th>项目</th>
+    <th>Stars</th>
+    <th>前端</th>
+    <th>后端</th>
+    <th>许可</th>
+    <th>多人同步</th>
+    <th>关键特性</th>
+  </tr>
+  <tr>
+    <td><strong>Foundry VTT</strong></td>
+    <td>N/A (专有)</td>
+    <td>Canvas/HTML</td>
+    <td>Node.js</td>
+    <td>专有 ($50 一次性)</td>
+    <td>WebSocket</td>
+    <td>5e 模块最完整参考 / 模块化插件 / 动态光照 / Actor-Item 数据模型</td>
+  </tr>
+  <tr>
+    <td><strong>PlanarAlly</strong></td>
+    <td>~482</td>
+    <td>Vue.js</td>
+    <td><strong>Python (aiohttp)</strong></td>
+    <td>MIT</td>
+    <td>WebSocket</td>
+    <td><strong>Python 后端！</strong> / 离线支持 / 动态光照 / 多层楼面 / 先攻追踪</td>
+  </tr>
+  <tr>
+    <td><strong>MapTool</strong></td>
+    <td>~909</td>
+    <td>Java Swing</td>
+    <td>Java TCP</td>
+    <td>Apache-2.0</td>
+    <td>TCP Socket</td>
+    <td>视野遮挡(VBL) / 宏系统 / 多层 / Java 桌面应用</td>
+  </tr>
+  <tr>
+    <td><strong>Dungeoneer</strong></td>
+    <td>~209</td>
+    <td>HTML/JS</td>
+    <td>Node.js (Electron)</td>
+    <td>AGPL-3.0</td>
+    <td>WebSocket</td>
+    <td>DND 5e 专有 / 遭遇构建器 / 战利品生成</td>
+  </tr>
+</table>
+
+<div class="card card-teal">
+  <h3>重点参考: PlanarAlly (Python 后端 VTT)</h3>
+  <p><a href="https://github.com/Kruptein/PlanarAlly">Kruptein/PlanarAlly</a> — 与你的项目技术栈最接近的 VTT。</p>
+  <ul>
+    <li><strong>Python 后端</strong> (aiohttp + Pydantic) — 与 FastAPI 技术理念一致</li>
+    <li><strong>Vue.js 前端</strong> — 现代化前端，Canvas 地图渲染</li>
+    <li><strong>层级系统</strong> — Map Layer / Grid Layer / Tokens Layer / DM Layer / FOW Layer</li>
+    <li><strong>动态光照</strong> — 光源/阴影/视野限制</li>
+    <li><strong>先攻追踪器</strong> — 内置战斗回合管理</li>
+    <li><strong>WebSocket 多人同步</strong> — 与你的架构思路一致</li>
+    <li><strong>离线支持</strong> — 完全断网可用</li>
+    <li><strong>ARCHITECTURE.md</strong> — 有架构文档可参考</li>
+  </ul>
+  <p><strong>建议</strong>：直接阅读 PlanarAlly 的 <code class="code-inline">ARCHITECTURE.md</code> 和 <code class="code-inline">server/</code> 目录，学习其 Python WebSocket 多人架构 + 地图层级系统的设计。</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h2>五、多人游戏架构模式分析</h2>
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<h3>5.1 权威服务器 vs P2P</h3>
+<div class="grid-2">
+  <div class="card card-green">
+    <h4><span class="tag tag-green">推荐</span> 权威服务器 (Authoritative Server)</h4>
+    <p>服务器持有唯一真实状态，客户端发操作请求，服务器验证+执行+广播结果。</p>
+    <ul>
+      <li><span class="good">✓</span> 防作弊 — 骰子结果服务端决定</li>
+      <li><span class="good">✓</span> 状态一致 — 不会出现客户端状态分歧</li>
+      <li><span class="good">✓</span> DND 天然适合 — 本来就是 DM 说了算</li>
+      <li><span class="bad">✗</span> 延迟 — 每次操作需往返服务器</li>
+    </ul>
+    <p><strong>你的项目已经是这个模式</strong>（<code class="code-inline">graph.run</code> 在服务端执行），方向正确。</p>
+  </div>
+  <div class="card card-red">
+    <h4>P2P (点对点)</h4>
+    <p>客户端直接互连，无中心服务器。CRDT 保证最终一致性。</p>
+    <ul>
+      <li><span class="good">✓</span> 无服务器成本</li>
+      <li><span class="good">✓</span> 低延迟</li>
+      <li><span class="bad">✗</span> 防作弊难 — 任何客户端都能篡改状态</li>
+      <li><span class="bad">✗</span> DND 不适合 — DM 的权威性需要服务器保证</li>
+    </ul>
+  </div>
+</div>
+
+<h3>5.2 回合制游戏的状态同步</h3>
+<div class="diagram">
+<pre>
+实时游戏 (MMO/FPS):                    回合制游戏 (DND):
+┌────────────────────┐                 ┌────────────────────┐
+│ 高频状态更新        │                 │ 离散状态变更         │
+│ 20-60 tick/s       │                 │ 每回合/每动作 1 次   │
+│ 需要插值+预测       │                 │ 无需预测            │
+│ 延迟敏感 (ms 级)    │                 │ 延迟容忍 (秒级)     │
+│ 增量快照            │                 │ 全量状态同步可接受   │
+│ UDP 常用            │                 │ WebSocket 最合适    │
+└────────────────────┘                 └────────────────────┘
+
+DND 的混合特性:
+  战斗 = 回合制 (离散)    →  WebSocket 全量同步
+  骰子动画 = 实时响应      →  事件驱动
+  Token 拖拽 = 实时交互    →  可用增量同步
+  聊天/叙事 = 实时流       →  WebSocket 事件
+</pre>
+</div>
+
+<h3>5.3 "一人行动，全员观看" 模式</h3>
+<div class="diagram">
+<pre>
+                    ┌─────────────────────┐
+                    │   AI DM 服务器       │ (权威状态)
+                    │   (FastAPI + WS)     │
+                    └──────────┬──────────┘
+              ┌────────────────┼────────────────┐
+       ┌──────▼──────┐  ┌──────▼──────┐  ┌──────▼──────┐
+       │   玩家 A     │  │   玩家 B     │  │   玩家 C     │
+       │ (当前回合)   │  │  (观察者)    │  │  (观察者)    │
+       │  操作面板启用 │  │  操作面板灰显 │  │  操作面板灰显 │
+       └─────────────┘  └─────────────┘  └─────────────┘
+
+流程:
+  1. 玩家A发送 action → 服务器
+  2. 服务器验证: isPlayerTurn(A)? → YES
+  3. 服务器执行 graph.run(input) → narration + dice + state_changes
+  4. 服务器广播 result → 所有客户端
+  5. 服务器广播 state_update → 所有客户端 (HP/战斗/回合)
+  6. 其他玩家 UI 更新: "轮到 B 了"
+</pre>
+</div>
+
+<h3>5.4 DM 权限模型</h3>
+<table class="comparison-table">
+  <tr><th>能力</th><th>DM (主持人)</th><th>玩家</th></tr>
+  <tr><td>查看隐藏信息 (陷阱 DC / 怪物 HP / 隐藏笔记)</td><td><span class="good">✓</span></td><td><span class="bad">✗</span></td></tr>
+  <tr><td>修改任何状态 (HP / 物品 / 位置)</td><td><span class="good">✓</span></td><td><span class="bad">✗ 仅自己的角色</span></td></tr>
+  <tr><td>撤销/回溯操作</td><td><span class="good">✓</span></td><td><span class="bad">✗</span></td></tr>
+  <tr><td>控制 NPC / 怪物</td><td><span class="good">✓</span></td><td><span class="bad">✗</span></td></tr>
+  <tr><td>控制地图 FOW (战争迷雾)</td><td><span class="good">✓</span></td><td><span class="bad">✗</span></td></tr>
+  <tr><td>强制结束/跳过回合</td><td><span class="good">✓</span></td><td><span class="bad">✗</span></td></tr>
+  <tr><td>在自己的回合执行操作</td><td><span class="good">✓</span></td><td><span class="good">✓</span></td></tr>
+  <tr><td>查看公开骰子结果</td><td><span class="good">✓</span></td><td><span class="good">✓</span></td></tr>
+  <tr><td>发送聊天消息</td><td><span class="good">✓</span></td><td><span class="good">✓</span></td></tr>
+</table>
+
+<h3>5.5 房间生命周期管理</h3>
+<div class="diagram">
+<pre>
+创建 ──→ 等待玩家 ──→ 游戏中 ──→ 暂停 ──→ 销毁
+ ↑          │           │         ↑         │
+ │     可重连窗口     可断线重连    │    持久化到 DB
+ │     (30s)       (保持状态)     │
+ └──────────────────────────────────────────┘
+
+关键时间点:
+  onCreate:  初始化战役状态、加载规则书 RAG
+  onJoin:    加载角色卡、发送当前场景+战斗状态
+  onAction:  序列化执行 graph.run、广播结果
+  onLeave:   标记离线、30s 重连窗口
+  onDispose: 持久化到 SQLite、清理内存
+</pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h2>六、针对 AIDM 的架构升级方案</h2>
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<h3>方案对比</h3>
+<table class="comparison-table">
+  <tr>
+    <th>方案</th>
+    <th>核心组件</th>
+    <th>改动量</th>
+    <th>获得能力</th>
+    <th>推荐度</th>
+  </tr>
+  <tr>
+    <td><strong>A. python-socketio 升级</strong></td>
+    <td>python-socketio + Redis</td>
+    <td><span class="good">小</span> (改 ws.py)</td>
+    <td>Room / 重连 / Redis 扩展</td>
+    <td><span class="good">★★★★★</span></td>
+  </tr>
+  <tr>
+    <td><strong>B. 前端引入 Yjs</strong></td>
+    <td>Yjs + y-websocket (Node.js 中继)</td>
+    <td><span class="warn">中</span> (加 Node 服务)</td>
+    <td>CRDT 角色卡协作 / 离线编辑 / 冲突解决</td>
+    <td><span class="good">★★★★☆</span></td>
+  </tr>
+  <tr>
+    <td><strong>C. boardgame.io 接管</strong></td>
+    <td>boardgame.io (Node.js) + AIDM (Python RPC)</td>
+    <td><span class="bad">大</span> (重构架构)</td>
+    <td>回合制框架 / Secret State / 时间旅行</td>
+    <td><span class="warn">★★★☆☆</span></td>
+  </tr>
+  <tr>
+    <td><strong>D. Colyseus 接管</strong></td>
+    <td>Colyseus (Node.js) + AIDM (Python RPC)</td>
+    <td><span class="bad">大</span> (重构架构)</td>
+    <td>Room/Schema/增量同步/匹配</td>
+    <td><span class="warn">★★★☆☆</span></td>
+  </tr>
+  <tr>
+    <td><strong>E. 参考 Colyseus 自建</strong></td>
+    <td>自建 Room + Schema + Redis (纯 Python)</td>
+    <td><span class="warn">中</span></td>
+    <td>完全控制 / 无语言桥接</td>
+    <td><span class="good">★★★★☆</span></td>
+  </tr>
+</table>
+
+<h3>6.1 推荐方案: A + E 组合（分阶段实施）</h3>
+
+<div class="card card-green">
+  <h4><span class="tag tag-green">Phase 1</span> python-socketio 升级（1-2 天）</h4>
+  <p><strong>目标</strong>：用 python-socketio 替换裸 WebSocket，获得 Room/重连/消息缓冲能力。</p>
+  <ol>
+    <li>安装 <code class="code-inline">python-socketio</code></li>
+    <li>将 <code class="code-inline">ws.py</code> 的 ConnectionManager 改为基于 Socket.IO Room</li>
+    <li><code class="code-inline">sio.enter_room(sid, f'campaign_{campaign_id}')</code> 自动管理房间</li>
+    <li>前端引入 <code class="code-inline">socket.io-client</code>（替换裸 WebSocket）</li>
+    <li>利用 Socket.IO 的自动重连机制，玩家断线后自动恢复</li>
+  </ol>
+  <div class="code-block"># ws.py 改造核心
+import socketio
+
+sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
+
+@sio.event
+async def connect(sid, environ):
+    # 从 query string 解析参数
+    qs = dict(pair.split('=') for pair in environ.get('QUERY_STRING','').split('&'))
+    campaign_id = int(qs.get('campaign_id', 0))
+    character_id = int(qs.get('character_id', 0))
+    name = qs.get('name', '玩家')
+
+    await sio.enter_room(sid, f'campaign_{campaign_id}')
+    await sio.save_session(sid, {
+        'campaign_id': campaign_id,
+        'character_id': character_id,
+        'name': name
+    })
+    # 通知房间内其他玩家
+    await sio.emit('join', {'name': name, 'players': await get_players(campaign_id)},
+                   room=f'campaign_{campaign_id}', skip_sid=sid)
+    # 给新连接发当前状态
+    await sio.emit('scene_update', world.get_scene(campaign_id), to=sid)
+
+@sio.on('action')
+async def on_action(sid, data):
+    session = await sio.get_session(sid)
+    campaign_id = session['campaign_id']
+    character_id = session['character_id']
+    name = session['name']
+
+    # 回合检查
+    if not is_player_turn(campaign_id, character_id):
+        await sio.emit('error', {'message': '还没轮到你'}, to=sid)
+        return
+
+    # 通知全员：X 正在行动
+    await sio.emit('player_acting', {'player': name},
+                   room=f'campaign_{campaign_id}', skip_sid=sid)
+
+    # 序列化执行
+    async with lock:
+        result = await run_in_executor(graph.run,
+            data['player_input'], campaign_id, character_id, ...)
+
+    # 广播结果给房间内所有人
+    await sio.emit('result', {
+        'player': name, 'narration': result.get('narration', ''),
+        'dice': result.get('dice', {}),
+    }, room=f'campaign_{campaign_id}')</div>
+</div>
+
+<div class="card card-blue">
+  <h4><span class="tag tag-blue">Phase 2</span> 房间生命周期 + Redis 扩展（3-5 天）</h4>
+  <p><strong>目标</strong>：参考 Colyseus 架构，实现房间生命周期管理和多进程扩展。</p>
+  <ol>
+    <li><strong>Room 类</strong>：封装战役房间的完整生命周期</li>
+    <li><strong>Redis Pub/Sub</strong>：<code class="code-inline">socketio.AsyncRedisManager</code> 跨进程广播</li>
+    <li><strong>重连窗口</strong>：玩家断线后保持房间状态 30 秒，可重连恢复</li>
+    <li><strong>房间注册表</strong>：Redis 记录活跃房间 → 服务器映射</li>
+    <li><strong>自动持久化</strong>：房间销毁时自动存 SQLite</li>
+  </ol>
+  <div class="code-block"># Room 生命周期管理
+class CampaignRoom:
+    """一个 DND 战役房间，参考 Colyseus Room 设计。"""
+    rooms: dict[int, 'CampaignRoom'] = {}  # campaign_id → room
+
+    def __init__(self, campaign_id: int):
+        self.campaign_id = campaign_id
+        self.players: dict[str, PlayerSession] = {}  # sid → session
+        self.lock = asyncio.Lock()
+        self.created_at = time.time()
+        self.last_activity = time.time()
+
+    async def on_join(self, sid, character_id, name):
+        self.players[sid] = PlayerSession(sid, character_id, name)
+        self.last_activity = time.time()
+        await self.broadcast_player_list()
+
+    async def on_leave(self, sid):
+        if sid in self.players:
+            del self.players[sid]
+        # 如果房间空了，30秒后销毁
+        if not self.players:
+            asyncio.create_task(self._schedule_dispose())
+
+    async def _schedule_dispose(self):
+        await asyncio.sleep(30)  # 30秒重连窗口
+        if not self.players:
+            await self.dispose()
+
+    async def dispose(self):
+        # 持久化到 SQLite
+        store.save_campaign_state(self.campaign_id)
+        del CampaignRoom.rooms[self.campaign_id]</div>
+</div>
+
+<div class="card card-accent">
+  <h4><span class="tag tag-purple">Phase 3</span> 权限分层 + Secret State（2-3 天）</h4>
+  <p><strong>目标</strong>：区分 DM 和玩家权限，实现信息可见性控制。</p>
+  <ol>
+    <li>连接时通过 token 识别角色（DM vs Player）</li>
+    <li><code class="code-inline">emit</code> 时按角色过滤数据（DM 收到完整数据，玩家收到过滤后数据）</li>
+    <li>DM 操作：控制 NPC、修改 HP、强制跳过回合、操控 FOW</li>
+    <li>玩家操作：仅在自己的回合行动、查看自己的角色卡</li>
+  </ol>
+  <div class="code-block"># 权限过滤示例
+async def broadcast_with_filter(room, event, data, dm_data=None):
+    """广播时按权限过滤：DM 收完整数据，玩家收过滤后数据。"""
+    for sid, session in room.players.items():
+        if session.is_dm:
+            await sio.emit(event, dm_data or data, to=sid)
+        else:
+            await sio.emit(event, data, to=sid)
+
+# 战斗状态广播：DM 看怪物 HP，玩家不看
+await broadcast_with_filter(
+    room, 'combat_update',
+    data={'active': True, 'round': 3, 'initiative_order': public_order},
+    dm_data={'active': True, 'round': 3,
+             'initiative_order': full_order_with_monster_hp}
+)</div>
+</div>
+
+<div class="card card-amber">
+  <h4><span class="tag tag-amber">Phase 4</span> 地图/Token 系统（5-7 天，可选）</h4>
+  <p><strong>目标</strong>：引入 VTT 核心的地图和 Token 系统。</p>
+  <ol>
+    <li><strong>前端</strong>：引入 Canvas/PixiJS 渲染地图 + Token 拖拽</li>
+    <li><strong>后端</strong>：新增 <code class="code-inline">map.py</code> 管理地图状态（网格、Token 位置、FOW）</li>
+    <li><strong>同步</strong>：Token 位置变更通过 WebSocket 增量广播</li>
+    <li><strong>参考</strong>：直接学习 <a href="https://github.com/Kruptein/PlanarAlly">PlanarAlly</a> 的 Python 后端架构</li>
+  </ol>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h2>七、技术选型汇总</h2>
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<table class="comparison-table">
+  <tr>
+    <th>需求</th>
+    <th>推荐方案</th>
+    <th>理由</th>
+  </tr>
+  <tr>
+    <td>WebSocket 通信</td>
+    <td><strong>python-socketio</strong></td>
+    <td>FastAPI 原生集成 / Room 支持 / 自动重连 / Redis 扩展</td>
+  </tr>
+  <tr>
+    <td>房间管理</td>
+    <td><strong>自建 Room 类</strong>（参考 Colyseus）</td>
+    <td>纯 Python / 无语言桥接 / 完全控制生命周期</td>
+  </tr>
+  <tr>
+    <td>状态同步</td>
+    <td><strong>事件驱动 + 全量快照</strong></td>
+    <td>DND 回合制 / 状态量小 / 全量同步简单可靠</td>
+  </tr>
+  <tr>
+    <td>回合协调</td>
+    <td><strong>已有 <code>is_player_turn()</code></strong></td>
+    <td>已实现 / 保持现状</td>
+  </tr>
+  <tr>
+    <td>权限控制</td>
+    <td><strong>DM/Player 角色过滤</strong></td>
+    <td>连接时区分角色 / emit 时按权限过滤</td>
+  </tr>
+  <tr>
+    <td>断线重连</td>
+    <td><strong>Socket.IO 自动重连 + 30s 窗口</strong></td>
+    <td>原生支持 / 零额外代码</td>
+  </tr>
+  <tr>
+    <td>水平扩展</td>
+    <td><strong>Redis Pub/Sub</strong></td>
+    <td>python-socketio 内置 / <code class="code-inline">AsyncRedisManager</code></td>
+  </tr>
+  <tr>
+    <td>持久化</td>
+    <td><strong>SQLite (已有)</strong></td>
+    <td>当前够用 / 未来量大可迁 PostgreSQL</td>
+  </tr>
+  <tr>
+    <td>地图/Token (未来)</td>
+    <td><strong>Canvas + 自建状态管理</strong>（参考 PlanarAlly）</td>
+    <td>Python 后端参考 / MIT 许可</td>
+  </tr>
+  <tr>
+    <td>角色卡协作 (未来)</td>
+    <td><strong>Yjs + y-websocket</strong>（可选）</td>
+    <td>CRDT 离线编辑 / 冲突解决 / 21K star 成熟</td>
+  </tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<h2>八、核心结论</h2>
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<div class="card card-green">
+  <h3>最终推荐路线</h3>
+  <div class="diagram">
+<pre>
+当前架构                    Phase 1 (1-2天)              Phase 2 (3-5天)
+┌──────────────┐           ┌──────────────┐            ┌──────────────┐
+│ FastAPI      │           │ FastAPI      │            │ FastAPI      │
+│ + 裸 WebSocket│    →      │ + python-    │     →      │ + python-    │
+│ + 内存 dict   │           │   socketio   │            │   socketio   │
+│ + 无重连      │           │ + Room 自动  │            │ + Room 类    │
+│              │           │   管理       │            │ + Redis      │
+│              │           │ + 自动重连   │            │ + 30s 重连   │
+│              │           │              │            │ + 生命周期   │
+└──────────────┘           └──────────────┘            └──────────────┘
+
+                           Phase 3 (2-3天)              Phase 4 (5-7天, 可选)
+                           ┌──────────────┐            ┌──────────────┐
+                           │ + DM/Player  │            │ + 地图/Token  │
+                           │   权限分层    │            │ + Canvas 渲染 │
+                           │ + Secret     │            │ + FOW 系统   │
+                           │   State 过滤 │            │ (参考        │
+                           │              │            │  PlanarAlly) │
+                           └──────────────┘            └──────────────┘
+</pre>
+  </div>
+</div>
+
+<div class="card card-accent">
+  <h3>关键决策点</h3>
+  <ol>
+    <li><strong>不需要引入 Node.js</strong> — python-socketio 提供了 Socket.IO 的全部能力，保持纯 Python 技术栈。Yjs/boardgame.io/Colyseus 虽然优秀但都是 Node.js 生态，引入会带来语言桥接复杂度。</li>
+    <li><strong>不需要 CRDT（短期）</strong> — DND 是回合制，不存在高频并发写入冲突。权威服务器 + 事件驱动就够了。Yjs 只在需要"离线编辑角色卡"时才值得引入。</li>
+    <li><strong>不需要 UDP/WebRTC</strong> — DND 不是 FPS，不需要毫秒级延迟。WebSocket 的可靠性更重要。</li>
+    <li><strong>参考 Colyseus 架构但不直接使用</strong> — Colyseus 的 Room/Schema/生命周期设计是教科书级别的。在 Python 中照着实现一套，比直接引入 Node.js 更好。</li>
+    <li><strong>PlanarAlly 是最佳参考项目</strong> — 同为 Python 后端 + WebSocket 多人 + VTT 功能，直接阅读其源码。</li>
+  </ol>
+</div>
+
+<div class="card card-blue">
+  <h3>10K+ Star 项目一览表</h3>
+  <table class="comparison-table">
+    <tr><th>项目</th><th>Stars</th><th>语言</th><th>用途</th><th>是否采用</th></tr>
+    <tr><td>Socket.io</td><td>63K</td><td>Node.js/TS</td><td>实时通信框架</td><td><span class="good">采用 Python 版 (python-socketio)</span></td></tr>
+    <tr><td>RxDB</td><td>23K</td><td>TypeScript</td><td>响应式本地数据库</td><td><span class="warn">暂不需要</span></td></tr>
+    <tr><td>Yjs</td><td>21K</td><td>TypeScript</td><td>CRDT 协作</td><td><span class="warn">Phase 4+ 可选</span></td></tr>
+    <tr><td>Nakama</td><td>12.4K</td><td>Go</td><td>游戏后端 BaaS</td><td><span class="bad">过重，不采用</span></td></tr>
+    <tr><td>boardgame.io</td><td>12.3K</td><td>TypeScript</td><td>回合制游戏框架</td><td><span class="bad">参考其设计理念</span></td></tr>
+  </table>
+</div>
+
+<p class="footnote">
+  调研日期: 2026-07-15 | 调研范围: GitHub 开源项目 + VTT 生态 + 多人游戏架构模式 | 项目: AIDM (AI Dungeon Master, D&D 5e AI DM)
+</p>
+
+</div>
+</div>
+</body>
+</html>

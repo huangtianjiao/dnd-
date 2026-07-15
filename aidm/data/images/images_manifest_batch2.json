@@ -1,14 +1,13 @@
 {
-  "batch": "batch2 (sync endpoint; 300/day cap hit mid-run on new key)",
+  "batch": "batch2 COMPLETE",
   "model": "senseaudio-image-2.0-260319",
-  "updated_at": "2026-07-14 17:07:52",
+  "updated_at": "2026-07-15 10:17:37",
   "count": 571,
   "summary": {
-    "ok": 435,
-    "pending": 136,
+    "ok": 571,
+    "pending": 0,
     "failed": 0
   },
-  "note": "magic-items(339)+stronghold(29) complete; monsters 67/203; new key daily cap (300) reached → remaining 136 monsters after reset.",
   "items": [
     {
       "category": "magic-items",
@@ -3422,9 +3421,9 @@
       "category": "monsters",
       "name": "Sprite",
       "cn_name": "小仙灵",
-      "file": null,
+      "file": "data/images/monsters/Sprite_小仙灵.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
@@ -3454,9 +3453,9 @@
       "category": "monsters",
       "name": "Centaur Warden",
       "cn_name": "人马守望者",
-      "file": null,
+      "file": "data/images/monsters/Centaur_人马守望者.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
@@ -3478,9 +3477,9 @@
       "category": "monsters",
       "name": "Satyr Revelmaster",
       "cn_name": "半羊人欢庆之主",
-      "file": null,
+      "file": "data/images/monsters/Satyr_半羊人欢庆之主.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
@@ -3518,1065 +3517,1065 @@
       "category": "monsters",
       "name": "Goblin Hexer",
       "cn_name": "地精咒术师",
-      "file": null,
+      "file": "data/images/monsters/Goblin_地精咒术师.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Goblin Minion",
       "cn_name": "地精喽啰",
-      "file": null,
+      "file": "data/images/monsters/Goblin_地精喽啰.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Goblin Warrior",
       "cn_name": "地精武者",
-      "file": null,
+      "file": "data/images/monsters/Goblin_地精武者.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Goblin Boss",
       "cn_name": "地精老大",
-      "file": null,
+      "file": "data/images/monsters/Goblin_地精老大.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Ettin",
       "cn_name": "双头巨人",
-      "file": null,
+      "file": "data/images/monsters/Ettin_双头巨人.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Fomorian",
       "cn_name": "废陋巨人",
-      "file": null,
+      "file": "data/images/monsters/Fomorian_废陋巨人.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Troll",
       "cn_name": "巨魔",
-      "file": null,
+      "file": "data/images/monsters/Troll_巨魔.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Cloud Giant",
       "cn_name": "云巨人",
-      "file": null,
+      "file": "data/images/monsters/Cloud_云巨人.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Hill Giant",
       "cn_name": "山丘巨人",
-      "file": null,
+      "file": "data/images/monsters/Hill_山丘巨人.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Fire Giant",
       "cn_name": "火巨人",
-      "file": null,
+      "file": "data/images/monsters/Fire_火巨人.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Stone Giant",
       "cn_name": "石巨人",
-      "file": null,
+      "file": "data/images/monsters/Stone_石巨人.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Frost Giant",
       "cn_name": "霜巨人",
-      "file": null,
+      "file": "data/images/monsters/Frost_霜巨人.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Storm Giant",
       "cn_name": "风暴巨人",
-      "file": null,
+      "file": "data/images/monsters/Storm_风暴巨人.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Cyclopes",
       "cn_name": "独眼巨人",
-      "file": null,
+      "file": "data/images/monsters/Cyclopes_独眼巨人.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Ogrillon Ogre",
       "cn_name": "半食人魔",
-      "file": null,
+      "file": "data/images/monsters/Ogrillon_半食人魔.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Ogre",
       "cn_name": "食人魔",
-      "file": null,
+      "file": "data/images/monsters/Ogre_食人魔.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Flumph",
       "cn_name": "呋噜",
-      "file": null,
+      "file": "data/images/monsters/Flumph_呋噜.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Gibbering Mouther",
       "cn_name": "呓语之口",
-      "file": null,
+      "file": "data/images/monsters/Gibbering_呓语之口.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Intellect Devourer",
       "cn_name": "噬脑怪",
-      "file": null,
+      "file": "data/images/monsters/Intellect_噬脑怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Grimlock",
       "cn_name": "幽邃盲族",
-      "file": null,
+      "file": "data/images/monsters/Grimlock_幽邃盲族.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Aboleth",
       "cn_name": "底栖魔鱼",
-      "file": null,
+      "file": "data/images/monsters/Aboleth_底栖魔鱼.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Cloaker",
       "cn_name": "斗篷怪",
-      "file": null,
+      "file": "data/images/monsters/Cloaker_斗篷怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Darkmantle",
       "cn_name": "暗幕魔兽",
-      "file": null,
+      "file": "data/images/monsters/Darkmantle_暗幕魔兽.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Chuul",
       "cn_name": "甲伏怪",
-      "file": null,
+      "file": "data/images/monsters/Chuul_甲伏怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Roper",
       "cn_name": "石绳怪",
-      "file": null,
+      "file": "data/images/monsters/Roper_石绳怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Piercer",
       "cn_name": "石锥怪",
-      "file": null,
+      "file": "data/images/monsters/Piercer_石锥怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Grell",
       "cn_name": "触须怪",
-      "file": null,
+      "file": "data/images/monsters/Grell_触须怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Nothic",
       "cn_name": "诺斯怪",
-      "file": null,
+      "file": "data/images/monsters/Nothic_诺斯怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Otyugh",
       "cn_name": "食腐兽",
-      "file": null,
+      "file": "data/images/monsters/Otyugh_食腐兽.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Death Slaad",
       "cn_name": "史拉亡蟾",
-      "file": null,
+      "file": "data/images/monsters/Death_史拉亡蟾.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Gray Slaad",
       "cn_name": "史拉灰蟾",
-      "file": null,
+      "file": "data/images/monsters/Gray_史拉灰蟾.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Red Slaad",
       "cn_name": "史拉红蟾",
-      "file": null,
+      "file": "data/images/monsters/Red_史拉红蟾.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Death Dog",
       "cn_name": "亡命恶犬",
-      "file": null,
+      "file": "data/images/monsters/Death_亡命恶犬.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Ettercap",
       "cn_name": "伊特怪",
-      "file": null,
+      "file": "data/images/monsters/Ettercap_伊特怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Manticore",
       "cn_name": "刺尾狮",
-      "file": null,
+      "file": "data/images/monsters/Manticore_刺尾狮.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Chimera",
       "cn_name": "奇美拉",
-      "file": null,
+      "file": "data/images/monsters/Chimera_奇美拉.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Minotaur of Baphomet",
       "cn_name": "巴弗灭的牛头人",
-      "file": null,
+      "file": "data/images/monsters/Minotaur_巴弗灭的牛头人.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Hook Horror",
       "cn_name": "恐爪怪",
-      "file": null,
+      "file": "data/images/monsters/Hook_恐爪怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Mimic",
       "cn_name": "拟身怪",
-      "file": null,
+      "file": "data/images/monsters/Mimic_拟身怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Umber Hulk",
       "cn_name": "掘土巨怪",
-      "file": null,
+      "file": "data/images/monsters/Umber_掘土巨怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Merrow",
       "cn_name": "梅洛人鱼",
-      "file": null,
+      "file": "data/images/monsters/Merrow_梅洛人鱼.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Griffon",
       "cn_name": "狮鹫",
-      "file": null,
+      "file": "data/images/monsters/Griffon_狮鹫.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Phase Spider",
       "cn_name": "相位蜘蛛",
-      "file": null,
+      "file": "data/images/monsters/Phase_相位蜘蛛.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Basilisk",
       "cn_name": "石化蜥蜴",
-      "file": null,
+      "file": "data/images/monsters/Basilisk_石化蜥蜴.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Displacer Beast",
       "cn_name": "移位兽",
-      "file": null,
+      "file": "data/images/monsters/Displacer_移位兽.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Purple Worm",
       "cn_name": "紫虫",
-      "file": null,
+      "file": "data/images/monsters/Purple_紫虫.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Medusa",
       "cn_name": "美杜莎",
-      "file": null,
+      "file": "data/images/monsters/Medusa_美杜莎.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Drider",
       "cn_name": "蛛化卓尔",
-      "file": null,
+      "file": "data/images/monsters/Drider_蛛化卓尔.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Homunculus",
       "cn_name": "人工生命体",
-      "file": null,
+      "file": "data/images/monsters/Homunculus_人工生命体.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Helmed Horror",
       "cn_name": "恐怖铠甲",
-      "file": null,
+      "file": "data/images/monsters/Helmed_恐怖铠甲.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Shield Guardian",
       "cn_name": "盾卫",
-      "file": null,
+      "file": "data/images/monsters/Shield_盾卫.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Scarecrow",
       "cn_name": "稻草人",
-      "file": null,
+      "file": "data/images/monsters/Scarecrow_稻草人.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Animated Flying Sword",
       "cn_name": "活化凌空剑",
-      "file": null,
+      "file": "data/images/monsters/Animated_活化凌空剑.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Animated Broom",
       "cn_name": "活化扫帚",
-      "file": null,
+      "file": "data/images/monsters/Animated_活化扫帚.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Animated Objects",
       "cn_name": "活化物件",
-      "file": null,
+      "file": "data/images/monsters/Animated_活化物件.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Animated Armor",
       "cn_name": "活化盔甲",
-      "file": null,
+      "file": "data/images/monsters/Animated_活化盔甲.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Animated Rug of Smothering",
       "cn_name": "活化闷人毯",
-      "file": null,
+      "file": "data/images/monsters/Animated_活化闷人毯.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Brazen Gorgon",
       "cn_name": "焚化铜牛",
-      "file": null,
+      "file": "data/images/monsters/Brazen_焚化铜牛.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Gorgon",
       "cn_name": "石化铁牛",
-      "file": null,
+      "file": "data/images/monsters/Gorgon_石化铁牛.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Stone Golem",
       "cn_name": "石魔像",
-      "file": null,
+      "file": "data/images/monsters/Stone_石魔像.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Flesh Golem",
       "cn_name": "血肉魔像",
-      "file": null,
+      "file": "data/images/monsters/Flesh_血肉魔像.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Iron Golem",
       "cn_name": "铁魔像",
-      "file": null,
+      "file": "data/images/monsters/Iron_铁魔像.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Clay Golem",
       "cn_name": "黏土魔像",
-      "file": null,
+      "file": "data/images/monsters/Clay_黏土魔像.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Modrons",
       "cn_name": "魔冢",
-      "file": null,
+      "file": "data/images/monsters/Modrons_魔冢.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Treant",
       "cn_name": "树人",
-      "file": null,
+      "file": "data/images/monsters/Treant_树人.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Shambling Mound",
       "cn_name": "蔓生怪",
-      "file": null,
+      "file": "data/images/monsters/Shambling_蔓生怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Awakened Tree",
       "cn_name": "启蒙大树",
-      "file": null,
+      "file": "data/images/monsters/Awakened_启蒙大树.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Awakened Plants",
       "cn_name": "启蒙植物",
-      "file": null,
+      "file": "data/images/monsters/Awakened_启蒙植物.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Awakened Shrub",
       "cn_name": "启蒙灌木",
-      "file": null,
+      "file": "data/images/monsters/Awakened_启蒙灌木.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Twig Blight",
       "cn_name": "枯枝怪",
-      "file": null,
+      "file": "data/images/monsters/Twig_枯枝怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Tree Blight",
       "cn_name": "枯树怪",
-      "file": null,
+      "file": "data/images/monsters/Tree_枯树怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Vine Blight",
       "cn_name": "枯藤怪",
-      "file": null,
+      "file": "data/images/monsters/Vine_枯藤怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Shrieker Fungus",
       "cn_name": "尖叫菌",
-      "file": null,
+      "file": "data/images/monsters/Shrieker_尖叫菌.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Gas Spore Fungus",
       "cn_name": "气孢菌",
-      "file": null,
+      "file": "data/images/monsters/Gas_气孢菌.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Fungi",
       "cn_name": "真菌",
-      "file": null,
+      "file": "data/images/monsters/Fungi_真菌.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Violet Fungus",
       "cn_name": "紫腐菌",
-      "file": null,
+      "file": "data/images/monsters/Violet_紫腐菌.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Violet Fungus Necrohulk",
       "cn_name": "紫腐菌尸聚怪",
-      "file": null,
+      "file": "data/images/monsters/Violet_紫腐菌尸聚怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Myconids",
       "cn_name": "蕈人",
-      "file": null,
+      "file": "data/images/monsters/Myconids_蕈人.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Actions",
       "cn_name": "动作",
-      "file": null,
+      "file": "data/images/monsters/Actions_动作.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Myconid Sprout",
       "cn_name": "蕈人幼体",
-      "file": null,
+      "file": "data/images/monsters/Myconid_蕈人幼体.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Gelatinous Cube",
       "cn_name": "凝胶方块",
-      "file": null,
+      "file": "data/images/monsters/Gelatinous_凝胶方块.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Ochre Jelly",
       "cn_name": "赭果冻",
-      "file": null,
+      "file": "data/images/monsters/Ochre_赭果冻.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Black Pudding",
       "cn_name": "黑布丁",
-      "file": null,
+      "file": "data/images/monsters/Black_黑布丁.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Psychic Gray Ooze",
       "cn_name": "心能灰泥怪",
-      "file": null,
+      "file": "data/images/monsters/Psychic_心能灰泥怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Gray Ooze",
       "cn_name": "灰泥怪",
-      "file": null,
+      "file": "data/images/monsters/Gray_灰泥怪.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Commoner",
       "cn_name": "平民",
-      "file": null,
+      "file": "data/images/monsters/Commoner_平民.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Druid",
       "cn_name": "德鲁伊",
-      "file": null,
+      "file": "data/images/monsters/Druid_德鲁伊.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Bandit",
       "cn_name": "匪徒",
-      "file": null,
+      "file": "data/images/monsters/Bandit_匪徒.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Tough",
       "cn_name": "打手",
-      "file": null,
+      "file": "data/images/monsters/Tough_打手.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Tough Boss",
       "cn_name": "打手老大",
-      "file": null,
+      "file": "data/images/monsters/Tough_打手老大.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Scout",
       "cn_name": "斥候",
-      "file": null,
+      "file": "data/images/monsters/Scout_斥候.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Scout Captain",
       "cn_name": "斥候队长",
-      "file": null,
+      "file": "data/images/monsters/Scout_斥候队长.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Warrior Commander",
       "cn_name": "武将",
-      "file": null,
+      "file": "data/images/monsters/Warrior_武将.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Pirate Admiral",
       "cn_name": "海盗将军",
-      "file": null,
+      "file": "data/images/monsters/Pirate_海盗将军.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Berserker",
       "cn_name": "狂战士",
-      "file": null,
+      "file": "data/images/monsters/Berserker_狂战士.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Berserker Commander",
       "cn_name": "狂战将",
-      "file": null,
+      "file": "data/images/monsters/Berserker_狂战将.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Priest",
       "cn_name": "祭司",
-      "file": null,
+      "file": "data/images/monsters/Priest_祭司.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Guard",
       "cn_name": "警卫",
-      "file": null,
+      "file": "data/images/monsters/Guard_警卫.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Guard Captain",
       "cn_name": "警卫队长",
-      "file": null,
+      "file": "data/images/monsters/Guard_警卫队长.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Noble",
       "cn_name": "贵族",
-      "file": null,
+      "file": "data/images/monsters/Noble_贵族.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Noble Prodigy",
       "cn_name": "贵血天骄",
-      "file": null,
+      "file": "data/images/monsters/Noble_贵血天骄.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Jackalwere",
       "cn_name": "化形胡狼",
-      "file": null,
+      "file": "data/images/monsters/Jackalwere_化形胡狼.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Hell Hound",
       "cn_name": "地狱犬",
-      "file": null,
+      "file": "data/images/monsters/Hell_地狱犬.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Cambion",
       "cn_name": "坎比翁",
-      "file": null,
+      "file": "data/images/monsters/Cambion_坎比翁.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Oni",
       "cn_name": "恶鬼",
-      "file": null,
+      "file": "data/images/monsters/Oni_恶鬼.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Lamia",
       "cn_name": "拉迷亚",
-      "file": null,
+      "file": "data/images/monsters/Lamia_拉迷亚.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Rakshasa",
       "cn_name": "罗刹",
-      "file": null,
+      "file": "data/images/monsters/Rakshasa_罗刹.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Succubus",
       "cn_name": "魅魔",
-      "file": null,
+      "file": "data/images/monsters/Succubus_魅魔.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Arcanaloth",
       "cn_name": "奥法罗斯魔",
-      "file": null,
+      "file": "data/images/monsters/Arcanaloth_奥法罗斯魔.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Nycaloth",
       "cn_name": "征伐罗斯魔",
-      "file": null,
+      "file": "data/images/monsters/Nycaloth_征伐罗斯魔.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Mezzoloth",
       "cn_name": "毒虫罗斯魔",
-      "file": null,
+      "file": "data/images/monsters/Mezzoloth_毒虫罗斯魔.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Ultroloth",
       "cn_name": "超等罗斯魔",
-      "file": null,
+      "file": "data/images/monsters/Ultroloth_超等罗斯魔.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Larva",
       "cn_name": "幼虫魔",
-      "file": null,
+      "file": "data/images/monsters/Larva_幼虫魔.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Swarm of Larvae",
       "cn_name": "幼虫魔集群",
-      "file": null,
+      "file": "data/images/monsters/Swarm_幼虫魔集群.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Marilith",
       "cn_name": "六臂蛇魔",
-      "file": null,
+      "file": "data/images/monsters/Marilith_六臂蛇魔.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Nalfeshnee",
       "cn_name": "判魂魔",
-      "file": null,
+      "file": "data/images/monsters/Nalfeshnee_判魂魔.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Chasme",
       "cn_name": "喀嘶魔",
-      "file": null,
+      "file": "data/images/monsters/Chasme_喀嘶魔.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Pseudodragon",
       "cn_name": "伪龙",
-      "file": null,
+      "file": "data/images/monsters/Pseudodragon_伪龙.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Half-Dragon",
       "cn_name": "半龙",
-      "file": null,
+      "file": "data/images/monsters/Half-Dragon_半龙.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Wyvern",
       "cn_name": "飞龙",
-      "file": null,
+      "file": "data/images/monsters/Wyvern_飞龙.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Dragon Turtle",
       "cn_name": "龙龟",
-      "file": null,
+      "file": "data/images/monsters/Dragon_龙龟.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Shadow Dragons",
       "cn_name": "幽影龙",
-      "file": null,
+      "file": "data/images/monsters/Shadow_幽影龙.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Kobolds",
       "cn_name": "狗头人",
-      "file": null,
+      "file": "data/images/monsters/Kobolds_狗头人.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Kobold Warrior",
       "cn_name": "狗头人武者",
-      "file": null,
+      "file": "data/images/monsters/Kobold_狗头人武者.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Adult White Dragon",
       "cn_name": "成年白龙",
-      "file": null,
+      "file": "data/images/monsters/Adult_成年白龙.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "White Dragon Wyrmling",
       "cn_name": "白龙雏龙",
-      "file": null,
+      "file": "data/images/monsters/White_白龙雏龙.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Adult Red Dragon",
       "cn_name": "成年红龙",
-      "file": null,
+      "file": "data/images/monsters/Adult_成年红龙.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Red Dragon Wyrmling",
       "cn_name": "红龙雏龙",
-      "file": null,
+      "file": "data/images/monsters/Red_红龙雏龙.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Adult Green Dragon",
       "cn_name": "成年绿龙",
-      "file": null,
+      "file": "data/images/monsters/Adult_成年绿龙.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Adult Blue Dragon",
       "cn_name": "成年蓝龙",
-      "file": null,
+      "file": "data/images/monsters/Adult_成年蓝龙.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Blue Dragon Wyrmling",
       "cn_name": "蓝龙雏龙",
-      "file": null,
+      "file": "data/images/monsters/Blue_蓝龙雏龙.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Copper Dragons",
       "cn_name": "赤铜龙",
-      "file": null,
+      "file": "data/images/monsters/Copper_赤铜龙.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     },
     {
       "category": "monsters",
       "name": "Adult Gold Dragon",
       "cn_name": "成年金龙",
-      "file": null,
+      "file": "data/images/monsters/Adult_成年金龙.png",
       "size": "1024x1024",
-      "status": "pending"
+      "status": "ok"
     }
   ]
 }

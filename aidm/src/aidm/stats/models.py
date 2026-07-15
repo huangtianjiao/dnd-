@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import json
-from typing import Optional
+from typing import ClassVar, Optional
 
 from sqlmodel import SQLModel, Field, create_engine
 
@@ -58,6 +58,8 @@ class Character(SQLModel, table=True):
     known_spells_json: str = Field(default="[]")
     inventory_json: str = Field(default="[]")
     conditions_json: str = Field(default="[]")     # 状态集合
+    attuned_items_json: str = Field(default="[]")  # 已同调魔法物品名称列表（最多3个）
+    feats_json: str = Field(default="[]")          # 已选专长名列表（PHB 第五章）
     # 数值
     hp_current: int = 0
     hp_max: int = 0
@@ -92,6 +94,59 @@ class Character(SQLModel, table=True):
 
     def set_spell_slots(self, slots: dict) -> None:
         self.spell_slots_json = json.dumps(slots)
+
+    # —— 同调物品桥接 ——
+    # 规则: 玩家手册 同调Attunement — 一个生物最多同时与3件魔法物品同调
+    MAX_ATTUNED_ITEMS: ClassVar[int] = 3
+
+    @property
+    def attuned_items(self) -> list[str]:
+        """已同调的魔法物品名称列表（最多3个）。
+
+        规则: 同调 — 一个生物最多同时与三件魔法物品同调。
+        """
+        return json.loads(self.attuned_items_json)
+
+    def set_attuned_items(self, names: list[str]) -> None:
+        """设置已同调物品列表（强制上限3）。"""
+        if len(names) > self.MAX_ATTUNED_ITEMS:
+            raise ValueError(
+                f"同调物品上限为{self.MAX_ATTUNED_ITEMS}件，"
+                f"试图设置{len(names)}件"
+            )
+        self.attuned_items_json = json.dumps(names)
+
+    # —— 物品栏桥接 ——
+    # 规则: 城主指南2024/7.宝藏/ — 角色持有的魔法物品名称列表
+    @property
+    def inventory(self) -> list[str]:
+        """角色物品栏中的魔法物品名称列表。
+
+        规则: 城主指南2024/7.宝藏/ — 战利品分配后写入角色物品栏。
+        """
+        return json.loads(self.inventory_json)
+
+    def set_inventory(self, items: list[str]) -> None:
+        """设置角色物品栏。"""
+        self.inventory_json = json.dumps(items)
+
+    def add_to_inventory(self, item_name: str) -> None:
+        """向物品栏添加一件物品（不重复添加）。"""
+        inv = self.inventory
+        if item_name not in inv:
+            inv.append(item_name)
+            self.inventory_json = json.dumps(inv)
+
+    # —— 专长桥接 ——
+    # 规则: PHB 第五章「专长」— 起源/通用/战斗风格/传奇恩惠
+    @property
+    def feats(self) -> list[str]:
+        """已选专长名列表。"""
+        return json.loads(self.feats_json)
+
+    def set_feats(self, names: list[str]) -> None:
+        """设置已选专长名列表。"""
+        self.feats_json = json.dumps(names)
 
     # —— engine 桥接 ——
     def ability_score(self, ab: str) -> int:

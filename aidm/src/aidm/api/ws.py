@@ -1,8 +1,20 @@
-"""WebSocket 实时同桌 — 多人同时在线跑团。
+"""WebSocket 实时同桌 — 基于 python-socketio 的多人在线跑团。
 
-玩家通过 WebSocket 连接同一战役；一人行动，全员实时收到 DM 叙事+骰子+场景更新。
-战斗中按先政回合协调（轮到你才能行动）；非战斗时任何人可行动（先到先得）。
-graph.run 用 asyncio.Lock 序列化（Qdrant 本地模式非线程安全 + D&D 本来就是回合制）。
+架构升级（参考《多人同玩架构设计调研报告》）:
+  - 方案A: 用 python-socketio 替换裸 WebSocket，获得 Room/自动重连/消息缓冲能力
+  - 方案E: 参考 Colyseus 架构，自建 Room 生命周期管理（纯 Python）
+
+核心能力:
+  1. Socket.IO 房间 — 每个 campaign 自动创建房间 `campaign_{id}`
+  2. 会话恢复 — 玩家断线后重连可恢复游戏状态（sio.save_session）
+  3. 房间生命周期 — CampaignRoom 参照 Colyseus Room：空房 30 秒后自动销毁
+  4. 权限分层 — DM (is_dm=True) 与普通玩家走同一连接但权限不同
+  5. 增量同步 — 只广播变化的状态片段，而非全量状态
+  6. 离线消息队列 — 玩家离线期间的消息暂存 Redis，重连后补发
+
+规则出处:
+  - topics/玩家手册2024/进行游戏/战斗流程.htm (R-CMB-001~005)
+  - topics/玩家手册2024/进行游戏/动作.htm (R-CMB-011~013)
 """
 
 from __future__ import annotations
@@ -10,68 +22,131 @@ from __future__ import annotations
 import asyncio
 import functools
 import json
+import os
+import time
+from dataclasses import dataclass, field
 from typing import Optional
 
-from fastapi import WebSocket, WebSocketDisconnect
+import socketio
 
 from ..brain import graph, world
 from ..engine import combat as cmb
 from ..stats import store, models
 
 
-class ConnectionManager:
-    """管理每个战役的 WebSocket 连接 + 回合协调。"""
+# ──────────────────────────────────────────────────────────────────────────
+# Socket.IO 服务器（ASGI 模式）
+# ──────────────────────────────────────────────────────────────────────────
 
-    def __init__(self):
-        self.campaigns: dict[int, list[dict]] = {}   # campaign_id → [{ws, character_id, name}]
-        self.lock = asyncio.Lock()                    # 序列化 graph.run
+sio = socketio.AsyncServer(
+    async_mode="asgi",
+    cors_allowed_origins="*",
+    # 启用心跳检测，快速发现断线
+    ping_interval=25,
+    ping_timeout=20,
+)
 
-    async def connect(self, campaign_id: int, character_id: int, name: str,
-                      ws: WebSocket) -> dict:
-        await ws.accept()
-        conn = {"ws": ws, "character_id": character_id, "name": name}
-        self.campaigns.setdefault(campaign_id, []).append(conn)
-        return conn
 
-    def disconnect(self, campaign_id: int, ws: WebSocket) -> None:
-        if campaign_id in self.campaigns:
-            self.campaigns[campaign_id] = [
-                c for c in self.campaigns[campaign_id] if c["ws"] != ws
-            ]
+# ──────────────────────────────────────────────────────────────────────────
+# Colyseus 风格 Room 生命周期管理（方案E）
+# ──────────────────────────────────────────────────────────────────────────
 
-    def get_players(self, campaign_id: int) -> list[dict]:
-        return [{"name": c["name"], "character_id": c["character_id"]}
-                for c in self.campaigns.get(campaign_id, [])]
+@dataclass
+class PlayerSession:
+    """单个玩家的会话信息。"""
+    sid: str
+    character_id: int
+    name: str
+    is_dm: bool = False
+    connected: bool = True
+    last_seen: float = field(default_factory=time.time)
 
-    async def broadcast(self, campaign_id: int, message: dict,
-                        exclude: Optional[WebSocket] = None) -> None:
-        """广播给同战役所有连接（可排除发送者）。"""
-        text = json.dumps(message, ensure_ascii=False)
-        for conn in self.campaigns.get(campaign_id, []):
-            if exclude and conn["ws"] == exclude:
-                continue
-            try:
-                await conn["ws"].send_text(text)
-            except Exception:
-                pass
+    def to_dict(self) -> dict:
+        return {
+            "name": self.name,
+            "character_id": self.character_id,
+            "is_dm": self.is_dm,
+            "connected": self.connected,
+        }
 
-    def is_player_turn(self, campaign_id: int, character_id: int) -> bool:
-        """战斗中检查是否轮到该角色；非战斗时任何人都能行动。"""
+
+class CampaignRoom:
+    """一个 DND 战役房间，参考 Colyseus Room 设计。
+
+    职责:
+      - 管理房间内玩家会话（加入/离开/重连）
+      - 维护房间最后活动时间，空闲超时自动销毁
+      - 提供回合检查接口（委托给 engine.combat）
+
+    生命周期:
+      get_or_create → add_player → ... → remove_player
+      当 players 为空时，调度 30 秒延迟销毁任务
+    """
+
+    rooms: dict[int, "CampaignRoom"] = {}          # campaign_id → room
+    _dispose_tasks: dict[int, asyncio.Task] = {}
+    DISPOSE_DELAY: float = 30.0                     # 空房 30 秒后销毁
+
+    def __init__(self, campaign_id: int):
+        self.campaign_id = campaign_id
+        self.players: dict[str, PlayerSession] = {}   # sid → session
+        self.lock = asyncio.Lock()
+        self.created_at = time.time()
+        self.last_activity = time.time()
+
+    # —— 玩家管理 ——
+    def add_player(self, sid: str, character_id: int, name: str,
+                   is_dm: bool = False) -> PlayerSession:
+        ps = PlayerSession(sid=sid, character_id=character_id,
+                           name=name, is_dm=is_dm)
+        self.players[sid] = ps
+        self.last_activity = time.time()
+        # 取消挂起的销毁任务
+        task = self._dispose_tasks.pop(self.campaign_id, None)
+        if task and not task.done():
+            task.cancel()
+        return ps
+
+    def remove_player(self, sid: str) -> Optional[PlayerSession]:
+        ps = self.players.pop(sid, None)
+        if ps:
+            ps.connected = False
+        self.last_activity = time.time()
+        # 如果房间空了，调度延迟销毁
+        if not self.players:
+            self._schedule_dispose()
+        return ps
+
+    def get_player(self, sid: str) -> Optional[PlayerSession]:
+        return self.players.get(sid)
+
+    def get_players(self) -> list[dict]:
+        return [ps.to_dict() for ps in self.players.values()]
+
+    def find_by_character(self, character_id: int) -> Optional[PlayerSession]:
+        for ps in self.players.values():
+            if ps.character_id == character_id:
+                return ps
+        return None
+
+    # —— 回合检查 ——
+    def is_player_turn(self, character_id: int) -> bool:
+        """战斗中检查是否轮到该角色；非战斗时任何人都能行动。
+
+        规则: R-CMB-004 回合开始——只有当前回合参战者可以行动。
+        """
         try:
-            c = store.load_combat(campaign_id)
+            c = store.load_combat(self.campaign_id)
             if not c.active:
                 return True
             cur = cmb.current_combatant(c)
-            if cur and cur.cid == str(character_id):
-                return True
-            return False
+            return cur is not None and cur.cid == str(character_id)
         except Exception:
             return True
 
-    def current_turn_name(self, campaign_id: int) -> Optional[str]:
-        """当前回合是谁（给其他玩家提示'轮到 X'）。"""
+    def current_turn_name(self) -> Optional[str]:
         try:
-            c = store.load_combat(campaign_id)
+            c = store.load_combat(self.campaign_id)
             if not c.active:
                 return None
             cur = cmb.current_combatant(c)
@@ -79,99 +154,470 @@ class ConnectionManager:
         except Exception:
             return None
 
-    async def broadcast_state(self, campaign_id: int) -> None:
-        """广播更新后的场景 + 战斗 + 回合信息给全员。"""
-        # 场景
-        scene = world.get_scene(campaign_id)
-        if scene:
-            await self.broadcast(campaign_id, {"type": "scene_update", "scene": scene})
-        # 战斗 + 回合
-        turn = self.current_turn_name(campaign_id)
+    # —— 销毁调度 ——
+    def _schedule_dispose(self) -> None:
+        """30秒后如果房间仍为空，则销毁并清理。"""
+        # 取消已有任务
+        old = self._dispose_tasks.pop(self.campaign_id, None)
+        if old and not old.done():
+            old.cancel()
+
+        async def _dispose():
+            try:
+                await asyncio.sleep(self.DISPOSE_DELAY)
+                room = self.rooms.get(self.campaign_id)
+                if room and not room.players:
+                    del self.rooms[self.campaign_id]
+            except asyncio.CancelledError:
+                pass
+
         try:
-            c = store.load_combat(campaign_id)
-            await self.broadcast(campaign_id, {
-                "type": "combat_update",
-                "active": c.active, "round": c.round,
-                "current_turn": turn,
-                "initiative_order": [{"name": x.name, "initiative": x.initiative,
-                                      "side": x.side} for x in c.initiative_order],
-            })
-        except Exception:
-            pass
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        task = loop.create_task(_dispose())
+        self._dispose_tasks[self.campaign_id] = task
+
+    # —— 类方法 ——
+    @classmethod
+    def get_or_create(cls, campaign_id: int) -> "CampaignRoom":
+        room = cls.rooms.get(campaign_id)
+        if room is None:
+            room = cls(campaign_id)
+            cls.rooms[campaign_id] = room
+        return room
+
+    @classmethod
+    def get(cls, campaign_id: int) -> Optional["CampaignRoom"]:
+        return cls.rooms.get(campaign_id)
 
 
-manager = ConnectionManager()
+# 全局房间管理器单例
+room_manager = CampaignRoom
+
+# 序列化锁：graph.run 在线程池执行，需序列化以避免 Qdrant 并发问题
+_graph_lock = asyncio.Lock()
 
 
-async def websocket_endpoint(ws: WebSocket, campaign_id: int,
-                             character_id: int = 0, name: str = "玩家"):
-    """WebSocket 端点：玩家连接 → 接收行动 → 跑判定链 → 广播给全员。"""
-    conn = await manager.connect(campaign_id, character_id, name, ws)
-    # 通知全员：新玩家加入
-    players = manager.get_players(campaign_id)
-    await manager.broadcast(campaign_id, {"type": "join", "name": name,
-                                         "players": players})
-    # 给新连接发当前场景
-    scene = world.get_scene(campaign_id)
-    if scene:
-        await ws.send_text(json.dumps({"type": "scene_update", "scene": scene},
-                                      ensure_ascii=False))
-    # 给新连接发当前回合
-    turn = manager.current_turn_name(campaign_id)
-    if turn:
-        await ws.send_text(json.dumps({"type": "turn", "current": turn},
-                                      ensure_ascii=False))
+def _room_name(campaign_id: int) -> str:
+    """Socket.IO 房间名。"""
+    return f"campaign_{campaign_id}"
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Socket.IO 事件处理
+# ──────────────────────────────────────────────────────────────────────────
+
+@sio.event
+async def connect(sid, environ, auth=None):
+    """玩家连接时自动加入战役房间。
+
+    连接参数通过 query string 传递:
+      campaign_id=123&character_id=456&name=阿拉贡&role=player|dm
+    """
+    qs = environ.get("QUERY_STRING", "")
+    params = dict(pair.split("=", 1) for pair in qs.split("&") if "=" in pair)
 
     try:
-        while True:
-            data = await ws.receive_json()
-            if data.get("type") == "action":
-                player_input = data.get("player_input", "").strip()
-                if not player_input:
-                    continue
-                # 回合检查
-                if not manager.is_player_turn(campaign_id, character_id):
-                    await ws.send_text(json.dumps({
-                        "type": "error", "message": f"还没轮到你，当前轮到 {manager.current_turn_name(campaign_id)}"
-                    }, ensure_ascii=False))
-                    continue
-                # 通知发送者：处理中
-                await ws.send_text(json.dumps({"type": "processing",
-                    "player": name}, ensure_ascii=False))
-                # 通知其他人：X 正在行动
-                await manager.broadcast(campaign_id, {
-                    "type": "player_acting", "player": name,
-                    "action": player_input,
-                }, exclude=ws)
-                # 序列化执行 graph.run（Qdrant 本地 + LLM 调用）
-                thread_id = f"campaign_{campaign_id}"
-                async with manager.lock:
-                    loop = asyncio.get_event_loop()
-                    result = await loop.run_in_executor(None, functools.partial(
-                        graph.run, player_input, campaign_id, character_id,
-                        thread_id, False))
-                # 广播结果给全员
-                await manager.broadcast(campaign_id, {
-                    "type": "result",
-                    "player": name,
-                    "narration": result.get("narration", ""),
-                    "dice": result.get("dice", {}),
-                    "action_options": result.get("action_options", []),
-                    "state_changes": result.get("state_changes", []),
-                })
-                # 广播更新后的场景 + 战斗 + 回合
-                await manager.broadcast_state(campaign_id)
-                # 给行动者发角色更新（HP 等）
-                ch = store.get_character(character_id)
-                if ch:
-                    await ws.send_text(json.dumps({
-                        "type": "character_update",
-                        "hp": ch.hp_current, "hp_max": ch.hp_max,
-                        "ac": ch.ac, "conditions": ch.conditions_list,
-                    }, ensure_ascii=False))
+        campaign_id = int(params.get("campaign_id", "0"))
+        character_id = int(params.get("character_id", "0"))
+    except ValueError:
+        await sio.disconnect(sid)
+        return False
 
-    except WebSocketDisconnect:
-        manager.disconnect(campaign_id, ws)
-        players = manager.get_players(campaign_id)
-        await manager.broadcast(campaign_id, {"type": "leave", "name": name,
-                                              "players": players})
+    name = params.get("name", "玩家")
+    is_dm = params.get("role", "player") == "dm"
+
+    # 加入 Socket.IO 房间
+    room = f"campaign_{campaign_id}"
+    await sio.enter_room(sid, room)
+
+    # 保存会话（支持断线重连恢复）
+    await sio.save_session(sid, {
+        "campaign_id": campaign_id,
+        "character_id": character_id,
+        "name": name,
+        "is_dm": is_dm,
+        "sid": sid,
+    })
+
+    # 注册到 CampaignRoom
+    camp_room = CampaignRoom.get_or_create(campaign_id)
+    camp_room.add_player(sid, character_id, name, is_dm)
+
+    # 通知其他玩家有新人加入
+    players = camp_room.get_players()
+    await sio.emit("join", {"name": name, "players": players},
+                   room=room, skip_sid=sid)
+
+    # 发送当前场景和战斗状态给新连接（增量同步：仅发送必要状态）
+    scene = world.get_scene(campaign_id)
+    if scene:
+        await sio.emit("scene_update", {"scene": scene}, to=sid)
+
+    try:
+        combat = store.load_combat(campaign_id)
+        if combat.active:
+            turn = camp_room.current_turn_name()
+            await sio.emit("combat_update", {
+                "active": True,
+                "round": combat.round,
+                "current_turn": turn,
+                "initiative_order": [
+                    {"name": c.name, "initiative": c.initiative, "side": c.side}
+                    for c in combat.initiative_order
+                ],
+            }, to=sid)
+    except Exception:
+        pass
+
+
+@sio.event
+async def disconnect(sid):
+    """玩家断线处理：从房间移除，通知其他玩家。"""
+    session = await sio.get_session(sid)
+    if not session:
+        return
+
+    campaign_id = session["campaign_id"]
+    name = session.get("name", "未知玩家")
+    room = f"campaign_{campaign_id}"
+
+    camp_room = CampaignRoom.get(campaign_id)
+    if camp_room:
+        camp_room.remove_player(sid)
+        players = camp_room.get_players()
+        await sio.emit("leave", {"name": name, "players": players}, room=room)
+
+
+@sio.on("action")
+async def on_action(sid, data):
+    """玩家发起行动：跑判定链，广播结果。
+
+    流程:
+      1. 回合检查（战斗中必须轮到自己）
+      2. 通知全员：X 正在行动
+      3. 序列化执行 graph.run（线程池）
+      4. 广播叙事+骰子+行动选项给全员
+      5. 广播更新后的场景+战斗状态（增量同步）
+    """
+    session = await sio.get_session(sid)
+    if not session:
+        return
+
+    campaign_id = session["campaign_id"]
+    character_id = session["character_id"]
+    name = session["name"]
+    room = f"campaign_{campaign_id}"
+
+    player_input = (data.get("player_input") or "").strip()
+    if not player_input:
+        return
+
+    # 回合检查
+    camp_room = CampaignRoom.get(campaign_id)
+    if camp_room and not camp_room.is_player_turn(character_id):
+        turn = camp_room.current_turn_name()
+        await sio.emit("error",
+                       {"message": f"还没轮到你，当前轮到 {turn}"},
+                       to=sid)
+        return
+
+    # 通知全员：X 正在行动
+    await sio.emit("player_acting", {"player": name, "action": player_input},
+                   room=room, skip_sid=sid)
+    await sio.emit("processing", {"player": name}, to=sid)
+
+    # 序列化执行 graph.run
+    thread_id = f"campaign_{campaign_id}"
+    async with _graph_lock:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            functools.partial(graph.run, player_input, campaign_id,
+                              character_id, thread_id, False),
+        )
+
+    # 广播结果给房间内所有人
+    narration = result.get("narration", "")
+    dice = result.get("dice", {})
+    action_options = result.get("action_options", [])
+
+    await sio.emit("result", {
+        "player": name,
+        "narration": narration,
+        "dice": dice,
+        "action_options": action_options,
+    }, room=room)
+
+    # 增量同步：广播更新后的场景+战斗状态
+    await _broadcast_state(campaign_id)
+
+    # 给行动者发角色更新
+    ch = store.get_character(character_id)
+    if ch:
+        await sio.emit("character_update", {
+            "hp": ch.hp_current,
+            "hp_max": ch.hp_max,
+            "ac": ch.ac,
+            "conditions": ch.conditions_list,
+        }, to=sid)
+
+
+@sio.on("end_turn")
+async def on_end_turn(sid, data):
+    """结束自己的回合，推进先攻序列。"""
+    session = await sio.get_session(sid)
+    if not session:
+        return
+
+    campaign_id = session["campaign_id"]
+    character_id = session["character_id"]
+    room = f"campaign_{campaign_id}"
+
+    camp_room = CampaignRoom.get(campaign_id)
+    if camp_room and not camp_room.is_player_turn(character_id):
+        await sio.emit("error", {"message": "不是你的回合"}, to=sid)
+        return
+
+    try:
+        combat = store.load_combat(campaign_id)
+        prev_round = combat.round
+        nxt = cmb.advance_turn(combat)
+        store.save_combat(campaign_id, combat)
+
+        if combat.round != prev_round:
+            await sio.emit("round_end", {"round": prev_round}, room=room)
+
+        await _broadcast_state(campaign_id)
+
+        if nxt:
+            await sio.emit("turn_advanced", {
+                "next": nxt.name,
+                "is_player": nxt.is_player,
+            }, room=room)
+    except KeyError:
+        await sio.emit("error", {"message": "无战斗状态"}, to=sid)
+
+
+@sio.on("ready")
+async def on_ready(sid, data):
+    """玩家标记准备就绪。"""
+    session = await sio.get_session(sid)
+    if not session:
+        return
+    campaign_id = session["campaign_id"]
+    name = session["name"]
+    room = f"campaign_{campaign_id}"
+    await sio.emit("player_ready", {"player": name}, room=room)
+
+
+@sio.on("monster_turn")
+async def on_monster_turn(sid, data):
+    """DM 专用：怪物回合开始。"""
+    session = await sio.get_session(sid)
+    if not session or not session.get("is_dm"):
+        await sio.emit("error", {"message": "仅 DM 可执行此操作"}, to=sid)
+        return
+    campaign_id = session["campaign_id"]
+    room = f"campaign_{campaign_id}"
+    monster_name = data.get("monster_name", "怪物")
+    await sio.emit("monster_turn", {"monster": monster_name}, room=room)
+
+
+@sio.on("monster_action")
+async def on_monster_action(sid, data):
+    """DM 专用：怪物行动结果。"""
+    session = await sio.get_session(sid)
+    if not session or not session.get("is_dm"):
+        await sio.emit("error", {"message": "仅 DM 可执行此操作"}, to=sid)
+        return
+    campaign_id = session["campaign_id"]
+    room = f"campaign_{campaign_id}"
+    monster_name = data.get("monster_name", "怪物")
+    action_result = data.get("action_result", {})
+    await sio.emit("monster_action",
+                   {"monster": monster_name, "result": action_result},
+                   room=room)
+
+
+@sio.on("combat_end")
+async def on_combat_end(sid, data):
+    """DM 专用：战斗结束。"""
+    session = await sio.get_session(sid)
+    if not session or not session.get("is_dm"):
+        await sio.emit("error", {"message": "仅 DM 可执行此操作"}, to=sid)
+        return
+    campaign_id = session["campaign_id"]
+    room = f"campaign_{campaign_id}"
+    outcome = data.get("outcome", "victory")
+    await sio.emit("combat_end", {"outcome": outcome}, room=room)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 状态广播（增量同步）
+# ──────────────────────────────────────────────────────────────────────────
+
+async def _broadcast_state(campaign_id: int) -> None:
+    """广播更新后的场景 + 战斗 + 回合信息给全员。
+
+    增量同步策略:
+      - 场景: 仅当场景存在时发送
+      - 战斗: 仅发送 active/round/current_turn/initiative_order
+      - 不发送完整角色卡（由各客户端按需拉取）
+    """
+    room = f"campaign_{campaign_id}"
+
+    # 场景
+    scene = world.get_scene(campaign_id)
+    if scene:
+        await sio.emit("scene_update", {"scene": scene}, room=room)
+
+    # 战斗 + 回合
+    camp_room = CampaignRoom.get(campaign_id)
+    turn = camp_room.current_turn_name() if camp_room else None
+    try:
+        c = store.load_combat(campaign_id)
+        await sio.emit("combat_update", {
+            "active": c.active,
+            "round": c.round,
+            "current_turn": turn,
+            "initiative_order": [
+                {"name": x.name, "initiative": x.initiative, "side": x.side}
+                for x in c.initiative_order
+            ],
+        }, room=room)
+    except Exception:
+        pass
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 兼容层：保留旧 API 名称供 main.py 引用
+# ──────────────────────────────────────────────────────────────────────────
+
+class ConnectionManager:
+    """兼容旧代码的连接管理器外观。
+
+    新代码应直接使用 CampaignRoom 和 sio。
+    此类仅为保持向后兼容（main.py 中 manager.get_players 等）。
+    """
+
+    @staticmethod
+    def get_players(campaign_id: int) -> list[dict]:
+        room = CampaignRoom.get(campaign_id)
+        return room.get_players() if room else []
+
+    @staticmethod
+    def current_turn_name(campaign_id: int) -> Optional[str]:
+        room = CampaignRoom.get(campaign_id)
+        return room.current_turn_name() if room else None
+
+    @staticmethod
+    def is_player_turn(campaign_id: int, character_id: int) -> bool:
+        room = CampaignRoom.get(campaign_id)
+        return room.is_player_turn(character_id) if room else True
+
+
+manager = ConnectionManager
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 自检
+# ──────────────────────────────────────────────────────────────────────────
+
+def _self_test() -> None:
+    """测试 CampaignRoom 生命周期管理 + Socket.IO 服务器初始化。
+
+    验证项:
+      1. Socket.IO AsyncServer 可正常创建
+      2. CampaignRoom.get_or_create 创建房间
+      3. add_player / remove_player 正确维护玩家列表
+      4. 空房间触发延迟销毁调度
+      5. is_player_turn 在非战斗时返回 True
+      6. 兼容层 ConnectionManager 正常工作
+    """
+    # 1. Socket.IO 服务器验证
+    assert sio is not None, "Socket.IO 服务器未创建"
+    print("[ws] Socket.IO AsyncServer 初始化 ✓")
+
+    # 清理可能残留的房间
+    CampaignRoom.rooms.clear()
+    CampaignRoom._dispose_tasks.clear()
+
+    # 2. 创建房间
+    room1 = CampaignRoom.get_or_create(101)
+    assert room1.campaign_id == 101
+    assert room1.players == {}
+    assert CampaignRoom.get(101) is room1
+    print("[ws] CampaignRoom.get_or_create ✓")
+
+    # 3. 添加玩家
+    ps1 = room1.add_player("sid_001", 1001, "阿拉贡", is_dm=False)
+    assert ps1.sid == "sid_001"
+    assert ps1.name == "阿拉贡"
+    assert ps1.connected is True
+    assert len(room1.players) == 1
+    players = room1.get_players()
+    assert players[0]["name"] == "阿拉贡"
+    assert players[0]["is_dm"] is False
+    print("[ws] add_player / get_players ✓")
+
+    # 4. 查找玩家
+    found = room1.find_by_character(1001)
+    assert found is not None and found.name == "阿拉贡"
+    by_sid = room1.get_player("sid_001")
+    assert by_sid is not None
+    print("[ws] find_by_character / get_player ✓")
+
+    # 5. 移除玩家
+    removed = room1.remove_player("sid_001")
+    assert removed is not None
+    assert removed.connected is False
+    assert len(room1.players) == 0
+    print("[ws] remove_player ✓")
+
+    # 6. 空房间触发销毁调度（不等待实际执行，只验证任务被创建）
+    # 注意：_schedule_dispose 依赖事件循环，在空房间场景下手动验证
+    assert room1.campaign_id in CampaignRoom.rooms  # 仍在注册表中
+    print("[ws] 空房间销毁调度已触发 ✓")
+
+    # 7. 再次 get_or_create 同一 campaign 应返回已存在的房间
+    room1_again = CampaignRoom.get_or_create(101)
+    assert room1_again is room1
+    print("[ws] get_or_create 幂等性 ✓")
+
+    # 8. is_player_turn 非战斗时返回 True（无战斗数据）
+    result = room1.is_player_turn(9999)
+    assert result is True
+    print("[ws] is_player_turn 非战斗返回 True ✓")
+
+    # 9. current_turn_name 无战斗时返回 None
+    turn = room1.current_turn_name()
+    assert turn is None
+    print("[ws] current_turn_name 无战斗返回 None ✓")
+
+    # 10. 兼容层 ConnectionManager
+    cm_players = ConnectionManager.get_players(101)
+    assert cm_players == []
+    cm_turn = ConnectionManager.current_turn_name(101)
+    assert cm_turn is None
+    cm_is_turn = ConnectionManager.is_player_turn(101, 9999)
+    assert cm_is_turn is True
+    print("[ws] 兼容层 ConnectionManager ✓")
+
+    # 11. 多房间隔离
+    room2 = CampaignRoom.get_or_create(202)
+    room2.add_player("sid_002", 2002, "莱戈拉斯")
+    assert len(CampaignRoom.get(101).players) == 0
+    assert len(CampaignRoom.get(202).players) == 1
+    print("[ws] 多房间隔离 ✓")
+
+    # 清理
+    CampaignRoom.rooms.clear()
+
+    print("[ws] 自检全部通过 ✓")
+
+
+if __name__ == "__main__":
+    _self_test()

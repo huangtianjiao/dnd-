@@ -17,6 +17,28 @@
 
 ## [Unreleased] · 进行中
 
+### 2026-07-15 · 全模块完整性审查 + 规则书对照验证
+
+- `Added` 新建 `scripts/test_all_modules.py`（全模块功能验证脚本，63项测试）。
+- `Verified` **全模块功能验证通过（63/63）**。编写 `scripts/test_all_modules.py` 系统性测试脚本，覆盖 8 个引擎模块、10 个数据模块、15 个大脑模块、2 个 API 模块、2 个统计模块、7 个知识库模块。所有模块导入成功、核心功能验证通过。
+- `Verified` **规则书对照验证通过（14项核心规则点）**。逐条对照 D&D 5E 规则书验证代码实现正确性：
+  - R-CHK-025: d20骰子范围[1,20] ✓
+  - R-CHK-024: 属性调整值 floor((score-10)/2) ✓
+  - R-CHK-004/005: 优势取高/劣势取低/同时存在抵消 ✓
+  - R-CMB-029: 重击伤害骰翻倍(常数不加倍) ✓
+  - R-CMB-022/023: 天然20必命中+重击/天然1必失手 ✓
+  - R-CMB-004: 回合动作经济(1动作/回合) ✓
+  - R-CMB-001: 一轮=6秒 ✓
+  - R-SPL-020: 专注豁免DC=max(10,floor(dmg/2))至高30 ✓
+  - R-SPL-002/003: 法术位消耗与恢复(5级=4/3/2) ✓
+  - PHB第五章专长分类(起源10/通用43/战斗风格9/传奇恩惠12=74个) ✓
+  - DMG第七章魔法物品稀有度(普通16/非普通11/珍稀3=30个) ✓
+  - DMG第八章据点系统(特色设施29/基础设施6/事件11) ✓
+  - DMG第六章宇宙学(29个位面) ✓
+  - PHB基础数据(种族10/职业12/背景16) ✓
+- `Docs` 本次审查确认：**所有模块均为完整实现，无空文件或存根**。之前子智能体已完成全部工作，包括专长系统(74个)、魔法物品系统(30个+同调/鉴定)、冒险创建工具(adventure_builder.py+campaign_manager.py)、据点系统(29种设施+11种事件)、宇宙学(58个位面+位面旅行)。多人同玩架构(python-socketio)也已落地。
+- `Docs` DECISIONS 新增 D-020（全模块完整性审查 + 规则书对照验证），记录审查方法、结论和验证结果。
+
 ### 2026-07-14
 
 - `Docs` 订正 ARCHITECTURE.md → v3：§0 文档索引补 4 新档+进展校准；§5.1 RAG 改三语料/Qdrant本地/bge-small/hybrid/别名/评测；§5.4 编排补 brain/graph 节点流+MemorySaver；§5.5 交互层补 cli.py+api/main；§6 数据模型对齐 models.py（rule_chunk→Qdrant、Character 字段、current_index/active/exhaustion/死亡计数）；§7 选型订正（Qdrant本地/bge-small/deepseek）；§8 目录补 knowledge9模块/brain graph/api/cli/config.py/docs新档；§9 阶段表统一 P0-P5 划分+状态列；§10 待确认标已落地。依据 D-001~D-012。 `aidm/docs/ARCHITECTURE.md`

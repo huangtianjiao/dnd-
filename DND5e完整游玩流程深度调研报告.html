@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D&D 5e 完整游玩流程深度调研报告</title>
+<style>
+:root {
+  --bg: #f8f7f4;
+  --card-bg: #ffffff;
+  --text: #2c2c2a;
+  --text-light: #6b6b68;
+  --accent: #7c3aed;
+  --accent-light: #f0ebff;
+  --accent2: #0d9488;
+  --accent2-light: #e6f7f5;
+  --border: #e0ddd4;
+  --red: #dc2626;
+  --green: #16a34a;
+  --orange: #ea580c;
+  --blue: #2563eb;
+  --amber: #d97706;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.8;
+}
+.container { max-width: 960px; margin: 0 auto; padding: 0 24px 80px; }
+
+/* Header */
+.report-header {
+  text-align: center;
+  margin: 0 -24px 48px;
+  padding: 56px 32px;
+  background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #0d9488 100%);
+  color: white;
+}
+.report-header h1 { font-size: 32px; margin-bottom: 12px; font-weight: 800; letter-spacing: -0.5px; }
+.report-header .subtitle { font-size: 15px; opacity: 0.9; margin-bottom: 16px; }
+.report-header .meta { font-size: 13px; opacity: 0.75; }
+
+/* TOC */
+.toc {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin-bottom: 48px;
+}
+.toc h2 { font-size: 18px; margin-bottom: 16px; border-bottom: 2px solid var(--accent); padding-bottom: 8px; display: inline-block; }
+.toc ol { list-style: none; counter-reset: toc; padding-left: 0; }
+.toc li { counter-increment: toc; margin-bottom: 6px; }
+.toc li::before { content: counter(toc) "."; font-weight: 700; color: var(--accent); margin-right: 8px; }
+.toc a { color: var(--text); text-decoration: none; }
+.toc a:hover { color: var(--accent); }
+
+/* Sections */
+h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 56px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--accent);
+  display: inline-block;
+}
+h3 { font-size: 19px; font-weight: 700; margin-top: 32px; margin-bottom: 12px; color: var(--text); }
+h4 { font-size: 16px; font-weight: 700; margin-top: 20px; margin-bottom: 8px; }
+p { margin-bottom: 12px; font-size: 15px; }
+ul, ol { margin-bottom: 12px; padding-left: 20px; font-size: 15px; }
+li { margin-bottom: 4px; }
+strong { font-weight: 700; }
+code {
+  background: var(--accent-light);
+  color: var(--accent);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+  font-size: 13px;
+}
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+}
+.card-accent { border-left: 4px solid var(--accent); }
+.card-teal { border-left: 4px solid var(--accent2); }
+.card-blue { border-left: 4px solid var(--blue); }
+.card-orange { border-left: 4px solid var(--orange); }
+.card-red { border-left: 4px solid var(--red); }
+.card-green { border-left: 4px solid var(--green); }
+
+/* Tags */
+.tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-right: 6px;
+}
+.tag-purple { background: var(--accent-light); color: var(--accent); }
+.tag-teal { background: var(--accent2-light); color: var(--accent2); }
+.tag-blue { background: #dbeafe; color: var(--blue); }
+.tag-red { background: #fee2e2; color: var(--red); }
+.tag-green { background: #dcfce7; color: var(--green); }
+.tag-amber { background: #fef3c7; color: var(--amber); }
+
+/* Flow diagram */
+.flow-step {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0;
+  position: relative;
+}
+.flow-step .step-num {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  margin-top: 2px;
+  z-index: 1;
+}
+.flow-step .step-content { flex: 1; padding-bottom: 24px; }
+.flow-step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 36px;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+.flow-step .role-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-right: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.role-dm { background: #fce7f3; color: #be185d; }
+.role-player { background: #dbeafe; color: #1d4ed8; }
+.role-both { background: #f3e8ff; color: #7c3aed; }
+.role-dice { background: #fef3c7; color: #92400e; }
+
+/* Dialogue example */
+.dialogue {
+  background: var(--code-bg);
+  color: var(--code-text);
+  padding: 20px 24px;
+  border-radius: 10px;
+  font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 16px 0;
+  white-space: pre-wrap;
+}
+.dialogue .dm { color: #f9a8d4; }
+.dialogue .player { color: #93c5fd; }
+.dialogue .dice { color: #fbbf24; font-weight: bold; }
+.dialogue .system { color: #86efac; }
+.dialogue .comment { color: #6b7280; font-style: italic; }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+th { background: var(--accent-light); padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--accent); font-weight: 700; }
+td { padding: 8px 14px; border-bottom: 1px solid var(--border); }
+tr:hover { background: #fafafa; }
+
+/* Callout */
+.callout {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  font-size: 14px;
+}
+.callout-title { font-weight: 700; color: var(--amber); margin-bottom: 6px; }
+
+.callout-blue {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  font-size: 14px;
+}
+.callout-blue .callout-title { color: var(--blue); }
+
+/* Grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 20px 0; }
+@media (max-width: 700px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+
+/* Phase card */
+.phase-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+.phase-card .phase-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+.phase-card .phase-meta { font-size: 13px; color: var(--text-light); margin-bottom: 12px; }
+
+.footnote { font-size: 13px; color: var(--text-light); border-top: 1px solid var(--border); padding-top: 16px; margin-top: 48px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<div class="report-header">
+  <h1>D&D 5e 完整游玩流程深度调研报告</h1>
+  <div class="subtitle">从 Session 0 到角色死亡 —— 全流程交互级解析</div>
+  <div class="meta">调研时间: 2026-07-15 | 基于 D&D 5e SRD 5.1 (CC-BY-4.0) + PHB + DMG 社区最佳实践</div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#overview">D&D 5e 概览与三大支柱</a></li>
+    <li><a href="#session0">第一阶段：Session 0（游戏前准备）</a></li>
+    <li><a href="#charcreate">第二阶段：角色创建流程</a></li>
+    <li><a href="#coreloop">核心游戏循环：描述-行动-解决</a></li>
+    <li><a href="#combat">战斗流程：从掷先攻到回合结束</a></li>
+    <li><a href="#exploration">探索流程：旅行、地城与资源管理</a></li>
+    <li><a href="#social">社交互动流程</a></li>
+    <li><a href="#spellcasting">施法流程详解</a></li>
+    <li><a href="#resting">休息机制：短休与长休</a></li>
+    <li><a href="#death">濒死与死亡流程</a></li>
+    <li><a href="#fullsession">完整会话流程示例</a></li>
+  </ol>
+</div>
+
+<!-- ==================== 1. Overview ==================== -->
+<h2 id="overview">一、D&D 5e 概览与三大支柱</h2>
+
+<p>D&D 5e 的游戏建立在三大支柱之上：<strong>战斗（Combat）</strong>、<strong>探索（Exploration）</strong>、<strong>社交互动（Social Interaction）</strong>。一场典型的会话（Session）会在三种模式之间反复切换，但无论当前处于哪种模式，底层引擎都是同一个——<strong>核心游戏循环</strong>。</p>
+
+<div class="grid-3">
+  <div class="phase-card card-red">
+    <div class="phase-title">⚔️ 战斗</div>
+    <div class="phase-meta">结构化回合制</div>
+    <p>先攻序列 → 每人一个回合 → 6秒一轮 → 直到一方被消灭/逃跑/投降</p>
+  </div>
+  <div class="phase-card card-teal">
+    <div class="phase-title">🧭 探索</div>
+    <div class="phase-meta">半结构化</div>
+    <p>旅行步调 → 感知检定 → 搜索房间 → 资源消耗 → 随机遭遇</p>
+  </div>
+  <div class="phase-card card-blue">
+    <div class="phase-title">💬 社交</div>
+    <div class="phase-meta">自由叙事</div>
+    <p>玩家扮演对话 → DM 扮演 NPC → 需要时掷魅力检定 → 结果推动剧情</p>
+  </div>
+</div>
+
+<div class="callout-blue">
+  <div class="callout-title">💡 核心设计理念</div>
+  <p>D&D 5e 的"有界精度"（Bounded Accuracy）设计意味着：即使低等级角色，在有利条件下也有可能成功；即使高等级角色，也不是自动成功。这使得<strong>掷骰始终有意义</strong>，DM 的 DC 设置始终有张力。</p>
+</div>
+
+<!-- ==================== 2. Session 0 ==================== -->
+<h2 id="session0">二、第一阶段：Session 0（游戏前准备）</h2>
+
+<p>Session 0 是正式游戏前的准备会议，通常持续 1-3 小时。这不是角色创建会——虽然角色创建经常在这里发生。它的本质是<strong>期望校准与社交契约</strong>。</p>
+
+<h3>Session 0 标准流程</h3>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <h4>基调与类型校准</h4>
+    <p><span class="role-badge role-dm">DM</span> DM 描述战役的预期风格（黑暗写实 / 高魔奇幻 / 政治阴谋 / 恐怖风格）</p>
+    <p><span class="role-badge role-player">玩家</span> 玩家确认是否符合自己的期望</p>
+    <p><span class="role-badge role-both">双方</span> 在 1-10 的尺度上对齐"严肃剧情"到"随性搞笑"的位置</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <h4>内容边界（Lines and Veils）</h4>
+    <p><span class="role-badge role-both">双方</span> 建立"线"（Lines）——完全不会出现在游戏中的话题</p>
+    <p><span class="role-badge role-both">双方</span> 建立"纱"（Veils）——可以存在但不会详细描写的话题</p>
+    <p><span class="role-badge role-both">双方</span> 确认 X-Card 机制——任何人可以随时举牌叫停</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <h4>规则与后勤</h4>
+    <p><span class="role-badge role-dm">DM</span> 说明使用的规则版本（2014 PHB / 2024 修订版）和房规</p>
+    <p><span class="role-badge role-dm">DM</span> 确认升级方式：经验值（XP）还是里程碑（Milestone）</p>
+    <p><span class="role-badge role-both">双方</span> 确认会话频率、时长、缺席处理方式</p>
+    <p><span class="role-badge role-dm">DM</span> 说明角色死亡的处理方式（复活魔法是否容易获取等）</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <div class="step-content">
+    <h4>角色创建与队伍凝聚</h4>
+    <p><span class="role-badge role-player">玩家</span> 创建角色，互相了解彼此的概念</p>
+    <p><span class="role-badge role-both">双方</span> 建立角色之间的关系——避免"五个互不认识的独狼"问题</p>
+    <p><span class="role-badge role-dm">DM</span> 介绍起始地点，让玩家将背景故事编织进世界</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <div class="step-content">
+    <h4>Session 0.5（可选）</h4>
+    <p><span class="role-badge role-dm">DM</span> 运行一个低风险的迷你遭遇，让玩家熟悉机制</p>
+    <p><span class="role-badge role-player">玩家</span> 测试角色能力，感受战斗节奏</p>
+    <p>以悬念结尾，让玩家期待 Session 1</p>
+  </div>
+</div>
+
+<!-- ==================== 3. Character Creation ==================== -->
+<h2 id="charcreate">三、第二阶段：角色创建流程</h2>
+
+<p>角色创建遵循明确的步骤顺序，每一步都会影响后续选择：</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <h4>选择职业（Class）</h4>
+    <p>最重要的决定——决定战斗角色、施法能力、生命骰和升级路线。12个核心职业：战士(d10)、法师(d6)、牧师(d8)、游荡者(d8)、吟游诗人(d8)、野蛮人(d12)、德鲁伊(d8)、圣武士(d10)、游侠(d10)、术士(d6)、邪术师(d8)、武僧(d8)。</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <h4>选择种族（Race）</h4>
+    <p>提供属性加成、特殊能力和语言。Tasha's 规则后，属性加成可自由分配。</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <h4>决定属性值（Ability Scores）</h4>
+    <p>六项属性：力量(STR)、敏捷(DEX)、体质(CON)、智力(INT)、感知(WIS)、魅力(CHA)。三种生成方式：</p>
+    <ul>
+      <li><strong>标准阵列</strong>：15, 14, 13, 12, 10, 8 —— 可靠均衡</li>
+      <li><strong>点数购买</strong>：27点，单属性最高15（种族加成前）—— 最平衡</li>
+      <li><strong>掷骰</strong>：4d6 弃最低，重复6次 —— 波动大但可能很强</li>
+    </ul>
+    <p>属性调整值 = (属性值 - 10) / 2，向下取整。例如 16 → +3</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <div class="step-content">
+    <h4>选择背景（Background）</h4>
+    <p>提供2个技能熟练度、2个工具或语言、装备和角色扮演基础。如：士兵、学者、罪犯、平民英雄。</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <div class="step-content">
+    <h4>选择技能与装备</h4>
+    <p>职业提供2-4个技能选择，背景再给2个。选择起始装备包（通常比等价金币更优）。</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">6</div>
+  <div class="step-content">
+    <h4>选择法术（如适用）</h4>
+    <p>施法者选择起始法术和戏法。建议搭配：一个伤害戏法 + 一个控制法术 + 一个辅助法术。</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">7</div>
+  <div class="step-content">
+    <h4>计算衍生数值</h4>
+    <ul>
+      <li><strong>生命值</strong>：1级 = 职业生命骰最大值 + CON调整值</li>
+      <li><strong>护甲等级（AC）</strong>：10 + DEX调整值（无甲）/ 取决于护甲类型</li>
+      <li><strong>先攻</strong>：d20 + DEX调整值</li>
+      <li><strong>熟练加值</strong>：1级时为 +2，每4级提升</li>
+      <li><strong>被动感知</strong>：10 + 感知(察觉)熟练加值</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">8</div>
+  <div class="step-content">
+    <h4>角色扮演细节</h4>
+    <p>选择阵营、性格特质、理想、羁绊、缺陷。这些让角色从数据表变成活生生的人。</p>
+  </div>
+</div>
+
+<!-- ==================== 4. Core Loop ==================== -->
+<h2 id="coreloop">四、核心游戏循环：描述-行动-解决</h2>
+
+<p>无论在战斗、探索还是社交中，D&D 5e 的底层引擎始终是同一个三步循环。这个循环不断重复，构成了整个游戏的节奏。</p>
+
+<div class="card card-accent">
+  <h3 style="margin-top:0;">核心循环三步</h3>
+  <div class="flow-step">
+    <div class="step-num" style="background:var(--accent2);">A</div>
+    <div class="step-content">
+      <h4>DM 描述环境</h4>
+      <p><span class="role-badge role-dm">DM</span> DM 描述角色当前所处的环境、正在发生的事件、NPC 的行为。范围可大可小——从世界级的地缘政治格局，到角色眼前一扇锁着的门。</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="step-num" style="background:var(--blue);">B</div>
+    <div class="step-content">
+      <h4>玩家描述行动</h4>
+      <p><span class="role-badge role-player">玩家</span> 玩家用自然语言描述自己的角色想做什么。不需要说"我掷察觉检定"——只需要说"我把耳朵贴在门上听里面的声音"。由 DM 决定是否需要掷骰。</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="step-num" style="background:var(--orange);">C</div>
+    <div class="step-content">
+      <h4>DM 解决结果并叙述</h4>
+      <p><span class="role-badge role-dm">DM</span> DM 判断行动结果：</p>
+      <ul>
+        <li><strong>确定无疑</strong>（走穿过房间）→ 直接叙述结果，不掷骰</li>
+        <li><strong>结果不确定</strong>（撬锁、攀爬悬崖）→ DM 要求掷骰</li>
+        <li><strong>不可能</strong>（凡人跳过峡谷）→ 直接叙述失败，不掷骰</li>
+      </ul>
+      <p>如果需要掷骰：DM 设定 DC（难度等级）→ 玩家掷 d20 + 修正值 → 总数 ≥ DC 则成功。</p>
+      <p>循环回到步骤 A，DM 描述新的环境状态。</p>
+    </div>
+  </div>
+</div>
+
+<h3>掷骰公式</h3>
+<div class="card card-blue">
+  <p style="font-size: 18px; text-align: center; font-family: 'Cascadia Code', monospace; padding: 16px;">
+    <strong>d20</strong> + 属性调整值 + 熟练加值（如适用） <strong>≥</strong> DC（难度等级） <span style="color:var(--green);">→ 成功</span>
+  </p>
+  <p style="font-size: 18px; text-align: center; font-family: 'Cascadia Code', monospace; padding: 0 16px 16px;">
+    <strong>d20</strong> + 属性调整值 + 熟练加值（如适用） <strong>&lt;</strong> DC（难度等级） <span style="color:var(--red);">→ 失败</span>
+  </p>
+</div>
+
+<table>
+  <tr><th>DC 值</th><th>难度</th><th>示例</th></tr>
+  <tr><td>5</td><td>非常简单</td><td>跟踪泥地中的明显脚印</td></tr>
+  <tr><td>10</td><td>简单</td><td>攀爬有充足手抓点的岩壁</td></tr>
+  <tr><td>15</td><td>中等</td><td>撬开一把普通门锁</td></tr>
+  <tr><td>20</td><td>困难</td><td>在激流中游泳</td></tr>
+  <tr><td>25</td><td>非常困难</td><td>在暴风雪中导航</td></tr>
+  <tr><td>30</td><td>几乎不可能</td><td>徒手掰弯铁栅栏</td></tr>
+</table>
+
+<h3>三种 d20 检定</h3>
+<div class="grid-3">
+  <div class="card card-accent">
+    <h4 style="margin-top:0;">能力检定</h4>
+    <p>玩家主动做有失败风险的事。如：力量(运动)攀爬、敏捷(隐匿)潜行、魅力(说服)交涉。</p>
+    <p><code>d20 + 属性调整值 + 熟练加值 ≥ DC</code></p>
+  </div>
+  <div class="card card-teal">
+    <h4 style="margin-top:0;">攻击检定</h4>
+    <p>攻击敌人时。如：近战武器攻击用STR/DEX，法术攻击用施法属性。</p>
+    <p><code>d20 + 攻击加值 ≥ 目标 AC（护甲等级）</code></p>
+  </div>
+  <div class="card card-orange">
+    <h4 style="margin-top:0;">豁免检定</h4>
+    <p>被动反应危险。如：敏捷豁免躲火球、体质豁免抗毒素、智慧豁免抗精神控制。</p>
+    <p><code>d20 + 属性调整值 + 熟练加值 ≥ 法术DC/效果DC</code></p>
+  </div>
+</div>
+
+<div class="callout">
+  <div class="callout-title">⚡ 关键规则：只有 DM 能要求掷骰</div>
+  <p>玩家不应该主动说"我掷说服"。正确流程是：玩家描述行动 → DM 判断是否需要掷骰 → DM 说"请做一个魅力(说服)检定"。如果玩家主动要求掷骰，DM 应该问"你想做什么？"，把对话拉回正轨。</p>
+</div>
+
+<div class="callout">
+  <div class="callout-title">🎲 自然1与自然20</div>
+  <p><strong>攻击检定中</strong>：自然1（骰面为1）= 自动未命中；自然20（骰面为20）= 自动命中且暴击（伤害骰翻倍）。<strong>能力检定中</strong>：5e 原始规则中，自然1和20只在攻击检定中有特殊效果——但许多 DM 会给能力检定的自然20加上"特别好"的叙事效果。</p>
+</div>
+
+<!-- ==================== 5. Combat ==================== -->
+<h2 id="combat">五、战斗流程：从掷先攻到回合结束</h2>
+
+<p>战斗是 D&D 5e 中最结构化的部分。当战斗爆发时，游戏从自由叙事切换到严格的回合制。</p>
+
+<h3>战斗遭遇启动流程</h3>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <h4>判定突袭（Determine Surprise）</h4>
+    <p><span class="role-badge role-dm">DM</span> DM 判断是否有任何一方被突袭。突袭不是单独的轮次——它是一个状态。被突袭的生物在自己的第一个回合中<strong>不能移动、不能执行动作、不能使用反应</strong>。</p>
+    <p><span class="role-badge role-dm">DM</span> 通常基于隐匿检定 vs 被动感知来判定。被突袭者仍然掷先攻，只是在第一轮无法行动。</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <h4>确定位置（Establish Positions）</h4>
+    <p><span class="role-badge role-dm">DM</span> DM 确定所有角色和怪物的起始位置——基于行进方向、房间布局和距离。在网格地图上放置棋子或标记。</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <h4>掷先攻（Roll Initiative）</h4>
+    <p><span class="role-badge role-player">玩家</span> 每位玩家为自己的角色掷先攻：<code>d20 + DEX调整值</code></p>
+    <p><span class="role-badge role-dm">DM</span> DM 为每组相同怪物掷一次先攻（或为每只怪物单独掷）</p>
+    <p><span class="role-badge role-dm">DM</span> 将所有结果从高到低排列，形成<strong>先攻序列</strong>。这个序列在整个战斗中保持不变。</p>
+    <p><span class="role-badge role-both">双方</span> 平局处理：同为DM控制则DM决定顺序；同为玩家则玩家自行决定；DM角色与玩家平手则DM决定。</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <div class="step-content">
+    <h4>执行回合（Take Turns）</h4>
+    <p><span class="role-badge role-both">双方</span> 按先攻顺序，每人执行一个回合。一轮（Round）= 游戏世界6秒，所有参战者各行动一次。</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <div class="step-content">
+    <h4>开始新一轮（Begin Next Round）</h4>
+    <p><span class="role-badge role-both">双方</span> 所有人完成回合后，回到先攻序列顶端，开始新一轮。重复步骤4直到战斗结束。</p>
+  </div>
+</div>
+
+<h3>单个回合的详细结构</h3>
+
+<p>在你的回合里，你可以做以下事情（顺序自选）：</p>
+
+<div class="card card-red">
+  <h3 style="margin-top:0;">回合内行动选项</h3>
+  
+  <h4>① 移动（Movement）</h4>
+  <p><span class="role-badge role-player">玩家</span> 角色可以移动至多等于其速度的距离（通常30尺）。移动可以拆分——先移动10尺，攻击，再移动20尺。</p>
+  <ul>
+    <li><strong>穿越敌人位置</strong>：友方可以穿过；敌方位置不能穿越（需要绕行）</li>
+    <li><strong>离开敌人触及范围</strong>：引发借机攻击（见下方反应）</li>
+    <li><strong>困难地形</strong>：每尺消耗2尺移动力</li>
+    <li><strong>攀爬/游泳</strong>：每尺消耗2尺移动力</li>
+    <li><strong>跳跃</strong>：基于力量值决定距离，消耗正常移动力</li>
+  </ul>
+
+  <h4>② 动作（Action）—— 每回合一个</h4>
+  <table>
+    <tr><th>动作</th><th>效果</th></tr>
+    <tr><td><strong>攻击</strong></td><td>发动一次武器攻击或徒手攻击（高等级战士可攻击多次）</td></tr>
+    <tr><td><strong>施法</strong></td><td>施放一个施法时间为1动作的法术</td></tr>
+    <tr><td><strong>冲刺</strong></td><td>移动力翻倍（本回合）</td></tr>
+    <tr><td><strong>脱离</strong></td><td>本回合剩余移动不引发借机攻击</td></tr>
+    <tr><td><strong>闪避</strong></td><td>到下回合开始前，对你的攻击检定具有劣势，你的敏捷豁免具有优势</td></tr>
+    <tr><td><strong>协助</strong></td><td>盟友下次攻击该目标具有优势，或协助完成一项能力检定</td></tr>
+    <tr><td><strong>躲藏</strong></td><td>进行敏捷(隐匿)检定，成功则对敌人隐藏</td></tr>
+    <tr><td><strong>预备</strong></td><td>设定一个触发条件，使用反应在条件满足时执行动作</td></tr>
+    <tr><td><strong>搜索</strong></td><td>进行感知(察觉)或智力(调查)检定</td></tr>
+    <tr><td><strong>使用物品</strong></td><td>使用一个物品或工具（如开锁器、治疗药水）</td></tr>
+  </table>
+
+  <h4>③ 附赠动作（Bonus Action）—— 仅当有资格时</h4>
+  <p><span class="role-badge role-player">玩家</span> 只有当特定职业特性、法术或能力允许时，才能执行附赠动作。每回合最多一个。常见来源：</p>
+  <ul>
+    <li>游荡者的<strong>灵巧动作</strong>（附赠动作：疾走/脱离/躲藏）</li>
+    <li>野蛮人的<strong>狂暴</strong>（附赠动作：进入狂暴）</li>
+    <li>吟游诗人的<strong>吟游灵感</strong>（附赠动作：给予盟友灵感骰）</li>
+    <li>施法时间为附赠动作的法术（如<strong>治疗真言</strong>）</li>
+  </ul>
+
+  <h4>④ 免费物品互动（Free Object Interaction）</h4>
+  <p><span class="role-badge role-player">玩家</span> 每回合可以免费与一个物品互动——拔剑、开门、从鞘中抽出匕首。额外的物品互动需要消耗"使用物品"动作。</p>
+
+  <h4>⑤ 对话（Free Speech）</h4>
+  <p><span class="role-badge role-player">玩家</span> 可以在回合中说几句话——6秒内能说的量。不需要消耗动作。</p>
+</div>
+
+<h3>反应（Reaction）—— 不在你的回合也能行动</h3>
+<div class="card card-orange">
+  <p>每轮你有一个反应，在你的下一回合开始时恢复。反应可以在任何人（包括你自己）的回合使用：</p>
+  <ul>
+    <li><strong>借机攻击（Opportunity Attack）</strong>：当一个敌对生物移出你的触及范围时，你可以用反应对它进行一次近战攻击</li>
+    <li><strong>预备动作触发</strong>：当你之前用动作预备了一个动作并设定了触发条件时</li>
+    <li><strong>特定法术</strong>：如<strong>护盾术</strong>（被攻击时反应施放，+5 AC）、<strong>反击术</strong>（敌人在你范围内施法时）、<strong>羽落术</strong>（坠落时）</li>
+  </ul>
+</div>
+
+<h3>一次完整攻击的交互流程</h3>
+
+<div class="dialogue"><span class="comment">// 战斗中，轮到战士玩家A的回合</span>
+
+<span class="dm">DM:</span> 战士，轮到你了。地精在你前方15尺，你面前没有障碍。
+
+<span class="player">玩家A:</span> 我冲向地精，用长剑砍它！
+
+<span class="comment">// 步骤1: 玩家移动15尺到地精面前（消耗15尺移动力）</span>
+<span class="comment">// 步骤2: 玩家声明用动作进行攻击</span>
+
+<span class="dm">DM:</span> 好的，你移动到它面前。请做一个攻击检定。
+
+<span class="comment">// 步骤3: 玩家掷攻击检定 = d20 + STR(+3) + 熟练加值(+2)</span>
+
+<span class="player">玩家A:</span> <span class="dice">（掷骰）</span> 我掷出了……14。加上5，总共19。
+
+<span class="comment">// 步骤4: DM将总数与地精的AC比较</span>
+
+<span class="dm">DM:</span> <span class="system">（地精AC是15，19 ≥ 15 → 命中！）</span> 你的剑砍中了地精！掷伤害吧。
+
+<span class="comment">// 步骤5: 玩家掷伤害 = 武器伤害骰 + STR调整值</span>
+
+<span class="player">玩家A:</span> <span class="dice">（掷骰）</span> 长剑伤害1d8……掷出6，加上力量加值3，总共9点伤害。
+
+<span class="dm">DM:</span> <span class="system">（地精剩余HP: 7 - 9 = -2 → 死亡）</span> 你的长剑深深劈入地精，它惨叫一声倒地不起。你还剩15尺移动力，要移动吗？
+
+<span class="player">玩家A:</span> 不用了，我站在这里警戒其他敌人。
+
+<span class="comment">// 回合结束，先攻序列进入下一个参战者</span>
+</div>
+
+<h3>先攻序列可视化</h3>
+<div class="card card-accent">
+  <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 0;">
+    <div style="text-align: center;"><div style="font-size: 13px; color: var(--text-light);">先攻值</div><div style="font-size: 28px; font-weight: 800; color: var(--accent);">18</div><div style="font-weight: 600;">法师</div></div>
+    <div style="font-size: 24px; color: var(--text-light);">→</div>
+    <div style="text-align: center;"><div style="font-size: 13px; color: var(--text-light);">先攻值</div><div style="font-size: 28px; font-weight: 800; color: var(--accent);">14</div><div style="font-weight: 600;">地精A组</div></div>
+    <div style="font-size: 24px; color: var(--text-light);">→</div>
+    <div style="text-align: center;"><div style="font-size: 13px; color: var(--text-light);">先攻值</div><div style="font-size: 28px; font-weight: 800; color: var(--accent);">12</div><div style="font-weight: 600;">战士</div></div>
+    <div style="font-size: 24px; color: var(--text-light);">→</div>
+    <div style="text-align: center;"><div style="font-size: 13px; color: var(--text-light);">先攻值</div><div style="font-size: 28px; font-weight: 800; color: var(--accent);">9</div><div style="font-weight: 600;">牧师</div></div>
+    <div style="font-size: 24px; color: var(--text-light);">↻</div>
+    <div style="text-align: center;"><div style="font-size: 13px; color: var(--text-light);">新轮</div><div style="font-size: 28px; font-weight: 800; color: var(--accent2);">→</div><div style="font-weight: 600;">回到法师</div></div>
+  </div>
+  <p style="text-align: center; font-size: 13px; color: var(--text-light); margin-top: 8px;">先攻序列一旦确定，整个战斗中保持不变</p>
+</div>
+
+<!-- ==================== 6. Exploration ==================== -->
+<h2 id="exploration">六、探索流程：旅行、地城与资源管理</h2>
+
+<p>探索是三大支柱中最被忽视、却占用最多实际游戏时间的部分。它涵盖了旅行、地城导航、陷阱检测、资源管理等一系列互锁机制。</p>
+
+<h3>旅行探索流程</h3>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <h4>设定旅行步调</h4>
+    <p><span class="role-badge role-player">玩家</span> 队伍选择一个旅行步调：</p>
+    <table>
+      <tr><th>步调</th><th>速度</th><th>效果</th></tr>
+      <tr><td><strong>快速</strong></td><td>30里/日</td><td>被动感知 -5（更容易被伏击）</td></tr>
+      <tr><td><strong>正常</strong></td><td>24里/日</td><td>无修正</td></tr>
+      <tr><td><strong>慢速</strong></td><td>18里/日</td><td>可以隐身行进、可以觅食</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <h4>分配队伍职责</h4>
+    <p><span class="role-badge role-player">玩家</span> 分配角色：导航员（负责找路）、侦察兵（负责前方警戒）、后卫（负责殿后）、军需官（负责补给）。</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <h4>导航检定</h4>
+    <p><span class="role-badge role-dm">DM</span> DM 根据地形设定导航 DC（森林 DC 15，沼泽 DC 15，无地标海域 DC 20）</p>
+    <p><span class="role-badge role-player">玩家</span> 导航员进行感知(生存)检定</p>
+    <p><span class="role-badge role-dm">DM</span> 失败则队伍偏离路线——可能多走一天，也可能闯入危险区域</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <div class="step-content">
+    <h4>被动感知与遭遇检测</h4>
+    <p><span class="role-badge role-dm">DM</span> DM 用敌人的隐匿检定对比队伍的<strong>被动感知</strong>（10 + 感知(察觉)修正值）</p>
+    <p>如果敌人隐匿 &gt; 队伍被动感知 → 队伍被伏击（突袭！）</p>
+    <p>如果敌人隐匿 ≤ 队伍被动感知 → 队伍提前发现敌人，可以准备</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <div class="step-content">
+    <h4>随机遭遇检定</h4>
+    <p><span class="role-badge role-dm">DM</span> DM 定期掷随机遭遇骰（通常每日2次，d20 ≥ 18 触发）</p>
+    <p>遭遇不一定是战斗——可能是环境事件、文明痕迹、生物足迹</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">6</div>
+  <div class="step-content">
+    <h4>资源追踪</h4>
+    <p><span class="role-badge role-both">双方</span> 每日消耗口粮（每生物1磅）、追踪水源、火把持续时间（每根1小时）、黑暗视觉范围（60尺）</p>
+    <p>缺乏食物/水/睡眠 → 累力等级累积（6级制，1级劣势能力检定，6级死亡）</p>
+  </div>
+</div>
+
+<h3>地城探索流程</h3>
+
+<p>地城探索使用更紧凑的时间单位——通常以<strong>10分钟为一段</strong>（探索回合）：</p>
+
+<div class="dialogue"><span class="comment">// 地城探索的典型交互</span>
+
+<span class="dm">DM:</span> 你们沿着走廊走了约60尺，来到一扇石门前。门看起来很厚实，没有明显的锁孔。
+
+<span class="player">玩家A:</span> 我把耳朵贴在门上听里面有没有声音。
+
+<span class="comment">// DM判断: 这有失败的可能（门厚、隔音好）→ 需要掷骰</span>
+
+<span class="dm">DM:</span> 好的，请做一个感知(察觉)检定。DC我来定。
+
+<span class="player">玩家A:</span> <span class="dice">（掷骰）</span> 15 + 3 = 18。
+
+<span class="dm">DM:</span> <span class="system">（DC 15，成功）</span> 你隐约听到门后有低沉的吟唱声，像是某种仪式。声音断断续续，至少有两个声音。
+
+<span class="player">玩家B:</span> 我检查门上有没有陷阱。
+
+<span class="dm">DM:</span> 请做一个智力(调查)检定，或者感知(察觉)检定——你想怎么检查？
+
+<span class="player">玩家B:</span> 我仔细摸门的边缘和门把手，找有没有机关。
+
+<span class="dm">DM:</span> 那是智力(调查)。请掷骰。
+
+<span class="player">玩家B:</span> <span class="dice">（掷骰）</span> 呃……4 + 2 = 6。
+
+<span class="dm">DM:</span> <span class="system">（DC 13，失败）</span> 你仔细摸索了门边，没发现任何异常。<span class="comment">（实际上门把手有一个毒针陷阱，但你没找到）</span>
+
+<span class="player">A:</span> 我推开门！
+
+<span class="dm">DM:</span> <span class="system">（触发陷阱！门把手毒针攻击）</span> 当你抓住门把手时，一根细小的针刺入了你的手掌……请做一个敏捷豁免检定。
+
+<span class="player">玩家A:</span> <span class="dice">（掷骰）</span> 11 + 2 = 13。
+
+<span class="dm">DM:</span> <span class="system">（陷阱DC 12，成功 → 半伤害）</span> 你在最后一刻缩回了手，但还是被针尖划过。受到1d4/2 = 2点毒素伤害，并且需要进行体质豁免对抗毒素效果……
+
+<span class="comment">// 以上整个交互大约消耗了10分钟的游戏内时间</span>
+</div>
+
+<div class="callout-blue">
+  <div class="callout-title">🔍 被动感知 vs 主动检定</div>
+  <p>DM 用<strong>被动感知</strong>决定角色是否"自动"注意到某些东西——不需要玩家要求掷骰。例如：队伍被动感知最高的人为16，走廊里有一个 DC 15 的秘密门 → 最高被动感知者自动注意到墙上有异常缝隙。但如果 DC 是18，则需要玩家主动说"我搜索墙壁"并掷骰才能发现。</p>
+</div>
+
+<!-- ==================== 7. Social ==================== -->
+<h2 id="social">七、社交互动流程</h2>
+
+<p>社交互动是三大支柱中规则约束最少、自由度最高的部分。大部分社交通过角色扮演对话完成，只在结果不确定时才掷骰。</p>
+
+<h3>社交互动循环</h3>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <h4>DM 扮演 NPC</h4>
+    <p><span class="role-badge role-dm">DM</span> DM 以 NPC 的口吻说话，描述 NPC 的表情、姿态、语气。NPC 有自己的目标、态度和知识——DM 扮演他们就像扮演另一个角色。</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <h4>玩家角色扮演回应</h4>
+    <p><span class="role-badge role-player">玩家</span> 玩家以自己角色的口吻回应，描述自己说的话和做的动作。重要的是描述<strong>意图</strong>和<strong>方法</strong>，而不是说"我掷说服"。</p>
+    <p>好的说法："我走近守卫，压低声音说：'如果你放我们进去，没人需要知道你见过我们。'"</p>
+    <p>不好的说法："我掷说服检定。"</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <h4>DM 判断是否需要掷骰</h4>
+    <p><span class="role-badge role-dm">DM</span> DM 评估：</p>
+    <ul>
+      <li>NPC 是否可能被说服/欺骗/恐吓？→ 如果角色扮演足够好，可能自动成功</li>
+      <li>结果是否不确定？→ 需要掷骰</li>
+      <li>NPC 的态度（友善/中立/敌对）影响 DC</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <div class="step-content">
+    <h4>掷骰与解决</h4>
+    <p><span class="role-badge role-player">玩家</span> 掷相应技能检定：</p>
+    <ul>
+      <li><strong>说服（Persuasion）</strong>：魅力检定，真诚影响他人态度</li>
+      <li><strong>欺瞒（Deception）</strong>：魅力检定，说谎或误导</li>
+      <li><strong>威吓（Intimidation）</strong>：魅力检定，用威胁迫使合作</li>
+      <li><strong>表演（Performance）</strong>：魅力检定，娱乐或伪装</li>
+      <li><strong>洞悉（Insight）</strong>：感知检定，判断 NPC 是否说谎</li>
+    </ul>
+    <p><span class="role-badge role-dm">DM</span> DM 秘密设定 DC，比较结果，叙述 NPC 的反应和对话。</p>
+  </div>
+</div>
+
+<div class="callout">
+  <div class="callout-title">⚠️ 说服不是精神控制</div>
+  <p>说服检定成功不会让 NPC 做完全不合理的事。你不能用说服让酒馆老板免费让你住3个月——这不叫说服，这叫妄想。DC 30 的任务几乎是"不可能"级别的。如果 NPC 根本不可能同意，DM 应该直接说"不，这不可能"，不需要掷骰。</p>
+</div>
+
+<!-- ==================== 8. Spellcasting ==================== -->
+<h2 id="spellcasting">八、施法流程详解</h2>
+
+<p>施法是 D&D 5e 中最复杂的子系统之一，但遵循固定的流程：</p>
+
+<h3>施法步骤</h3>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <h4>声明施法</h4>
+    <p><span class="role-badge role-player">玩家</span> 在自己的回合声明要施放哪个法术，使用什么等级的法术位（可升环施放）。</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <h4>确认施法时间</h4>
+    <p>大多数法术施法时间为1动作。部分为附赠动作（如治疗真言）、反应（如护盾术）、或更长时间（仪式施法+10分钟）。</p>
+    <div class="callout">
+      <div class="callout-title">⚠️ 附赠动作施法限制</div>
+      <p>如果你用附赠动作施放了一个法术，你这回合不能再施放其他法术——除非是施法时间为1动作的戏法（Cantrip）。</p>
+    </div>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <h4>确认法术成分</h4>
+    <p>检查法术是否需要：</p>
+    <ul>
+      <li><strong>言语（V）</strong>：需要能说话——被塞嘴或沉默术中无法施法</li>
+      <li><strong>姿势（S）</strong>：需要至少一只手自由——被绑缚无法施法</li>
+      <li><strong>材料（M）</strong>：需要法术焦点或材料包（除非有花费的材料需单独购买）</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <div class="step-content">
+    <h4>解决法术效果</h4>
+    <p>法术效果有三种解决方式：</p>
+    <div class="grid-3">
+      <div class="card card-accent" style="margin-bottom:0;">
+        <h4 style="margin-top:0;">攻击检定型</h4>
+        <p>如火焰箭、魔法飞弹攻击</p>
+        <p><code>d20 + 法术攻击加值 ≥ 目标AC</code></p>
+        <p>命中 → 掷伤害</p>
+      </div>
+      <div class="card card-teal" style="margin-bottom:0;">
+        <h4 style="margin-top:0;">豁免检定型</h4>
+        <p>如火球术、人类定身术</p>
+        <p><code>法术DC = 8 + 熟练加值 + 施法属性调整值</code></p>
+        <p>目标掷豁免 → 失败受全效/成功受半效</p>
+      </div>
+      <div class="card card-green" style="margin-bottom:0;">
+        <h4 style="margin-top:0;">自动生效型</h4>
+        <p>如魔法飞弹、护盾术、治疗真言</p>
+        <p>不需要攻击检定或豁免检定</p>
+        <p>直接产生效果</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <div class="step-content">
+    <h4>消耗法术位</h4>
+    <p><span class="role-badge role-player">玩家</span> 消耗对应等级的法术位。戏法（0环）不消耗法术位，可以随意施放。长休恢复所有法术位（邪术师在短休恢复）。</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">6</div>
+  <div class="step-content">
+    <h4>维持集中（如需要）</h4>
+    <p>标注"集中"的法术需要施法者保持集中。规则：</p>
+    <ul>
+      <li>同时只能集中维持一个法术——施放新的集中法术，旧的立刻结束</li>
+      <li>可以随时主动放弃集中（不需要动作）</li>
+      <li>受到伤害时 → 体质豁免 DC = 10 或伤害值的一半（取较高）→ 失败则法术中断</li>
+      <li>被失能或死亡 → 自动中断集中</li>
+    </ul>
+  </div>
+</div>
+
+<h3>施法公式速查</h3>
+<table>
+  <tr><th>项目</th><th>公式</th></tr>
+  <tr><td>法术攻击加值</td><td>熟练加值 + 施法属性调整值</td></tr>
+  <tr><td>法术豁免DC</td><td>8 + 熟练加值 + 施法属性调整值</td></tr>
+  <tr><td>法师</td><td>智力 (INT)</td></tr>
+  <tr><td>牧师/德鲁伊/游侠</td><td>感知 (WIS)</td></tr>
+  <tr><td>吟游诗人/术士/邪术师/圣武士</td><td>魅力 (CHA)</td></tr>
+</table>
+
+<!-- ==================== 9. Resting ==================== -->
+<h2 id="resting">九、休息机制：短休与长休</h2>
+
+<p>休息是资源管理的核心。冒险者何时休息、能否安全休息，直接决定了冒险的节奏和难度。</p>
+
+<div class="grid-2">
+  <div class="card card-teal">
+    <h3 style="margin-top:0;">🟢 短休（Short Rest）</h3>
+    <p><strong>时长：</strong>至少1小时，进行轻度活动（吃、喝、阅读、包扎伤口）</p>
+    <h4>恢复内容：</h4>
+    <ul>
+      <li>花费<strong>生命骰</strong>恢复HP——每枚生命骰掷骰 + CON调整值 = 恢复量</li>
+      <li>邪术师恢复所有法术位</li>
+      <li>战士恢复行动涌动和风之息</li>
+      <li>武僧恢复所有真气点</li>
+      <li>吟游诗人(5级+)恢复吟游灵感</li>
+      <li>德鲁伊恢复野性变身</li>
+    </ul>
+    <p><strong>限制：</strong>无每日上限，但实际地城时间通常不允许频繁短休</p>
+  </div>
+  <div class="card card-accent">
+    <h3 style="margin-top:0;">🟣 长休（Long Rest）</h3>
+    <p><strong>时长：</strong>至少8小时，其中至少6小时睡眠（精灵需4小时出神），最多2小时轻度活动（站岗、阅读）</p>
+    <h4>恢复内容：</h4>
+    <ul>
+      <li>恢复<strong>所有</strong>HP</li>
+      <li>恢复<strong>已花费生命骰的一半</strong>（向下取整，至少1枚）</li>
+      <li>恢复<strong>所有</strong>法术位（除邪术师外的施法者）</li>
+      <li>恢复几乎所有职业特性</li>
+      <li>重置所有"长休后恢复"的特性</li>
+    </ul>
+    <p><strong>限制：</strong>每24小时最多获益一次；开始长休时至少有1HP；被战斗打断需重新开始8小时</p>
+  </div>
+</div>
+
+<div class="callout">
+  <div class="callout-title">🎯 休息的战略意义</div>
+  <p>不同职业对休息的依赖不同：<strong>邪术师和战士</strong>依赖短休恢复资源，如果 DM 从不给短休机会，这些职业会被暗中削弱。<strong>法师和牧师</strong>依赖长休恢复法术位。一个冒险日（两次长休之间）中安排几次短休、多少次战斗，直接决定了队伍的资源消耗节奏和战斗难度。</p>
+</div>
+
+<!-- ==================== 10. Death ==================== -->
+<h2 id="death">十、濒死与死亡流程</h2>
+
+<p>当角色 HP 降至 0 时，进入濒死状态。这是 D&D 5e 中最紧张的机制之一。</p>
+
+<h3>HP 归零后的流程</h3>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <h4>判定是否瞬间死亡</h4>
+    <p><span class="role-badge role-dm">DM</span> 如果受到的伤害将角色降至0HP <strong>且</strong>剩余伤害 ≥ 角色最大HP → <strong>瞬间死亡</strong>，无法挽救。</p>
+    <p>例：角色最大HP 15，当前HP 6，受到 21 点伤害 → 降至0后剩余15 ≥ 15 → 瞬间死亡。</p>
+    <p>如果剩余伤害 &lt; 最大HP → 角色倒下，进入濒死状态。</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <h4>濒死状态（0 HP, Unconscious）</h4>
+    <p>角色倒地昏迷，无法移动或行动。每轮在你的回合开始时，必须进行<strong>死亡豁免检定</strong>：</p>
+    <ul>
+      <li><strong>掷 d20，不加任何修正值</strong>（除非有特定特性加成）</li>
+      <li><strong>10+：成功</strong> → 记录1次成功</li>
+      <li><strong>9以下：失败</strong> → 记录1次失败</li>
+      <li><strong>自然1（骰面1）：2次失败</strong></li>
+      <li><strong>自然20（骰面20）：恢复1HP，苏醒！</strong></li>
+      <li>累计<strong>3次成功 → 稳定</strong>（不再需要掷骰，但仍昏迷）</li>
+      <li>累计<strong>3次失败 → 死亡</strong></li>
+      <li>成功和失败不需要连续——各自累积，先到3个为准</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <h4>濒死状态下受到伤害</h4>
+    <p><span class="role-badge role-dm">DM</span> 如果昏迷角色受到任何伤害 → 1次死亡豁免失败</p>
+    <p>如果是<strong>近战暴击</strong>（5尺内的攻击对昏迷目标自动暴击）→ 2次失败</p>
+    <p>如果伤害 ≥ 最大HP → 瞬间死亡</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <div class="step-content">
+    <h4>挽救濒死角色</h4>
+    <p>有几种方式可以挽救濒死角色：</p>
+    <ul>
+      <li><strong>治疗法术</strong>：任何治疗（如治疗真言、治疗伤势、治疗药水）→ 恢复至少1HP → <strong>立刻苏醒</strong>，死亡豁免计数归零</li>
+      <li><strong>医药检定</strong>：动作进行 DC 10 感知(医药)检定 → 成功则稳定（不再掷死亡豁免，但仍昏迷，1d4小时后恢复1HP）</li>
+      <li><strong>医疗包</strong>：消耗1次使用次数，自动稳定，不需要检定</li>
+      <li><strong>濒死之触戏法</strong>：接触范围，动作，自动稳定</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <div class="step-content">
+    <h4>死亡与复活</h4>
+    <p>如果角色真正死亡（3次失败或瞬间死亡），可以通过高等级法术复活：</p>
+    <ul>
+      <li><strong>复生术（Revivify）</strong>：3环，300gp钻石，死后1分钟内，恢复1HP</li>
+      <li><strong>死者复生（Raise Dead）</strong>：5环，500gp钻石，死后10天内</li>
+      <li><strong>完全复生（Resurrection）</strong>：7环，1000gp钻石，死后100年内</li>
+      <li><strong>真实复生（True Resurrection）</strong>：9环，25000gp钻石，死后200年内，甚至不需要尸体</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ==================== 11. Full Session ==================== -->
+<h2 id="fullsession">十一、完整会话流程示例</h2>
+
+<p>下面展示一场典型的3-4小时 D&D 5e 会话的完整流程，标注每个阶段的 DM/玩家交互：</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <h4>开场回顾（5-10分钟）</h4>
+    <p><span class="role-badge role-dm">DM</span> "上次你们在黑潮洞穴深处发现了一扇刻有古代符文的铁门，战士差点被陷阱毒针刺中。你们站在门前，准备下一步行动。"</p>
+    <p><span class="role-badge role-player">玩家</span> 回顾上一轮的状态、HP、法术位消耗</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <h4>探索阶段（30-60分钟）</h4>
+    <p><span class="role-badge role-dm">DM</span> 描述当前环境（走廊、房间、气味、声音）</p>
+    <p><span class="role-badge role-player">玩家</span> 声明行动："我检查门上有没有陷阱" / "我用法术侦测魔法" / "我推开门"</p>
+    <p><span class="role-badge role-dm">DM</span> 判断是否需要掷骰 → 玩家掷骰 → DM 叙述结果</p>
+    <p>循环重复，推进地城探索。消耗时间、法术位、HP</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <h4>社交阶段（15-30分钟）</h4>
+    <p><span class="role-badge role-dm">DM</span> 遭遇 NPC，以 NPC 口吻说话</p>
+    <p><span class="role-badge role-player">玩家</span> 角色扮演对话，尝试获取信息、谈判、威胁</p>
+    <p><span class="role-badge role-dm">DM</span> 需要时要求魅力(说服/欺瞒/威吓)或感知(洞悉)检定</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <div class="step-content">
+    <h4>战斗阶段（30-90分钟）</h4>
+    <p><span class="role-badge role-dm">DM</span> "从阴影中跳出三只地精！掷先攻！"</p>
+    <p><span class="role-badge role-player">玩家</span> 每人掷 d20 + DEX → 排列先攻序列</p>
+    <p><span class="role-badge role-dm">DM</span> 为地精掷先攻 → 排入序列 → 按顺序执行回合</p>
+    <p>每人回合：移动 → 动作（攻击/施法）→ 附赠动作（如有）→ DM 叙述结果</p>
+    <p>循环至战斗结束（一方全灭/逃跑/投降）</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <div class="step-content">
+    <h4>休息与恢复（10-20分钟）</h4>
+    <p><span class="role-badge role-player">玩家</span> "我们需要短休，花生命骰回血"</p>
+    <p><span class="role-badge role-dm">DM</span> 判断环境是否安全 → 玩家掷生命骰恢复HP → 恢复短休特性</p>
+    <p>如果时间允许且安全 → 长休8小时 → 全恢复</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">6</div>
+  <div class="step-content">
+    <h4>继续探索/战斗（重复2-5）</h4>
+    <p>在会话中多次切换探索→社交→战斗→休息的循环</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">7</div>
+  <div class="step-content">
+    <h4>会话结尾与悬念（5-10分钟）</h4>
+    <p><span class="role-badge role-dm">DM</span> 在一个自然的叙事节点暂停——可能是刚打败BOSS后发现新线索，或到达一个令人震惊的场景</p>
+    <p><span class="role-badge role-dm">DM</span> "你们打败了地精酋长，在他身上找到了一张泛黄的地图，上面标记着地城更深处的一个位置……"</p>
+    <p><span class="role-badge role-both">双方</span> 记录当前状态（HP、法术位、物品），约定下次会话时间</p>
+  </div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">8</div>
+  <div class="step-content">
+    <h4>升级（如触发）</h4>
+    <p><span class="role-badge role-dm">DM</span> 宣布获得经验值或达到里程碑</p>
+    <p><span class="role-badge role-player">玩家</span> 升级流程：增加HP（掷生命骰 + CON）、可能获得新特性/法术位/熟练加值提升、选择新法术（如适用）</p>
+  </div>
+</div>
+
+<!-- Summary -->
+<h2>总结：D&D 5e 游玩流程全景图</h2>
+
+<div class="card card-accent">
+  <div style="text-align: center; padding: 12px;">
+    <div style="font-size: 14px; color: var(--text-light); margin-bottom: 16px;">从宏观到微观的完整流程层次</div>
+    
+    <div style="background: var(--accent-light); border-radius: 10px; padding: 16px; margin-bottom: 12px;">
+      <strong style="color: var(--accent);">战役层（Campaign）</strong><br>
+      <span style="font-size: 14px;">Session 0 → Session 1 → Session 2 → ... → 大结局</span>
+    </div>
+    
+    <div style="font-size: 20px; color: var(--text-light);">↓ 每次会话包含多个 ↓</div>
+    
+    <div style="background: #fce7f3; border-radius: 10px; padding: 16px; margin: 12px 0;">
+      <strong style="color: #be185d;">会话层（Session）</strong><br>
+      <span style="font-size: 14px;">开场回顾 → 探索 → 社交 → 战斗 → 休息 → ... → 悬念结尾</span>
+    </div>
+    
+    <div style="font-size: 20px; color: var(--text-light);">↓ 每个阶段使用 ↓</div>
+    
+    <div style="background: #dbeafe; border-radius: 10px; padding: 16px; margin: 12px 0;">
+      <strong style="color: var(--blue);">核心循环（Core Loop）</strong><br>
+      <span style="font-size: 14px;">DM描述环境 → 玩家声明行动 → DM判断/要求掷骰 → 玩家掷骰 → DM叙述结果 → 循环</span>
+    </div>
+    
+    <div style="font-size: 20px; color: var(--text-light);">↓ 战斗中细化为 ↓</div>
+    
+    <div style="background: #fee2e2; border-radius: 10px; padding: 16px; margin: 12px 0;">
+      <strong style="color: var(--red);">战斗轮次（Combat Round）</strong><br>
+      <span style="font-size: 14px;">掷先攻 → 按序列执行回合 → 每回合：移动 + 动作 + 附赠动作 + 反应 → 新一轮</span>
+    </div>
+    
+    <div style="font-size: 20px; color: var(--text-light);">↓ 每个动作触发 ↓</div>
+    
+    <div style="background: #fef3c7; border-radius: 10px; padding: 16px; margin-top: 12px;">
+      <strong style="color: var(--amber);">掷骰解决（Dice Resolution）</strong><br>
+      <span style="font-size: 14px;">d20 + 修正值 ≥ DC/AC → 成功/失败 → 叙述结果</span>
+    </div>
+  </div>
+</div>
+
+<div class="footnote">
+  <p>本报告基于 D&D 5e SRD 5.1 (CC-BY-4.0)、Player's Handbook、Dungeon Master's Guide 以及社区最佳实践编写。参考资料包括 RPGBot、dndrules.com、dndlogs.com、rollfortwo.com、musedungeon.com、enworld.org 等社区资源。</p>
+  <p>调研日期: 2026-07-15</p>
+</div>
+
+</div>
+</body>
+</html>

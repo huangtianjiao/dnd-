@@ -1071,7 +1071,697 @@ resolve(骰子,纯代码!) → narrate(LLM叙事) → apply(持久化+战斗轮�
 
 ## 十一、文档更新计划
 
-## 十一、总结
+每个 Phase 完成后更新以下文档：
+
+1. **ARCHITECTURE.md**：新增模块的架构说明
+2. **DECISIONS.md**：记录技术决策和设计选择
+3. **RULE_SPEC.md**：回填实现函数签名和文件位置
+4. **PRD.md**：更新功能需求和验收标准
+5. **BUILD.md**：更新构建指南和依赖说明
+
+---
+
+## 十二、遗漏项补充（基于规则书原文审计）
+
+### 12.1 专长系统（P0 — PHB 第五章 专长）
+
+**规则书出处**：`topics/玩家手册2024/专长/` 下5个页面
+
+**数据模型扩展**（`stats/models.py` Character）：
+```python
+feats_json: str = "[]"  # 已选专长列表
+```
+
+**新增文件**：`src/aidm/data/feats.py`
+
+**功能**：
+- 专长概述：专长是角色的特殊能力，在特定等级（4/8/12/16/19）获得
+- 起源专长：来自背景的专长
+- 战斗风格专长：战士/游侠/圣武士的战斗风格
+- 通用专长：所有角色可选的专长
+- 传奇恩惠专长：高等级传奇专长
+
+**API**：
+- `GET /feats` — 返回可选专长列表
+- `POST /character/{id}/feat` — 选择专长
+
+**前端**：
+- 角色卡增加"专长"区域
+- 升级时弹出专长选择对话框
+
+---
+
+### 12.2 魔法物品系统（P0 — DMG 第七章 宝藏）
+
+**规则书出处**：`topics/城主指南2024/7.宝藏/` 下84个文件
+
+**数据模型扩展**（`stats/models.py` 新增 MagicItem）：
+```python
+class MagicItem(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    rarity: str          # 普通/非普通/珍稀/极珍稀/传说/神器
+    type: str            # 武器/护甲/奇物/戒指/卷轴/药水/法杖/权杖/魔杖
+    attunement: bool     # 是否需要同调
+    cursed: bool         # 是否诅咒
+    description: str
+    properties_json: str # "{}" 魔法属性
+```
+
+**Character 扩展**：
+```python
+attuned_items_json: str = "[]"  # 已同调物品（最多3个）
+```
+
+**新增文件**：`src/aidm/data/magic_items.py`, `src/aidm/brain/loot.py`
+
+**功能**：
+- 魔法物品稀有度系统：普通/非普通/珍稀/极珍稀/传说/神器
+- 同调机制：最多同调3件，短休建立同调
+- 鉴定机制：鉴定术或短休集中接触
+- 诅咒物品：鉴定时不揭示诅咒
+- 随机魔法物品生成表：器具表/圣物表/奥秘表/武备表
+- 战利品分配：击败怪物后按CR分配战利品
+
+**API**：
+- `GET /magic-items` — 返回魔法物品数据库
+- `GET /magic-items/{name}` — 查询特定魔法物品
+- `POST /character/{id}/attune` — 同调魔法物品
+- `POST /loot/generate` — 生成随机战利品
+
+**前端**：
+- 物品栏增加魔法物品标识（稀有度颜色边框）
+- 同调管理面板（已同调3/3，可解除同调）
+- 鉴定弹窗（未鉴定物品显示为"未知物品"）
+- 战利品分配弹窗（击败怪物后自动弹出）
+
+---
+
+### 12.3 冒险创建工具（P1 — DMG 第四章 创建冒险）
+
+**规则书出处**：`topics/城主指南2024/4.创建冒险/` 下31个文件
+
+**新增文件**：`src/aidm/brain/adventure_builder.py`
+
+**功能**：
+- 冒险设计步骤：钩子→地点→遭遇→NPC→奖励→结局
+- 导入玩家：冒险赞助者/巧合引子/超自然引子
+- 布置背景：不同等级的冒险情景/冒险冲突/冒险设定
+- 规划遭遇：交涉遭遇/战斗遭遇/探索遭遇/遭遇节奏和紧张感
+- 冒险奖励：XP/金币/魔法物品/信息
+- 结束冒险：收尾/悬念
+
+**API**：
+- `POST /adventure/create` — 创建自定义冒险
+- `GET /adventure/{id}` — 获取冒险详情
+- `POST /adventure/{id}/encounter` — 添加遭遇
+
+**前端**：
+- DM工具箱面板（冒险设计向导）
+- 遭遇规划器（拖拽式遭遇编辑）
+- 冒险地图编辑器（简化版）
+
+---
+
+### 12.4 据点系统（P1 — DMG 第八章 据点）
+
+**规则书出处**：`topics/城主指南2024/8.据点/` 下35个文件
+
+**数据模型扩展**（`stats/models.py` 新增 Stronghold）：
+```python
+class Stronghold(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    campaign_id: int
+    name: str
+    map_json: str        # "{}" 据点地图
+    facilities_json: str # "[]" 已建设施
+    events_json: str     # "[]" 据点事件
+    treasury: int        # 金库
+```
+
+**新增文件**：`src/aidm/brain/stronghold.py`
+
+**功能**：
+- 建立据点：选择地点/类型
+- 据点回合：管理据点的周期性活动
+- 据点地图：基础设施+25种特色设施
+  - 仓库/传送法阵/公会大厅/兵营/军械库
+  - 冥想间/剧院/动物园/半位面
+  - 图书馆/圣器室/圣坛/圣所/圣物库
+  - 天文台/奥术研究室/实验室/工坊
+  - 抄写室/档案室/温室/游戏厅
+  - 种植园/训练场/酒馆/铁匠铺/陈列室/马厩
+- 据点事件：随机事件/入侵/访客
+- 失去据点：被攻占/被摧毁
+
+**API**：
+- `POST /stronghold/create` — 建立据点
+- `GET /stronghold/{campaign_id}` — 获取据点状态
+- `POST /stronghold/build` — 建设设施
+- `POST /stronghold/event` — 触发据点事件
+
+**前端**：
+- 据点管理面板（地图视图+设施列表）
+- 建设菜单（可选择要建设的设施）
+- 据点事件弹窗
+
+---
+
+### 12.5 多人游戏系统（P0 — WebSocket 实时同桌）
+
+**规则书出处**：DMG 2.运作游戏/团队规模.htm + 运作交拟/态度.htm
+
+**需求**：真正的多人在线跑团——一人行动全员实时收到 DM 叙事+骰子+场景更新
+
+**已有基础**：`api/ws.py` ConnectionManager + WS端点 + 回合协调 + 广播
+
+**需要补充的功能**：
+
+#### 12.5.1 房间管理系统
+**新增文件**：`src/aidm/brain/room.py`
+
+**功能**：
+- 创建房间：房主创建战役+设置密码
+- 加入房间：输入房间号+密码+角色信息
+- 房间状态：等待中/进行中/暂停中
+- 玩家管理：踢出玩家/转让房主/查看在线玩家
+- 观战模式：非玩家可以观战
+
+**数据模型**（`stats/models.py` 新增 Room）：
+```python
+class Room(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    campaign_id: int
+    password: str = ""
+    status: str = "waiting"   # waiting/playing/paused
+    max_players: int = 6
+    spectators_json: str = "[]"  # 观战者列表
+```
+
+**API**：
+- `POST /room/create` — 创建房间
+- `POST /room/join` — 加入房间
+- `GET /room/{id}` — 获取房间状态
+- `POST /room/{id}/kick` — 踢出玩家
+- `POST /room/{id}/transfer` — 转让房主
+- `WebSocket /ws/{campaign_id}` — 实时通信（已有）
+
+#### 12.5.2 多人战斗协调
+**修改文件**：`engine/combat.py`, `api/ws.py`
+
+**功能**：
+- 先攻序列共享：所有玩家看到同一个先攻序列
+- 回合锁定：只有当前回合的玩家可以行动
+- 行动广播：玩家A攻击→所有人看到攻击结果
+- 怪物AI回合：DM控制怪物行动，所有玩家看到结果
+- 反应协调：玩家B在玩家A的回合使用反应（如借机攻击）
+
+**WebSocket消息类型扩展**：
+```python
+# 已有
+join/leave/result/processing/player_acting/scene_update/combat_update/character_update/turn/error
+
+# 新增
+initiative_roll      # 玩家掷先政，全员可见
+action_start         # 玩家开始行动
+action_complete      # 玩家完成行动
+monster_turn         # 怪物回合开始
+monster_action       # 怪物行动结果
+reaction_available   # 可以使用反应
+reaction_used        # 反应已使用
+round_end            # 一轮结束
+combat_end           # 战斗结束
+player_ready         # 玩家准备就绪
+all_ready            # 所有玩家准备就绪
+```
+
+#### 12.5.3 多人探索协调
+**修改文件**：`brain/exploration.py`, `api/ws.py`
+
+**功能**：
+- 队伍行进：所有玩家同步移动
+- 队形管理：先锋/殿后/侧翼
+- 被动察觉：每个玩家有自己的被动察觉值
+- 发现共享：玩家A发现陷阱→所有人看到提示
+- 分头行动：玩家可以暂时离开队伍单独探索
+
+#### 12.5.4 多人社交协调
+**修改文件**：`brain/social.py`, `api/ws.py`
+
+**功能**：
+- 对话顺序：DM控制谁先说话
+- 态度共享：所有玩家看到NPC对队伍的态度
+- 协助检定：玩家A说服时，玩家B可以协助（给予优势）
+- 信息共享：玩家A从NPC获取的信息→所有人可见
+
+#### 12.5.5 多人休息协调
+**修改文件**：`brain/rest.py`, `api/ws.py`
+
+**功能**：
+- 同步休息：所有玩家同时进入短休/长休
+- 生命骰独立：每个玩家独立决定消耗多少生命骰
+- 法术位恢复：长休后所有玩家的法术位恢复
+- 打断通知：如果有敌人打断休息，所有玩家收到警报
+
+#### 12.5.6 多人战利品分配
+**新增文件**：`src/aidm/brain/loot_distribution.py`
+
+**功能**：
+- 战利品池：击败怪物后生成战利品池
+- 分配方式：
+  - 需求优先：需要该物品的玩家优先
+  - 轮流拾取：按先政顺序轮流选择
+  - 点数分配：掷骰决定优先权
+  - DM指定：DM直接指定归属
+- 金币分配：平均分配或按贡献分配
+- 分配记录：记录每次分配的结果
+
+**API**：
+- `POST /loot/pool` — 生成战利品池
+- `POST /loot/distribute` — 分配战利品
+- `GET /loot/history/{campaign_id}` — 获取分配历史
+
+**前端**：
+- 战利品分配弹窗（物品列表+分配按钮）
+- 分配方式选择器
+- 分配结果展示
+
+---
+
+### 12.6 宇宙学/位面旅行（P2 — DMG 第六章 宇宙学）
+
+**规则书出处**：`topics/城主指南2024/6.宇宙学/` 下37个文件
+
+**新增文件**：`src/aidm/data/planes.py`, `src/aidm/brain/plane_travel.py`
+
+**功能**：
+- 30个位面描述：物质位面/以太位面/星光位面/四大元素位面/外域/九层地狱/无底深渊等
+- 位面旅行机制：位面传送门/法术传送/物理穿越
+- 位面效应：不同位面的物理法则差异
+- 位面居民：各位面的原住民和生物
+
+**API**：
+- `GET /planes` — 返回位面数据库
+- `GET /planes/{name}` — 查询特定位面
+- `POST /plane/travel` — 位面旅行
+
+**前端**：
+- 位面地图导航器
+- 位面信息卡片
+
+---
+
+### 12.7 创作工具（P2 — DMG 第三章 地下城主工具箱）
+
+**规则书出处**：`topics/城主指南2024/3.地下城主工具箱/` 下24个文件
+
+**新增文件**：`src/aidm/brain/dm_toolbox.py`
+
+**功能**：
+- 创作法术：DM自定义法术
+- 创作生物：DM自定义怪物
+- 创作魔法物品：DM自定义魔法物品
+- 危害系统：环境危害/陷阱
+- 名望/声望系统
+- 怪群设计
+- 恐惧与精神压力
+- 攻城装备
+- 枪械与爆炸物
+- 诅咒与魔法疫病
+- 超自然赠礼
+- 追逐规则
+- 门机制
+- 阵营系统
+- NPC设计工具
+
+**API**：
+- `POST /dm/create-spell` — 创建自定义法术
+- `POST /dm/create-monster` — 创建自定义怪物
+- `POST /dm/create-item` — 创建自定义物品
+- `GET /dm/toolbox` — 获取DM工具箱
+
+**前端**：
+- DM工具箱面板
+- 自定义内容编辑器
+
+---
+
+## 十三、多人同玩架构升级方案
+
+> 基于《多人同玩架构设计调研报告》制定。
+
+### 13.1 推荐路线
+
+| Phase | 目标 | 改动量 | 时间 |
+|-------|------|--------|------|
+| **Phase 1** | 用 `python-socketio` 替换裸 WebSocket，获得 Room/自动重连/消息缓冲 | 小（改 ws.py） | 1-2天 |
+| **Phase 2** | 参考 Colyseus 实现 Room 生命周期 + Redis 扩展 + 30s 重连窗口 | 中 | 3-5天 |
+| **Phase 3** | DM/Player 权限分层 + Secret State 过滤 | 中 | 2-3天 |
+| **Phase 4** | 地图/Token 系统（可选，参考 PlanarAlly） | 大 | 5-7天 |
+
+### 13.2 关键决策
+
+1. **不需要引入 Node.js** — `python-socketio` 提供全部 Socket.IO 能力，保持纯 Python 技术栈
+2. **不需要 CRDT** — DND 是回合制，权威服务器 + 事件驱动就够。Yjs 只在需要"离线编辑角色卡"时才值得引入
+3. **不需要 UDP/WebRTC** — DND 不是 FPS，不需要毫秒级延迟。WebSocket 的可靠性更重要
+4. **参考 Colyseus 架构但不直接使用** — Colyseus 的 Room/Schema/生命周期设计是教科书级别的。在 Python 中照着实现一套，比直接引入 Node.js 更好
+5. **PlanarAlly 是最佳参考项目** — 同为 Python 后端 + WebSocket 多人 + VTT 功能，直接阅读其源码
+
+### 13.3 当前架构瓶颈（报告指出）
+
+| 瓶颈 | 说明 | 解决方案 |
+|------|------|----------|
+| ❌ 单进程内存态 | `ConnectionManager.campaigns` 是内存 dict，重启即丢失 | Redis 持久化 + SQLite 备份 |
+| ❌ 无重连恢复 | 玩家断线后无法恢复游戏状态 | Socket.IO 自动重连 + 30s 窗口 |
+| ❌ 无房间生命周期管理 | 房间不会自动创建/销毁 | CampaignRoom 类 + onDispose 钩子 |
+| ❌ 无权限分层 | DM 和普通玩家走同一 WebSocket | 连接时区分角色 + emit 时按权限过滤 |
+| ❌ 全量广播 | 每次广播整个状态，无增量同步 | 事件驱动 + 差异对比（长期） |
+| ❌ 无离线消息队列 | 玩家离线期间的消息直接丢失 | Socket.IO 消息缓冲 + Redis 队列 |
+
+### 13.4 Phase 1 实施方案：python-socketio 升级
+
+#### 安装依赖
+```bash
+pip install python-socketio redis aiofiles
+```
+
+#### 核心改动：`src/aidm/api/ws.py` 重写
+
+```python
+import socketio
+import asyncio
+from ..brain import graph, world
+from ..engine import combat as cmb
+from ..stats import store, models
+from ..brain.room import RoomManager
+
+# 创建 Socket.IO 服务器
+sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
+
+# 房间管理器
+room_manager = RoomManager()
+
+# 序列化锁（Qdrant 本地模式非线程安全 + D&D 本来就是回合制）
+lock = asyncio.Lock()
+
+
+@sio.event
+async def connect(sid, environ):
+    """玩家连接时自动加入战役房间"""
+    qs = dict(pair.split('=') for pair in environ.get('QUERY_STRING', '').split('&') if '=' in pair)
+    campaign_id = int(qs.get('campaign_id', 0))
+    character_id = int(qs.get('character_id', 0))
+    name = qs.get('name', '玩家')
+    is_dm = qs.get('role', 'player') == 'dm'
+
+    # 加入 Socket.IO 房间
+    await sio.enter_room(sid, f'campaign_{campaign_id}')
+
+    # 保存会话
+    await sio.save_session(sid, {
+        'campaign_id': campaign_id,
+        'character_id': character_id,
+        'name': name,
+        'is_dm': is_dm,
+        'sid': sid,
+    })
+
+    # 注册到房间管理器
+    room_manager.add_player(campaign_id, sid, character_id, name, is_dm)
+
+    # 通知其他玩家
+    players = room_manager.get_players(campaign_id)
+    await sio.emit('join', {'name': name, 'players': players},
+                   room=f'campaign_{campaign_id}', skip_sid=sid)
+
+    # 发送当前场景和战斗状态
+    scene = world.get_scene(campaign_id)
+    if scene:
+        await sio.emit('scene_update', scene, to=sid)
+
+    try:
+        combat = store.load_combat(campaign_id)
+        if combat.active:
+            await sio.emit('combat_update', {
+                'active': True, 'round': combat.round,
+                'initiative_order': [{'name': c.name, 'init': c.initiative, 'side': c.side}
+                                     for c in combat.initiative_order],
+            }, to=sid)
+    except Exception:
+        pass
+
+
+@sio.on('action')
+async def on_action(sid, data):
+    """玩家发起行动"""
+    session = await sio.get_session(sid)
+    campaign_id = session['campaign_id']
+    character_id = session['character_id']
+    name = session['name']
+
+    # 回合检查
+    if not room_manager.is_player_turn(campaign_id, character_id):
+        await sio.emit('error', {'message': '还没轮到你'}, to=sid)
+        return
+
+    # 通知全员：X 正在行动
+    await sio.emit('player_acting', {'player': name},
+                   room=f'campaign_{campaign_id}', skip_sid=sid)
+
+    # 序列化执行
+    async with lock:
+        result = await asyncio.get_event_loop().run_in_executor(
+            None, graph.run, data['player_input'], campaign_id, character_id
+        )
+
+    # 广播结果给房间内所有人
+    await sio.emit('result', {
+        'player': name,
+        'narration': result.get('narration', ''),
+        'dice': result.get('dice', {}),
+        'action_options': result.get('action_options', []),
+    }, room=f'campaign_{campaign_id}')
+
+
+@sio.event
+async def disconnect(sid):
+    """玩家断线处理"""
+    session = await sio.get_session(sid)
+    if not session:
+        return
+    campaign_id = session['campaign_id']
+    name = session.get('name', '未知玩家')
+
+    room_manager.remove_player(campaign_id, sid)
+    players = room_manager.get_players(campaign_id)
+    await sio.emit('leave', {'name': name, 'players': players},
+                   room=f'campaign_{campaign_id}')
+```
+
+#### 前端更新：`ui/static/index.html`
+
+将 `new WebSocket(...)` 替换为 `io(...)` (socket.io-client)：
+
+```javascript
+// 旧代码
+ws = new WebSocket(`${API.replace('http', 'ws')}/ws/${campId}?character_id=${charId}&name=${encodeURIComponent(myName)}`);
+
+// 新代码
+ws = io(API, {
+    query: {
+        campaign_id: campId,
+        character_id: charId,
+        name: myName,
+        role: 'player'
+    }
+});
+
+// 消息处理逻辑保持不变
+ws.on('join', (data) => { ... });
+ws.on('result', (data) => { ... });
+ws.on('disconnect', () => { ... });
+
+// 发送行动
+ws.emit('action', { player_input: text });
+```
+
+#### API 层集成：`src/aidm/api/main.py`
+
+```python
+from ..api.ws import sio
+
+# 将 Socket.IO ASGI 应用与 FastAPI 合并
+combined_app = socketio.ASGIApp(sio, app)
+```
+
+### 13.5 Phase 2 实施方案：Room 生命周期 + Redis 扩展
+
+#### `src/aidm/brain/room.py` — 升级，参考 Colyseus Room 设计
+
+```python
+@dataclass
+class PlayerSession:
+    sid: str
+    character_id: int
+    name: str
+    is_dm: bool = False
+    connected: bool = True
+    last_seen: float = field(default_factory=time.time)
+
+
+class CampaignRoom:
+    """一个 DND 战役房间，参考 Colyseus Room 设计。"""
+    rooms: dict[int, 'CampaignRoom'] = {}  # campaign_id → room
+    _dispose_tasks: dict[int, asyncio.Task] = {}
+
+    def __init__(self, campaign_id: int):
+        self.campaign_id = campaign_id
+        self.players: dict[str, PlayerSession] = {}  # sid → session
+        self.lock = asyncio.Lock()
+        self.created_at = time.time()
+        self.last_activity = time.time()
+
+    def add_player(self, sid, character_id, name, is_dm=False):
+        self.players[sid] = PlayerSession(sid, character_id, name, is_dm)
+        self.last_activity = time.time()
+
+    def remove_player(self, sid):
+        if sid in self.players:
+            del self.players[sid]
+        # 如果房间空了，30秒后销毁
+        if not self.players:
+            self._schedule_dispose()
+
+    def get_players(self):
+        return [{'name': p.name, 'character_id': p.character_id, 'is_dm': p.is_dm}
+                for p in self.players.values()]
+
+    def is_player_turn(self, character_id):
+        """检查是否轮到该角色"""
+        try:
+            combat = store.load_combat(self.campaign_id)
+            if not combat.active:
+                return True  # 非战斗时自由行动
+            cur = cmb.current_combatant(combat)
+            return cur and cur.cid == str(character_id)
+        except Exception:
+            return True
+
+    def _schedule_dispose(self):
+        """30秒后如果房间仍为空，则销毁并持久化"""
+        async def _dispose():
+            await asyncio.sleep(30)
+            if not self.players:
+                # 持久化到 SQLite（store 已有此能力）
+                del CampaignRoom.rooms[self.campaign_id]
+
+        loop = asyncio.get_event_loop()
+        task = loop.create_task(_dispose())
+        self._dispose_tasks[self.campaign_id] = task
+
+    @classmethod
+    def get_or_create(cls, campaign_id: int) -> 'CampaignRoom':
+        if campaign_id not in cls.rooms:
+            cls.rooms[campaign_id] = cls(campaign_id)
+        return cls.rooms[campaign_id]
+```
+
+#### Redis 扩展（可选，多进程时启用）
+
+```python
+# 多进程广播：用 Redis Pub/Sub 跨服务器
+mgr = socketio.AsyncRedisManager('redis://localhost:6379/0')
+sio = socketio.AsyncServer(client_manager=mgr, async_mode='asgi',
+                           cors_allowed_origins='*')
+```
+
+### 13.6 Phase 3 实施方案：DM/Player 权限分层
+
+#### 权限模型
+
+| 能力 | DM（主持人） | 玩家 |
+|------|-------------|------|
+| 查看隐藏信息（陷阱 DC / 怪物 HP / 隐藏笔记） | ✅ | ❌ |
+| 修改任何状态（HP / 物品 / 位置） | ✅ | ❌ 仅自己的角色 |
+| 撤销/回溯操作 | ✅ | ❌ |
+| 控制 NPC / 怪物 | ✅ | ❌ |
+| 控制地图 FOW（战争迷雾） | ✅ | ❌ |
+| 强制结束/跳过回合 | ✅ | ❌ |
+| 在自己的回合执行操作 | ✅ | ✅ |
+| 查看公开骰子结果 | ✅ | ✅ |
+| 发送聊天消息 | ✅ | ✅ |
+
+#### 实现：连接时区分角色 + emit 时按权限过滤
+
+```python
+async def broadcast_with_filter(room, event, data, dm_data=None):
+    """广播时按权限过滤：DM 收完整数据，玩家收过滤后数据。"""
+    for sid, session in room.players.items():
+        if session.is_dm:
+            await sio.emit(event, dm_data or data, to=sid)
+        else:
+            await sio.emit(event, data, to=sid)
+
+# 战斗状态广播：DM 看怪物 HP，玩家不看
+await broadcast_with_filter(
+    room, 'combat_update',
+    data={'active': True, 'round': 3, 'initiative_order': public_order},
+    dm_data={'active': True, 'round': 3,
+             'initiative_order': full_order_with_monster_hp}
+)
+```
+
+### 13.7 技术选型汇总
+
+| 需求 | 推荐方案 | 理由 |
+|------|----------|------|
+| WebSocket 通信 | **python-socketio** | FastAPI 原生集成 / Room 支持 / 自动重连 / Redis 扩展 |
+| 房间管理 | **自建 Room 类**（参考 Colyseus） | 纯 Python / 无语言桥接 / 完全控制生命周期 |
+| 状态同步 | **事件驱动 + 全量快照** | DND 回合制 / 状态量小 / 全量同步简单可靠 |
+| 回合协调 | **已有 `is_player_turn()`** | 已实现 / 保持现状 |
+| 权限控制 | **DM/Player 角色过滤** | 连接时区分角色 / emit 时按权限过滤 |
+| 断线重连 | **Socket.IO 自动重连 + 30s 窗口** | 原生支持 / 零额外代码 |
+| 水平扩展 | **Redis Pub/Sub** | python-socketio 内置 / `AsyncRedisManager` |
+| 持久化 | **SQLite (已有)** | 当前够用 / 未来量大可迁 PostgreSQL |
+| 地图/Token (未来) | **Canvas + 自建状态管理**（参考 PlanarAlly） | Python 后端参考 / MIT 许可 |
+| 角色卡协作 (未来) | **Yjs + y-websocket**（可选） | CRDT 离线编辑 / 冲突解决 / 21K star 成熟 |
+
+### 13.8 开源项目一览表
+
+| 项目 | Stars | 语言 | 用途 | 是否采用 |
+|------|-------|------|------|----------|
+| Socket.io | 63K | Node.js/TS | 实时通信框架 | ✅ 采用 Python 版 (python-socketio) |
+| RxDB | 23K | TypeScript | 响应式本地数据库 | ⚠️ 暂不需要 |
+| Yjs | 21K | TypeScript | CRDT 协作 | ⚠️ Phase 4+ 可选 |
+| Nakama | 12.4K | Go | 游戏后端 BaaS | ❌ 过重，不采用 |
+| boardgame.io | 12.3K | TypeScript | 回合制游戏框架 | ❌ 参考其设计理念 |
+| Colyseus | 6.8K | Node.js/TS | 权威服务器+Room | ❌ 参考其架构设计 |
+| python-socketio | 3.7K | Python | Socket.IO Python 实现 | ✅ 核心依赖 |
+| Automerge | 6.4K | Rust+WASM | CRDT 版本历史 | ⚠️ 有 Python 绑定，可选 |
+| PlanarAlly | ~482 | Python (aiohttp) | VTT 虚拟桌面 | 📖 最佳参考项目 |
+
+| 优先级 | Phase/模块 | 说明 | 预估工作量 |
+|--------|-----------|------|-----------|
+| P0 | Phase B 角色创建 | 五步车卡法 | 已完成 ✅ |
+| P0 | Phase C 核心循环 | DM描述→玩家行动→DM解决 | 已完成 ✅ |
+| P0 | Phase D 战斗流程 | 突袭→先攻→回合经济→借机攻击 | 已完成 ✅ |
+| P0 | Phase G 施法流程 | 声明→成分→效果→法术位→专注 | 已完成 ✅ |
+| P0 | Phase H 休息机制 | 短休(1h)/长休(8h)→恢复HP/法术位/特性 | 已完成 ✅ |
+| P0 | Phase I 升级成长 | XP表/升级五步骤/游戏四阶段(T1-T4) | 已完成 ✅ |
+| P0 | Phase E 探索流程 | 旅行步调→导航→被动察觉→随机遭遇→资源追踪 | 已完成 ✅ |
+| P0 | Phase F 社交流程 | NPC态度系统(友好/冷漠/敌对)/四步社交互动/态度转换阈值 | 已完成 ✅ |
+| P0 | Phase A Session 0 | 基调校准/内容边界/规则后勤 | 已完成 ✅ |
+| **P0** | **12.2 魔法物品系统** | **战利品/稀有度/同调/鉴定/诅咒** | **大** |
+| **P0** | **12.5 多人游戏系统** | **房间管理/多人战斗协调/多人探索协调/多人社交协调/多人休息协调/多人战利品分配** | **大** |
+| **P0** | **12.1 专长系统** | **PHB第五章专长(起源/战斗风格/通用/传奇恩惠)** | **中** |
+| P1 | 12.3 冒险创建工具 | DMG第四章创建冒险(设计步骤/导入玩家/布置背景/规划遭遇) | 大 |
+| P1 | 12.4 据点系统 | DMG第八章据点(建立/回合/地图/25种特色设施/事件/失去) | 大 |
+| P2 | 12.6 宇宙学/位面旅行 | DMG第六章宇宙学(30个位面/位面旅行/位面效应/位面居民) | 中 |
+| P2 | 12.7 创作工具 | DMG第三章地下城主工具箱(创作法术/生物/物品/危害/名望/声望/怪群/恐惧/攻城/枪械/诅咒/赠礼/追逐/门/阵营/NPC) | 大 |
+
+---
+
+## 十四、总结
 
 这份改造计划将当前"单一聊天框"系统升级为**分阶段、全流程覆盖的跑团引擎**，涵盖：
 
@@ -1086,4 +1776,20 @@ resolve(骰子,纯代码!) → narrate(LLM叙事) → apply(持久化+战斗轮�
 - **休息机制**：短休（1h）/长休（8h）→恢复HP/法术位/特性
 - **升级与成长**：XP表/升级五步骤/游戏四阶段（T1-T4）
 
-每个阶段都有明确的：新增文件、数据模型、API端点、前端组件、验收标准。
+### 新增遗漏项（基于规则书原文审计）
+
+- **专长系统**（P0）：PHB第五章，角色成长核心
+- **魔法物品系统**（P0）：DMG第七章，战利品/稀有度/同调/鉴定/诅咒
+- **冒险创建工具**（P1）：DMG第四章，DM自定义冒险
+- **据点系统**（P1）：DMG第八章，高等级基地管理
+- **宇宙学/位面旅行**（P2）：DMG第六章，多元宇宙冒险
+- **创作工具**（P2）：DMG第三章，DM自定义内容
+
+### 新增多人游戏系统（P0）
+
+- **房间管理系统**：创建/加入/密码/状态/玩家管理/观战
+- **多人战斗协调**：先攻序列共享/回合锁定/行动广播/怪物AI回合/反应协调
+- **多人探索协调**：队伍行进/队形管理/被动察觉/发现共享/分头行动
+- **多人社交协调**：对话顺序/态度共享/协助检定/信息共享
+- **多人休息协调**：同步休息/生命骰独立/法术位恢复/打断通知
+- **多人战利品分配**：战利品池/分配方式(需求优先/轮流拾取/点数分配/DM指定)/金币分配/分配记录
