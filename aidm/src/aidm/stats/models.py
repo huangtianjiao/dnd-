@@ -137,13 +137,14 @@ class Character(SQLModel, table=True):
 # ──────────────────────────────────────────────────────────────────────────
 
 class Campaign(SQLModel, table=True):
-    """战役：世界设定(背景) + rolling summary + 世界标记。"""
+    """战役：世界设定输入 + AI 生成的完整背景故事 + rolling summary + 世界标记。"""
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    setting: str = Field(default="")                  # 战役世界背景（设定/基调/区域/委托）
-    tone: str = Field(default="")                      # 基调（黑暗/英雄/恐怖...）
-    rolling_summary: str = Field(default="")           # 剧情压缩摘要（防上下文失忆）
-    world_flags_json: str = Field(default="{}")        # 世界状态标记（NPC关系/阵营/任务）
+    setting: str = Field(default="")                  # 玩家输入/编辑的世界设定提示词
+    tone: str = Field(default="")                    # 基调（黑暗/英雄/恐怖...）
+    world_background: str = Field(default="")        # AI 生成的完整背景故事（长文，持续显示）
+    rolling_summary: str = Field(default="")         # 剧情压缩摘要（防上下文失忆）
+    world_flags_json: str = Field(default="{}")      # 世界状态标记（NPC关系/阵营/任务）
 
     @property
     def world_flags(self) -> dict:
@@ -154,21 +155,18 @@ class Campaign(SQLModel, table=True):
 
 
 class Scene(SQLModel, table=True):
-    """当前场景：地点/在场NPC/氛围/时间/DM场景叙事(situation)/可做之事(exits)。
-
-    依据 DMG「运作游戏/叙事」：DM 用多感官氛围框定场景、给出可感知细节与区分选项，
-    玩家不凭空掷骰而据场景说意图（见 R-DM 叙事/运作探索/决定掷骰结果）。
-    """
+    """当前场景：地点/在场NPC/氛围/时间/场景叙事/可做之事/叙事日志。"""
     id: Optional[int] = Field(default=None, primary_key=True)
     campaign_id: Optional[int] = Field(default=None, foreign_key="campaign.id")
-    location: str = ""                # 地点
-    npcs_json: str = Field(default="[]")   # 在场 NPC [{name, attitude, role}]
-    environment: str = ""             # 环境（光照/遮蔽/地形）
-    time: str = ""                    # 时间（白天/夜晚/第N日）
-    atmosphere: str = ""              # 氛围（多感官：视觉/听觉/嗅觉/触觉）
-    situation: str = ""               # DM 当前场景叙事（呈现给玩家的描述）
-    exits_json: str = Field(default="[]")  # 可感知的选项/出路
-    notes: str = ""                   # DM 私密备注（秘密/发现）
+    location: str = ""                    # 地点
+    npcs_json: str = Field(default="[]")  # 在场 NPC [{name, attitude, role}]
+    environment: str = ""                 # 环境（光照/遮蔽/地形）
+    time: str = ""                        # 时间（白天/夜晚/第N日）
+    atmosphere: str = ""                  # 氛围（多感官：视觉/听觉/嗅觉/触觉）
+    situation: str = ""                   # 当前场景摘要（短）
+    story_log: str = ""                   # 场景内叙事日志（长，持续显示）
+    exits_json: str = Field(default="[]") # 可感知的选项/出路
+    notes: str = ""                       # DM 私密备注（秘密/发现）
 
     @property
     def npcs(self) -> list:

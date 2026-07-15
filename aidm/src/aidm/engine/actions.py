@@ -1,0 +1,525 @@
+"""战斗动作分派器 — 攻击 / 疾走 / 撤离 / 回避 / 协助 / 躲藏 /
+魔法 / 预备 / 搜索 / 研究 / 操作。
+
+依赖 engine.check（attack_roll, ability_check）、engine.damage（roll_damage）、
+engine.combat（Combatant, use_action）。标注规则ID+出处。
+
+规则出处:
+  - topics/玩家手册2024/进行游戏/动作.htm
+  - topics/玩家手册2024/进行游戏/攻击检定.htm
+  - topics/玩家手册2024/进行游戏/重击.htm
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Callable, Optional
+
+from . import check, damage
+from .combat import Combatant, use_action
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 动作结果
+# ──────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class ActionResult:
+    """一次战斗动作的结算结果。"""
+    action_type: str                       # attack/dash/disengage/...
+    success: bool = True                   # 动作是否成功执行
+    message: str = ""                      # 叙事摘要
+    attack_result: Optional[check.AttackResult] = None   # 攻击检定结果
+    damage_result: Optional[damage.DamageResult] = None  # 伤害结算结果
+    extra: dict[str, Any] = field(default_factory=dict)  # 动作特定附加数据
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 武器/攻击描述（轻量结构，供 actions 使用）
+# ──────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class WeaponProfile:
+    """武器攻击档案（简化版，完整武器数据见 data/equipment.py）。
+
+    规则: R-CMB-018 攻击检定属性映射 / R-CMB-019 灵巧武器
+          R-CMB-029 重击伤害骰翻倍
+    """
+    name: str                              # 武器名称
+    attack_bonus: int = 0                  # 命中加值（含属性调整值+熟练加值）
+    damage_dice: str = "1d6"               # 伤害骰表达式，如 "1d8"
+    damage_type: str = "slashing"          # 伤害类型
+    ability_mod: int = 0                   # 伤害加的属性调整值
+    add_ability_mod_to_damage: bool = True # 是否将属性调整值加到伤害
+    crit: bool = False                     # 本次攻击是否为重击（由 attack 设置）
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 各动作实现
+# ──────────────────────────────────────────────────────────────────────────
+
+def action_attack(attacker: Combatant, target: Combatant,
+                  weapon: WeaponProfile,
+                  advantage: bool = False, disadvantage: bool = False,
+                  target_ac: int = 10) -> ActionResult:
+    """攻击动作：选择目标 → 攻击检定 → （命中则）掷伤害。
+
+    规则: R-CMB-014 攻击流程 / R-CMB-017 命中判定 / R-CMB-022 天然20必出重击
+          R-CMB-023 天然1必失手 / R-CMB-029 重击伤害骰翻倍
+    出处: topics/玩家手册2024/进行游戏/攻击检定.htm ; 重击.htm
+    说明:
+      - target_ac 由调用方提供（已计入掩护加值等，见 R-CMB-015）。
+      - 重击时伤害骰数量翻倍（damage.roll_damage 的 crit 参数处理）。
+    """
+    if not use_action(attacker):
+        return ActionResult("attack", success=False,
+                            message="无可用动作")
+
+    # R-CMB-017/R-CMB-022/R-CMB-023: 攻击检定
+    atk = check.attack_roll(bonus=weapon.attack_bonus, ac=target_ac,
+                            advantage=advantage, disadvantage=disadvantage)
+
+    result = ActionResult(
+        "attack",
+        success=True,
+        message=f"{attacker.name} 攻击 {target.name}",
+        attack_result=atk,
+    )
+
+    if not atk.hit:
+        result.message += "：未命中"
+        return result
+
+    # R-CMB-029: 重击时伤害骰翻倍
+    req = damage.DamageRequest(
+        dice_expr=weapon.damage_dice,
+        damage_type=weapon.damage_type,
+        ability_mod=weapon.ability_mod,
+        add_mod=weapon.add_ability_mod_to_damage,
+        crit=atk.crit,
+    )
+    dmg = damage.roll_damage(req)
+    result.damage_result = dmg
+    result.message += f"：命中{'（重击）' if atk.crit else ''}，造成 {dmg.final} 点{weapon.damage_type}伤害"
+    return result
+
+
+def action_dash(attacker: Combatant) -> ActionResult:
+    """疾走动作：给予自己等同于速度的额外移动力，持续至回合结束。
+
+    规则: R-CMB-006 动作:疾走
+          bonus_movement = speed; move_total_this_turn = speed + bonus_movement
+    出处: topics/玩家手册2024/进行游戏/动作.htm
+    """
+    if not use_action(attacker):
+        return ActionResult("dash", success=False, message="无可用动作")
+    # 疾走给予额外等于速度的移动力
+    attacker.speed_remaining += attacker.speed           # R-CMB-006
+    return ActionResult("dash", success=True,
+                        message=f"{attacker.name} 疾走，本回合移动力增至 {attacker.speed_remaining} 尺",
+                        extra={"new_speed_remaining": attacker.speed_remaining})
+
+
+def action_disengage(attacker: Combatant) -> ActionResult:
+    """撤离动作：本回合余下时间的移动不引发借机攻击。
+
+    规则: R-CMB-007 动作:撤离
+          provokes_opportunity_attack = false (for this turn's movement)
+    出处: topics/玩家手册2024/进行游戏/动作.htm
+    """
+    if not use_action(attacker):
+        return ActionResult("disengage", success=False, message="无可用动作")
+    attacker.disengage_active = True                     # R-CMB-007
+    return ActionResult("disengage", success=True,
+                        message=f"{attacker.name} 撤离，本回合移动不引发借机攻击")
+
+
+def action_dodge(attacker: Combatant) -> ActionResult:
+    """回避动作：直至下个回合开始，对你进行的攻击检定具有劣势，
+    你进行的敏捷豁免检定具有优势；失能或速度0时失去增益。
+
+    规则: R-CMB-008 动作:回避
+          attacks_against_self = disadvantage; own_DEX_saves = advantage;
+          duration = until start of next turn;
+          lose_if incapacitated OR speed==0
+    出处: topics/玩家手册2024/进行游戏/动作.htm
+    """
+    if not use_action(attacker):
+        return ActionResult("dodge", success=False, message="无可用动作")
+    attacker.dodge_active = True                         # R-CMB-008
+    return ActionResult("dodge", success=True,
+                        message=f"{attacker.name} 回避，对自身的攻击具有劣势")
+
+
+def action_help(attacker: Combatant, ally: Combatant,
+                target: Optional[Combatant] = None) -> ActionResult:
+    """协助动作：盟友下次对该目标的攻击检定具有优势；或进行急救。
+
+    规则: R-CMB-014 协助另一个生物进行属性或攻击检定，或进行急救
+    出处: topics/玩家手册2024/进行游戏/动作.htm
+    说明: 这里在 ally 上标记 help_advantage_target，供后续攻击查询。
+          具体优势应用由调用方在 attack 时传入 advantage=True。
+    """
+    if not use_action(attacker):
+        return ActionResult("help", success=False, message="无可用动作")
+    return ActionResult("help", success=True,
+                        message=f"{attacker.name} 协助 {ally.name}"
+                                + (f" 对抗 {target.name}" if target else ""),
+                        extra={"ally": ally.cid,
+                               "target": target.cid if target else None})
+
+
+def action_hide(attacker: Combatant, stealth_mod: int, stealth_prof: int,
+                proficient: bool, dc: int,
+                advantage: bool = False, disadvantage: bool = False) -> ActionResult:
+    """躲藏动作：进行一次敏捷（隐匿）检定。
+
+    规则: R-CMB-009 动作:躲藏 → 敏捷(隐匿)检定
+          check = d20 + DEX_mod + stealth_proficiency(if proficient)
+    出处: topics/玩家手册2024/进行游戏/动作.htm
+    说明: 成功则进入隐形状态（hidden=True），失败则未躲藏。
+          DC 通常为对手的被动察觉（R-GLS-010）。
+    """
+    if not use_action(attacker):
+        return ActionResult("hide", success=False, message="无可用动作")
+    r = check.ability_check(mod=stealth_mod, prof=stealth_prof,
+                            proficient=proficient, dc=dc,
+                            advantage=advantage, disadvantage=disadvantage)
+    if r.success:
+        attacker.hidden = True                           # R-CMB-009 躲藏成功
+    return ActionResult("hide", success=r.success,
+                        message=f"{attacker.name} 躲藏检定 {r.total} vs DC{dc}："
+                                + ("成功" if r.success else "失败"),
+                        extra={"check_total": r.total, "dc": dc,
+                               "hidden": attacker.hidden})
+
+
+def action_magic(attacker: Combatant, spell_name: str = "",
+                 spell_dc: int = 0) -> ActionResult:
+    """魔法动作：施展一道法术、使用一个魔法物品或是使用一个魔法特性。
+
+    规则: R-CMB-014 魔法 施展法术/使用魔法物品/魔法特性
+    出处: topics/玩家手册2024/进行游戏/动作.htm
+    说明: 法术的具体效果（伤害/豁免/状态）由施法模块（spell.py）结算；
+          此函数仅消耗动作并返回占位结果，供上层调用真正的施法逻辑。
+    """
+    if not use_action(attacker):
+        return ActionResult("magic", success=False, message="无可用动作")
+    return ActionResult("magic", success=True,
+                        message=f"{attacker.name} 施展法术" +
+                                (f"：{spell_name}" if spell_name else ""),
+                        extra={"spell": spell_name, "spell_dc": spell_dc})
+
+
+def action_ready(attacker: Combatant, trigger_condition: str,
+                 ready_action: str = "attack") -> ActionResult:
+    """预备动作：设定触发条件，用反应在条件满足时执行该动作。
+
+    规则: R-CMB-014 预备 做好执行某个动作的准备，触发时机/情况由你决定
+    出处: topics/玩家手册2024/进行游戏/动作.htm
+    说明: 预备本身消耗动作；真正执行时消耗反应（见 opportunity_attack.py 的模式）。
+          这里在 attacker 上记录 ready_trigger，供反应阶段查询。
+    """
+    if not use_action(attacker):
+        return ActionResult("ready", success=False, message="无可用动作")
+    return ActionResult("ready", success=True,
+                        message=f"{attacker.name} 预备{ready_action}，"
+                                f"触发条件：{trigger_condition}",
+                        extra={"trigger": trigger_condition,
+                               "ready_action": ready_action})
+
+
+def action_search(attacker: Combatant, perception_mod: int,
+                  perception_prof: int, proficient: bool, dc: int,
+                  advantage: bool = False, disadvantage: bool = False) -> ActionResult:
+    """搜索动作：进行一次感知（洞悉/医药/察觉/求生）检定。
+
+    规则: R-CMB-010 动作:技能检定属性映射
+          Search = WIS(洞悉/医药/察觉/求生)
+    出处: topics/玩家手册2024/进行游戏/动作.htm
+    """
+    if not use_action(attacker):
+        return ActionResult("search", success=False, message="无可用动作")
+    r = check.ability_check(mod=perception_mod, prof=perception_prof,
+                            proficient=proficient, dc=dc,
+                            advantage=advantage, disadvantage=disadvantage)
+    return ActionResult("search", success=r.success,
+                        message=f"{attacker.name} 搜索检定 {r.total} vs DC{dc}："
+                                + ("成功" if r.success else "失败"),
+                        extra={"check_total": r.total, "dc": dc})
+
+
+def action_study(attacker: Combatant, intelligence_mod: int,
+                 intelligence_prof: int, proficient: bool, dc: int,
+                 advantage: bool = False, disadvantage: bool = False) -> ActionResult:
+    """研究动作：进行一次智力（奥秘/历史/调查/自然/宗教）检定。
+
+    规则: R-CMB-010 动作:技能检定属性映射
+          Study = INT(奥秘/历史/调查/自然/宗教)
+    出处: topics/玩家手册2024/进行游戏/动作.htm
+    """
+    if not use_action(attacker):
+        return ActionResult("study", success=False, message="无可用动作")
+    r = check.ability_check(mod=intelligence_mod, prof=intelligence_prof,
+                            proficient=proficient, dc=dc,
+                            advantage=advantage, disadvantage=disadvantage)
+    return ActionResult("study", success=r.success,
+                        message=f"{attacker.name} 研究检定 {r.total} vs DC{dc}："
+                                + ("成功" if r.success else "失败"),
+                        extra={"check_total": r.total, "dc": dc})
+
+
+def action_utilize(attacker: Combatant, object_name: str = "",
+                   ability_mod: int = 0, prof: int = 0, proficient: bool = False,
+                   dc: int = 0, advantage: bool = False,
+                   disadvantage: bool = False) -> ActionResult:
+    """操作动作：使用一个非魔法物件。
+
+    规则: R-CMB-014 操作 使用一个非魔法物件
+          R-CMB-005 第二个物件需执行操作动作
+    出处: topics/玩家手册2024/进行游戏/动作.htm
+    说明: 若需要检定（如撬锁），进行属性检定；否则仅消耗动作。
+    """
+    if not use_action(attacker):
+        return ActionResult("utilize", success=False, message="无可用动作")
+    if dc > 0:
+        r = check.ability_check(mod=ability_mod, prof=prof,
+                                proficient=proficient, dc=dc,
+                                advantage=advantage, disadvantage=disadvantage)
+        return ActionResult("utilize", success=r.success,
+                            message=f"{attacker.name} 操作{object_name}："
+                                    + ("成功" if r.success else "失败"),
+                            extra={"check_total": r.total, "dc": dc})
+    return ActionResult("utilize", success=True,
+                        message=f"{attacker.name} 操作{object_name}")
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 动作分派表
+# ──────────────────────────────────────────────────────────────────────────
+
+# 规则: R-CMB-014 动作表（攻击/疾走/撤离/回避/协助/躲藏/影响/魔法/预备/搜索/研究/操作）
+# 出处: topics/玩家手册2024/进行游戏/动作.htm
+COMBAT_ACTIONS: dict[str, Callable[..., ActionResult]] = {
+    "attack":     action_attack,
+    "dash":       action_dash,
+    "disengage":  action_disengage,
+    "dodge":      action_dodge,
+    "help":       action_help,
+    "hide":       action_hide,
+    "magic":      action_magic,
+    "ready":      action_ready,
+    "search":     action_search,
+    "study":      action_study,
+    "utilize":    action_utilize,
+}
+
+
+def resolve_combat_action(action_type: str, attacker: Combatant,
+                          target: Optional[Combatant] = None,
+                          weapon: Optional[WeaponProfile] = None,
+                          **kwargs) -> ActionResult:
+    """分派并结算一次战斗动作。
+
+    规则: R-CMB-011 一次一个动作限制（use_action 内部检查）
+          R-CMB-014 攻击流程 / 动作表
+    出处: topics/玩家手册2024/进行游戏/动作.htm
+
+    参数:
+      action_type: COMBAT_ACTIONS 的键之一
+      attacker: 执行动作的参战者
+      target: 攻击/协助的目标（可选）
+      weapon: 攻击用的武器档案（attack 必填）
+      **kwargs: 动作特定参数（如 advantage, dc, stealth_mod 等）
+
+    返回:
+      ActionResult，包含命中/伤害/叙事摘要。
+    """
+    handler = COMBAT_ACTIONS.get(action_type)
+    if handler is None:
+        return ActionResult(action_type, success=False,
+                            message=f"未知动作类型: {action_type}")
+
+    # 根据动作类型组装参数
+    if action_type == "attack":
+        if weapon is None:
+            return ActionResult("attack", success=False,
+                                message="攻击动作需要 weapon 参数")
+        if target is None:
+            return ActionResult("attack", success=False,
+                                message="攻击动作需要 target 参数")
+        return action_attack(attacker=attacker, target=target, weapon=weapon,
+                             **kwargs)
+    elif action_type in ("dash", "disengage", "dodge"):
+        return handler(attacker=attacker)
+    elif action_type == "help":
+        ally = kwargs.pop("ally", None)
+        if ally is None:
+            return ActionResult("help", success=False,
+                                message="协助动作需要 ally 参数")
+        return action_help(attacker=attacker, ally=ally, target=target, **kwargs)
+    elif action_type == "hide":
+        return action_hide(attacker=attacker, **kwargs)
+    elif action_type == "magic":
+        return action_magic(attacker=attacker, **kwargs)
+    elif action_type == "ready":
+        return action_ready(attacker=attacker, **kwargs)
+    elif action_type == "search":
+        return action_search(attacker=attacker, **kwargs)
+    elif action_type == "study":
+        return action_study(attacker=attacker, **kwargs)
+    elif action_type == "utilize":
+        return action_utilize(attacker=attacker, **kwargs)
+    else:
+        return handler(attacker=attacker, target=target, weapon=weapon, **kwargs)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 自检
+# ──────────────────────────────────────────────────────────────────────────
+
+def _self_test() -> None:
+    from . import dice as _dice
+
+    attacker = Combatant(cid="a1", name="战士", side="player")
+    target = Combatant(cid="t1", name="哥布林", side="enemy")
+    weapon = WeaponProfile(name="长剑", attack_bonus=5,
+                           damage_dice="1d8", damage_type="slashing",
+                           ability_mod=3, add_ability_mod_to_damage=True)
+
+    # 攻击命中（固定 d20=15 → 15+5=20 ≥ AC10）
+    orig = _dice.roll_d20
+    orig_rd = _dice.roll_dice
+    _dice.roll_d20 = lambda advantage=False, disadvantage=False: \
+        type("R", (), {"used": 15, "rolls": [15], "mode": "normal"})()
+    _dice.roll_dice = lambda expr, *, crit=False: \
+        type("R", (), {"total": 6, "dice_rolls": [6], "expression": expr,
+                       "modifier": 0, "crit": crit, "notes": ""})()
+
+    r = resolve_combat_action("attack", attacker, target=target,
+                              weapon=weapon, target_ac=10)
+    assert r.success and r.attack_result.hit
+    assert r.damage_result is not None
+    # 伤害 = 骰子6 + 属性调整值3 = 9
+    assert r.damage_result.final == 9, r.damage_result
+    assert attacker.action_used is True
+
+    # 无可用动作时再次攻击应失败
+    r2 = resolve_combat_action("attack", attacker, target=target,
+                               weapon=weapon, target_ac=10)
+    assert r2.success is False
+
+    # 重置动作
+    attacker.action_used = False
+
+    # 天然20重击（d20=20）
+    _dice.roll_d20 = lambda advantage=False, disadvantage=False: \
+        type("R", (), {"used": 20, "rolls": [20], "mode": "normal"})()
+    _dice.roll_dice = lambda expr, *, crit=False: \
+        type("R", (), {"total": 16 if crit else 8,
+                       "dice_rolls": [8, 8] if crit else [8],
+                       "expression": expr, "modifier": 0,
+                       "crit": crit, "notes": ""})()
+    r3 = resolve_combat_action("attack", attacker, target=target,
+                               weapon=weapon, target_ac=30)
+    assert r3.attack_result.hit and r3.attack_result.crit
+    # 重击伤害 = 骰子16 + 属性3 = 19
+    assert r3.damage_result.final == 19, r3.damage_result
+
+    # 重置动作以测试天然1失手
+    attacker.action_used = False
+    # 天然1失手（d20=1）
+    _dice.roll_d20 = lambda advantage=False, disadvantage=False: \
+        type("R", (), {"used": 1, "rolls": [1], "mode": "normal"})()
+    r4 = resolve_combat_action("attack", attacker, target=target,
+                               weapon=weapon, target_ac=5)
+    assert r4.attack_result.hit is False
+
+    _dice.roll_d20 = orig
+    _dice.roll_dice = orig_rd
+
+    # 疾走（R-CMB-006）
+    attacker2 = Combatant(cid="a2", name="盗贼", speed=30)
+    attacker2.speed_remaining = 30
+    rd = resolve_combat_action("dash", attacker2)
+    assert rd.success
+    assert attacker2.speed_remaining == 60   # 30 + 30
+    assert attacker2.action_used is True
+
+    # 撤离（R-CMB-007）
+    attacker3 = Combatant(cid="a3", name="游侠", speed=30)
+    rdis = resolve_combat_action("disengage", attacker3)
+    assert rdis.success and attacker3.disengage_active is True
+
+    # 回避（R-CMB-008）
+    attacker4 = Combatant(cid="a4", name="牧师", speed=30)
+    rdod = resolve_combat_action("dodge", attacker4)
+    assert rdod.success and attacker4.dodge_active is True
+
+    # 躲藏（R-CMB-009）— 固定 d20 让检定成功
+    orig_chk = check.ability_check
+    check.ability_check = lambda **kw: type("R", (), {
+        "success": True, "total": 15, "d20": 10, "rolls": [10],
+        "mode": "normal", "target": kw.get("dc", 0),
+        "margin": 5, "modifier": 5})()
+    attacker5 = Combatant(cid="a5", name="游荡者", speed=30)
+    rh = resolve_combat_action("hide", attacker5, stealth_mod=5,
+                               stealth_prof=3, proficient=True, dc=12)
+    assert rh.success and attacker5.hidden is True
+    check.ability_check = orig_chk
+
+    # 搜索（R-CMB-010 Search=WIS）
+    attacker6 = Combatant(cid="a6", name="游侠2", speed=30)
+    check.ability_check = lambda **kw: type("R", (), {
+        "success": True, "total": 18, "d20": 10, "rolls": [10],
+        "mode": "normal", "target": kw.get("dc", 0),
+        "margin": 3, "modifier": 8})()
+    rs = resolve_combat_action("search", attacker6, perception_mod=8,
+                               perception_prof=3, proficient=True, dc=15)
+    assert rs.success
+    check.ability_check = orig_chk
+
+    # 研究（R-CMB-010 Study=INT）
+    attacker7 = Combatant(cid="a7", name="法师2", speed=30)
+    check.ability_check = lambda **kw: type("R", (), {
+        "success": False, "total": 8, "d20": 5, "rolls": [5],
+        "mode": "normal", "target": kw.get("dc", 0),
+        "margin": -7, "modifier": 3})()
+    rst = resolve_combat_action("study", attacker7, intelligence_mod=3,
+                                intelligence_prof=3, proficient=True, dc=15)
+    assert rst.success is False
+    check.ability_check = orig_chk
+
+    # 协助（R-CMB-014 help）
+    attacker8 = Combatant(cid="a8", name="战士3", speed=30)
+    ally = Combatant(cid="al", name="法师", speed=30)
+    rhp = resolve_combat_action("help", attacker8, ally=ally, target=target)
+    assert rhp.success
+
+    # 魔法（R-CMB-014 magic）
+    attacker9 = Combatant(cid="a9", name="法师3", speed=30)
+    rm = resolve_combat_action("magic", attacker9, spell_name="火球术",
+                               spell_dc=15)
+    assert rm.success
+
+    # 预备（R-CMB-014 ready）
+    attacker10 = Combatant(cid="a10", name="战士4", speed=30)
+    rr = resolve_combat_action("ready", attacker10,
+                               trigger_condition="敌人靠近",
+                               ready_action="attack")
+    assert rr.success
+
+    # 操作（R-CMB-014 utilize）
+    attacker11 = Combatant(cid="a11", name="游荡者2", speed=30)
+    ru = resolve_combat_action("utilize", attacker11, object_name="门把手")
+    assert ru.success
+
+    # 未知动作
+    rbad = resolve_combat_action("fly", attacker5)
+    assert rbad.success is False
+
+    print("[actions] 自检通过 ✓")
+
+
+if __name__ == "__main__":
+    _self_test()

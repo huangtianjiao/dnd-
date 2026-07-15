@@ -28,6 +28,10 @@ from .state import GameState
 from ..knowledge import hybrid, verifier
 from ..engine import check, damage, combat as cmb
 from ..data import equipment
+from ..brain import rest as rest_mod
+from ..brain import social as social_mod
+from ..brain import levelup as levelup_mod
+from ..brain import exploration as exploration_mod
 from ..stats import store, models
 
 
@@ -74,7 +78,7 @@ def classify(state: GameState) -> dict:
     """LLM 意图分类 → 结构化 intent（覆盖 attack/cast/ability_check/explore/start_combat/end_combat）。"""
     prompt = (
         "你是D&D 5E意图分类器。把玩家输入分类为动作意图,只输出JSON(不要markdown)。\n"
-        "action_type ∈ attack|cast|ability_check|explore|start_combat|end_combat|other\n"
+        "action_type ∈ attack|cast|ability_check|explore|start_combat|end_combat|rest|social|levelup|travel|other\n"
         "通用字段: target_name, target_ac(整数,未知0), ability(str/dex/con/int/wis/cha), "
         "retrieval_query(用规则原词构造的检索串:动作规范名+检定类型+DC关键词,如'徒手打击 推撞 豁免DC 8 力量 熟练')\n"
         "attack专有: weapon(武器中文名)\n"
@@ -207,6 +211,110 @@ def _resolve_ability_check(ch, it) -> dict:
             "success": r.success, "dc": dc, "margin": r.margin}
 
 
+def _resolve_rest(ch, it) -> dict:
+    """休息机制：短休消耗生命骰恢复HP+恢复职业特性；长休恢复全部HP+所有法术位+力竭-1。
+    R-GLS-014/R-GLS-015"""
+    rest_type = it.get("rest_type", "short")
+    if rest_type == "short":
+        hit_dice_to_spend = int(it.get("hit_dice_to_spend", 0))
+        result = rest_mod.short_rest(ch, hit_dice_to_spend=hit_dice_to_spend)
+        return {"kind": "rest", "rest_type": "short",
+                "hp_restored": result.get("hp_restored", 0),
+                "features_restored": result.get("features_restored", [])}
+    else:  # long
+        result = rest_mod.long_rest(ch)
+        return {"kind": "rest", "rest_type": "long",
+                "hp_restored": result.get("hp_restored", 0),
+                "spell_slots_restored": result.get("spell_slots_restored", False),
+                "exhaustion_reduced": result.get("exhaustion_reduced", False)}
+
+
+def _resolve_social(ch, it) -> dict:
+    """社交流程：NPC态度系统(友好/冷漠/敌对)/四步社交互动/态度转换阈值。
+    R-CON-012/R-DM-047"""
+    npc_name = it.get("npc_name", "NPC")
+    npc_attitude = it.get("npc_attitude", "indifferent")
+    player_input = it.get("player_input", "")
+    skill = it.get("skill", "persuasion")
+    dc = int(it.get("dc", 15))
+
+    # 创建NPC对象
+    npc = social_mod.NPC(name=npc_name, attitude=npc_attitude)
+
+    # 计算社交DC修正（友好-5/冷漠0/敌对+5）
+    dc_modifier = social_mod.check_social_dc(npc.attitude)
+    final_dc = max(1, dc + dc_modifier)
+
+    # 执行社交检定
+    ability = "cha" if skill in ("persuasion", "deception", "intimidation", "performance") else "wis"
+    r = check.ability_check(mod=ch.ability_mod(ability), prof=ch.prof(),
+                            proficient=True, dc=final_dc)
+
+    # 更新NPC态度（根据成功/失败次数）
+    success_count = 1 if r.success else 0
+    failure_count = 0 if r.success else 1
+    new_attitude = social_mod.update_attitude(npc, success_count, failure_count)
+
+    return {"kind": "social", "skill": skill, "dc": final_dc,
+            "check_total": r.total, "d20": r.d20,
+            "success": r.success, "margin": r.margin,
+            "npc_name": npc_name, "npc_attitude": npc_attitude,
+            "new_attitude": new_attitude,
+            "dc_modifier": dc_modifier}
+
+
+def _resolve_levelup(ch, it) -> dict:
+    """升级与成长：XP表(20级)/升级五步骤/游戏四阶段(T1-T4)。
+    R-DM-041/R-DM-042/R-DM-043/R-DM-044/R-DM-045"""
+    current_level = ch.level
+    new_level = current_level + 1
+
+    if new_level > 20:
+        return {"kind": "levelup", "error": "已达最高等级20"}
+
+    # 使用levelup模块执行升级
+    result = levelup_mod.level_up(ch, new_class=None, new_features=None,
+                                   ability_improvements=None, hit_die_roll=None)
+
+    return {"kind": "levelup", "old_level": current_level,
+            "new_level": result.get("new_level", new_level),
+            "hp_gained": result.get("hp_gained", 0),
+            "pb_changed": result.get("pb_changed", False),
+            "new_pb": result.get("new_proficiency_bonus", 0),
+            "tier": levelup_mod.get_tier(new_level)}
+
+
+def _resolve_travel(ch, it) -> dict:
+    """探索流程：旅行步调(快速30里/中速24里/慢速18里)/导航检定/被动察觉/随机遭遇/资源追踪。
+    R-DM-026~R-DM-040"""
+    pace = it.get("pace", "normal")
+    terrain = it.get("terrain", "森林")
+    nav_dc = int(it.get("nav_dc", 15))
+
+    # 获取旅行步调信息
+    pace_info = exploration_mod.TRAVEL_PACES.get(pace, exploration_mod.TRAVEL_PACES["normal"])
+
+    # 导航检定
+    nav_result = exploration_mod.navigation(nav_dc=nav_dc)
+
+    # 随机遭遇检定
+    encounter_result = exploration_mod.random_encounter_check()
+
+    # 被动察觉检测
+    passive_perception = 10 + ch.ability_mod("wis")
+    perception_result = exploration_mod.check_passive_perception(
+        party_members=[{"passive_perception": passive_perception}],
+        dc=15
+    )
+
+    return {"kind": "travel", "pace": pace,
+            "per_day_miles": pace_info.per_day_miles if hasattr(pace_info, 'per_day_miles') else 24,
+            "nav_result": nav_result,
+            "encounter_result": encounter_result,
+            "perception_result": perception_result,
+            "terrain": terrain}
+
+
 def resolve(state: GameState) -> dict:
     """硬性骰子分派（纯代码，LLM 不参与）。"""
     it = state["intent"]
@@ -226,6 +334,14 @@ def resolve(state: GameState) -> dict:
         return _resolve_start_combat(state, ch, it)
     if at == "end_combat":
         return {"dice": {"kind": "end_combat"}, "combat": {"active": False}}
+    if at == "rest":
+        return {"dice": _resolve_rest(ch, it)}
+    if at == "social":
+        return {"dice": _resolve_social(ch, it)}
+    if at == "levelup":
+        return {"dice": _resolve_levelup(ch, it)}
+    if at == "travel":
+        return {"dice": _resolve_travel(ch, it)}
     return {"dice": {}}  # other → 仅叙事
 
 

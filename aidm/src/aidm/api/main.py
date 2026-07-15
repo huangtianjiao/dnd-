@@ -13,6 +13,7 @@ from __future__ import annotations
 import os
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
 
@@ -25,13 +26,18 @@ app = FastAPI(title="AI DM", version="0.2.0")
 from .ws import manager, websocket_endpoint
 
 # 静态前端（P5 交互层：Web 聊天界面）
-_UI_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "ui", "static")
+_UI_DIR = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "ui", "static")
+)
+
+# 挂载静态文件目录（CSS/JS）
+app.mount("/static", StaticFiles(directory=_UI_DIR), name="static")
 
 
 @app.get("/")
 def index():
     """Web 跑团前端（HTML 聊天页，调 /chat）。"""
-    p = os.path.normpath(os.path.join(_UI_DIR, "index.html"))
+    p = os.path.join(_UI_DIR, "index.html")
     if os.path.exists(p):
         return FileResponse(p)
     return {"status": "frontend not found", "path": p}

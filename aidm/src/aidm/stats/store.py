@@ -130,6 +130,12 @@ def create_campaign(name: str, db_path: str = DEFAULT_DB) -> M.Campaign:
         return c
 
 
+def save_campaign(c: M.Campaign, db_path: str = DEFAULT_DB) -> M.Campaign:
+    with session(db_path) as s:
+        s.add(c); s.commit(); s.refresh(c)
+        return c
+
+
 def get_campaign(campaign_id: int, db_path: str = DEFAULT_DB) -> Optional[M.Campaign]:
     with session(db_path) as s:
         return s.get(M.Campaign, campaign_id)

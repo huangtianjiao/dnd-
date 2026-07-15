@@ -3909,9 +3909,92 @@ aidm/cli.py :: main()  # P5交互层(CLI,BUILD允许) 交互跑团: 输入→判
 
 # === 待实现（可选增强）===
 # ui/ :: Next.js + shadcn/ui 跑团Web界面(当前用CLI交互层,API已就绪可直接接前端) # P5可选
+
+# === Phase A Session 0（已完成）===
+aidm/brain/session0.py :: Session0Config(tone/seriousness/lines/veils/rule_version/advancement_mode/resurrection_access/safewords/party_size_min/max)  # R-DM-046 团队规模
+
+# === Phase C 核心循环细化（已完成）===
+aidm/engine/core_loop.py :: CoreLoopState(DM_DESCRIBE/PLAYER_ACT/DM_RESOLVE) + CoreLoopMachine  # R-CHK-001 D20检定三步流程
+aidm/engine/core_loop.py :: should_roll_dice(action_desc,situation) -> ActionCertainty  # CERTAIN/UNCERTAIN/IMPOSSIBLE
+aidm/engine/core_loop.py :: HeroicInspiration(grant/consume/reroll_with_inspiration)  # R-CHK-007 英雄激励重骰
+aidm/engine/core_loop.py :: dc_by_difficulty(label) -> int  # R-CHK-009 范例DC表(非常容易5...近乎不可能30)
+
+# === Phase E 探索流程（已完成）===
+aidm/brain/exploration.py :: ExplorationState(pace/roles/nav_dc/current_location/time_elapsed/resources/encounter_table/terrain/light_level/lost/exhaustion_levels)
+aidm/brain/exploration.py :: TRAVEL_PACES(快速400尺/分30里/天, 中速300/24, 慢速200/18)  # R-DM-032 旅行步调表
+aidm/brain/exploration.py :: TERRAIN_TABLE(11种地形: 寒带/海岸/荒漠/森林/草原/丘陵/山地/沼泽/幽暗地域/城市/水路)  # R-DM-033 旅行地形表
+aidm/brain/exploration.py :: light_obscurement(light_level) -> obscured_level  # R-DM-027 光照→遮蔽映射
+aidm/brain/exploration.py :: effective_obscurement(light_level, senses) -> obscured_level  # 特殊感官绕过遮蔽
+aidm/brain/exploration.py :: audible_distance(noise_level) -> int  # R-DM-026 声音传播距离(安静2d6×5/正常2d6×10/非常响2d6×50)
+aidm/brain/exploration.py :: outdoor_visibility(weather,vantage) / sea_visibility(sky) / underwater_encounter_distance(clarity,lighting)  # R-DM-027/028/029 能见度表
+aidm/brain/exploration.py :: weather_roll() -> dict  # R-DM-030 天气表(三次1d20确定温度/风力/降雨)
+aidm/brain/exploration.py :: extended_travel_exhaustion(extra_hours,con_save_total) -> int  # R-DM-031 延长旅行力竭(超8小时每额外1小时体质豁免DC=10+额外小时数)
+aidm/brain/exploration.py :: special_travel_rate(speed,pace) -> float  # R-DM-032 特殊移动旅行速率(mph=速度÷10, 快速×4/3, 慢速×2/3)
+aidm/brain/exploration.py :: apply_good_road(max_pace,has_good_road) -> str  # R-DM-034 路况良好提速(良好道路使最快步调提高一节)
+aidm/brain/exploration.py :: party_pace_slow_check(member_speeds,normal_speed) -> bool  # R-DM-035 慢速成员拖累(任一成员速度<正常/2则全队慢速)
+aidm/brain/exploration.py :: forage(survival_total,forage_dc,wis_mod) -> dict  # R-DM-036 觅食检定(感知(求生)检定对抗觅食DC, 成功掷1d6+wis_mod得食物磅数与水加仑)
+aidm/brain/exploration.py :: navigation(survival_total,nav_dc) -> dict  # R-DM-037 导航检定(失败则偏离路线, 旅程延长1d6×10%)
+aidm/brain/exploration.py :: track_research_time(area_type) -> int  # R-DM-039 追踪重新搜索时间(窄区10分钟/户外1小时)
+aidm/brain/exploration.py :: battle_duration(rounds) -> int  # R-DM-040 战斗回合时长(一轮6秒, 10回合=60秒=1分钟)
+aidm/brain/exploration.py :: check_passive_perception(party_members,dc) -> list  # R-DM-012 被动察觉检测(队伍最高被动察觉≥DC则自动发现)
+aidm/brain/exploration.py :: random_encounter_check(threshold=18) -> dict  # 随机遭遇检定(d20≥阈值触发, 通常每日2次)
+aidm/brain/exploration.py :: hide_check(stealth_total,passive_perception) -> bool  # 躲藏机制(敏捷(隐匿)检定严格大于对手被动察觉才算成功)
+aidm/brain/exploration.py :: Resources.consume_daily(creature_count) / is_supplied() / exhaustion_from_lack()  # 资源追踪(每生物每日1磅食物+1加仑水)
+aidm/brain/exploration.py :: travel_day(state,party,terrain_name,**kwargs) -> dict  # 一天旅行完整流程(设定步调→职责分配→导航检定→天气→觅食→随机遭遇→资源追踪)
+aidm/brain/exploration.py :: dungeon_turn(state,party,action_desc,dc,**kwargs) -> dict  # 地城探索回合(10分钟)(被动察觉检测+主动检定)
+
+# === Phase F 社交流程（已完成）===
+aidm/brain/social.py :: NPC(name/role/attitude/knowledge/goals/secrets/cr)  # R-CON-012/R-DM-047 NPC态度三种(友好/冷漠/敌对)
+aidm/brain/social.py :: SocialState(current_npc/conversation_history/attitude_changes/revealed_secrets/persuasion_dc/consecutive_successes/consecutive_failures/round)
+aidm/brain/social.py :: check_social_dc(npc_attitude) -> int  # 社交DC修正(友好-5/冷漠0/敌对+5)
+aidm/brain/social.py :: update_attitude(npc,success_count,failure_count) -> Optional[str]  # 态度转换(friendly→indifferent连续失败10次/indifferent→hostile连续失败5次/hostile→indifferent连续成功15次/indifferent→friendly连续成功10次)
+aidm/brain/social.py :: social_interaction(party,npc,player_input,conversation_history) -> dict  # 社交互动四步流程(DM扮演NPC→玩家角色扮演回应→DM判断是否需要掷骰→掷骰与解决)
+
+# === Phase H 休息机制（已完成）===
+aidm/brain/rest.py :: RestState(type/duration/start_time/interrupted/completed/interrupt_count/elapsed_at_interrupt) + required_duration()
+aidm/brain/rest.py :: short_rest(character,hit_dice_to_spend=0) -> dict  # R-GLS-014 短休(至少1小时, 必须至少1HP, 消耗生命骰恢复HP, 恢复职业特性)
+aidm/brain/rest.py :: long_rest(character) -> dict  # R-GLS-015 长休(至少8小时其中至少6小时睡眠, 恢复全部HP和所有已消耗的生命骰, 力竭等级-1, 恢复所有法术位)
+aidm/brain/rest.py :: interrupt_rest(rest_state,cause) -> dict  # 休息打断(短休被打断不提供任何增益; 长休被打断如果已休息至少1小时可获得一次短休的增益, 可以立刻继续但每被打断一次需额外休息1小时)
+
+# === Phase I 升级与成长（已完成）===
+aidm/brain/levelup.py :: XP_TABLE = {1:0, 2:300, ..., 20:355000}  # R-DM-041 经验值与等级表
+aidm/brain/levelup.py :: FIXED_HP_GAIN = {"野蛮人":7, "战士":6, ..., "法师":4}  # 每级固定HP增长
+aidm/brain/levelup.py :: proficiency_bonus(level) -> int  # R-CHK-015 熟练加值(1-4:+2, 5-8:+3, 9-12:+4, 13-16:+5, 17-20:+6)
+aidm/brain/levelup.py :: get_tier(level) -> str  # 游戏四阶段(T1:1-4/T2:5-10/T3:11-16/T4:17-20)
+aidm/brain/levelup.py :: level_from_xp(xp) -> int  # 由总XP反查等级
+aidm/brain/levelup.py :: check_level_up(character) -> bool  # 检查XP是否达到下一级
+aidm/brain/levelup.py :: award_xp(party,total_xp) -> dict  # R-DM-041 均分总XP给队伍成员(向下取整余数)
+aidm/brain/levelup.py :: milestone_xp(milestone_type,level) -> int  # R-DM-042 里程碑XP(主要→高难度遭遇XP; 次要→低难度)
+aidm/brain/levelup.py :: training_cost(target_level) -> tuple  # R-DM-044 训练变体(返回天数,GP)
+aidm/brain/levelup.py :: session_based_level(sessions_played) -> int  # R-DM-045 基于游戏回的升级速率
+aidm/brain/levelup.py :: level_up(character,new_class=None,new_features=None,ability_improvements=None,hit_die_roll=None) -> dict  # 升级五步骤(选择职业→修改生命值和生命骰→记录新职业特性→修改熟练加值→修改属性调整值)
+aidm/brain/levelup.py :: level_up_outside_rest(character,hp_gain) -> None  # R-DM-043 长休外升级HP辅助
+aidm/data/classes.py :: CLASSES(12职业)  # R-CHK-015 熟练加值表  topics/玩家手册2024/角色职业/
+aidm/data/races.py :: RACES(10种族)  # 种族属性加成/速度/黑暗视觉/特质/子族  topics/玩家手册2024/角色起源/种族/
+aidm/data/backgrounds.py :: BACKGROUNDS(16背景)  # 起源专长/技能熟练/工具熟练/装备  topics/玩家手册2024/角色起源/背景/
+aidm/brain/char_create.py :: create_character(...) -> Character  # 五步车卡法
+aidm/brain/char_create.py :: STANDARD_ARRAY=[15,14,13,12,10,8] / POINT_BUY_BUDGET=27 / roll_4d6_drop_lowest()
+aidm/brain/char_create.py :: compute_derived_stats(character) -> dict  # HP=HD+CON_mod, AC=10+DEX_mod, PB=2+(lv-1)//4
+
+# === Phase D 战斗流程完善（已完成，6模块自检通过）===
+aidm/engine/combat.py :: Combatant(cid,name,dex_mod,speed,position,reach,group_id,...)  # R-CMB-001~046 扩展
+aidm/engine/combat.py :: roll_initiative(combatants) -> list  # R-CMB-002 d20+DEX, 突袭劣势(R-GLS-009)
+aidm/engine/actions.py :: COMBAT_ACTIONS(attack/dash/disengage/dodge/help/hide/magic/ready/search/study/utilize)  # 新建, 11种动作分派器
+aidm/engine/actions.py :: resolve_combat_action(action_type,attacker,target,weapon,**kwargs) -> ActionResult
+aidm/engine/opportunity_attack.py :: can_make_opportunity_attack(attacker,target) -> bool  # 新建, R-CMB-025 借机攻击触发条件
+aidm/engine/opportunity_attack.py :: opportunity_attack(attacker,target,weapon,target_ac,...) -> ActionResult
+
+# === Phase G 施法流程完善（已完成，3文件自检通过）===
+aidm/data/spells.py :: Spell(name,en_name,level,school,casting_time,components,duration,concentration,effect_type,save_ability,damage,heal,upcast,...)  # 新建, 12个法术数据表
+aidm/data/spells.py :: SPELL_SLOTS_BY_LEVEL(1-20级法术位进度表) + max_spell_slots(level)  # R-SPL-002 法术位消耗
+aidm/data/spells.py :: CASTING_ABILITY_BY_CLASS = {法师:INT, 牧师/德鲁伊/游侠:WIS, 吟游诗人/术士/魔契师/圣武士:CHA}  # R-SPL-021 施法属性映射
+aidm/engine/concentration.py :: ConcentrationSlot + ConcentrationManager  # 新建, R-SPL-019 集中维持引擎
+aidm/engine/concentration.py :: concentration_save_on_damage(caster_id,damage_taken) -> bool  # R-SPL-020 受伤体质豁免DC=max(10,floor(dmg/2))至高30
+aidm/engine/spellcasting.py :: CasterState(caster_id,class_name,level,ability_scores,spell_slots,...)  # 新建, 施法者运行时状态
+aidm/engine/spellcasting.py :: cast_spell(caster,spell_name,slot_level,targets) -> dict  # 完整施法流程: 检查法术位→检查成分(V/S/M)→解决效果(attack_roll/saving_throw/automatic/heal/shield)→消耗法术位→设置集中
 ```
 
 ---
 
-*文档版本：v1.1 · 400 条规则点(364原+36审计补遗) · 经7组并行审计复核全部源文 · 修正11处不准确+补遗36条遗漏(P2/P3入待补清单)*
-*下一步：按 P0 规则点编写骰子引擎代码，写完回填"实现回填区"形成双向索引*
+*文档版本：v1.2 · 400 条规则点(364原+36审计补遗) · 经7组并行审计复核全部源文 · 修正11处不准确+补遗36条遗漏(P2/P3入待补清单)*
+*Phase B/D/G 已由6个子智能体并行实现，15个模块全回归自检通过*

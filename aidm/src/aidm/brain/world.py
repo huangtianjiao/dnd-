@@ -56,19 +56,25 @@ def open_campaign(setting: str, tone: str, campaign_id: int, character_id: int) 
                    f"世界设定:\n{setting}\n基调:{tone or '未指定'}\n角色:{ch_desc}",
                    temperature=0.6)
     obj = _extract_json(raw)
-    # 持久化设定 + 场景
-    store.set_campaign_setting(campaign_id, setting, tone)
+    world_background = obj.get("narration", raw[:600])
+    # 持久化背景 + 场景
+    camp = store.set_campaign_setting(campaign_id, setting, tone)
+    if camp is not None:
+        camp.world_background = world_background
+        store.save_campaign(camp)
     sc = store.get_scene(campaign_id) or models.Scene(campaign_id=campaign_id)
     s = obj.get("scene", {})
     sc.location = s.get("location", "")
     sc.time = s.get("time", "")
     sc.atmosphere = s.get("atmosphere", "")
     sc.environment = s.get("environment", "")
-    sc.situation = s.get("situation", obj.get("narration", "")[:300])
+    sc.situation = s.get("situation", world_background[:300])
+    sc.story_log = world_background
     sc.set_npcs(s.get("npcs", []))
     sc.set_exits(s.get("exits", []))
     store.save_scene(sc)
-    return {"narration": obj.get("narration", raw[:300]),
+    return {"world_background": world_background,
+            "narration": world_background,
             "action_options": obj.get("action_options", []),
             "scene": s}
 
@@ -89,9 +95,12 @@ def get_scene(campaign_id: int) -> dict:
     sc = store.get_scene(campaign_id)
     if not sc:
         return {}
+    camp = store.get_campaign(campaign_id)
     return {"location": sc.location, "time": sc.time, "atmosphere": sc.atmosphere,
             "environment": sc.environment, "npcs": sc.npcs, "exits": sc.exits,
-            "situation": sc.situation}
+            "situation": sc.situation, "story_log": sc.story_log,
+            "world_background": (camp.world_background if camp else ""),
+            "campaign_name": (camp.name if camp else "")}
 
 
 if __name__ == "__main__":

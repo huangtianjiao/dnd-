@@ -131,11 +131,11 @@
   | Dice3D (Three.js) | 3D物理 | Three.js+cannon.js | 可设最终面 | ⭐⭐⭐ 重 |
   | CSS-only 骰子 | CSS transform | 无 | 天然可控 | ⭐⭐⭐⭐ HTML版用 |
   | dice-roller-parser | 纯数学无动画 | npm | N/A | 配合视觉库 |
-- **实际集成**：
+- **实际集成与后续调整**：
   - **Next.js 版**（`ui/app/page.tsx`）：`npm install @3d-dice/dice-box@1.1.4`（BabylonJS 物理引擎+Web Worker+OffscreenCanvas）；assets 拷到 `public/assets/dice-box/`；page.tsx 用 `useEffect` 动态 `import('@3d-dice/dice-box')`（SSR 安全）；`diceBox.roll('1d20')` 3D 物理动画 + `fetch('/chat')` 后端值**并行**→后端 d20 值大字覆盖（权威）→叙事。`dice-box.d.ts` 类型声明解决 TS 编译。`npm run build` 绿（Route / 3.29kB）。
-  - **HTML 版**（`ui/static/index.html`）：CSS-only `@keyframes tumble` 3D 翻转 + `startDiceRoll()`/`landDiceRoll(d20,hit,crit)` 揭示后端值 + 颜色（命中绿/未中红/重击金）。**"🎲掷骰"按钮**（玩家显式点击）。
-  - **硬性判定不破**：3D 动画是视觉参与感，骰子值来自后端 secrets RNG（前端不随机）。dice-box 自带的随机值被后端值覆盖。
-- **后果**：玩家点击"掷骰"→ 3D 骰子翻转（BabylonJS 物理/CSS）→ 后端 d20 揭示（大字+颜色）→ LLM 叙事。有参与感，值不造假。
+  - **HTML 版**最初实现了 CSS-only 3D 翻转 + d20 值揭示（命中绿/未中红/重击金），后根据用户反馈"掷筛动画太久/删掉掷筛"，**已删除 HTML 前端骰子动画 overlay**，改回直接显示后端骰子文本结果；按钮文案由"🎲掷骰"改回"行动"。多人实时版以行动广播为主。
+  - **硬性判定不破**：不论是否展示动画，骰子值始终来自后端 secrets RNG（前端不随机）。
+- **后果**：保留 Next.js 3D 骰子库调研与构建能力，当前 HTML/多人实时版界面不再显示前端骰子动画，只展示后端权威骰子值与结果。
 - **关联**：`ui/app/page.tsx` · `ui/static/index.html` · `ui/dice-box.d.ts` · `ui/public/assets/dice-box/` · ARCHITECTURE §0 · PRD §4 P5
 
 ---
@@ -209,6 +209,28 @@
   - 继续游戏流程：列出战役 → 点选 → 加载状态(场景/角色/战斗/摘要) → WS 连接 → 继续。
 - **后果**：像正规游戏主菜单——3个明确选项，每种游戏方式都有独立流程。
 - **关联**：`ui/static/index.html` 主菜单 · `api/main.py:/campaigns+/campaign/{id}/state` · `stats/store.py:list_campaigns` · ARCHITECTURE §0
+
+---
+
+## D-019 Phase B/D/G 并行实现（6子智能体）✅已落地
+
+- **背景**：改造计划 v2 定义了 9 个 Phase，其中 B（角色创建）、D（战斗流程）、G（施法流程）是 P0/P1 优先级。用户授权开 6 个子智能体并行工作。
+- **执行方式**：3 个子智能体分别负责 Phase B/D/G，每个先读 `5echm_web/topics/` 规则书原文，再编码，最后自检。
+- **Phase B 交付**（209项自检通过）：
+  - `data/classes.py`：12个核心职业数据表（生命骰/主属性/豁免熟练/技能选择/护甲武器熟练/子职）
+  - `data/races.py`：10种种族数据表（属性加成/速度/黑暗视觉/特质/子族）
+  - `data/backgrounds.py`：16种背景数据表（起源专长/技能熟练/工具熟练/装备）
+  - `brain/char_create.py`：五步车卡流程 + 衍生数值计算（标准阵列/购点法27点/4d6弃最低）
+- **Phase D 交付**（6模块自检通过）：
+  - `engine/combat.py` 扩展：Combatant 数据结构扩展（position/speed_remaining/reach/group_id）、动作经济管理、移动与位置辅助
+  - `engine/actions.py` 新建：11种战斗动作分派器（attack/dash/disengage/dodge/help/hide/magic/ready/search/study/utilize）
+  - `engine/opportunity_attack.py` 新建：借机攻击触发条件判定 + 近战攻击检定
+- **Phase G 交付**（3文件自检通过）：
+  - `data/spells.py` 新建：12个法术数据表（火焰箭/魔法飞弹/火球术/闪电束/治愈真言/护盾术等）+ 法术位进度表(1-20级) + 施法属性映射
+  - `engine/concentration.py` 新建：ConcentrationManager 集中维持引擎（同时只能集中维持一个法术；受伤体质豁免DC=max(10,floor(dmg/2))至高30）
+  - `engine/spellcasting.py` 新建：cast_spell 完整施法流程（检查法术位→检查成分V/S/M→解决效果attack_roll/saving_throw/automatic/heal/shield→消耗法术位→设置集中）
+- **回归验证**：15个模块全回归自检通过，无冲突。现有 engine/dice.py、engine/check.py、engine/damage.py 未被修改。
+- **关联**：REFACTOR_PLAN.md §三 Phase B/D/G · RULE_SPEC.md "实现回填区" 已更新 · ARCHITECTURE.md §0
 
 ---
 
