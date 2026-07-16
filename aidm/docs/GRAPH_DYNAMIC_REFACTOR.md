@@ -189,7 +189,7 @@ LLM 看不到信息，自然只能瞎猜/留空 → 走兜底 → 写死常量�
 
 | 风险 | 对策 |
 |---|---|
-| graph.py / combat_engine.py `_resolve_attack` 重复实现，易漏改 | B1/B2 双写；或抽公共函数 `_pick_weapon(ch, it)` 复用 |
+| graph.py / combat_engine.py `_resolve_attack` 重复实现，易漏改 | B1 已双写完成（graph.py:268 + combat_engine.py:59/274）。combat_engine.py 全仓无导入（dead module），其 `_resolve_cast` 未同步 B2（无活跃路径，保持既有分歧）|
 | D2 重试在低温下收益递减 | 只救解析失败，不救信息缺失；max 3 次 |
 | C 注入增 prompt 长度 | 按 narrate 惯例截断；记忆 top-k 限制 |
 | equipped_weapon 默认值按职业映射是简化 | 靠 equip-weapon 端点 + 工作记忆兜；高等级角色可手动装 |
@@ -209,6 +209,27 @@ LLM 看不到信息，自然只能瞎猜/留空 → 走兜底 → 写死常量�
 - **B5**：自动遇遇在等级1森林→出低 CR 怪；非永远哥布林。
 - **C**：Director prompt 含记忆/角色卡/场景段落；classify 结果 weapon 与角色卡一致。
 - **D**：故意构造坏 JSON→触发重试→恢复。
+
+### 实测结果（2026-07，全过）
+
+**节点级**：
+- A1 migrate：临时库 `PRAGMA table_info(character)` 含 equipped_weapon；存取"长剑"往返 ✓
+- A2：`default_weapon_for_class`（战士→长剑/法师→匕首/游侠→短弓/未知→匕首）✓
+- A3：monsters 自检；`to_combatant_dict` 含期望键 ✓
+- A4/B1：`resolve_weapon_damage` 长剑→(1d8,挥砍)/徒手→(1,钝击)/未知→(1d8,挥砍) ✓
+- B2：`_resolve_cast` 火球术→8d6/火焰/dex；护盾术→0伤害；未知法术→回退LLM；魔法飞弹→力场(auto_hit) ✓
+- B3：`_resolve_travel` 森林(15/15)/海岸(5/15)/山地(15/20) ✓
+- B4：`_resolve_start_combat` 兽人→hp15/atk+5/1d12+3；未知怪→默认 hp7 ✓
+- C：`_build_classify_context` 含角色(武器)+场景(地形/NPC) ✓
+- D1：`scripts/verify_structured_output.py` 实测网关支持 structured output（暂缓切换，理由见 §6）✓
+
+**回归**：`scripts/verify_fixes.py` 全过（已同步 `_resolve_travel` 新签名）；dice/equipment/monsters 自检全过；8 文件编译过。
+
+**端到端**（真实 LLM，`graph.run` 全链路 classify→retrieve→verify→resolve→narrate→apply）：
+- 战士"我攻击那只AC15的哥布林"（输入未提武器）→ intent.attack / weapon=长剑（C 注入 equipped_weapon 填的）/ ac=15 → resolve 命中检定 → narrate 叙事 ✓
+- 法师"我对那群哥布林施展火球术"（输入未提骰子/类型）→ intent.cast / spell=火球术 / lvl=3 → resolve **spell_dice=8d6 / damage_type=火焰 / save=dex**（来自 get_spell，非 LLM 猜）→ narrate 叙事 ✓
+
+（e2e 用 rules.db 副本避开运行中服务端持有的 Qdrant 本地锁）
 
 ---
 

@@ -48,6 +48,7 @@ class Spell:
     save_ability: Optional[str] = None      # 豁免属性 DEX/CON/WIS/CHA/INT/STR
     damage_dice: Optional[str] = None       # 伤害骰表达式 如 "1d10"
     damage_type: Optional[str] = None       # 伤害类型 如 "fire"
+    half_on_save: bool = False              # 豁免成功是否仍受半伤（火球术=True；圣火术等=0伤）
     heal_dice: Optional[str] = None         # 治疗骰表达式 如 "2d8"
     add_casting_mod_to_heal: bool = False   # 治疗是否加施法属性调整值
     ac_bonus: int = 0                       # 护甲加值 (护盾术 +5)
@@ -149,6 +150,19 @@ _SPELLS_LIST: list[Spell] = [
         upcast={"cantrip_scaling": [(5, "2d10"), (11, "3d10"), (17, "4d10")]},
         description="你对施法距离内一名生物或物件掷出一把火焰，对目标进行一次远程法术攻击。命中时，目标将受到1d10点火焰伤害。",
         class_list=("术士", "法师"),
+    ),
+    Spell(
+        name="圣火术", en_name="Sacred Flame",
+        level=0, school="塑能",
+        casting_time="动作", casting_time_type="ACTION",
+        range="60尺", components=frozenset({"V", "S"}),
+        duration="立即", concentration=False,
+        effect_type="saving_throw", save_ability="DEX",
+        damage_dice="1d8", damage_type="光耀",
+        half_on_save=False,  # 豁免成功不受伤害（非半伤法术）
+        upcast={"cantrip_scaling": [(5, "2d8"), (11, "3d8"), (17, "4d8")]},
+        description="如同火焰的光辉自天上降下，笼罩施法距离内一名你能看见的生物。目标必须进行一次敏捷豁免，失败受到1d8点光耀伤害。目标不能因掩护而在此次豁免中获得加值。",
+        class_list=("牧师",),
     ),
     Spell(
         name="光亮术", en_name="Light",
@@ -270,6 +284,7 @@ _SPELLS_LIST: list[Spell] = [
         duration="立即", concentration=False,
         effect_type="saving_throw", save_ability="DEX",
         damage_dice="8d6", damage_type="fire",
+        half_on_save=True,
         upcast={"per_level_above_base": "+1d6"},
         description="明亮的闪光从你的指间飞驰向施法距离内你指定的一点，并迸成一片烈焰。目标点周围半径20尺球状区域内的每个生物必须进行一次敏捷豁免。豁免失败受到8d6火焰伤害，成功减半。",
         class_list=("术士", "法师"),
@@ -283,6 +298,7 @@ _SPELLS_LIST: list[Spell] = [
         duration="立即", concentration=False,
         effect_type="saving_throw", save_ability="DEX",
         damage_dice="8d6", damage_type="lightning",
+        half_on_save=True,
         upcast={"per_level_above_base": "+1d6"},
         description="一束100尺长、5尺宽的线状闪电从你的位置向你指定的方向爆发迸出。在线状区域内的每个生物必须进行一次敏捷豁免，失败受到8d6闪电伤害，成功减半。",
         class_list=("术士", "法师"),

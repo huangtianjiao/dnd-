@@ -298,8 +298,25 @@ def _resolve_cast(ch, it) -> dict:
     # 施法资格校验：非施法职业不能施法（R-SPL-001 施法者前提）
     if ch.char_class not in CLASS_CAST_ABILITY:
         return {"kind": "cast", "error": f"{ch.char_class} 不会施法，无法施展法术"}
+    # 先查 spells 数据表取权威值（优先于 LLM 猜测）：level/spell_dice/damage_type/
+    # effect_type/save_ability/concentration/half_on_save。表未收录（get_spell 抛 KeyError）
+    # 则回退 LLM 猜测，不硬性报错——因 spells 表条目有限，报错会阻断多数施法。
+    # 详见 docs/GRAPH_DYNAMIC_REFACTOR.md 阶段B2
+    spell_name = it.get("spell_name", "")
+    _spell = None
+    if spell_name:
+        try:
+            from ..data import spells as _sp
+            _spell = _sp.get_spell(spell_name)
+        except Exception:
+            _spell = None
+
     # 法术位校验（戏法 level<=0 不耗位）R-SPL-002
-    level = int(it.get("spell_level") or 1)
+    # level 取权威：表内法术用 _spell.level；表外回退 LLM 猜测 it.spell_level。
+    # 注意用 dict.get(key, default) 而非 `or`——`0 or 1` 会把戏法(level=0)误判为 1，
+    # 导致戏法被当作 1 环法术消耗法术位（BUG-D）。LLM 对戏法环阶猜测不稳定
+    # （圣火术时而报 0 时而报 1），故表内法术必须以表为准。
+    level = int(_spell.level) if _spell else int(it.get("spell_level", 1))
     if level >= 1:
         try:
             _sd = json.loads(ch.spell_slots_json) if ch.spell_slots_json else {}
@@ -319,18 +336,8 @@ def _resolve_cast(ch, it) -> dict:
     out = {"kind": "cast", "spell_save_dc": save_dc, "spell_attack_bonus": atk_bonus,
            "spell_level": level}
 
-    # 查 spells 数据表取权威值（优先于 LLM 猜测）：damage_dice/damage_type/effect_type/
-    # save_ability/concentration。表未收录（get_spell 抛 KeyError）则回退 LLM 猜测，
-    # 再保守默认；不硬性报错——因 spells 表仅 25 条，报错会阻断多数施法。
-    # 详见 docs/GRAPH_DYNAMIC_REFACTOR.md 阶段B2
-    spell_name = it.get("spell_name", "")
-    _spell = None
-    if spell_name:
-        try:
-            from ..data import spells as _sp
-            _spell = _sp.get_spell(spell_name)
-        except Exception:
-            _spell = None
+    # 法术字段：表内取权威 damage_dice/damage_type/effect_type/save_ability/concentration；
+    # 表外回退 LLM 猜测。
     if _spell:
         if _spell.concentration:
             out["concentrating_on"] = _spell.name
@@ -375,6 +382,17 @@ def _resolve_cast(ch, it) -> dict:
                                      resistances=resists, vulnerabilities=vulns, immunities=immuns)
             out.update({"damage": dr.final, "damage_type": dmg_type, "damage_rolls": dr.dice_rolls,
                         "resisted": dr.resisted, "vulnerable": dr.vulnerable, "immune": dr.immune})
+    elif _etype == "heal" or (it.get("damage_type", "") or "").lower() in ("heal", "healing", "治疗"):
+        # 治疗法术（疗伤术/治愈真言等）：掷治疗骰（spell_dice 已含+施法属性调整值），
+        # 无攻击检定、无豁免——治疗始终生效。BUG-G：原走豁免分支致「豁免成功=0治疗」。
+        # 输出统一 damage_type="治疗"，供 apply_node step2.9 确定性应用。
+        if has_damage:
+            dr = damage.roll_damage(damage.DamageRequest(dice_expr=spell_dice, damage_type="heal", add_mod=False),
+                                    resistances=[], vulnerabilities=[], immunities=[])
+            out.update({"hit": True, "damage_type": "治疗", "raw_damage": dr.final,
+                        "damage": dr.final, "damage_rolls": dr.dice_rolls})
+        else:
+            out.update({"hit": True, "damage_type": "治疗", "damage": 0})
     else:  # 豁免型法术 / 无伤害 buff·utility
         if has_damage:
             save_bonus = int(it.get("target_save_bonus") or 0)
@@ -382,8 +400,14 @@ def _resolve_cast(ch, it) -> dict:
             dr = damage.roll_damage(damage.DamageRequest(dice_expr=spell_dice, damage_type=dmg_type, add_mod=False),
                                     resistances=resists, vulnerabilities=vulns, immunities=immuns)
             piped = dr.final  # 经管线后的全额伤害（已处理抗性/易伤/免疫）
-            # R-CHK-014 豁免成功半伤：管线后再减半（抗性+半伤可叠加=1/4）
-            final = engine_dice.round_down(piped / 2) if sv.success else piped
+            # R-CHK-014 豁免成功伤害：按法术属性 half_on_save 决定——
+            # 火球术等「成功减半」半伤；圣火术/毒素喷吐等「成功不受伤害」0伤。
+            # 法术表未收录（回退 LLM 猜测）时默认 0 伤（多数单目标豁免法术如此）。
+            half = bool(_spell.half_on_save) if _spell else False
+            if sv.success:
+                final = engine_dice.round_down(piped / 2) if half else 0
+            else:
+                final = piped
             out.update({"save_success": sv.success, "save_total": sv.total, "raw_damage": piped,
                         "damage": final, "damage_type": dmg_type, "damage_rolls": dr.dice_rolls,
                         "resisted": dr.resisted, "vulnerable": dr.vulnerable, "immune": dr.immune})
@@ -1175,10 +1199,16 @@ def apply_node(state: GameState) -> dict:
             delta = int(chg.get("delta", 0))
         except (ValueError, TypeError):
             continue
-        if target != str(cid) or not ch:
+        # 玩家自身状态变更：target 可为 cid 或角色名（LLM 偶用 name 致匹配失败，BUG-F）
+        if (target != str(cid) and (not ch or target != ch.name)) or not ch:
             continue
-        # use_item 轮的治疗由 step2.8 统一应用（避免与 narrate 的治疗 state_changes 叠加致恢复过多）
-        if state.get("dice", {}).get("kind") == "use_item" and field == "hp" and delta > 0:
+        # 治疗 state_changes 由后续确定性步骤统一应用，避免叠加（use_item→2.8 / cast→2.9）
+        _dice = state.get("dice", {})
+        _is_heal_sc = (field == "hp" and delta > 0
+                       and (_dice.get("kind") == "use_item"
+                            or (_dice.get("kind") == "cast"
+                                and _dice.get("damage_type") in ("治疗", "heal", "healing"))))
+        if _is_heal_sc:
             continue
         if field == "hp":
             if delta < 0:
@@ -1199,7 +1229,7 @@ def apply_node(state: GameState) -> dict:
         except Exception as e:
             _log.debug("法术位 JSON 解析失败 cid=%s，回退为空: %s", cid, e)
             sd = {}
-        if sd.get(str(lvl), 0) > 0:
+        if lvl >= 1 and sd.get(str(lvl), 0) > 0:
             sd[str(lvl)] -= 1
         ch.spell_slots_json = _j.dumps(sd)
 
@@ -1247,6 +1277,15 @@ def apply_node(state: GameState) -> dict:
         heal = int(state["dice"].get("heal", 0) or 0)
         if heal > 0:
             _apply_healing_to_character(ch, heal)
+
+    # 2.9) 施法治疗法术（疗伤术/治愈真言等）落盘：直接按 dice.damage(治疗) 应用到施法者，
+    #      不依赖 narrate 的 state_changes——LLM 偶发漏给或用 name 而非 cid 致 step1 漏应用（BUG-F）。
+    #      step1 已跳过 cast 治疗的 state_changes，避免与此处叠加。
+    if ch and state.get("dice", {}).get("kind") == "cast":
+        if state["dice"].get("damage_type") in ("治疗", "heal", "healing"):
+            _cast_heal = int(state["dice"].get("damage", 0) or 0)
+            if _cast_heal > 0:
+                _apply_healing_to_character(ch, _cast_heal)
 
     if ch:
         store.save_character(ch)
@@ -1441,10 +1480,18 @@ def apply_node(state: GameState) -> dict:
                 try:
                     from ..data import monsters as _mon
                     _pool = _mon.pick_encounter_pool(ch.level)
-                    _m = _pool[engine_dice.roll_die(len(_pool)) - 1] if _pool else None
+                    n = 1 if engine_dice.roll_die(2) == 1 else 2
+                    # BUG-E(遭遇平衡): n>=2 时仅从低CR(<=0.5)怪池选取，避免对单人
+                    # 角色生成致命级遭遇（2×CR1龙裔战士≈CR2，对单人3级为致命级，
+                    # R-DMG 遭遇难度阈值）。单怪仍可从全池取（含CR1，单人3级为中等）。
+                    if n >= 2:
+                        _low = [m for m in _pool if getattr(m, "cr", 1) <= 0.5]
+                        _sel = _low if _low else _pool
+                    else:
+                        _sel = _pool
+                    _m = _sel[engine_dice.roll_die(len(_sel)) - 1] if _sel else None
                 except Exception:
                     _m = None
-                n = 1 if engine_dice.roll_die(2) == 1 else 2
                 if _m:
                     _md = _m.to_combatant_dict()
                     enemies = [dict(_md) for _ in range(n)]
