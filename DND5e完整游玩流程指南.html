@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D&D 5e 完整游玩流程指南</title>
+    <style>
+        :root {
+            --bg: #f8f6f1;
+            --parchment: #faf8f3;
+            --card: #ffffff;
+            --text: #2b2118;
+            --text-mid: #5c4d3a;
+            --text-light: #8a7a62;
+            --gold: #c8a44e;
+            --gold-dark: #a8862e;
+            --gold-light: #f5ecd6;
+            --red: #b83229;
+            --red-light: #fce8e6;
+            --green: #3a7d44;
+            --green-light: #e8f5e9;
+            --blue: #2c5f8a;
+            --blue-light: #e3f0fa;
+            --purple: #6b3fa0;
+            --purple-light: #f0e8fa;
+            --border: #d4c9b0;
+            --border-light: #e8e0d0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Georgia", "Songti SC", "STSong", "SimSun", serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.85;
+        }
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 0 80px; }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, #1a1410 0%, #3d2e1a 50%, #2b1f12 100%);
+            color: #f0e6d2;
+            text-align: center;
+            padding: 64px 32px 56px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(200,164,78,0.15) 0%, transparent 60%);
+        }
+        .hero-dragon { font-size: 56px; margin-bottom: 8px; position: relative; }
+        .hero h1 {
+            font-size: 36px; font-weight: 700;
+            background: linear-gradient(180deg, #f5e6c8 0%, #c8a44e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            margin-bottom: 8px;
+        }
+        .hero .subtitle { font-size: 15px; opacity: 0.8; position: relative; letter-spacing: 2px; }
+        .hero .meta {
+            display: flex; gap: 24px; justify-content: center;
+            margin-top: 20px; font-size: 13px; opacity: 0.6; position: relative;
+        }
+        .hero .meta span { display: flex; align-items: center; gap: 6px; }
+
+        /* TOC */
+        .toc-wrap {
+            background: var(--parchment);
+            border-bottom: 1px solid var(--border);
+            padding: 32px 32px;
+        }
+        .toc-wrap-inner { max-width: 940px; margin: 0 auto; }
+        .toc-wrap h2 {
+            font-size: 18px; color: var(--gold-dark);
+            margin-bottom: 16px; letter-spacing: 1px;
+            border-bottom: 2px solid var(--gold); padding-bottom: 8px; display: inline-block;
+        }
+        .toc-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 20px;
+            list-style: none; counter-reset: toc;
+        }
+        .toc-grid li { counter-increment: toc; font-size: 14px; }
+        .toc-grid li::before {
+            content: counter(toc, decimal-leading-zero);
+            color: var(--gold); font-weight: 700; margin-right: 8px; font-size: 12px;
+        }
+        .toc-grid a { color: var(--text-mid); text-decoration: none; transition: color .2s; }
+        .toc-grid a:hover { color: var(--gold-dark); }
+        @media (max-width: 700px) { .toc-grid { grid-template-columns: 1fr; } }
+
+        /* Content */
+        .content { padding: 0 32px; max-width: 940px; margin: 0 auto; }
+
+        .section { margin-bottom: 56px; scroll-margin-top: 20px; }
+        .section-header {
+            display: flex; align-items: center; gap: 14px;
+            margin-bottom: 24px; padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+        }
+        .section-icon {
+            width: 44px; height: 44px; border-radius: 10px;
+            background: var(--gold-light); border: 1px solid var(--gold);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+        .section-header h2 { font-size: 26px; color: var(--text); font-weight: 700; }
+        .section-header .section-num {
+            font-size: 13px; color: var(--gold-dark); font-weight: 600; letter-spacing: 1px;
+        }
+
+        h3 {
+            font-size: 19px; color: var(--text); margin: 28px 0 14px;
+            padding-left: 14px; border-left: 4px solid var(--gold);
+        }
+        h4 { font-size: 16px; margin: 18px 0 10px; color: var(--text); }
+        p { margin-bottom: 12px; font-size: 15px; }
+        ul, ol { margin: 10px 0 14px 22px; }
+        li { margin-bottom: 5px; font-size: 15px; }
+        strong { color: var(--text); }
+        code {
+            background: var(--gold-light); padding: 1px 6px; border-radius: 4px;
+            font-size: 13px; font-family: "Consolas", "Courier New", monospace; color: var(--gold-dark);
+        }
+
+        /* Tables */
+        .tbl { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px;
+               background: var(--card); border-radius: 10px; overflow: hidden;
+               box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .tbl thead { background: linear-gradient(180deg, #f5ecd6 0%, #efe4c8 100%); }
+        .tbl th {
+            padding: 10px 14px; text-align: left; font-weight: 700;
+            color: var(--text); border-bottom: 2px solid var(--gold);
+            font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .tbl td { padding: 9px 14px; border-bottom: 1px solid var(--border-light); }
+        .tbl tr:last-child td { border-bottom: none; }
+        .tbl tr:hover { background: #faf8f3; }
+        .tbl .hl { color: var(--gold-dark); font-weight: 700; }
+        .tbl .center { text-align: center; }
+
+        /* Callout */
+        .callout {
+            border-radius: 10px; padding: 16px 20px; margin: 16px 0;
+            font-size: 14px; border-left: 4px solid;
+        }
+        .callout-gold { background: var(--gold-light); border-color: var(--gold); }
+        .callout-red { background: var(--red-light); border-color: var(--red); }
+        .callout-green { background: var(--green-light); border-color: var(--green); }
+        .callout-blue { background: var(--blue-light); border-color: var(--blue); }
+        .callout-purple { background: var(--purple-light); border-color: var(--purple); }
+        .callout strong { display: block; margin-bottom: 4px; font-size: 15px; }
+
+        /* Formula box */
+        .formula {
+            background: linear-gradient(135deg, #1a1410 0%, #2b1f12 100%);
+            color: #f0e6d2; border-radius: 10px; padding: 16px 24px;
+            margin: 14px 0; font-family: "Georgia", serif; font-size: 16px;
+            text-align: center; letter-spacing: 1px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        }
+        .formula .gold-text { color: var(--gold); }
+        .formula small { font-size: 12px; opacity: 0.7; display: block; margin-top: 4px; }
+
+        /* Flow steps */
+        .flow { display: flex; flex-direction: column; gap: 0; margin: 20px 0; }
+        .flow-step { display: flex; gap: 16px; position: relative; }
+        .flow-step:not(:last-child)::after {
+            content: ''; position: absolute; left: 23px; top: 50px; bottom: -10px;
+            width: 2px; background: var(--border);
+        }
+        .flow-num {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: 700; flex-shrink: 0; z-index: 1;
+            box-shadow: 0 2px 8px rgba(168,134,46,0.4);
+        }
+        .flow-body {
+            background: var(--card); border: 1px solid var(--border-light);
+            border-radius: 10px; padding: 16px 20px; margin-bottom: 14px; flex: 1;
+        }
+        .flow-body h4 { margin: 0 0 6px; }
+        .flow-body p { font-size: 14px; color: var(--text-mid); margin: 0; }
+        .flow-body .tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+        .flow-body .tag {
+            font-size: 11px; padding: 2px 8px; border-radius: 4px;
+            background: var(--gold-light); color: var(--gold-dark); font-weight: 600;
+        }
+
+        /* Cards */
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 16px 0; }
+        .card {
+            background: var(--card); border: 1px solid var(--border-light);
+            border-radius: 10px; padding: 16px; transition: transform .2s, box-shadow .2s;
+        }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
+        .card h4 { font-size: 15px; margin: 0 0 8px; }
+        .card p { font-size: 13px; color: var(--text-mid); margin: 0; line-height: 1.6; }
+        .card .badge {
+            display: inline-block; font-size: 11px; padding: 2px 8px;
+            border-radius: 4px; font-weight: 600; margin-bottom: 8px;
+        }
+
+        /* Combat chain */
+        .chain { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 16px 0; }
+        .chain-item {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 8px; padding: 8px 14px; font-size: 13px; white-space: nowrap;
+        }
+        .chain-arrow { color: var(--gold); font-size: 20px; }
+
+        /* Action grid */
+        .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 14px 0; }
+        .action-item {
+            background: var(--card); border: 1px solid var(--border-light);
+            border-radius: 8px; padding: 12px; border-top: 3px solid var(--gold);
+        }
+        .action-item h5 { font-size: 14px; margin: 0 0 4px; }
+        .action-item p { font-size: 12px; color: var(--text-mid); margin: 0; }
+
+        /* Class cards */
+        .class-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+        .class-card {
+            background: var(--card); border: 1px solid var(--border-light);
+            border-radius: 10px; padding: 14px; border-left: 4px solid var(--gold);
+        }
+        .class-card .class-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+        .class-card .class-stat { font-size: 12px; color: var(--text-light); }
+        .class-card .class-hp { font-size: 13px; color: var(--red); margin-top: 4px; }
+
+        /* Quick ref */
+        .quick-ref {
+            background: linear-gradient(135deg, #1a1410 0%, #2b1f12 100%);
+            border-radius: 14px; padding: 28px; color: #f0e6d2; margin: 20px 0;
+        }
+        .quick-ref h3 { color: var(--gold); border-left-color: var(--gold); }
+        .quick-ref .tbl { background: rgba(255,255,255,0.05); color: #e0d6c2; }
+        .quick-ref .tbl th { background: rgba(200,164,78,0.15); color: var(--gold); border-bottom-color: var(--gold-dark); }
+        .quick-ref .tbl td { border-bottom-color: rgba(255,255,255,0.08); color: #e0d6c2; }
+        .quick-ref .formula { background: rgba(200,164,78,0.1); border: 1px solid rgba(200,164,78,0.3); }
+
+        /* Footer */
+        .footer {
+            text-align: center; padding: 40px 32px; margin-top: 48px;
+            border-top: 2px solid var(--border); font-size: 13px; color: var(--text-light);
+            background: var(--parchment);
+        }
+        .footer p { margin-bottom: 4px; }
+
+        .hl-gold { color: var(--gold-dark); font-weight: 700; }
+        .hl-red { color: var(--red); font-weight: 700; }
+        .hl-green { color: var(--green); font-weight: 700; }
+        .hl-blue { color: var(--blue); font-weight: 700; }
+
+        .divider { height: 1px; background: var(--border); margin: 32px 0; }
+    </style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+    <div class="hero-dragon">🐉</div>
+    <h1>D&D 5e 完整游玩流程指南</h1>
+    <p class="subtitle">DUNGEONS & DRAGONS · 第五版（2024修订版）· 从零到英雄</p>
+    <div class="meta">
+        <span>📜 基于2024版玩家手册</span>
+        <span>⚔️ 全流程覆盖</span>
+        <span>📐 含全部核心公式</span>
+    </div>
+</div>
+
+<!-- TOC -->
+<div class="toc-wrap">
+    <div class="toc-wrap-inner">
+        <h2>目 录</h2>
+        <ol class="toc-grid">
+            <li><a href="#overview">游戏概览与基本循环</a></li>
+            <li><a href="#session0">开团前：Session Zero</a></li>
+            <li><a href="#charcreate">角色创建：五步车卡法</a></li>
+            <li><a href="#d20">核心机制：D20 检定系统</a></li>
+            <li><a href="#exploration">探索：旅行、视野与光照</a></li>
+            <li><a href="#social">交涉：社交互动</a></li>
+            <li><a href="#combat">战斗系统全流程</a></li>
+            <li><a href="#damage">伤害、治疗与死亡</a></li>
+            <li><a href="#spellcasting">施法系统详解</a></li>
+            <li><a href="#rest">休息与恢复</a></li>
+            <li><a href="#levelup">升级与成长</a></li>
+            <li><a href="#quickref">速查表：公式与数值</a></li>
+        </ol>
+    </div>
+</div>
+
+<div class="content">
+
+<!-- 1. Overview -->
+<div class="section" id="overview">
+    <div class="section-header">
+        <div class="section-icon">📖</div>
+        <div>
+            <div class="section-num">CHAPTER 01</div>
+            <h2>游戏概览与基本循环</h2>
+        </div>
+    </div>
+
+    <p>D&D（龙与地下城）是一款合作叙事的桌上角色扮演游戏。由 <strong>DM（地下城主）</strong> 描述世界、扮演NPC和怪物，<strong>玩家</strong> 扮演各自的角色（PC）在奇幻世界中冒险。一切行动发生在玩家的想象中，由所有人共同叙述。</p>
+
+    <h3>游戏三大支柱</h3>
+    <div class="cards">
+        <div class="card" style="border-top: 4px solid var(--blue);">
+            <span class="badge" style="background: var(--blue-light); color: var(--blue);">支柱一</span>
+            <h4>💬 交涉（Social）</h4>
+            <p>与NPC对话、谈判、欺骗、表演。角色扮演是核心，骰子辅助判定结果。</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--green);">
+            <span class="badge" style="background: var(--green-light); color: var(--green);">支柱二</span>
+            <h4>🗺️ 探索（Exploration）</h4>
+            <p>在世界中旅行、搜索、调查、解谜。冒险装备、视野与光照在此环节至关重要。</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--red);">
+            <span class="badge" style="background: var(--red-light); color: var(--red);">支柱三</span>
+            <h4>⚔️ 战斗（Combat）</h4>
+            <p>回合制战斗，以动作经济为核心。先攻决定顺序，D20决定命中与伤害。</p>
+        </div>
+    </div>
+
+    <h3>基本游戏循环</h3>
+    <div class="callout callout-gold">
+        <strong>DM → 玩家 → DM 的循环</strong>
+        这个循环贯穿整个游戏，无论是交涉、探索还是战斗。
+    </div>
+    <div class="flow">
+        <div class="flow-step">
+            <div class="flow-num">1</div>
+            <div class="flow-body">
+                <h4>DM 描绘场景</h4>
+                <p>DM 告诉玩家角色身处何处、周围有什么、发生了什么。例如："你们走进一间阴暗的石室，空气中弥漫着霉味，墙角有一具枯骨。"</p>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="flow-num">2</div>
+            <div class="flow-body">
+                <h4>玩家描述行动</h4>
+                <p>玩家说出角色要做什么。战斗外，DM 确保每人有机会行动；战斗中，按先攻轮次行动。例如："我想检查那具枯骨身上有没有什么。"</p>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="flow-num">3</div>
+            <div class="flow-body">
+                <h4>DM 表述结果</h4>
+                <p>简单行动直接叙述结果；有挑战且失败会导致有意义结果时，DM 要求掷骰（D20检定）。掷骰结果将游戏引导回第1步。</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="callout callout-blue">
+        <strong>核心原则：特例高于通用规则</strong>
+        通用规则（如近战用力量、远程用敏捷）适用大部分情况。但职业特性、专长、法术、魔法物品等可能提供例外——以特例为准。
+    </div>
+</div>
+
+<!-- 2. Session Zero -->
+<div class="section" id="session0">
+    <div class="section-header">
+        <div class="section-icon">🎪</div>
+        <div>
+            <div class="section-num">CHAPTER 02</div>
+            <h2>开团前：Session Zero</h2>
+        </div>
+    </div>
+
+    <p>在正式跑团之前，DM 和所有玩家进行一次准备会议，称为 <strong>Session Zero（零号会议）</strong>。这是确保所有人享受游戏的关键一步。</p>
+
+    <div class="cards">
+        <div class="card">
+            <h4>🌍 介绍世界观</h4>
+            <p>DM 向玩家介绍游戏世界的基本设定：时代背景、主要势力、地理环境、种族关系等。</p>
+        </div>
+        <div class="card">
+            <h4>🎭 讨论角色</h4>
+            <p>玩家讨论各自想要创建的角色概念，确保团队配置合理（战/法/牧/贼经典组合），角色之间有合理的协作关系。</p>
+        </div>
+        <div class="card">
+            <h4>⏰ 确认时间</h4>
+            <p>确定跑团频率和每次时长。单场3-5小时，短团3-5场，长团可达数月。</p>
+        </div>
+        <div class="card">
+            <h4>🚫 安全词</h4>
+            <p>设置安全词或禁忌话题，确保所有玩家在游戏中感到舒适。任何人可以用安全词暂停或跳过不适内容。</p>
+        </div>
+    </div>
+
+    <h3>DM 的准备清单</h3>
+    <table class="tbl">
+        <thead>
+            <tr><th>准备项</th><th>说明</th><th>必需</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>规则书</td><td>玩家手册（PHB）、城主指南（DMG）、怪物图鉴（MM）</td><td class="hl-red">必需</td></tr>
+            <tr><td>模组</td><td>使用官方模组或自创剧本，含地图、敌人、NPC、谜题</td><td class="hl-red">必需</td></tr>
+            <tr><td>NPC设计</td><td>为主要NPC预设动机、台词模板和反应逻辑</td><td class="hl-gold">重要</td></tr>
+            <tr><td>备用分支</td><td>2-3个备用剧情分支，应对玩家跳脱预设路线</td><td class="hl-blue">推荐</td></tr>
+            <tr><td>音乐/BGM</td><td>准备环境音乐和战斗音乐，增强沉浸感</td><td class="hl-green">加分</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- 3. Character Creation -->
+<div class="section" id="charcreate">
+    <div class="section-header">
+        <div class="section-icon">🧙</div>
+        <div>
+            <div class="section-num">CHAPTER 03</div>
+            <h2>角色创建：五步车卡法</h2>
+        </div>
+    </div>
+
+    <p>D&D 5e 角色创建按顺序分为五个步骤。角色卡上许多空格都标有对应步骤的数字。</p>
+
+    <!-- Step 1 -->
+    <h3>第一步：选择职业（Class）</h3>
+    <p>职业决定了角色的天职、特殊禀赋和偏好战术。通常从 1 级开始（0 XP），DM 也可以让玩家从更高等级开始。</p>
+
+    <div class="class-grid">
+        <div class="class-card" style="border-left-color: #b83229;">
+            <div class="class-name">🪓 野蛮人 Barbarian</div>
+            <div class="class-stat">主属性：力量 | 复杂度：中</div>
+            <div class="class-hp">HP：12 + 体质调整</div>
+        </div>
+        <div class="class-card" style="border-left-color: #6b3fa0;">
+            <div class="class-name">🎵 吟游诗人 Bard</div>
+            <div class="class-stat">主属性：魅力 | 复杂度：高</div>
+            <div class="class-hp">HP：8 + 体质调整</div>
+        </div>
+        <div class="class-card" style="border-left-color: #c8a44e;">
+            <div class="class-name">✝️ 牧师 Cleric</div>
+            <div class="class-stat">主属性：感知 | 复杂度：中</div>
+            <div class="class-hp">HP：8 + 体质调整</div>
+        </div>
+        <div class="class-card" style="border-left-color: #3a7d44;">
+            <div class="class-name">🌿 德鲁伊 Druid</div>
+            <div class="class-stat">主属性：感知 | 复杂度：高</div>
+            <div class="class-hp">HP：8 + 体质调整</div>
+        </div>
+        <div class="class-card" style="border-left-color: #b83229;">
+            <div class="class-name">⚔️ 战士 Fighter</div>
+            <div class="class-stat">主属性：力量/敏捷 | 复杂度：低</div>
+            <div class="class-hp">HP：10 + 体质调整</div>
+        </div>
+        <div class="class-card" style="border-left-color: #3a7d44;">
+            <div class="class-name">👊 武僧 Monk</div>
+            <div class="class-stat">主属性：敏捷+感知 | 复杂度：高</div>
+            <div class="class-hp">HP：8 + 体质调整</div>
+        </div>
+        <div class="class-card" style="border-left-color: #c8a44e;">
+            <div class="class-name">🛡️ 圣武士 Paladin</div>
+            <div class="class-stat">主属性：力量+魅力 | 复杂度：中</div>
+            <div class="class-hp">HP：10 + 体质调整</div>
+        </div>
+        <div class="class-card" style="border-left-color: #3a7d44;">
+            <div class="class-name">🏹 游侠 Ranger</div>
+            <div class="class-stat">主属性：敏捷+感知 | 复杂度：中</div>
+            <div class="class-hp">HP：10 + 体质调整</div>
+        </div>
+        <div class="class-card" style="border-left-color: #2c5f8a;">
+            <div class="class-name">🗡️ 游荡者 Rogue</div>
+            <div class="class-stat">主属性：敏捷 | 复杂度：低</div>
+            <div class="class-hp">HP：8 + 体质调整</div>
+        </div>
+        <div class="class-card" style="border-left-color: #6b3fa0;">
+            <div class="class-name">✨ 术士 Sorcerer</div>
+            <div class="class-stat">主属性：魅力 | 复杂度：高</div>
+            <div class="class-hp">HP：6 + 体质调整</div>
+        </div>
+        <div class="class-card" style="border-left-color: #6b3fa0;">
+            <div class="class-name">📕 魔契师 Warlock</div>
+            <div class="class-stat">主属性：魅力 | 复杂度：高</div>
+            <div class="class-hp">HP：8 + 体质调整</div>
+        </div>
+        <div class="class-card" style="border-left-color: #2c5f8a;">
+            <div class="class-name">📖 法师 Wizard</div>
+            <div class="class-stat">主属性：智力 | 复杂度：中</div>
+            <div class="class-hp">HP：6 + 体质调整</div>
+        </div>
+    </div>
+
+    <div class="callout callout-blue">
+        <strong>经典团队配置</strong>
+        牧师（治疗） + 战士（坦克） + 游荡者（侦查/伤害） + 法师（AOE/控制）。每个位置都有可替换的职业选择，如野蛮人替战士、德鲁伊替牧师。
+    </div>
+
+    <!-- Step 2 -->
+    <h3>第二步：确定起源（Origin）</h3>
+    <p>起源由 <strong>背景 + 种族 + 语言</strong> 三部分组成。背景影响属性值分配，种族决定体型和速度。</p>
+
+    <h4>种族（10种）</h4>
+    <div class="cards">
+        <div class="card"><h4>🧝 精灵 Elf</h4><p>黑暗视觉，擅长魔法。分高精灵、木精灵、卓尔精灵等子族。</p></div>
+        <div class="card"><h4>🪨 矮人 Dwarf</h4><p>毒素抗性，黑暗视觉。分山地矮人、丘陵矮人、杜尔加矮人。</p></div>
+        <div class="card"><h4>🐉 龙裔 Dragonborn</h4><p>龙息武器，根据龙血系获得不同伤害类型的吐息。</p></div>
+        <div class="card"><h4>🧌 侏儒 Gnome</h4><p>小体型，天赋魔法抗性。分森林侏儒、岩侏儒等。</p></div>
+        <div class="card"><h4>👤 人类 Human</h4><p>万金油，每天获得一个英雄激励。适应性极强。</p></div>
+        <div class="card"><h4>😈 提夫林 Tiefling</h4><p>地狱血统，天赋火焰抗性和黑暗视觉，有先天法术。</p></div>
+        <div class="card"><h4>😇 阿斯莫 Aasimar</h4><p>天界血统，天赋光明与治愈之力。</p></div>
+        <div class="card"><h4>🦶 半身人 Halfling</h4><p>小体型，幸运天赋（可重骰1）。分轻足、壮硕等。</p></div>
+        <div class="card"><h4>🐗 兽人 Orc</h4><p>力量天赋，凶猛冲锋。</p></div>
+        <div class="card"><h4>⛰️ 歌利亚 Goliath</h4><p>大型体格，天生适应高海拔环境。</p></div>
+    </div>
+
+    <h4>背景（16种）</h4>
+    <p>背景给予 <strong>一个专长 + 两项技能熟练 + 一项工具熟练 + 起始装备</strong>。背景还决定属性值加成（见第三步）。</p>
+    <div class="callout callout-gold">
+        <strong>背景列表</strong>
+        侍僧 · 农民 · 向导 · 商人 · 士兵 · 工匠 · 抄写员 · 智者 · 水手 · 流浪者 · 罪犯 · 艺人 · 警卫 · 贵族 · 隐士 · 骗子
+    </div>
+
+    <!-- Step 3 -->
+    <h3>第三步：确定属性值（Ability Scores）</h3>
+    <p>六项属性衡量角色的核心能力。有三种方法生成数值：</p>
+
+    <div class="cards">
+        <div class="card">
+            <span class="badge" style="background: var(--green-light); color: var(--green);">推荐新手</span>
+            <h4>📊 标准数列</h4>
+            <p>固定数值 <strong>15, 14, 13, 12, 10, 8</strong>，自由分配到六项属性。最快速、最平衡。</p>
+        </div>
+        <div class="card">
+            <span class="badge" style="background: var(--gold-light); color: var(--gold-dark);">随机乐趣</span>
+            <h4>🎲 随机生成</h4>
+            <p>投 <strong>4d6 弃最低</strong>，取三个骰子总和，重复六次。随机性高，可能很强或很弱。</p>
+        </div>
+        <div class="card">
+            <span class="badge" style="background: var(--blue-light); color: var(--blue);">精确控制</span>
+            <h4>⚖️ 购点法</h4>
+            <p>27点自由分配。8花费0点，15花费9点。上限15。最公平的竞技开卡方式。</p>
+        </div>
+    </div>
+
+    <h4>购点法花费表</h4>
+    <table class="tbl">
+        <thead><tr><th>属性值</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th></tr></thead>
+        <tbody><tr><td class="hl">花费</td><td class="center">0</td><td class="center">1</td><td class="center">2</td><td class="center">3</td><td class="center">4</td><td class="center">5</td><td class="center">7</td><td class="center">9</td></tr></tbody>
+    </table>
+
+    <h4>背景属性加成</h4>
+    <p>每个背景列出三项属性——将其中一项 <strong>+2</strong>、另一项 <strong>+1</strong>，或三项各 <strong>+1</strong>。无法将属性提升到 20 以上。</p>
+
+    <h4>属性调整值表</h4>
+    <div class="formula">
+        <span class="gold-text">调整值 = (属性值 - 10) ÷ 2</span>（向下取整）
+        <small>这是 D&D 中最核心的公式之一，几乎影响所有检定</small>
+    </div>
+    <table class="tbl">
+        <thead><tr><th>属性值</th><th>1</th><th>2-3</th><th>4-5</th><th>6-7</th><th>8-9</th><th>10-11</th><th>12-13</th><th>14-15</th><th>16-17</th><th>18-19</th><th>20</th></tr></thead>
+        <tbody><tr><td class="hl">调整值</td><td class="center hl-red">-5</td><td class="center hl-red">-4</td><td class="center hl-red">-3</td><td class="center hl-red">-2</td><td class="center">-1</td><td class="center">0</td><td class="center hl-green">+1</td><td class="center hl-green">+2</td><td class="center hl-green">+3</td><td class="center hl-green">+4</td><td class="center hl-green">+5</td></tr></tbody>
+    </table>
+
+    <table class="tbl">
+        <thead><tr><th>属性</th><th>简称</th><th>衡量</th><th>典型检定场景</th></tr></thead>
+        <tbody>
+            <tr><td class="hl-gold">力量</td><td>STR</td><td>力气</td><td>举重、破门、游泳、近战攻击</td></tr>
+            <tr><td class="hl-gold">敏捷</td><td>DEX</td><td>灵活、反应、平衡</td><td>潜行、特技、远程攻击、先攻</td></tr>
+            <tr><td class="hl-gold">体质</td><td>CON</td><td>健康、耐力</td><td>生命值、毒素豁免、长时间奔跑</td></tr>
+            <tr><td class="hl-gold">智力</td><td>INT</td><td>推理、记忆</td><td>奥秘、历史、调查、宗教</td></tr>
+            <tr><td class="hl-gold">感知</td><td>WIS</td><td>洞察、意志</td><td>察觉、医药、求生、驯兽</td></tr>
+            <tr><td class="hl-gold">魅力</td><td>CHA</td><td>自信、影响力</td><td>游说、欺瞒、威吓、表演</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Step 4 -->
+    <h3>第四步：选择阵营（Alignment）</h3>
+    <p>阵营由 <strong>道德倾向</strong>（善良/中立/邪恶）和 <strong>秩序态度</strong>（守序/中立/混乱）两轴交叉构成 3×3=9 种。</p>
+    <table class="tbl">
+        <thead><tr><th></th><th>守序 Lawful</th><th>中立 Neutral</th><th>混乱 Chaotic</th></tr></thead>
+        <tbody>
+            <tr><td class="hl-gold">善良 Good</td><td>守序善良：按准则行善</td><td>中立善良：尽力行善</td><td>混乱善良：按良心行事</td></tr>
+            <tr><td class="hl-gold">中立 Neutral</td><td>守序中立：依法律行事</td><td>绝对中立：回避道德</td><td>混乱中立：随心而行</td></tr>
+            <tr><td class="hl-gold">邪恶 Evil</td><td>守序邪恶：秩序内谋私</td><td>中立邪恶：不顾破坏</td><td>混乱邪恶：随意施暴</td></tr>
+        </tbody>
+    </table>
+    <div class="callout callout-red">
+        <strong>预设规则</strong>
+        玩家角色不属于邪恶阵营。构建邪恶角色前需与 DM 确认。
+    </div>
+
+    <!-- Step 5 -->
+    <h3>第五步：丰富细节（Fill in Details）</h3>
+    <p>使用已做出的选择填写角色卡上剩余的所有细节。以下是关键公式：</p>
+
+    <div class="cards">
+        <div class="card" style="border-top: 3px solid var(--red);">
+            <h4>❤️ 生命值（1级）</h4>
+            <p>生命值上限 = 职业生命骰面值 + 体质调整值<br>野蛮人 d12，战士/圣武士/游侠 d10，诗人/牧师/德鲁伊/武僧/游荡者/魔契师 d8，术士/法师 d6</p>
+        </div>
+        <div class="card" style="border-top: 3px solid var(--blue);">
+            <h4>🛡️ 护甲等级（AC）</h4>
+            <p>无甲时 AC = 10 + 敏捷调整值<br>穿甲后根据护甲类型计算。多个AC计算方式只能选一种。</p>
+        </div>
+        <div class="card" style="border-top: 3px solid var(--green);">
+            <h4>⚡ 先攻（Initiative）</h4>
+            <p>先攻 = 敏捷检定 = d20 + 敏捷调整值<br>某些职业特性可使用其他属性代替。</p>
+        </div>
+        <div class="card" style="border-top: 3px solid var(--gold);">
+            <h4>👁️ 被动察觉</h4>
+            <p>被动察觉 = 10 + 感知（察觉）检定调整值<br>例：感知15 + 熟练察觉 = 10 + 2 + 2 = 14</p>
+        </div>
+        <div class="card" style="border-top: 3px solid var(--purple);">
+            <h4>⚔️ 攻击加值</h4>
+            <p>近战 = 力量调整 + 熟练加值<br>远程 = 敏捷调整 + 熟练加值<br>灵巧武器取力量或敏捷较高者</p>
+        </div>
+        <div class="card" style="border-top: 3px solid var(--purple);">
+            <h4>✨ 施法数值</h4>
+            <p>法术豁免DC = 8 + 施法属性调整 + 熟练加值<br>法术攻击加值 = 施法属性调整 + 熟练加值</p>
+        </div>
+    </div>
+
+    <h4>18项技能及对应属性</h4>
+    <table class="tbl">
+        <thead><tr><th>技能</th><th>属性</th><th>技能</th><th>属性</th><th>技能</th><th>属性</th></tr></thead>
+        <tbody>
+            <tr><td>特技</td><td class="hl-blue">敏捷</td><td>奥秘</td><td class="hl-blue">智力</td><td>察觉</td><td class="hl-blue">感知</td></tr>
+            <tr><td>驯兽</td><td class="hl-blue">感知</td><td>历史</td><td class="hl-blue">智力</td><td>表演</td><td class="hl-blue">魅力</td></tr>
+            <tr><td>运动</td><td class="hl-blue">力量</td><td>洞悉</td><td class="hl-blue">感知</td><td>游说</td><td class="hl-blue">魅力</td></tr>
+            <tr><td>欺瞒</td><td class="hl-blue">魅力</td><td>威吓</td><td class="hl-blue">魅力</td><td>宗教</td><td class="hl-blue">智力</td></tr>
+            <tr><td>调查</td><td class="hl-blue">智力</td><td>医药</td><td class="hl-blue">感知</td><td>巧手</td><td class="hl-blue">敏捷</td></tr>
+            <tr><td>自然</td><td class="hl-blue">智力</td><td></td><td></td><td>隐匿</td><td class="hl-blue">敏捷</td></tr>
+            <tr><td></td><td></td><td></td><td></td><td>求生</td><td class="hl-blue">感知</td></tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-green">
+        <strong>技能搭配其他属性</strong>
+        DM 可允许用不同属性进行同一技能检定（如力量(威吓)——用肌肉展示威慑力），若具备该技能熟练仍可加熟练加值。
+    </div>
+</div>
+
+<!-- 4. D20 System -->
+<div class="section" id="d20">
+    <div class="section-header">
+        <div class="section-icon">🎲</div>
+        <div>
+            <div class="section-num">CHAPTER 04</div>
+            <h2>核心机制：D20 检定系统</h2>
+        </div>
+    </div>
+
+    <p>当行动结果不确定时，使用 D20 决定成功或失败。这是 D&D 最核心的机制，涵盖<strong>属性检定、豁免检定、攻击检定</strong>三种类型。</p>
+
+    <div class="formula">
+        <span class="gold-text">d20 + 属性调整值 + 熟练加值（如适用）+ 临时调整 ≥ DC / AC</span> = 成功
+        <small>DC = 难度等级（属性/豁免检定） · AC = 护甲等级（攻击检定）</small>
+    </div>
+
+    <h3>三步流程</h3>
+    <div class="flow">
+        <div class="flow-step">
+            <div class="flow-num">1</div>
+            <div class="flow-body">
+                <h4>掷 1d20</h4>
+                <p>越高越好。有<strong>优势</strong>时投两个 d20 取较高值；有<strong>劣势</strong>时取较低值。</p>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="flow-num">2</div>
+            <div class="flow-body">
+                <h4>添加调整值</h4>
+                <p>相关属性调整值 + 熟练加值（如熟练该技能） + 临时加值/减值（来自法术、特性等）</p>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="flow-num">3</div>
+            <div class="flow-body">
+                <h4>比较目标数值</h4>
+                <p>结果 ≥ DC（难度等级）或 AC（护甲等级）= 成功！否则失败。DM 决定 DC 并告知结果。</p>
+            </div>
+        </div>
+    </div>
+
+    <h3>优势与劣势</h3>
+    <div class="cards">
+        <div class="card" style="border-top: 3px solid var(--green);">
+            <h4>🟢 优势（Advantage）</h4>
+            <p>反映有利条件。投<strong>两个 d20</strong>，取<strong>较高</strong>值。通常通过特殊能力/动作获取，DM 也可根据情况给予。</p>
+        </div>
+        <div class="card" style="border-top: 3px solid var(--red);">
+            <h4>🔴 劣势（Disadvantage）</h4>
+            <p>反映不利条件。投<strong>两个 d20</strong>，取<strong>较低</strong>值。来自环境、状态或特殊规则。</p>
+        </div>
+    </div>
+
+    <div class="callout callout-gold">
+        <strong>优势/劣势三大规则</strong>
+        <strong>1. 不叠加：</strong>多个优势 = 仍只投两颗 d20；多个劣势 = 也只投两颗。<br>
+        <strong>2. 互相抵消：</strong>同时有优势和劣势 → 既无优势也无劣势，只投一颗 d20。无论来源多少个。<br>
+        <strong>3. 重骰规则：</strong>有优/劣势时可重骰或替换其中一个 d20（自选）。
+    </div>
+
+    <h3>英雄激励（Heroic Inspiration）</h3>
+    <div class="callout callout-purple">
+        <strong>重骰机会</strong>
+        拥有英雄激励时，可在投任何骰子后立即消耗来<strong>重骰</strong>，必须采用新结果。一次只能拥有一个。已有时获得新的可转交队友。人类角色每天获得一个英雄激励。DM 在玩家做出英雄之举或有趣行动时给予。
+    </div>
+
+    <h3>难度等级参考（DC）</h3>
+    <table class="tbl">
+        <thead><tr><th>任务难度</th><th>DC</th><th>示例</th></tr></thead>
+        <tbody>
+            <tr><td class="hl-green">非常容易</td><td class="center">5</td><td>注意到开阔地上的大型物体</td></tr>
+            <tr><td class="hl-green">容易</td><td class="center">10</td><td>跟踪明显的脚印</td></tr>
+            <tr><td class="hl-gold">中等</td><td class="center">15</td><td>撬开一把普通锁</td></tr>
+            <tr><td class="hl-red">困难</td><td class="center">20</td><td>翻越光滑的高墙</td></tr>
+            <tr><td class="hl-red">非常困难</td><td class="center">25</td><td>解密远古龙语文献</td></tr>
+            <tr><td class="hl-red">近乎不可能</td><td class="center">30</td><td>徒手掰开铁牢门</td></tr>
+        </tbody>
+    </table>
+
+    <h3>熟练加值表</h3>
+    <table class="tbl">
+        <thead><tr><th>角色等级</th><th>1-4</th><th>5-8</th><th>9-12</th><th>13-16</th><th>17-20</th></tr></thead>
+        <tbody><tr><td class="hl">熟练加值</td><td class="center hl-green">+2</td><td class="center hl-green">+3</td><td class="center hl-green">+4</td><td class="center hl-green">+5</td><td class="center hl-green">+6</td></tr></tbody>
+    </table>
+    <div class="callout callout-red">
+        <strong>熟练加值不叠加</strong>
+        即使有多个熟练适用于同一检定（如欺瞒和游说都基于魅力），也只加一次熟练加值。
+    </div>
+</div>
+
+<!-- 5. Exploration -->
+<div class="section" id="exploration">
+    <div class="section-header">
+        <div class="section-icon">🗺️</div>
+        <div>
+            <div class="section-num">CHAPTER 05</div>
+            <h2>探索：旅行、视野与光照</h2>
+        </div>
+    </div>
+
+    <h3>旅行步调</h3>
+    <table class="tbl">
+        <thead><tr><th>步调</th><th>每分钟</th><th>每小时</th><th>每天</th><th>游戏效果</th></tr></thead>
+        <tbody>
+            <tr><td class="hl-gold">快速</td><td class="center">400尺</td><td class="center">4里</td><td class="center">30里</td><td>察觉/生存 + 隐匿检定均<strong>劣势</strong></td></tr>
+            <tr><td class="hl-gold">中速</td><td class="center">300尺</td><td class="center">3里</td><td class="center">24里</td><td>隐匿检定<strong>劣势</strong></td></tr>
+            <tr><td class="hl-gold">慢速</td><td class="center">200尺</td><td class="center">2里</td><td class="center">18里</td><td>察觉/生存检定<strong>优势</strong></td></tr>
+        </tbody>
+    </table>
+
+    <h3>视野与光照</h3>
+    <table class="tbl">
+        <thead><tr><th>光照等级</th><th>来源</th><th>效果</th></tr></thead>
+        <tbody>
+            <tr><td class="hl-gold">明亮光照</td><td>白昼、火把、提灯</td><td>正常视物</td></tr>
+            <tr><td class="hl-blue">微光光照</td><td>黎明/黄昏、满月月光</td><td>形成<strong>轻度遮蔽</strong>：基于视觉的察觉检定<strong>劣势</strong></td></tr>
+            <tr><td class="hl-red">黑暗</td><td>夜晚户外、无灯地城</td><td>形成<strong>重度遮蔽</strong>：尝试看穿时陷入<strong>目盲</strong>状态</td></tr>
+        </tbody>
+    </table>
+
+    <h4>特殊感官</h4>
+    <div class="cards">
+        <div class="card"><h4>👁️ 黑暗视觉</h4><p>在微光/黑暗中可看到如同微光的景象，范围通常60尺。大多数非人类种族拥有。</p></div>
+        <div class="card"><h4>🌊 震颤感知</h4><p>可感知震动，无视视觉遮蔽。通常限于特定距离。</p></div>
+        <div class="card"><h4>🔮 真实视觉</h4><p>可看穿一切幻象和遮蔽，如同一切正常。极为稀有。</p></div>
+        <div class="card"><h4>🦇 盲视</h4><p>无需视觉即可感知周围环境，无视目盲和隐身。</p></div>
+    </div>
+
+    <h3>躲藏（Hiding）</h3>
+    <div class="callout callout-green">
+        <strong>躲藏机制</strong>
+        执行<strong>躲藏</strong>动作，进行一次<strong>敏捷（隐匿）检定</strong>。结果对抗敌人的<strong>被动察觉</strong>。是否适合躲藏由 DM 决定（需要遮蔽物）。攻击后位置暴露（无论命中与否）。
+    </div>
+</div>
+
+<!-- 6. Social -->
+<div class="section" id="social">
+    <div class="section-header">
+        <div class="section-icon">💬</div>
+        <div>
+            <div class="section-num">CHAPTER 06</div>
+            <h2>交涉：社交互动</h2>
+        </div>
+    </div>
+
+    <p>NPC 对角色的态度分为三种：</p>
+    <div class="cards">
+        <div class="card" style="border-top: 3px solid var(--green);">
+            <h4>😊 友好</h4>
+            <p>乐于提供帮助，可能主动提供信息或资源。</p>
+        </div>
+        <div class="card" style="border-top: 3px solid var(--gold);">
+            <h4>😐 冷漠</h4>
+            <p>中立态度，需要说服才会配合。</p>
+        </div>
+        <div class="card" style="border-top: 3px solid var(--red);">
+            <h4>😠 敌对</h4>
+            <p>会试图妨碍、攻击或拒绝合作。</p>
+        </div>
+    </div>
+
+    <h3>两条途径</h3>
+    <div class="cards">
+        <div class="card">
+            <h4>🎭 角色扮演（RP）</h4>
+            <p>由玩家决定角色如何思考、行动、发言。可用<strong>演出式</strong>（直接说台词）或<strong>描述式</strong>（描述角色行为）。DM 根据 NPC 性格和角色行为决定反应。为 NPC 提供它想要的事物或利用其同情心、恐惧、目的，可能收获友谊或关键信息。</p>
+        </div>
+        <div class="card">
+            <h4>🎲 属性检定</h4>
+            <p>DM 想让骰子发挥作用时，要求执行一次<strong>影响</strong>动作。考虑自己和队友的技能熟练——如欺骗卫兵用<strong>欺瞒</strong>，说服贵族用<strong>游说</strong>，恐吓犯人用<strong>威吓</strong>。</p>
+        </div>
+    </div>
+</div>
+
+<!-- 7. Combat -->
+<div class="section" id="combat">
+    <div class="section-header">
+        <div class="section-icon">⚔️</div>
+        <div>
+            <div class="section-num">CHAPTER 07</div>
+            <h2>战斗系统全流程</h2>
+        </div>
+    </div>
+
+    <h3>战斗三步</h3>
+    <div class="chain">
+        <div class="chain-item" style="background: var(--gold-light); font-weight: 700;">① 确定位置</div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-item" style="background: var(--gold-light); font-weight: 700;">② 投掷先攻</div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-item" style="background: var(--gold-light); font-weight: 700;">③ 执行回合</div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-item">循环至战斗结束</div>
+    </div>
+
+    <h4>1. 确定位置</h4>
+    <p>DM 决定所有角色和怪物的位置（距离和方向）。使用方格地图时，<strong>每格 = 5 尺</strong>。</p>
+
+    <h4>2. 投掷先攻（Initiative）</h4>
+    <div class="formula">
+        <span class="gold-text">先攻 = d20 + 敏捷调整值</span>
+        <small>由高到低排序，每轮顺序保持一致。被突袭者在先攻检定上有劣势。</small>
+    </div>
+    <ul>
+        <li><strong>突袭（Surprise）</strong>：被突袭者在先攻检定上具有<strong>劣势</strong>。例如躲藏中的伏击者对未意识到战斗开始的敌人构成突袭。</li>
+        <li><strong>平局</strong>：怪物间由 DM 决定；玩家间自行决定；玩家与怪物间由 DM 裁定。</li>
+    </ul>
+
+    <h4>3. 执行回合</h4>
+    <p>每回合（约 6 秒游戏时间）你可以：</p>
+    <div class="formula">
+        <span class="gold-text">移动（至多速度距离） + 一个动作</span>
+        <small>先移动还是先行动作由你决定。移动可拆分到动作前后。</small>
+    </div>
+
+    <h3>每回合可执行的内容</h3>
+    <table class="tbl">
+        <thead><tr><th>类型</th><th>每回合</th><th>说明</th></tr></thead>
+        <tbody>
+            <tr><td class="hl-gold">动作（Action）</td><td class="center">1次</td><td>主要行动，从下方动作表中选择</td></tr>
+            <tr><td class="hl-gold">附赠动作</td><td class="center">0-1次</td><td>仅当特殊能力/法术明确允许时可用。每回合至多一个。</td></tr>
+            <tr><td class="hl-gold">反应（Reaction）</td><td class="center">0-1次</td><td>触发式行动，可在任何人的回合发生。每轮至多一次，下回合开始时恢复。</td></tr>
+            <tr><td class="hl-gold">移动（Movement）</td><td class="center">速度值</td><td>可拆分：走15尺→攻击→再走15尺。包含攀爬、游泳等。</td></tr>
+            <tr><td class="hl-gold">物件交互</td><td class="center">1次</td><td>免费与一个物件交互（如开门、拔剑）。第二个需要消耗动作。</td></tr>
+            <tr><td class="hl-gold">交流</td><td class="center">不限</td><td>简短说话/手势免费；长篇大论需要动作（影响动作）。</td></tr>
+        </tbody>
+    </table>
+
+    <h3>动作一览表</h3>
+    <div class="action-grid">
+        <div class="action-item"><h5>⚔️ 攻击</h5><p>使用武器或徒手打击</p></div>
+        <div class="action-item"><h5>🏃 疾走</h5><p>获得等于速度的额外移动力</p></div>
+        <div class="action-item"><h5>🚪 撤离</h5><p>移动不引发借机攻击</p></div>
+        <div class="action-item"><h5>🛡️ 回避</h5><p>对你攻击有劣势，敏捷豁免有优势</p></div>
+        <div class="action-item"><h5>🤝 协助</h5><p>盟友的属性/攻击检定获得优势，或急救</p></div>
+        <div class="action-item"><h5>🌿 躲藏</h5><p>进行敏捷（隐匿）检定</p></div>
+        <div class="action-item"><h5>💬 影响</h5><p>魅力（欺瞒/威吓/表演/游说）或感知（驯兽）检定</p></div>
+        <div class="action-item"><h5>✨ 魔法</h5><p>施展法术、使用魔法物品或特性</p></div>
+        <div class="action-item"><h5>⏳ 预备</h5><p>设定触发条件，准备好后用反应执行</p></div>
+        <div class="action-item"><h5>🔍 搜索</h5><p>感知（洞悉/医药/察觉/求生）检定</p></div>
+        <div class="action-item"><h5>📖 研究</h5><p>智力（奥秘/历史/调查/自然/宗教）检定</p></div>
+        <div class="action-item"><h5>🔧 操作</h5><p>使用一个非魔法物件</p></div>
+    </div>
+
+    <h3>攻击检定</h3>
+    <div class="formula">
+        <span class="gold-text">d20 + 属性调整值 + 熟练加值 ≥ 目标 AC</span> = 命中！
+        <small>近战用力量，远程用敏捷，法术攻击用施法属性。灵巧武器取力量/敏捷较高者。</small>
+    </div>
+
+    <div class="callout callout-gold">
+        <strong>天然 20 与天然 1</strong>
+        <strong>天然 20（d20 掷出 20）</strong>：必中，且为<strong>重击</strong>（Critical Hit）。<br>
+        <strong>天然 1（d20 掷出 1）</strong>：必失手。
+    </div>
+
+    <h4>重击（Critical Hit）</h4>
+    <div class="callout callout-red">
+        <strong>重击伤害计算</strong>
+        投掷<strong>两次</strong>该攻击的所有伤害骰，累加后再加上属性调整值。<br>
+        <strong>附带伤害骰同样翻倍</strong>——如游荡者的偷袭伤害骰也掷两次。<br>
+        示例：匕首重击 = 2d4 + 属性调整值（普通命中为 1d4 + 属性调整值）。
+    </div>
+
+    <h3>掩护（Cover）</h3>
+    <table class="tbl">
+        <thead><tr><th>掩护程度</th><th>AC / 敏捷豁免加值</th><th>条件</th></tr></thead>
+        <tbody>
+            <tr><td class="hl-blue">半身掩护</td><td class="center">+2</td><td>另一个生物或遮挡约一半的物件</td></tr>
+            <tr><td class="hl-blue">四分之三掩护</td><td class="center">+5</td><td>遮挡约四分之三的物件</td></tr>
+            <tr><td class="hl-red">全身掩护</td><td class="center">无法被攻击</td><td>完全遮挡，不能被选作目标</td></tr>
+        </tbody>
+    </table>
+    <p>多重掩护取最高值，不叠加。</p>
+
+    <h3>借机攻击（Opportunity Attack）</h3>
+    <div class="callout callout-red">
+        <strong>最常见的反应</strong>
+        当敌人离开你的<strong>触及范围</strong>（通常 5 尺）时，你可以消耗<strong>反应</strong>进行一次近战攻击。使用<strong>撤离</strong>动作可以避免引发借机攻击。
+    </div>
+
+    <h3>移动规则</h3>
+    <div class="cards">
+        <div class="card"><h4>📐 拆分移动</h4><p>可将移动拆分到动作前后：走10尺→攻击→再走20尺。</p></div>
+        <div class="card"><h4>⛰️ 困难地形</h4><p>每尺移动需额外消耗1尺移动力。多个因素不叠加。</p></div>
+        <div class="card"><h4>🧎 俯卧倒地</h4><p>爬起消耗一半速度。倒地时近战攻击对你有优势，远程有劣势。</p></div>
+        <div class="card"><h4>🚶 穿过生物</h4><p>可穿过盟友/失能/微型生物。其他生物的空间视为困难地形。</p></div>
+    </div>
+
+    <h3>15种状态（Conditions）</h3>
+    <div class="cards">
+        <div class="card"><h4>👁️ 目盲</h4><p>攻击检定劣势，基于视觉的检定劣势。对目盲者的攻击有优势。</p></div>
+        <div class="card"><h4>💕 魅惑</h4><p>不能攻击魅惑者。魅惑者对你进行社交检定有优势。</p></div>
+        <div class="card"><h4>👂 耳聋</h4><p>失聪，基于听觉的检定劣势。</p></div>
+        <div class="card"><h4>😴 力竭</h4><p>分6级，每级速度-5尺、属性检定/攻击/豁免-1。6级=死亡。</p></div>
+        <div class="card"><h4>😱 恐慌</h4><p>不能自愿移向恐惧源。恐慌源在视线内时属性检定劣势。</p></div>
+        <div class="card"><h4>🤝 受擒</h4><p>速度为0。攻击对受擒者有优势（非擒拿者攻击时）。</p></div>
+        <div class="card"><h4>😵 失能</h4><p>不能行动或反应。攻击对失能者有优势。豁免检定和敏捷检定失败。</p></div>
+        <div class="card"><h4>👻 隐形</h4><p>攻击有优势，被攻击有劣势。察觉检定劣势对试图发现你者。</p></div>
+        <div class="card"><h4>⚡ 麻痹</h4><p>失能+无法移动/说话。近战攻击对麻痹者有优势且为重击。</p></div>
+        <div class="card"><h4>🤢 中毒</h4><p>攻击检定和属性检定劣势。</p></div>
+        <div class="card"><h4>🧎 倒地</h4><p>唯一动作是爬起（消耗一半速度）。近战攻击对你优势，远程劣势。</p></div>
+        <div class="card"><h4>📜 石化</h4><p>开始石化过程，完成后变为石头物件。</p></div>
+        <div class="card"><h4>🪢 束缚</h4><p>速度为0。攻击劣势，敏捷检定劣势。对你攻击有优势。</p></div>
+        <div class="card"><h4>💫 震慑</h4><p>失能+无法移动/说话。对你攻击有优势。</p></div>
+        <div class="card"><h4>💀 昏迷</h4><p>失能+无法移动/说话/感知。丢下手中物品。倒地。攻击有优势。5尺内攻击为重击。</p></div>
+    </div>
+</div>
+
+<!-- 8. Damage & Death -->
+<div class="section" id="damage">
+    <div class="section-header">
+        <div class="section-icon">💀</div>
+        <div>
+            <div class="section-num">CHAPTER 08</div>
+            <h2>伤害、治疗与死亡</h2>
+        </div>
+    </div>
+
+    <h3>伤害计算</h3>
+    <div class="formula">
+        <span class="gold-text">伤害 = 武器伤害骰 + 属性调整值</span>
+        <small>重击时所有伤害骰翻倍（属性调整值不翻倍）</small>
+    </div>
+
+    <h3>抗性与易伤</h3>
+    <table class="tbl">
+        <thead><tr><th>类型</th><th>效果</th><th>说明</th></tr></thead>
+        <tbody>
+            <tr><td class="hl-green">抗性（Resistance）</td><td>伤害<strong>减半</strong>（向下取整）</td><td>多个同类型抗性不叠加</td></tr>
+            <tr><td class="hl-red">易伤（Vulnerability）</td><td>伤害<strong>翻倍</strong></td><td>多个同类型易伤不叠加</td></tr>
+            <tr><td class="hl-blue">免疫（Immunity）</td><td>不受该类型伤害</td><td>完全忽略</td></tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-gold">
+        <strong>伤害调整顺序（重要！）</strong>
+        <strong>① 数值修正</strong>（加值/减值/乘数）→ <strong>② 抗性</strong>（减半，向下取整）→ <strong>③ 易伤</strong>（翻倍）<br>
+        示例：28点火焰伤害，全伤害抗性 + 火焰易伤 + 减5灵光：<br>
+        先减5 = 23 → 抗性减半 = 11 → 易伤翻倍 = <strong>22（最终）</strong>
+    </div>
+
+    <h3>生命值降至 0</h3>
+    <div class="callout callout-red">
+        <strong>三种死亡方式</strong>
+        <strong>1. 即刻毙命：</strong>受到的伤害将 HP 降至 0 后，剩余伤害 ≥ HP 上限 → 死亡。<br>
+        <strong>2. HP 上限归 0：</strong>某些效应直接降低 HP 上限。<br>
+        <strong>3. 死亡豁免失败 3 次：</strong>见下文。
+    </div>
+
+    <h3>死亡豁免检定（Death Saving Throws）</h3>
+    <p>HP 降至 0 且未立即死亡时陷入<strong>昏迷</strong>状态。每回合以 0 HP 开始时进行死亡豁免检定（与属性无关）：</p>
+    <table class="tbl">
+        <thead><tr><th>d20 结果</th><th>效果</th></tr></thead>
+        <tbody>
+            <tr><td class="hl-green">10 或以上</td><td>记录 1 次<strong>成功</strong></td></tr>
+            <tr><td class="hl-red">9 或以下</td><td>记录 1 次<strong>失败</strong></td></tr>
+            <tr><td class="hl-red hl">天然 1</td><td>记录 <strong>2 次</strong>失败</td></tr>
+            <tr><td class="hl-green hl">天然 20</td><td>恢复 <strong>1 点</strong>生命值</td></tr>
+        </tbody>
+    </table>
+    <div class="formula">
+        <span class="gold-text">3 次成功 = 伤势稳定</span> &nbsp;|&nbsp; <span style="color: #ff6b6b;">3 次失败 = 死亡</span>
+        <small>成功/失败无需连续。计数在伤势稳定或恢复HP时归零。</small>
+    </div>
+
+    <h3>稳定伤势</h3>
+    <ul>
+        <li>使用<strong>协助</strong>动作 + DC 10 感知（医药）检定可稳定伤势</li>
+        <li>稳定后 HP 仍为 0，不需死亡豁免，但仍昏迷</li>
+        <li>稳定但未治疗的生物在 <strong>1d4 小时</strong>后恢复 1 点 HP</li>
+        <li>受到伤害则不再稳定，重新开始死亡豁免</li>
+    </ul>
+
+    <h3>击晕（Knock Out）</h3>
+    <div class="callout callout-blue">
+        <strong>非致命攻击</strong>
+        近战攻击将生物 HP 降至 0 时，可改为降至 1 并使其昏迷。该生物立即开始短休，短休结束时脱离昏迷。
+    </div>
+
+    <h3>临时生命值</h3>
+    <ul>
+        <li>受伤害时<strong>优先扣临时HP</strong>，余下伤害扣到真正HP</li>
+        <li>持续至被消耗或<strong>完成长休</strong></li>
+        <li><strong>不叠加</strong>：获得更多时选择保留原值或新值</li>
+        <li>不是治疗也不是生命值：满HP也可获得，但HP为0时获得临时HP<strong>不能恢复意识</strong></li>
+    </ul>
+</div>
+
+<!-- 9. Spellcasting -->
+<div class="section" id="spellcasting">
+    <div class="section-header">
+        <div class="section-icon">✨</div>
+        <div>
+            <div class="section-num">CHAPTER 09</div>
+            <h2>施法系统详解</h2>
+        </div>
+    </div>
+
+    <h3>法术环阶与法术位</h3>
+    <p>法术分为 <strong>0-9 环</strong>。零环法术即<strong>戏法（Cantrips）</strong>，可无限次施展。</p>
+    <div class="cards">
+        <div class="card"><h4>🔄 法术位</h4><p>施展一环或更高法术需消耗一个<strong>相应或更高环阶</strong>的法术位。<strong>长休恢复所有法术位</strong>。</p></div>
+        <div class="card"><h4>📖 仪式施法</h4><p>带有"仪式"标签的法术可多花10分钟施法时间，<strong>不消耗法术位</strong>。必须准备了该法术。</p></div>
+        <div class="card"><h4>⬆️ 升环施法</h4><p>用更高环阶法术位施展低环法术时，该法术被视为更高环阶。部分法术升环后效果更强。</p></div>
+        <div class="card"><h4>🎯 戏法</h4><p>零环法术，无需法术位，可随意施展。随等级提升威力增加。</p></div>
+    </div>
+
+    <div class="callout callout-red">
+        <strong>每回合限施一道消耗法术位的法术</strong>
+        每个回合中，至多只能消耗一个法术位。不能在同一回合用动作消耗法术位施法后，再用附赠动作消耗法术位施另一道法术。（但可以用附赠动作施戏法 + 动作施法术等组合，只要不违反此规则。）
+    </div>
+
+    <h3>法术成分（Components）</h3>
+    <table class="tbl">
+        <thead><tr><th>成分</th><th>缩写</th><th>要求</th></tr></thead>
+        <tbody>
+            <tr><td class="hl-gold">言语</td><td>V</td><td>以<strong>正常音量</strong>咏唱咒文。被堵嘴或身处魔法性沉默区域时不能施带有V的法术。</td></tr>
+            <tr><td class="hl-gold">姿势</td><td>S</td><td>至少一只手做出固定手印或精巧动作。</td></tr>
+            <tr><td class="hl-gold">材料</td><td>M</td><td>需要一只空闲的手拿取材料。可用<strong>材料包</strong>或<strong>法器</strong>取代（除非材料有指定价格或会被消耗）。</td></tr>
+        </tbody>
+    </table>
+
+    <h3>施法时间</h3>
+    <table class="tbl">
+        <thead><tr><th>施法时间</th><th>说明</th></tr></thead>
+        <tbody>
+            <tr><td class="hl-gold">1 个动作</td><td>最常见的施法时间，通过<strong>魔法</strong>动作施展</td></tr>
+            <tr><td class="hl-gold">1 个附赠动作</td><td>快速法术，仅在特殊能力允许时</td></tr>
+            <tr><td class="hl-gold">1 个反应</td><td>对触发条件的响应（如护盾术）</td></tr>
+            <tr><td class="hl-gold">1 分钟或更久</td><td>需每个回合执行魔法动作 + 保持<strong>专注</strong>。失去专注则法术失败（但不消耗法术位）。</td></tr>
+        </tbody>
+    </table>
+
+    <h3>施法距离</h3>
+    <div class="cards">
+        <div class="card"><h4>📏 距离</h4><p>以尺数列出，如"60尺"、"120尺"。</p></div>
+        <div class="card"><h4>🤚 触碰</h4><p>效应以施法者接触的事物为源点。</p></div>
+        <div class="card"><h4>🧍 自身</h4><p>法术在施法者自身施展或从自身弥散。</p></div>
+    </div>
+
+    <h3>持续时间</h3>
+    <div class="cards">
+        <div class="card"><h4>⚡ 立即</h4><p>魔法只存在一瞬间，随后消散。</p></div>
+        <div class="card"><h4>⏱️ 持续时间段</h4><p>如"1分钟"=10轮。只要未失能，可随时结束（无需动作）。</p></div>
+        <div class="card"><h4>🧠 专注</h4><p>需保持专注。受到伤害需进行体质豁免（DC=10或伤害值的一半，取高），失败则法术中断。</p></div>
+    </div>
+
+    <h3>施法核心公式</h3>
+    <div class="formula">
+        <span class="gold-text">法术豁免 DC = 8 + 施法属性调整值 + 熟练加值</span>
+        <small>目标需进行对应属性的豁免检定，结果 ≥ DC 则不受完全影响</small>
+    </div>
+    <div class="formula">
+        <span class="gold-text">法术攻击加值 = 施法属性调整值 + 熟练加值</span>
+        <small>攻击型法术使用此加值，目标为 AC</small>
+    </div>
+
+    <h3>着甲施法</h3>
+    <div class="callout callout-red">
+        <strong>注意</strong>
+        着装护甲期间施展法术时，必须具备该种护甲的<strong>受训</strong>，否则因护甲妨碍而<strong>无法施展法术</strong>。
+    </div>
+
+    <h3>准备法术</h3>
+    <table class="tbl">
+        <thead><tr><th>职业</th><th>何时可更换</th><th>更换数量</th></tr></thead>
+        <tbody>
+            <tr><td>吟游诗人 / 术士 / 魔契师</td><td>升级时</td><td>一个</td></tr>
+            <tr><td>牧师 / 德鲁伊 / 法师</td><td>完成长休时</td><td>任意</td></tr>
+            <tr><td>圣武士 / 游侠</td><td>完成长休时</td><td>一个</td></tr>
+        </tbody>
+    </table>
+    <p>始终准备的法术（来自特性）<strong>不计入</strong>准备法术列表的数目限制。</p>
+</div>
+
+<!-- 10. Rest -->
+<div class="section" id="rest">
+    <div class="section-header">
+        <div class="section-icon">🏕️</div>
+        <div>
+            <div class="section-num">CHAPTER 10</div>
+            <h2>休息与恢复</h2>
+        </div>
+    </div>
+
+    <div class="cards">
+        <div class="card" style="border-top: 4px solid var(--blue);">
+            <h4>⏱️ 短休（Short Rest）</h4>
+            <p><strong>时长：</strong>1小时<br>
+            <strong>条件：</strong>必须至少 1 HP<br>
+            <strong>活动限制：</strong>不能做比阅读、交谈、进食、站岗更费力的事</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--purple);">
+            <h4>😴 长休（Long Rest）</h4>
+            <p><strong>时长：</strong>至少 8 小时<br>
+            <strong>要求：</strong>至少 6 小时睡眠 + 至多 2 小时轻度活动<br>
+            <strong>冷却：</strong>完成后须等待 16 小时才能再次长休</p>
+        </div>
+    </div>
+
+    <h3>短休收益</h3>
+    <ul>
+        <li><strong>消耗生命骰恢复HP</strong>：投掷任意枚生命骰 + 体质调整值 × 投掷次数。每次投掷后可决定是否继续消耗。</li>
+        <li><strong>特殊特性恢复</strong>：某些职业特性在短休时恢复使用次数。</li>
+    </ul>
+
+    <h3>长休收益</h3>
+    <ul>
+        <li><strong>恢复全部HP</strong>和所有已消耗的生命骰</li>
+        <li>HP 上限被减少的也恢复原状</li>
+        <li>被减少的属性值恢复原状</li>
+        <li><strong>力竭等级减少 1 层</strong></li>
+        <li><strong>恢复所有法术位</strong></li>
+        <li>特殊特性在长休时恢复</li>
+    </ul>
+
+    <h3>打断休息</h3>
+    <table class="tbl">
+        <thead><tr><th>打断条件</th><th>短休</th><th>长休</th></tr></thead>
+        <tbody>
+            <tr><td>投掷先攻</td><td class="hl-red">打断</td><td class="hl-red">打断</td></tr>
+            <tr><td>施展非戏法法术</td><td class="hl-red">打断</td><td class="hl-red">打断</td></tr>
+            <tr><td>受到任何伤害</td><td class="hl-red">打断</td><td class="hl-red">打断</td></tr>
+            <tr><td>1小时行走或体力劳动</td><td>—</td><td class="hl-red">打断</td></tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-gold">
+        <strong>长休被打断的处理</strong>
+        如果在长休被打断前已休息<strong>至少 1 小时</strong>，可获得一次<strong>短休的增益</strong>。可以在被打断后立刻继续长休，但每被打断一次需<strong>额外休息 1 小时</strong>才能完成。
+    </div>
+
+    <div class="callout callout-red">
+        <strong>短休被打断</strong>
+        一次被打断的短休<strong>不会提供任何增益</strong>。
+    </div>
+</div>
+
+<!-- 11. Leveling -->
+<div class="section" id="levelup">
+    <div class="section-header">
+        <div class="section-icon">📈</div>
+        <div>
+            <div class="section-num">CHAPTER 11</div>
+            <h2>升级与成长</h2>
+        </div>
+    </div>
+
+    <h3>经验值与等级表</h3>
+    <table class="tbl">
+        <thead><tr><th>等级</th><th>所需XP（总计）</th><th>熟练加值</th><th>游戏阶段</th></tr></thead>
+        <tbody>
+            <tr><td class="hl-gold">1</td><td class="center">0</td><td class="center">+2</td><td rowspan="4">T1 新手冒险者：村庄级威胁，选择子职</td></tr>
+            <tr><td class="hl-gold">2</td><td class="center">300</td><td class="center">+2</td></tr>
+            <tr><td class="hl-gold">3</td><td class="center">900</td><td class="center">+2</td></tr>
+            <tr><td class="hl-gold">4</td><td class="center">2,700</td><td class="center">+2</td></tr>
+            <tr><td class="hl-gold">5</td><td class="center">6,500</td><td class="center hl-green">+3</td><td rowspan="6">T2 成熟冒险者：获得标志性法术（火球术等），城市与王国级危机</td></tr>
+            <tr><td class="hl-gold">6</td><td class="center">14,000</td><td class="center">+3</td></tr>
+            <tr><td class="hl-gold">7</td><td class="center">23,000</td><td class="center">+3</td></tr>
+            <tr><td class="hl-gold">8</td><td class="center">34,000</td><td class="center">+3</td></tr>
+            <tr><td class="hl-gold">9</td><td class="center">48,000</td><td class="center hl-green">+4</td></tr>
+            <tr><td class="hl-gold">10</td><td class="center">64,000</td><td class="center">+4</td></tr>
+            <tr><td class="hl-gold">11</td><td class="center">85,000</td><td class="center">+4</td><td rowspan="6">T3 力量超凡：面对威胁整个地区的事物</td></tr>
+            <tr><td class="hl-gold">12</td><td class="center">100,000</td><td class="center">+4</td></tr>
+            <tr><td class="hl-gold">13</td><td class="center">120,000</td><td class="center hl-green">+5</td></tr>
+            <tr><td class="hl-gold">14</td><td class="center">140,000</td><td class="center">+5</td></tr>
+            <tr><td class="hl-gold">15</td><td class="center">165,000</td><td class="center">+5</td></tr>
+            <tr><td class="hl-gold">16</td><td class="center">195,000</td><td class="center">+5</td></tr>
+            <tr><td class="hl-gold">17</td><td class="center">225,000</td><td class="center hl-green">+6</td><td rowspan="4">T4 英雄典范：影响世界命运乃至多元宇宙秩序</td></tr>
+            <tr><td class="hl-gold">18</td><td class="center">265,000</td><td class="center">+6</td></tr>
+            <tr><td class="hl-gold">19</td><td class="center">305,000</td><td class="center">+6</td></tr>
+            <tr><td class="hl-gold">20</td><td class="center">355,000</td><td class="center">+6</td></tr>
+        </tbody>
+    </table>
+
+    <h3>升级五步骤</h3>
+    <div class="flow">
+        <div class="flow-step">
+            <div class="flow-num">1</div>
+            <div class="flow-body"><h4>选择职业</h4><p>大多数在同一个职业升级，也可使用兼职规则。</p></div>
+        </div>
+        <div class="flow-step">
+            <div class="flow-num">2</div>
+            <div class="flow-body">
+                <h4>修改生命值和生命骰</h4>
+                <p>获得一个额外生命骰。投掷后 + 体质调整值（至少1）加到HP上限。也可使用固定值：野蛮人+7，战士/圣武士/游侠+6，诗人/牧师/德鲁伊/武僧/游荡者/魔契师+5，术士/法师+4（均+体质调整）。</p>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="flow-num">3</div>
+            <div class="flow-body"><h4>记录新职业特性</h4><p>查看职业表格，记录该等级获得的新特性。</p></div>
+        </div>
+        <div class="flow-step">
+            <div class="flow-num">4</div>
+            <div class="flow-body"><h4>修改熟练加值</h4><p>提升时，角色卡上所有含熟练加值的数值都相应提升。</p></div>
+        </div>
+        <div class="flow-step">
+            <div class="flow-num">5</div>
+            <div class="flow-body"><h4>修改属性调整值</h4><p>体质调整值每提升1，生命值上限额外再提升等于当前等级的点数。</p></div>
+        </div>
+    </div>
+
+    <h3>游戏四阶段（Tiers of Play）</h3>
+    <div class="cards">
+        <div class="card" style="border-top: 4px solid var(--green);">
+            <h4>T1（1-4级）新手冒险者</h4>
+            <p>面对村庄级别威胁，3级选择子职。角色仍在摸索自己的能力。</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--gold);">
+            <h4>T2（5-10级）成熟冒险者</h4>
+            <p>获得标志性法术（如火球术、额外攻击）。面对城市与王国级危机。</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--purple);">
+            <h4>T3（11-16级）力量超凡</h4>
+            <p>力量远超普通冒险者。面对威胁整个地区的事物。可能获得传奇装备。</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--red);">
+            <h4>T4（17-20级）英雄典范</h4>
+            <p>影响世界命运乃至多元宇宙秩序。9环法术可以改变现实。</p>
+        </div>
+    </div>
+</div>
+
+<!-- 12. Quick Reference -->
+<div class="section" id="quickref">
+    <div class="section-header">
+        <div class="section-icon">📋</div>
+        <div>
+            <div class="section-num">CHAPTER 12</div>
+            <h2>速查表：公式与数值</h2>
+        </div>
+    </div>
+
+    <div class="quick-ref">
+        <h3 style="color: var(--gold); border-left-color: var(--gold);">核心公式一览</h3>
+        <table class="tbl">
+            <thead><tr><th>公式</th><th>计算方式</th></tr></thead>
+            <tbody>
+                <tr><td>属性调整值</td><td>(属性值 - 10) ÷ 2，向下取整</td></tr>
+                <tr><td>D20检定成功条件</td><td>d20 + 调整值 ≥ DC / AC</td></tr>
+                <tr><td>熟练技能检定</td><td>d20 + 属性调整值 + 熟练加值</td></tr>
+                <tr><td>非熟练技能检定</td><td>d20 + 属性调整值</td></tr>
+                <tr><td>豁免检定（熟练）</td><td>d20 + 属性调整值 + 熟练加值</td></tr>
+                <tr><td>近战攻击加值</td><td>力量调整值 + 熟练加值</td></tr>
+                <tr><td>远程攻击加值</td><td>敏捷调整值 + 熟练加值</td></tr>
+                <tr><td>灵巧武器攻击</td><td>max(力量, 敏捷) + 熟练加值</td></tr>
+                <tr><td>法术豁免DC</td><td>8 + 施法属性调整值 + 熟练加值</td></tr>
+                <tr><td>法术攻击加值</td><td>施法属性调整值 + 熟练加值</td></tr>
+                <tr><td>被动察觉</td><td>10 + 感知(察觉)检定调整值</td></tr>
+                <tr><td>无甲AC</td><td>10 + 敏捷调整值</td></tr>
+                <tr><td>先攻</td><td>d20 + 敏捷调整值</td></tr>
+                <tr><td>1级HP</td><td>职业生命骰面值 + 体质调整值</td></tr>
+                <tr><td>重击伤害</td><td>所有伤害骰 × 2 + 属性调整值</td></tr>
+                <tr><td>抗性</td><td>伤害 ÷ 2（向下取整）</td></tr>
+                <tr><td>易伤</td><td>伤害 × 2</td></tr>
+                <tr><td>伤害调整顺序</td><td>数值修正 → 抗性 → 易伤</td></tr>
+                <tr><td>死亡豁免</td><td>d20 ≥ 10 = 成功；3成功稳定，3失败死亡</td></tr>
+                <tr><td>稳定伤势</td><td>DC 10 感知（医药）检定</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>骰子标识速查</h3>
+    <table class="tbl">
+        <thead><tr><th>写法</th><th>含义</th><th>示例</th></tr></thead>
+        <tbody>
+            <tr><td class="hl-gold">d4</td><td>四面骰</td><td>匕首伤害 1d4</td></tr>
+            <tr><td class="hl-gold">d6</td><td>六面骰</td><td>法术飞弹 1d4+1 / 火球术 8d6</td></tr>
+            <tr><td class="hl-gold">d8</td><td>八面骰</td><td>长剑伤害 1d8</td></tr>
+            <tr><td class="hl-gold">d10</td><td>十面骰</td><td>生命骰（战士）</td></tr>
+            <tr><td class="hl-gold">d12</td><td>十二面骰</td><td>巨斧伤害 1d12 / 生命骰（野蛮人）</td></tr>
+            <tr><td class="hl-gold">d20</td><td>二十面骰</td><td>所有检定的核心骰</td></tr>
+            <tr><td class="hl-gold">d100</td><td>百分骰</td><td>随机表 / 百分比概率</td></tr>
+            <tr><td class="hl-gold">3d6+5</td><td>投3颗六面骰，总和+5</td><td>—</td></tr>
+            <tr><td class="hl-gold">4d6k3</td><td>投4颗六面骰，保留最高3个</td><td>车卡掷属性</td></tr>
+        </tbody>
+    </table>
+
+    <h3>战斗回合速查</h3>
+    <div class="formula">
+        <span class="gold-text">先攻排序 → 每人轮流：移动 + 动作 +（附赠动作）+（反应）→ 下一轮</span>
+        <small>一轮 ≈ 6秒游戏时间 · 一回合 = 一个角色的行动机会</small>
+    </div>
+
+    <h3>常用动作速查</h3>
+    <table class="tbl">
+        <thead><tr><th>你想做...</th><th>使用</th><th>检定方式</th></tr></thead>
+        <tbody>
+            <tr><td>攻击敌人</td><td>动作</td><td>d20 + 攻击加值 ≥ AC</td></tr>
+            <tr><td>施放法术</td><td>动作（通常）</td><td>法术攻击 或 目标豁免 vs DC</td></tr>
+            <tr><td>跑得更远</td><td>动作（疾走）</td><td>额外获得等于速度的移动力</td></tr>
+            <tr><td>安全撤退</td><td>动作（撤离）</td><td>不引发借机攻击</td></tr>
+            <tr><td>全力防御</td><td>动作（回避）</td><td>对你攻击劣势，敏捷豁免优势</td></tr>
+            <tr><td>帮盟友</td><td>动作（协助）</td><td>盟友获得优势</td></tr>
+            <tr><td>躲起来</td><td>动作（躲藏）</td><td>敏捷（隐匿）检定 vs 被动察觉</td></tr>
+            <tr><td>说服NPC</td><td>动作（影响）</td><td>魅力（游说/欺瞒/威吓/表演）</td></tr>
+            <tr><td>搜索区域</td><td>动作（搜索）</td><td>感知（察觉/求生）</td></tr>
+            <tr><td>调查线索</td><td>动作（研究）</td><td>智力（调查/奥秘/历史等）</td></tr>
+            <tr><td>设置伏击</td><td>动作（预备）</td><td>设定触发条件，用反应执行</td></tr>
+            <tr><td>使用物品</td><td>动作（操作）</td><td>使用非魔法物件</td></tr>
+        </tbody>
+    </table>
+
+    <div class="divider"></div>
+
+    <div class="callout callout-gold" style="text-align: center; font-size: 16px;">
+        <strong style="font-size: 18px;">🎲 愿骰子女神眷顾你的冒险！</strong>
+        记住核心原则：<strong>乐趣 &gt; 剧情 &gt; 规则</strong>。<br>
+        规则服务于游戏体验，当规则与乐趣冲突时，DM 有权做出最终裁决。
+    </div>
+</div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    <p>📜 本指南基于 D&D 5e 2024修订版 玩家手册（中文版）整理</p>
+    <p>⚡ 涵盖：角色创建 · D20检定 · 战斗系统 · 施法 · 休息 · 升级 · 速查表</p>
+    <p>🎮 资料来源：项目内 5echm_web 规则书 + 多源网络调研</p>
+    <p style="margin-top: 8px; opacity: 0.6;">Generated by WorkBuddy · 2026-07-15</p>
+</div>
+
+</body>
+</html>

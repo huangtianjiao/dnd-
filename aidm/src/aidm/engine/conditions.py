@@ -1,0 +1,219 @@
+"""状态条件引擎 — 14 种状态效应 + 力竭累加。
+
+提供状态集合/增删（不叠加规则）、战斗相关修饰符（攻防优劣势/速度/d20惩罚/
+失能/专注打断）。标注规则ID+出处。规则依据 R-GLS-044~058、R-QCK-003/004、
+R-GLS-043（不叠加）、R-GLS-047（力竭累加）。
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Iterable
+
+from . import dice
+
+
+# R-QCK-003（审计修正后）状态条件全集 15 项（含力竭）
+# 出处: topics/玩家手册2024/术语汇编/状态.htm
+CONDITIONS = frozenset({
+    "目盲", "魅惑", "耳聋", "恐慌", "受擒", "失能", "隐形",
+    "麻痹", "石化", "力竭", "中毒", "倒地", "束缚", "震慑", "昏迷",
+})
+
+# 失能性状态：含"失能"本身及隐含失能的状态
+# R-GLS-050 失能 / R-GLS-052 麻痹 / R-GLS-057 震慑 / R-GLS-058 昏迷 / R-GLS-053 石化
+INCAPACITATING = frozenset({"失能", "麻痹", "震慑", "昏迷", "石化"})
+
+# 速度归0的状态（除倒地外）
+# R-GLS-049 受擒 / R-GLS-052 麻痹 / R-GLS-053 石化 / R-GLS-056 束缚 / R-GLS-058 昏迷
+SPEED_ZERO_STATES = frozenset({"受擒", "麻痹", "石化", "束缚", "昏迷"})
+
+
+@dataclass
+class ConditionState:
+    """生物的状态集合（持久化于角色卡）。力竭单独记等级。"""
+    conditions: set[str] = field(default_factory=set)
+    exhaustion: int = 0                # R-GLS-047 力竭等级 0..6
+
+    def add(self, cond: str) -> bool:
+        """施加状态。非力竭不叠加（仅有/无）；力竭等级+1。
+
+        规则: R-GLS-043 状态不叠加原则（力竭例外）
+        出处: topics/玩家手册2024/术语汇编/状态与其他游戏状况.htm
+        返回: 是否为新施加（力竭总返回True）。
+        """
+        if cond == "力竭":              # R-GLS-047 力竭可叠加
+            self.exhaustion = min(6, self.exhaustion + 1)
+            return True
+        if cond not in CONDITIONS:
+            raise ValueError(f"未知状态 {cond!r}，可选: {sorted(CONDITIONS)}")
+        if cond in self.conditions:
+            return False                # 已有，不叠加
+        self.conditions.add(cond)
+        return True
+
+    def remove(self, cond: str) -> bool:
+        if cond == "力竭":
+            if self.exhaustion > 0:
+                self.exhaustion -= 1
+                return True
+            return False
+        if cond in self.conditions:
+            self.conditions.discard(cond)
+            return True
+        return False
+
+    def has(self, cond: str) -> bool:
+        return (cond == "力竭" and self.exhaustion > 0) or cond in self.conditions
+
+    def is_incapacitated(self) -> bool:
+        """是否失能（无法动作/附赠/反应，打断专注）。
+
+        规则: R-GLS-050 失能（含隐含失能的麻痹/震慑/昏迷/石化）
+        """
+        return any(c in self.conditions for c in INCAPACITATING)
+
+    def is_dead_from_exhaustion(self) -> bool:
+        """力竭6级即死。规则: R-GLS-047 / R-QCK-004"""
+        return self.exhaustion >= 6
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 战斗修饰符
+# ──────────────────────────────────────────────────────────────────────────
+
+def d20_penalty(state: ConditionState) -> int:
+    """D20 检定的减值：力竭等级×2。
+
+    规则: R-GLS-047 力竭（每级 D20 检定 −2）
+    出处: topics/玩家手册2024/术语汇编/状态.htm
+    """
+    return state.exhaustion * 2
+
+
+def speed_after_conditions(base_speed: int, state: ConditionState) -> int:
+    """受状态影响后的速度。
+
+    规则: R-GLS-049/052/053/056/058 速度归0；R-GLS-047 力竭 −等级×5 尺
+    出处: 术语汇编/状态.htm
+    说明: 倒地不直接归0（可匍匐/起立），倒地起立消耗由 combat 处理。
+    """
+    if any(state.has(c) for c in SPEED_ZERO_STATES):
+        return 0
+    speed = base_speed - state.exhaustion * 5     # R-GLS-047
+    return max(0, speed)
+
+
+@dataclass
+class AttackModifiers:
+    """一次攻击检定的优劣势/自动重击标记（由调用方传入 attack_roll）。"""
+    attacker_advantage: bool = False
+    attacker_disadvantage: bool = False
+    target_auto_crit_if_hit: bool = False   # 目标麻痹/昏迷且近战5尺内 → 命中即重击
+
+
+def attack_modifiers(attacker: ConditionState, target: ConditionState,
+                     distance_ft: int = 5) -> AttackModifiers:
+    """根据攻守双方状态计算攻击检定的优劣势与自动重击。
+
+    规则: R-GLS-044目盲 / R-GLS-054中毒 / R-GLS-055倒地 / R-GLS-052麻痹 /
+          R-GLS-058昏迷（5尺内命中即重击）/ R-GLS-056束缚 / R-GLS-051隐形
+    出处: topics/玩家手册2024/术语汇编/状态.htm
+    """
+    adv = False
+    dis = False
+
+    # —— 攻击者侧 ——
+    if attacker.has("目盲"):            # R-GLS-044 自己攻击劣势
+        dis = True
+    if attacker.has("中毒"):            # R-GLS-054 攻击检定劣势
+        dis = True
+    if attacker.has("束缚") or attacker.has("受擒"):  # R-GLS-056/049 自己攻击劣势
+        dis = True
+    if attacker.has("恐慌"):            # R-GLS-048 恐慌源可见时劣势
+        dis = True
+    if attacker.has("倒地"):            # R-GLS-055 倒地自己攻击劣势
+        dis = True
+    if attacker.has("隐形"):            # R-GLS-051 隐形自己攻击优势
+        adv = True
+
+    # —— 目标侧（对目标的攻击） ——
+    if target.has("目盲"):              # R-GLS-044 目标目盲 → 攻击其有优势
+        adv = True
+    if target.has("隐形"):              # R-GLS-051 目标隐形 → 攻击其劣势
+        dis = True
+    if target.has("束缚") or target.has("麻痹") or target.has("震慑") or target.has("昏迷") or target.has("石化"):
+        adv = True                       # R-GLS-052/053/056/057/058 攻击这些目标优势
+    if target.has("倒地"):              # R-GLS-055 倒地：5尺内优势，5尺外劣势
+        if distance_ft <= 5:
+            adv = True
+        else:
+            dis = True
+
+    # R-GLS-052 麻痹 / R-GLS-058 昏迷：5尺内近战命中即重击
+    auto_crit = (target.has("麻痹") or target.has("昏迷")) and distance_ft <= 5
+
+    return AttackModifiers(adv, dis, auto_crit)
+
+
+def concentration_broken_on_state_change(new_state: ConditionState) -> bool:
+    """陷入失能/昏迷/石化等是否打断专注。
+
+    规则: R-GLS-050 失能打断专注（施展另一专注法术/失能/死亡均失去专注，见 R-SPL-019）
+    出处: topics/玩家手册2024/术语汇编/状态.htm
+    """
+    return new_state.is_incapacitated()
+
+
+def long_rest_reduce_exhaustion(state: ConditionState) -> None:
+    """长休力竭−1级（降至0结束）。规则: R-GLS-047/R-QCK-004  出处: 状态.htm"""
+    state.exhaustion = max(0, state.exhaustion - 1)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 自检
+# ──────────────────────────────────────────────────────────────────────────
+
+def _self_test() -> None:
+    s = ConditionState()
+    assert s.add("中毒") is True and s.has("中毒")
+    assert s.add("中毒") is False              # 不叠加（R-GLS-043）
+    assert s.add("力竭") and s.add("力竭")     # 力竭可叠加
+    assert s.exhaustion == 2
+    assert s.add("力竭") and s.exhaustion == 3
+    # 失能判定
+    assert not ConditionState({"中毒"}).is_incapacitated()
+    assert ConditionState({"麻痹"}).is_incapacitated()
+    assert ConditionState({"昏迷"}).is_incapacitated()
+    # 力竭 d20惩罚/速度
+    s2 = ConditionState(); s2.add("力竭"); s2.add("力竭")
+    assert d20_penalty(s2) == 4                # 2级→-4
+    assert speed_after_conditions(30, s2) == 20  # 30-10
+    assert speed_after_conditions(30, ConditionState({"束缚"})) == 0  # 束缚→0
+    # 攻击修饰符
+    m = attack_modifiers(ConditionState({"中毒"}), ConditionState())  # 攻击者中毒→劣势
+    assert m.attacker_disadvantage and not m.attacker_advantage
+    m = attack_modifiers(ConditionState(), ConditionState({"目盲"}))   # 目标目盲→优势
+    assert m.attacker_advantage
+    m = attack_modifiers(ConditionState(), ConditionState({"倒地"}), distance_ft=5)  # 倒地5尺内优势
+    assert m.attacker_advantage
+    m = attack_modifiers(ConditionState(), ConditionState({"倒地"}), distance_ft=15)  # 倒地5尺外劣势
+    assert m.attacker_disadvantage
+    m = attack_modifiers(ConditionState(), ConditionState({"麻痹"}), 5)  # 麻痹5尺内自动重击
+    assert m.target_auto_crit_if_hit and m.attacker_advantage
+    # 力竭6级死
+    s3 = ConditionState()
+    for _ in range(6):
+        s3.add("力竭")
+    assert s3.is_dead_from_exhaustion()
+    # 长休-1
+    s4 = ConditionState(); s4.add("力竭"); s4.add("力竭")
+    long_rest_reduce_exhaustion(s4); assert s4.exhaustion == 1
+    # 专注打断
+    assert concentration_broken_on_state_change(ConditionState({"昏迷"}))
+    assert not concentration_broken_on_state_change(ConditionState({"中毒"}))
+    print("[conditions] 自检通过 ✓")
+
+
+if __name__ == "__main__":
+    _self_test()

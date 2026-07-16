@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI DM 模型技术能力与架构总报告</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --surface: #f5f4ef;
+  --surface2: #efeee8;
+  --border: #e0ddd4;
+  --border-light: #ebe9e2;
+  --text: #2c2c2a;
+  --text-muted: #888780;
+  --accent: #534AB7;
+  --accent-light: #EEEDFE;
+  --accent-dark: #3D35A0;
+  --teal: #0F6E56;
+  --teal-light: #E1F5EE;
+  --blue: #185FA5;
+  --blue-light: #E6F1FB;
+  --coral: #D85A30;
+  --coral-light: #FAECE7;
+  --green: #639922;
+  --green-light: #EAF3DE;
+  --amber: #BA7517;
+  --amber-light: #FAEEDA;
+  --red: #A32D2D;
+  --red-light: #FCEBEB;
+  --gold: #c8a44e;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.75;
+}
+.container { max-width: 960px; margin: 0 auto; padding: 0 0 80px; }
+
+.hero {
+  background: linear-gradient(135deg, #1a1410 0%, #2d2138 30%, #1a1a2e 60%, #0d1b2a 100%);
+  color: #f0e6d2;
+  padding: 56px 32px 48px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at 30% 0%, rgba(83,74,183,0.25) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 100%, rgba(15,110,86,0.15) 0%, transparent 50%);
+}
+.hero h1 {
+  font-size: 30px; font-weight: 700; position: relative; margin-bottom: 8px;
+  background: linear-gradient(180deg, #f5e6c8 0%, #c8a44e 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.hero .subtitle { font-size: 14px; opacity: 0.65; position: relative; margin-bottom: 16px; }
+.hero .meta {
+  display: flex; gap: 20px; justify-content: center; font-size: 12px; opacity: 0.45;
+  position: relative; flex-wrap: wrap;
+}
+
+.content { padding: 0 32px; max-width: 960px; margin: 0 auto; }
+
+h2 { font-size: 22px; font-weight: 700; margin-top: 2.8rem; margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border); }
+h3 { font-size: 17px; font-weight: 600; margin-top: 2rem; margin-bottom: 0.6rem; }
+h4 { font-size: 15px; font-weight: 600; margin-top: 1.2rem; margin-bottom: 0.4rem; }
+
+p { margin-bottom: 0.85rem; font-size: 15px; }
+ul, ol { margin-bottom: 0.85rem; padding-left: 1.5rem; font-size: 15px; }
+li { margin-bottom: 0.35rem; }
+
+.tag { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-right: 4px; }
+.tag-purple { background: var(--accent-light); color: var(--accent); }
+.tag-teal { background: var(--teal-light); color: var(--teal); }
+.tag-blue { background: var(--blue-light); color: var(--blue); }
+.tag-coral { background: var(--coral-light); color: var(--coral); }
+.tag-green { background: var(--green-light); color: var(--green); }
+.tag-amber { background: var(--amber-light); color: var(--amber); }
+.tag-red { background: var(--red-light); color: var(--red); }
+.tag-gold { background: #f5ecd6; color: var(--gold); }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+.card-accent { border-left: 4px solid var(--accent); }
+.card-teal { border-left: 4px solid var(--teal); }
+.card-blue { border-left: 4px solid var(--blue); }
+.card-coral { border-left: 4px solid var(--coral); }
+.card-green { border-left: 4px solid var(--green); }
+.card-amber { border-left: 4px solid var(--amber); }
+.card-red { border-left: 4px solid var(--red); }
+
+.comparison-table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 14px; }
+.comparison-table th { background: var(--surface2); padding: 8px 12px; text-align: left; border-bottom: 2px solid var(--border); font-weight: 600; white-space: nowrap; }
+.comparison-table td { padding: 8px 12px; border-bottom: 1px solid var(--border-light); vertical-align: top; }
+.comparison-table tr:last-child td { border-bottom: none; }
+.comparison-table tr:hover td { background: var(--surface); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; }
+@media (max-width: 750px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+
+.section-intro { font-size: 14px; color: var(--text-muted); margin-bottom: 1rem; padding-left: 0.5rem; }
+.bad { color: var(--red); font-weight: 600; }
+.good { color: var(--green); font-weight: 600; }
+.warn { color: var(--amber); font-weight: 600; }
+.highlight { background: var(--amber-light); padding: 2px 6px; border-radius: 3px; }
+
+.code-block {
+  background: #1a1a2e; color: #cdd6f4; padding: 1rem 1.25rem;
+  border-radius: 8px; font-size: 13px; line-height: 1.55; margin: 1rem 0;
+  white-space: pre-wrap; font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace; overflow-x: auto;
+}
+.code-inline { background: var(--surface2); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 13px; }
+
+.star-badge { display: inline-flex; align-items: center; gap: 4px; background: #fff3d6; color: #8a6d1b; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+
+.footnote { font-size: 13px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 2rem; }
+
+/* Capacity radar-like display */
+.cap-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.8rem; margin: 1rem 0; }
+.cap-item { text-align: center; padding: 14px 8px; background: var(--surface); border-radius: 10px; border: 1px solid var(--border); }
+.cap-item .cap-icon { font-size: 28px; margin-bottom: 4px; }
+.cap-item .cap-name { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+.cap-item .cap-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+
+.arch-diagram {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 1.5rem; margin: 1.5rem 0; text-align: center; overflow-x: auto;
+}
+.arch-diagram pre { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 11px; line-height: 1.5; text-align: left; display: inline-block; }
+
+.toc-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+}
+.toc-card h3 { margin-top: 0; margin-bottom: 0.6rem; }
+.toc-card ol { columns: 2; column-gap: 2rem; }
+.toc-card li { margin-bottom: 0.25rem; }
+
+.step-flow { display: flex; gap: 0; margin: 1.5rem 0; overflow-x: auto; }
+.step-item { flex: 1; min-width: 120px; padding: 16px 12px; text-align: center; background: var(--surface); border: 1px solid var(--border); position: relative; }
+.step-item:first-child { border-radius: 10px 0 0 10px; }
+.step-item:last-child { border-radius: 0 10px 10px 0; }
+.step-item:not(:last-child)::after {
+  content: '→'; position: absolute; right: -10px; top: 50%; transform: translateY(-50%);
+  font-size: 18px; color: var(--accent); z-index: 1; font-weight: 700;
+}
+.step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: white; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 6px; }
+.step-label { font-size: 12px; font-weight: 600; color: var(--text); }
+.step-detail { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+.matrix-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 13px; }
+.matrix-table th, .matrix-table td { padding: 6px 10px; text-align: center; border: 1px solid var(--border); }
+.matrix-table th { background: var(--surface2); font-weight: 600; font-size: 12px; }
+.matrix-table .high { background: var(--green-light); }
+.matrix-table .mid { background: var(--amber-light); }
+.matrix-table .low { background: var(--red-light); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>AI DM 模型技术能力与架构总报告</h1>
+  <p class="subtitle">WHAT AN AI DUNGEON MASTER NEEDS — FROM THE MODEL'S PERSPECTIVE</p>
+  <div class="meta">
+    <span>调研时间: 2026-07-15</span>
+    <span>项目: AIDM (AI Dungeon Master)</span>
+    <span>聚焦: 模型技术能力 / Tool Calling / 架构设计 / 流程接入</span>
+  </div>
+</div>
+
+<div class="container">
+<div class="content">
+
+<!-- ============================================================ -->
+<h2>零、核心结论：一个公式</h2>
+<!-- ============================================================ -->
+
+<div class="card card-accent">
+  <h3>AI DM = LLM (叙事大脑) + 确定性引擎 (规则手脚) + 持久记忆 (跨会话存在) + 多智能体协作 (职责分离)</h3>
+  <p>本报告通过全网开源项目、学术论文、社区实践三个维度交叉验证，得出以下核心结论：</p>
+  <ol>
+    <li><strong>单模型 + Prompt 方案不可持续</strong> — Session 3 之后必然崩塌（上下文溢出、规则遗忘、叙事断裂），已被多源实测证实</li>
+    <li><strong>多智能体架构是共识方向</strong> — 8 个主要开源项目全部采用 Agent + Tool Calling 架构，无一例外</li>
+    <li><strong>确定性与创造性的严格分离</strong> — 骰子/HP/AC/法术位 必须由确定性引擎处理，LLM 只负责叙事和判断</li>
+    <li><strong>记忆是最大技术挑战</strong> — 短/中/长三层记忆架构 + RAG + 摘要压缩是当前最佳实践</li>
+    <li><strong>LangGraph 是事实标准编排框架</strong> — 状态图模型天然匹配 D&D 游戏循环的分支逻辑</li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2>一、AI DM 需要具备的五大核心能力</h2>
+<!-- ============================================================ -->
+<p class="section-intro">基于 Narra·Gym 评估框架 + 7 个开源项目的能力矩阵分析，AI DM 必须同时具备以下五项互锁能力。</p>
+
+<div class="cap-grid">
+  <div class="cap-item">
+    <div class="cap-icon">🎨</div>
+    <div class="cap-name">创意叙事生成</div>
+    <div class="cap-desc">场景/角色/剧情弧线<br>动态分支叙事<br>多幕结构编排</div>
+  </div>
+  <div class="cap-item">
+    <div class="cap-icon">🧠</div>
+    <div class="cap-name">长上下文管理</div>
+    <div class="cap-desc">跨回合状态追踪<br>未解决线索保持<br>场景切换一致性</div>
+  </div>
+  <div class="cap-item">
+    <div class="cap-icon">🎭</div>
+    <div class="cap-name">角色模拟</div>
+    <div class="cap-desc">NPC 独立人格<br>稳定可区分的语音<br>随剧情进化</div>
+  </div>
+  <div class="cap-item">
+    <div class="cap-icon">⚖️</div>
+    <div class="cap-name">规则执行与裁决</div>
+    <div class="cap-desc">骰子/AC/DC/检定<br>法术系统/资源管理<br>战斗顺序/状态追踪</div>
+  </div>
+  <div class="cap-item">
+    <div class="cap-icon">🎯</div>
+    <div class="cap-name">交互式产物生成</div>
+    <div class="cap-desc">地图/信件/道具<br>场景插图<br>角色卡/战报</div>
+  </div>
+</div>
+
+<h3>1.1 能力一：创意叙事生成</h3>
+<div class="card card-accent">
+  <p>这是 LLM 擅长的领域，但需要 <strong>结构化约束</strong> 来防止发散。</p>
+  <ul>
+    <li><strong>多幕结构编排</strong>: 从稀疏情感输入（premise + emotion tone）→ 基础设定 → 角色构建 → 多幕大纲 → 开场场景。Narra·Gym 的五阶段构建流程是目前最精细的设计</li>
+    <li><strong>动态分支叙事</strong>: 不是预设的"选项树"，而是基于玩家行为 + 世界状态的实时生成。Oracle-RPG 三合一架构（DM Emulator + 描述生成器 + 冒险生成器）是 prompt 层面的最佳参考</li>
+    <li><strong>反停滞控制</strong>: Narra·Gym 的 Pacing Agent（节奏智能体）监控叙事是否在"假装推进"，从温和提醒升级到强制转折</li>
+    <li><strong>新鲜度约束</strong>: 通过 tag-based novelty filtering 确保场景、道具、遭遇不会重复</li>
+  </ul>
+  <p><strong>模型要求</strong>: 需要强创意写作能力（temperature 0.7-0.8），Claude/GPT-4o 级别。Narra·Gym 排行榜显示 Claude Sonnet 4 在叙事维度（Quality/Satisfaction）上碾压式领先。</p>
+</div>
+
+<h3>1.2 能力二：长上下文管理（最大的技术挑战）</h3>
+<div class="card card-coral">
+  <p>这是所有 AI DM 项目公认的头号难题。Gemini 100 万 token 实测证明：<strong>长上下文 ≠ 长记忆</strong>。窗口大了，反而会出现"反刍旧对话"和"编造剧情"。</p>
+  <h4>社区共识的三层记忆架构：</h4>
+  <table class="comparison-table">
+    <tr><th>层级</th><th>时间范围</th><th>存储方式</th><th>检索方式</th><th>典型内容</th></tr>
+    <tr>
+      <td><strong>工作记忆</strong></td>
+      <td>当前回合 ~ 最近 6 回合</td>
+      <td>对话缓冲区（直接注入上下文）</td>
+      <td>时间序列</td>
+      <td>最近对话、当前场景描述、当前战斗状态</td>
+    </tr>
+    <tr>
+      <td><strong>中期记忆</strong></td>
+      <td>当前 Session（数小时）</td>
+      <td>滚动摘要 + 观察提取</td>
+      <td>按时间/场景查询</td>
+      <td>场景级摘要、每个回合后的 Observations、NPC 交互记录</td>
+    </tr>
+    <tr>
+      <td><strong>长期记忆</strong></td>
+      <td>跨 Session（数天 ~ 数月）</td>
+      <td>向量数据库（Qdrant/ChromaDB）+ 文档数据库（MongoDB/SQLite）</td>
+      <td>语义检索 + 关键词 + 重要性加权 + 时间衰减 + Rerank</td>
+      <td>关键情节事实、NPC 关系、世界状态、任务进度、物品变化</td>
+    </tr>
+  </table>
+  <h4>Critical Miss 项目的记忆检索流水线（最详细实现）：</h4>
+  <ol>
+    <li>从当前对话生成"可能相关的查询问题"（LLM 自问）</li>
+    <li>生成"可能的相关记忆"（LLM 自回忆/猜）</li>
+    <li>余弦相似度 / 混合检索 / BM25 检索初始批次</li>
+    <li>加权排序（相关性 × 重要性 × 时间衰减）</li>
+    <li>Rerank → Top-K 注入上下文</li>
+  </ol>
+</div>
+
+<h3>1.3 能力三：角色模拟</h3>
+<div class="card card-teal">
+  <p>NPC 需要具备独立人格、稳定语音风格、关系演化。这不是简单的"用 X 的语气说话"，而是需要<strong>持久化的人格状态</strong>。</p>
+  <ul>
+    <li><strong>人格档案</strong>: 每个 NPC 维护独立的记忆文档集合（向量存储），包含其背景、性格、知识范围、与玩家的关系历史</li>
+    <li><strong>关系演化</strong>: NPC 会记仇/感恩，信任等级随时间推移变化（emasterlabs 的设计）</li>
+    <li><strong>语义检索人格记忆</strong>: NPC 回复时检索其"知道什么"和"感觉如何"，而非仅靠 prompt 描述</li>
+    <li><strong>语音一致性</strong>: 每个 NPC 使用不同的 temperature 和语音风格参数</li>
+  </ul>
+</div>
+
+<h3>1.4 能力四：规则执行与裁决（核心能力）</h3>
+<div class="card card-blue">
+  <p>这是 AI DM 与"故事接龙机器人"的本质区别。确定性 > 智能性——这个次序不能颠倒。</p>
+  <h4>必须由确定性引擎执行的规则：</h4>
+  <div class="grid-2">
+    <div class="card">
+      <h4>骰子系统</h4>
+      <ul>
+        <li>d20 攻击检定 vs AC（命中判定）</li>
+        <li>d20 属性检定 vs DC</li>
+        <li>d20 豁免检定 vs DC</li>
+        <li>优/劣势（掷两次取高/低）</li>
+        <li>伤害掷骰（按武器/法术表达式）</li>
+        <li>批量表达式（如 <code>4d6kh3</code>）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>战斗系统</h4>
+      <ul>
+        <li>先攻排序（敏捷检定）</li>
+        <li>逐回合推进 + 顺序强制执行</li>
+        <li>HP / 临时 HP 追踪</li>
+        <li>AC 比较（攻击检定 vs 目标 AC）</li>
+        <li>死亡豁免追踪</li>
+        <li>14 种状态条件自动递减</li>
+        <li>擒抱/推倒/脱离规则</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>法术系统</h4>
+      <ul>
+        <li>法术位消耗与恢复</li>
+        <li>专注检定（受伤 DC = 10 或 伤害/2）</li>
+        <li>升阶施法</li>
+        <li>法术书/准备法术管理</li>
+        <li>AOE 范围计算（球/锥/线/方/柱）</li>
+        <li>法术效应持续时间追踪</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>资源与空间</h4>
+      <ul>
+        <li>HP / 生命骰 / 法术位 / 职业资源</li>
+        <li>短休/长休恢复计算</li>
+        <li>物品栏（增/删/装备/转移）</li>
+        <li>距离测量（网格含海拔）</li>
+        <li>视线/掩护判定</li>
+        <li>负重/货币追踪</li>
+      </ul>
+    </div>
+  </div>
+  <p><strong>关键原则</strong>: LLM <strong>永远不能</strong>自己"编"一个骰子结果或 HP 数值。它只能调用工具来获取这些值，然后基于工具返回的结构化结果来叙述发生了什么。</p>
+</div>
+
+<h3>1.5 能力五：交互式产物生成</h3>
+<div class="card card-green">
+  <p>在合适时机生成场景插图、地图、道具卡等物理化产物。Narra·Gym 的 Artifact Agent 通过 tag-based novelty filtering 确保不重复。</p>
+  <ul>
+    <li>场景插图（战斗、关键场景配图）</li>
+    <li>战术地图（ASCII 或可视化网格）</li>
+    <li>角色卡 / 怪物卡渲染</li>
+    <li>信件、密文、地图碎片等剧情道具</li>
+    <li>战报自动生成</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>二、模型能力矩阵：不同 LLM 在各能力上的表现</h2>
+<!-- ============================================================ -->
+<p class="section-intro">基于 Narra·Gym v0.1 排行榜 + 社区实测 + 论文评估数据，整理主流模型在 AI DM 五项能力上的相对表现。</p>
+
+<table class="matrix-table">
+  <tr>
+    <th>模型</th>
+    <th>创意叙事</th>
+    <th>长上下文</th>
+    <th>角色模拟</th>
+    <th>规则执行<br>(需Tool)</th>
+    <th>综合评价</th>
+  </tr>
+  <tr>
+    <td><strong>Claude Sonnet 4</strong></td>
+    <td class="high">★★★★★</td>
+    <td class="high">★★★★★</td>
+    <td class="high">★★★★★</td>
+    <td class="mid">★★★</td>
+    <td>叙事质量最高，但 Function Calling 不如 GPT</td>
+  </tr>
+  <tr>
+    <td><strong>Claude Opus 4</strong></td>
+    <td class="high">★★★★★</td>
+    <td class="high">★★★★★</td>
+    <td class="high">★★★★★</td>
+    <td class="mid">★★★</td>
+    <td>深度叙事最佳，适合 DM 主脑</td>
+  </tr>
+  <tr>
+    <td><strong>GPT-4o</strong></td>
+    <td class="high">★★★★</td>
+    <td class="high">★★★★</td>
+    <td class="high">★★★★</td>
+    <td class="high">★★★★★</td>
+    <td>Tool Calling 最强，适合编排主脑</td>
+  </tr>
+  <tr>
+    <td><strong>GPT-5</strong></td>
+    <td class="high">★★★★★</td>
+    <td class="high">★★★★★</td>
+    <td class="high">★★★★</td>
+    <td class="high">★★★★★</td>
+    <td>综合最强但成本最高</td>
+  </tr>
+  <tr>
+    <td><strong>Gemini 3 Pro</strong></td>
+    <td class="mid">★★★</td>
+    <td class="high">★★★★</td>
+    <td class="mid">★★★</td>
+    <td class="mid">★★★</td>
+    <td>长窗口优势但叙事较弱</td>
+  </tr>
+  <tr>
+    <td><strong>Qwen3.5-397B</strong></td>
+    <td class="mid">★★★</td>
+    <td class="mid">★★★</td>
+    <td class="mid">★★★</td>
+    <td class="mid">???</td>
+    <td>中文场景有优势，开源可自部署</td>
+  </tr>
+  <tr>
+    <td><strong>DeepSeek V3.2</strong></td>
+    <td class="low">★★</td>
+    <td class="low">★★</td>
+    <td class="low">★★</td>
+    <td class="low">???</td>
+    <td>叙事能力偏弱，适合做子任务</td>
+  </tr>
+</table>
+
+<div class="card card-amber">
+  <h4>推荐策略：分层模型架构</h4>
+  <p>一个模型打不了全场。最佳实践是<strong>按任务分配不同能力的模型</strong>：</p>
+  <ul>
+    <li><strong>主 DM 脑（叙事 + 编排）</strong>: Claude Opus 4 / GPT-4o — 高 temperature (0.7-0.8) 保证创意，大上下文窗口</li>
+    <li><strong>规则裁决</strong>: GPT-4o — Function Calling 最成熟，temperature 0 保证确定性</li>
+    <li><strong>摘要/观察提取</strong>: GPT-4o-mini / Claude Haiku — temperature 0.2-0.3，成本优先</li>
+    <li><strong>RAG 检索</strong>: 不依赖 LLM，使用向量检索 + BM25 混合</li>
+    <li><strong>中文叙事</strong>: Qwen3 / DeepSeek 作为备选，本地部署优势</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>三、Tool Calling：AI DM 的"手"</h2>
+<!-- ============================================================ -->
+<p class="section-intro">Tool Calling 是让 AI 从"聊天机器人"变成"游戏引擎"的关键。以下是全网 7 个开源项目工具设计的综合分类。</p>
+
+<h3>3.1 工具分类全景（六大模块，40+ 工具）</h3>
+
+<div class="card card-blue">
+  <h4>模块一：骰子与检定 — 5 个核心工具</h4>
+  <table class="comparison-table">
+    <tr><th>工具名</th><th>输入</th><th>输出</th><th>说明</th></tr>
+    <tr><td><code>roll_dice</code></td><td>表达式: "2d6+4", "4d6kh3", "adv d20"</td><td>每次掷骰值 + 总和 + 调整值</td><td>支持优/劣势、批量表达式</td></tr>
+    <tr><td><code>roll_check</code></td><td>角色ID + 属性/技能名 + DC</td><td>d20结果 + 调整值 + 成功/失败</td><td>自动查角色属性加值</td></tr>
+    <tr><td><code>roll_attack</code></td><td>攻击者ID + 目标ID + 武器/法术</td><td>攻击检定结果 + AC比较 + 伤害</td><td>自动处理优/劣势、重击</td></tr>
+    <tr><td><code>roll_saving_throw</code></td><td>角色ID + 属性 + DC</td><td>豁免结果 + 成功/失败</td><td>自动查豁免熟练</td></tr>
+    <tr><td><code>roll_initiative</code></td><td>参战者ID列表</td><td>先攻排序列表</td><td>敏捷检定 + 敏捷调整值</td></tr>
+  </table>
+</div>
+
+<div class="card card-coral">
+  <h4>模块二：战斗系统 — 8 个核心工具</h4>
+  <table class="comparison-table">
+    <tr><th>工具名</th><th>功能</th><th>关键细节</th></tr>
+    <tr><td><code>create_encounter</code></td><td>创建遭遇（参战者 + 难度）</td><td>需指定怪物CR、数量，可自动查怪物数据</td></tr>
+    <tr><td><code>initiate_combat</code></td><td>开始战斗（先攻 + 布阵）</td><td>自动判定突袭，生成初始位置</td></tr>
+    <tr><td><code>execute_action</code></td><td>执行一个战斗行动</td><td>移动/攻击/施法/躲闪/撤离/准备等</td></tr>
+    <tr><td><code>advance_turn</code></td><td>推进到下一个回合</td><td>自动递减条件持续时间，检查持续伤害</td></tr>
+    <tr><td><code>manage_condition</code></td><td>施加/移除状态</td><td>14种5e标准状态 + 持续时间追踪</td></tr>
+    <tr><td><code>get_combat_state</code></td><td>查询当前战斗全貌</td><td>先攻顺序 + HP + 状态 + 位置 + 资源</td></tr>
+    <tr><td><code>render_battlefield</code></td><td>生成战术地图</td><td>ASCII网格 / 可视化格式</td></tr>
+    <tr><td><code>resolve_death</code></td><td>处理死亡豁免</td><td>三成功稳定 / 三失败死亡 / 自然20恢复1HP</td></tr>
+  </table>
+</div>
+
+<div class="card card-teal">
+  <h4>模块三：角色与资源管理 — 6 个核心工具</h4>
+  <table class="comparison-table">
+    <tr><th>工具名</th><th>功能</th></tr>
+    <tr><td><code>create_character</code></td><td>创建角色（种族/职业/属性/装备）</td></tr>
+    <tr><td><code>get_character_sheet</code></td><td>查看完整角色卡</td></tr>
+    <tr><td><code>update_character</code></td><td>修改属性/HP/资源（升级/受伤/恢复）</td></tr>
+    <tr><td><code>manage_spell_slots</code></td><td>法术位消耗/恢复/查询</td></tr>
+    <tr><td><code>manage_inventory</code></td><td>物品增/删/装备/转移/使用</td></tr>
+    <tr><td><code>take_rest</code></td><td>短休/长休（自动计算恢复量）</td></tr>
+  </table>
+</div>
+
+<div class="card card-green">
+  <h4>模块四：空间与世界 — 7 个核心工具</h4>
+  <table class="comparison-table">
+    <tr><th>工具名</th><th>功能</th></tr>
+    <tr><td><code>measure_distance</code></td><td>计算两点间距离（含海拔差）</td></tr>
+    <tr><td><code>calculate_aoe</code></td><td>计算范围效应覆盖的目标（球/锥/线/方/柱）</td></tr>
+    <tr><td><code>check_line_of_sight</code></td><td>判定视线是否通畅</td></tr>
+    <tr><td><code>check_cover</code></td><td>判定掩护等级（半/四分之三/全掩蔽）</td></tr>
+    <tr><td><code>calculate_movement</code></td><td>寻路计算（含地形难度）</td></tr>
+    <tr><td><code>manage_location</code></td><td>更新/查询地点描述和连接关系</td></tr>
+    <tr><td><code>move_party</code></td><td>队伍移动到新地点 + 触发遭遇判定</td></tr>
+  </table>
+</div>
+
+<div class="card card-accent">
+  <h4>模块五：规则查询（RAG）— 3 个核心工具</h4>
+  <table class="comparison-table">
+    <tr><th>工具名</th><th>功能</th></tr>
+    <tr><td><code>query_rules</code></td><td>语义搜索规则书（传入问题 → 返回规则原文片段）</td></tr>
+    <tr><td><code>lookup_spell</code></td><td>查询法术详述（等级/施法时间/范围/效应/持续时间）</td></tr>
+    <tr><td><code>lookup_monster</code></td><td>查询怪物数据卡（CR/AC/HP/属性/动作/传奇动作）</td></tr>
+  </table>
+</div>
+
+<div class="card card-amber">
+  <h4>模块六：记忆与会话 — 5 个核心工具</h4>
+  <table class="comparison-table">
+    <tr><th>工具名</th><th>功能</th></tr>
+    <tr><td><code>create_observation</code></td><td>回合结束后生成观察（重要事件/关系变化/线索揭示）</td></tr>
+    <tr><td><code>create_memory</code></td><td>创建持久化记忆（内容 + 关键词 + 重要性权重）</td></tr>
+    <tr><td><code>retrieve_memories</code></td><td>检索相关记忆（语义 + 关键词 + 时间衰减）</td></tr>
+    <tr><td><code>get_session_context</code></td><td>获取当前会话全局快照</td></tr>
+    <tr><td><code>save_checkpoint</code></td><td>存档（可回退）</td></tr>
+  </table>
+</div>
+
+<h3>3.2 Tool Calling 的关键设计原则</h3>
+<div class="card card-accent">
+  <ol>
+    <li><strong>返回结构化数据，不是自然语言</strong>: 工具返回 JSON/dict → LLM 负责把结构化结果"翻译"成叙事。这是职责分离的核心</li>
+    <li><strong>LLM 只能通过工具改变游戏状态</strong>: 没有直接写入工具 = LLM 不能修改 HP/物品/位置。这是安全护栏</li>
+    <li><strong>工具粒度"一个工具一个动作"</strong>: <code>resolve_attack</code> 做攻击判定，<code>apply_damage</code> 做伤害应用。不耦合</li>
+    <li><strong>错误处理要明确</strong>: 玩家没有剑就不能"用剑攻击"——工具应返回明确错误而非静默失败</li>
+    <li><strong>幂等性</strong>: 同一个工具调用多次不应该产生副作用叠加</li>
+  </ol>
+</div>
+
+<h3>3.3 两种 Tool Calling 实现方案对比</h3>
+<table class="comparison-table">
+  <tr><th>特性</th><th>OpenAI Function Calling (原生)</th><th>LangChain Tools</th></tr>
+  <tr><td>集成难度</td><td>低 — 直接定义 JSON Schema</td><td>中等 — 需 LangChain 框架</td></tr>
+  <tr><td>多模型支持</td><td>仅 OpenAI 模型</td><td>跨模型（通过 adapter）</td></tr>
+  <tr><td>可靠性</td><td class="good">最高 — GPT-4o 原生优化</td><td class="warn">依赖底层模型能力</td></tr>
+  <tr><td>结构化输出</td><td>原生 JSON mode + strict mode</td><td>Pydantic + with_structured_output</td></tr>
+  <tr><td>流式响应</td><td>原生支持</td><td>需 LangGraph streaming</td></tr>
+  <tr><td>适用场景</td><td>主 DM 编排（GPT-4o 作为中枢）</td><td>跨模型 / 多提供商场景</td></tr>
+</table>
+
+<div class="card card-teal">
+  <h4>推荐方案</h4>
+  <p>如果以 GPT-4o 为主模型：<strong>原生 Function Calling</strong>（更可靠、更简单）。如果需要多模型支持：<strong>LangChain Tools</strong>（抽象层带来的可移植性）。AIDM 场景推荐前者——先把一个模型做深做稳。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2>四、多智能体架构：从单一 DM 到"DM 内阁"</h2>
+<!-- ============================================================ -->
+<p class="section-intro">这是当前社区最核心的架构共识。全网 8 个主要开源项目中有 7 个采用了多智能体架构。</p>
+
+<h3>4.1 三种架构范式对比</h3>
+
+<div class="grid-3">
+  <div class="card card-purple">
+    <h4>范式 A: 单模型 + Prompt<span class="tag tag-red">已淘汰</span></h4>
+    <p>一个 LLM 包办一切。通过超长系统 prompt 约束行为。</p>
+    <p><span class="bad">Session 3 必然崩塌</span></p>
+    <p>代表: ChatGPT/Claude 直接当 DM</p>
+  </div>
+  <div class="card card-teal">
+    <h4>范式 B: 单 Agent + Tool Calling</h4>
+    <p>一个 LLM 作为决策中枢，通过 Function Calling 调用确定性工具。</p>
+    <p><span class="good">性价比最高</span></p>
+    <p>代表: FRPG Creator, dnd-llm-game</p>
+  </div>
+  <div class="card card-blue">
+    <h4>范式 C: 多智能体协作<span class="tag tag-green">共识方向</span></h4>
+    <p>多个专用 Agent + 统一 GameState + Director 协调。</p>
+    <p><span class="good">能力最强</span></p>
+    <p>代表: ITMO AI-DM (8 Agent), Critical Miss, ChatRPG 论文方案</p>
+  </div>
+</div>
+
+<h3>4.2 最完整的参考：ITMO 8-Agent 架构</h3>
+
+<div class="card card-accent">
+  <p><strong>统一共享 GameState</strong>（所有智能体的单一事实来源）包含：</p>
+  <div class="grid-3">
+    <div><strong>叙事状态</strong><br>故事弧线/场景/节拍</div>
+    <div><strong>世界状态</strong><br>地点/时间/天气/任务</div>
+    <div><strong>玩家数据</strong><br>角色/属性/库存</div>
+    <div><strong>战斗状态</strong><br>先攻/回合/轮次</div>
+    <div><strong>规则上下文</strong><br>当前规则/违规记录</div>
+    <div><strong>涌现指标</strong><br>节奏/连贯性/自主性</div>
+  </div>
+
+  <h4>8 个专项智能体：</h4>
+  <table class="comparison-table">
+    <tr><th>#</th><th>智能体</th><th>核心职责</th><th>模型建议</th></tr>
+    <tr><td>1</td><td><strong>Story Architect</strong></td><td>规划叙事结构和故事节拍</td><td>Claude Opus / GPT-5, T=0.7</td></tr>
+    <tr><td>2</td><td><strong>Dungeon Master</strong></td><td>叙述场景、引导游戏、生成自然语言输出</td><td>Claude Sonnet 4 / GPT-4o, T=0.8</td></tr>
+    <tr><td>3</td><td><strong>Player Proxy</strong></td><td>模拟自主玩家决策（NPC行为）</td><td>GPT-4o-mini, T=0.5</td></tr>
+    <tr><td>4</td><td><strong>World Engine</strong></td><td>管理环境与地点状态</td><td>确定性函数（非LLM）</td></tr>
+    <tr><td>5</td><td><strong>Action Resolver</strong></td><td>处理游戏行动和机制判定</td><td>确定性引擎 + GPT-4o-mini</td></tr>
+    <tr><td>6</td><td><strong>Director</strong></td><td>协调各智能体、平衡叙事节奏</td><td>GPT-4o, T=0.3</td></tr>
+    <tr><td>7</td><td><strong>Lore Builder</strong></td><td>生成世界观设定和历史</td><td>Claude Sonnet / GPT-4o, T=0.7</td></tr>
+    <tr><td>8</td><td><strong>Rule Judge</strong></td><td>验证行动是否合法（D&D 规则）</td><td>GPT-4o + RAG, T=0</td></tr>
+  </table>
+
+  <h4>协作模式：</h4>
+  <ul>
+    <li><strong>Director</strong>（导演）是协调中枢：决定何时调用哪个智能体、检查叙事节奏、平衡玩家自主性与剧情推进</li>
+    <li>所有智能体通过读写共享 <code>GameState</code> 协同，不直接互相调用</li>
+    <li><strong>Rule Judge</strong> 拥有否决权：任何行动必须先通过规则校验</li>
+    <li><strong>Action Resolver</strong> 是确定性执行层：骰子、AC 比较、伤害计算全部在此发生</li>
+  </ul>
+</div>
+
+<h3>4.3 AIDM 推荐架构：5-Agent 精简方案</h3>
+<div class="card card-teal">
+  <p>ITMO 的 8 Agent 架构在学术上最完整但工程复杂度高。基于 AIDM 项目现状（已有 LangGraph + Qdrant + 规则引擎），推荐精简为 <strong>5 个 Agent</strong>：</p>
+
+  <div class="arch-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────┐
+│                    LangGraph 编排层                           │
+│                                                              │
+│  ┌──────────────┐    ┌─────────────────┐                    │
+│  │   Director   │◄───│   GameState     │                    │
+│  │  (协调中枢)   │    │  (单一事实来源)  │                    │
+│  └──────┬───────┘    └─────────────────┘                    │
+│         │                                                    │
+│    ┌────┴──────────────────────────────┐                    │
+│    │       条件路由 (route_action)       │                    │
+│    └────┬──────┬──────┬──────┬─────────┘                    │
+│         │      │      │      │                               │
+│    ┌────▼──┐┌──▼───┐┌─▼───┐┌▼──────────┐                   │
+│    │Narrator││Combat││World ││Rule Judge │                   │
+│    │(叙事)  ││(战斗)││(世界)││(规则裁决) │                   │
+│    └───┬────┘└──┬───┘└──┬──┘└─────┬─────┘                   │
+│        │        │       │         │                           │
+│    ┌───┴────────┴───────┴─────────┴───────┐                  │
+│    │           工具层 (40+ Tools)          │                  │
+│    │  骰子│战斗│法术│空间│物品│规则│记忆  │                  │
+│    └─────────────────┬────────────────────┘                  │
+│                      │                                        │
+│    ┌─────────────────┴────────────────────┐                  │
+│    │            记忆与知识层                │                  │
+│    │  Qdrant(RAG) │ SQLite(状态) │ 向量记忆 │                  │
+│    └──────────────────────────────────────┘                  │
+└─────────────────────────────────────────────────────────────┘
+</pre>
+  </div>
+
+  <table class="comparison-table">
+    <tr><th>Agent</th><th>职责</th><th>何时激活</th><th>AIDM 对应</th></tr>
+    <tr>
+      <td><strong>Director</strong></td>
+      <td>接收玩家输入 → 分类意图 → 路由到专业 Agent → 组装最终叙事输出</td>
+      <td>每个回合</td>
+      <td>新增 — 替代原有单一 graph 入口</td>
+    </tr>
+    <tr>
+      <td><strong>Narrator</strong></td>
+      <td>场景描述、NPC 对话、剧情推进、氛围渲染</td>
+      <td>非战斗场景</td>
+      <td>brain/graph.py 重构</td>
+    </tr>
+    <tr>
+      <td><strong>Combat Engine</strong></td>
+      <td>先攻管理、逐回合推进、攻击判定、伤害计算、条件追踪</td>
+      <td>战斗场景</td>
+      <td>engine/combat/* 扩展为 Agent</td>
+    </tr>
+    <tr>
+      <td><strong>World Manager</strong></td>
+      <td>地点/时间/天气/NPC状态/任务进度/物品栏</td>
+      <td>每次状态变更</td>
+      <td>stats/store.py 扩展</td>
+    </tr>
+    <tr>
+      <td><strong>Rule Judge</strong></td>
+      <td>验证行动合法性 + 规则书 RAG 查询 + 法术/怪物数据检索</td>
+      <td>每次行动前</td>
+      <td>knowledge/* (Qdrant) 扩展</td>
+    </tr>
+  </table>
+</div>
+
+<h3>4.4 论文验证：多智能体 ReAct > 纯 Prompt</h3>
+<div class="card card-coral">
+  <h4>关键论文: "Multi-agent ReAct Game Master outperforms prompt-only GM in solo RPGs"</h4>
+  <p>该论文通过 controlled experiment (N=12) 比较了两种方案：</p>
+  <ul>
+    <li><strong>Prompt-Only GM</strong>: 将所有历史对话 + 角色卡 + 规则塞入 prompt</li>
+    <li><strong>Multi-agent ReAct GM</strong>: Narrator Agent (叙事+行动) + Archivist Agent (结构化 JSON 状态存储)</li>
+  </ul>
+  <p><strong>结论</strong>: 多智能体方案在 <strong>沉浸感 (1.64→2.42, p=0.034)</strong> 上有统计显著提升，同时 token 增长曲线从指数级降为线性（Archivist 将状态外置而非塞入 prompt）。</p>
+  <p><strong>关键设计</strong>: Archivist Agent 使用 ReAct (Thought→Action→Observation) 循环来维护持久化 JSON 游戏状态，每次只用 Thought 阶段的结果更新状态，而非把整个对话历史喂给模型。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2>五、流程接入：AI DM 如何嵌入 D&D 游戏循环</h2>
+<!-- ============================================================ -->
+<p class="section-intro">AI DM 不是"替代"人类 DM，而是"承接"DM 在游戏循环中的每一项职责。需要精确设计 AI 在每个流程节点的行为。</p>
+
+<h3>5.1 D&D 游戏循环的 AI 化改造</h3>
+
+<div class="step-flow" style="flex-wrap: wrap;">
+  <div class="step-item">
+    <div class="step-num">1</div>
+    <div class="step-label">DM描述环境</div>
+    <div class="step-detail">Narrator Agent<br>+ World State</div>
+  </div>
+  <div class="step-item">
+    <div class="step-num">2</div>
+    <div class="step-label">玩家描述行动</div>
+    <div class="step-detail">WebSocket<br>接收输入</div>
+  </div>
+  <div class="step-item">
+    <div class="step-num">3</div>
+    <div class="step-label">Director分类</div>
+    <div class="step-detail">意图识别<br>→ 路由决策</div>
+  </div>
+  <div class="step-item">
+    <div class="step-num">4</div>
+    <div class="step-label">RuleJudge验证</div>
+    <div class="step-detail">合法性检查<br>+ 规则RAG</div>
+  </div>
+  <div class="step-item">
+    <div class="step-num">5</div>
+    <div class="step-label">执行&判定</div>
+    <div class="step-detail">骰子/AC/DC<br>确定性引擎</div>
+  </div>
+  <div class="step-item">
+    <div class="step-num">6</div>
+    <div class="step-label">更新状态</div>
+    <div class="step-detail">HP/物品/位置<br>World Manager</div>
+  </div>
+  <div class="step-item">
+    <div class="step-num">7</div>
+    <div class="step-label">叙事输出</div>
+    <div class="step-detail">Narrator<br>组装回复</div>
+  </div>
+</div>
+
+<h3>5.2 完整回合流程详解</h3>
+
+<div class="card card-accent">
+<pre class="code-block">
+玩家输入: "我悄悄绕到酒桶后面，试图用匕首柄敲晕守卫"
+
+┌─ STEP 1: Director 接收 & 意图分类 ──────────────────┐
+│ LLM 判断: 这是一个"潜行攻击"动作                    │
+│ → 需要: Stealth(潜行) 检定 vs 守卫 Passive Perception │
+│ → 需要: Attack(攻击) 检定 vs 守卫 AC                 │
+│ → 意图为非致命伤害                                   │
+│ → 路由到: RuleJudge → Combat Engine                  │
+└──────────────────────────────────────────────────────┘
+
+┌─ STEP 2: RuleJudge 验证合法性 ──────────────────────┐
+│ 1. 查询角色是否有匕首 (inventory 工具)               │
+│ 2. 查询"非致命攻击"规则 (RAG query_rules)            │
+│ 3. 查询守卫被动感知值 (get_npc_stats)                │
+│ 4. 结论: 合法 ✅ → 进入执行                          │
+└──────────────────────────────────────────────────────┘
+
+┌─ STEP 3: 执行判定 (确定性引擎) ─────────────────────┐
+│ 3.1 潜行检定:                                        │
+│     roll_check(char_id, "stealth", DC=12)            │
+│     → d20(14) + 敏捷(+3) + 熟练(+2) = 19 ✅         │
+│                                                      │
+│ 3.2 攻击检定 (带优势 — 未被发现):                     │
+│     roll_attack(char_id, guard_id, "dagger", adv)    │
+│     → d20(8, 17) 取高 17 + 熟练(+2) + 敏捷(+3)      │
+│     → 22 vs 守卫 AC 12 → 命中 ✅                     │
+│                                                      │
+│ 3.3 伤害计算 (非致命):                                │
+│     1d4 + 敏捷(+3) = 3 + 3 = 6 钝击伤害              │
+│     守卫 HP: 11 → 5                                  │
+│     守卫状态: Unconscious (HP>0, 非致命)             │
+└──────────────────────────────────────────────────────┘
+
+┌─ STEP 4: 更新状态 ──────────────────────────────────┐
+│ World Manager:                                       │
+│   update_npc(guard_id, hp=5, status="unconscious")   │
+│   create_observation("守卫被敲晕在酒桶后")            │
+│   create_memory(内容, keywords=["守卫","酒桶","潜行"])│
+└──────────────────────────────────────────────────────┘
+
+┌─ STEP 5: Narrator 生成最终输出 ─────────────────────┐
+│ LLM: 基于结构化判定结果生成叙事:                      │
+│ "你轻手轻脚地绕到酒桶后面，匕首柄精准地敲在守卫的     │
+│  后脑勺上。守卫闷哼一声，软软地瘫倒在地，鼾声渐起。"  │
+└──────────────────────────────────────────────────────┘
+</pre>
+</div>
+
+<h3>5.3 战斗子循环</h3>
+<div class="card card-coral">
+  <p>战斗是 D&D 中规则最密集、最容易出错的环节。AI DM 必须严格遵循以下循环：</p>
+
+  <div class="arch-diagram">
+<pre>
+┌──────────────────────────────────────────────────┐
+│              战斗回合循环                          │
+│                                                   │
+│  initiate_combat → [突袭判定]                     │
+│       ↓                                          │
+│  roll_initiative → [先攻排序]                     │
+│       ↓                                          │
+│  ┌──────────────── loop ──────────────┐          │
+│  │  advance_turn → [切换到下一个回合]  │          │
+│  │       ↓                            │          │
+│  │  判断当前回合角色:                   │          │
+│  │  ├─ 玩家 → 等待玩家输入             │          │
+│  │  │   → Director 分类行动            │          │
+│  │  │   → execute_action              │          │
+│  │  └─ 怪物 → Enemy AI (LLM决策)      │          │
+│  │      → execute_action              │          │
+│  │       ↓                            │          │
+│  │  manage_condition → [递减状态]      │          │
+│  │       ↓                            │          │
+│  │  get_combat_state → [检查是否结束]  │          │
+│  │       ↓                            │          │
+│  │  继续? ──YES──→ back to loop       │          │
+│  └────────────────────────────────────┘          │
+│       ↓ NO                                       │
+│  resolve_combat → [战利品/XP/叙事收尾]            │
+└──────────────────────────────────────────────────┘
+</pre>
+  </div>
+
+  <h4>Enemy AI 设计：</h4>
+  <ul>
+    <li>LLM 决策但受规则约束：不能做规则不允许的动作</li>
+    <li>基于怪物"战术"描述（兽人好斗冲锋、地精狡猾逃跑、龙优先用喷吐武器）</li>
+    <li>temperature 0.3-0.5：有变化但不离谱</li>
+    <li>HP < 50% 触发逃跑/投降逻辑</li>
+  </ul>
+</div>
+
+<h3>5.4 跨 Session 连续性</h3>
+<div class="card card-teal">
+  <p><strong>Session 结束时的"存档"流程</strong>（这是防止 Session 3 崩塌的关键）：</p>
+  <ol>
+    <li><strong>生成完整摘要</strong>: Narrator + World Manager 联合生成"本次 Session 关键事件"摘要（10-20 条要点）</li>
+    <li><strong>持久化所有状态</strong>: 角色卡、NPC 关系、物品栏、任务进度 → SQLite</li>
+    <li><strong>生成记忆嵌入</strong>: 关键事实 → Qdrant 向量库（语义可检索）</li>
+    <li><strong>生成"前情提要"</strong>: 下次 Session 开始时注入的浓缩摘要（500-1000 tokens）</li>
+    <li><strong>Checkpoint</strong>: 完整状态快照，支持回退</li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2>六、模型选择策略</h2>
+<!-- ============================================================ -->
+
+<h3>6.1 不同 Agent 对模型能力的不同需求</h3>
+<table class="comparison-table">
+  <tr><th>Agent 角色</th><th>最需要的模型能力</th><th>推荐模型</th><th>Temperature</th><th>成本占比</th></tr>
+  <tr>
+    <td>Director (编排)</td>
+    <td>意图分类 / 路由判断 / Tool Calling</td>
+    <td>GPT-4o</td>
+    <td>0.2-0.3</td>
+    <td>~15%</td>
+  </tr>
+  <tr>
+    <td>Narrator (叙事)</td>
+    <td>创意写作 / 场景描述 / 情感渲染</td>
+    <td>Claude Sonnet 4 / GPT-4o</td>
+    <td>0.7-0.8</td>
+    <td>~50%</td>
+  </tr>
+  <tr>
+    <td>Combat Engine (战斗)</td>
+    <td>结构化ToolCall / 数学准确</td>
+    <td>GPT-4o-mini (或确定性引擎)</td>
+    <td>0</td>
+    <td>~10%</td>
+  </tr>
+  <tr>
+    <td>World Manager (世界)</td>
+    <td>结构化数据管理</td>
+    <td>确定性函数（非LLM）</td>
+    <td>N/A</td>
+    <td>~0%</td>
+  </tr>
+  <tr>
+    <td>Rule Judge (规则)</td>
+    <td>RAG检索 / 精确匹配 / 严格约束</td>
+    <td>GPT-4o-mini + Qdrant</td>
+    <td>0-0.1</td>
+    <td>~10%</td>
+  </tr>
+  <tr>
+    <td>摘要/观察提取</td>
+    <td>信息压缩 / 关键点提取</td>
+    <td>GPT-4o-mini / Claude Haiku</td>
+    <td>0.2</td>
+    <td>~15%</td>
+  </tr>
+</table>
+
+<h3>6.2 AIDM 项目的模型选择建议</h3>
+<div class="card card-green">
+  <h4>策略：GPT-4o 作为核心 + Claude 辅助叙事 + 小模型做琐事</h4>
+  <ol>
+    <li><strong>主模型</strong>: GPT-4o — Function Calling 最强、生态最成熟。作为 Director + 主要叙事引擎</li>
+    <li><strong>叙事增强</strong>: Claude Sonnet 4 — 中文叙事质量高于 GPT-4o（可选的辅助叙事通路）</li>
+    <li><strong>轻量任务</strong>: GPT-4o-mini — 摘要、观察提取、简单分类。成本为 GPT-4o 的 ~1/20</li>
+    <li><strong>中文自部署备选</strong>: Qwen3 — 如果对数据隐私有要求、希望完全本地化</li>
+    <li><strong>不推荐用单一模型</strong>: 任何模型都不擅长所有事。分层是必然选择</li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2>七、关键技术难点与对策</h2>
+<!-- ============================================================ -->
+
+<table class="comparison-table">
+  <tr><th>难点</th><th>根源</th><th>当前最佳对策</th><th>成熟度</th></tr>
+  <tr>
+    <td><strong>Session 3 崩塌</strong></td>
+    <td>上下文窗口无法承载完整对话历史</td>
+    <td>三层记忆架构 + 每回合观察提取 + 摘要压缩 + 语义检索注入。ChatRPG 论文方案（Archivist 外置状态）已验证可线性化 token 增长</td>
+    <td class="warn">中高</td>
+  </tr>
+  <tr>
+    <td><strong>规则幻觉</strong></td>
+    <td>LLM 训练数据中 D&D 规则不完整/过时</td>
+    <td>RAG 规则书检索 — AI 必须"查规则"而非"背规则"。Divination 项目（USP）和 AIDM 的 Qdrant 方案都指向这个方向</td>
+    <td class="good">高</td>
+  </tr>
+  <tr>
+    <td><strong>空间感缺失</strong></td>
+    <td>LLM 无空间推理能力</td>
+    <td>确定性空间工具（距离/AoE/视线/掩护）— ChatRPG 的 5 个空间工具是最完整参考</td>
+    <td class="good">高</td>
+  </tr>
+  <tr>
+    <td><strong>叙事反刍</strong></td>
+    <td>LLM 倾向于重复已有信息</td>
+    <td>80词约束 + novelty filtering + Pacing Agent（Narra·Gym 反停滞控制）</td>
+    <td class="warn">中</td>
+  </tr>
+  <tr>
+    <td><strong>玩家代理权侵犯</strong></td>
+    <td>LLM 有"替人做决定"的倾向</td>
+    <td>铁律约束（见下文）+ Rule Judge 验证 + 输出后置审核</td>
+    <td class="warn">中</td>
+  </tr>
+  <tr>
+    <td><strong>多玩家并发</strong></td>
+    <td>回合内多人同时行动</td>
+    <td>asyncio.Lock 序列化（已实现）+ Director 优先级排序 + 广播增量状态</td>
+    <td class="warn">中</td>
+  </tr>
+  <tr>
+    <td><strong>遭遇平衡</strong></td>
+    <td>CR 系统本身不精确 + LLM 不理解战术深度</td>
+    <td>XP Budget 工具 + CR 数据 RAG + "逃跑路线"硬编码 + 动态调整（增援延迟/怪物撤退）</td>
+    <td class="warn">中</td>
+  </tr>
+  <tr>
+    <td><strong>成本控制</strong></td>
+    <td>多 Agent + 长对话 → token 爆炸</td>
+    <td>分层模型（大模型做叙事、小模型做琐事）、摘要压缩、工具返回结构化短数据而非长文本</td>
+    <td class="good">高</td>
+  </tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>八、AI DM 的铁律（不可违反的约束）</h2>
+<!-- ============================================================ -->
+<div class="card card-red">
+  <h3>"五条铁律 — 来自全网 50+ 开源项目 + 论文的交叉验证"</h3>
+  <ol>
+    <li><strong>绝不替玩家行动</strong> — AI 不能描述玩家角色的行动、说话、思考或感受</li>
+    <li><strong>绝不透露未发现的信息</strong> — 场景不预宣布伏击，NPC 不透露未发现的秘密</li>
+    <li><strong>绝不假设行动成功</strong> — 简单任务自动成功、不可能任务自动失败，其余必须掷骰</li>
+    <li><strong>绝不强行推进预设剧情</strong> — 优先响应玩家选择，DM 的"计划"只是备选</li>
+    <li><strong>绝不跳过时间</strong> — 除非玩家明确要求。AI 的"加速叙事"倾向会让玩家失去控制感</li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2>九、AIDM 项目实施路线图（模型技术视角）</h2>
+<!-- ============================================================ -->
+
+<div class="card card-accent">
+  <h3>Phase 1: 工具层建设 (当前 ~ 2 周)</h3>
+  <p><strong>目标</strong>: 建立确定性执行层，让 AI 有"手"可用</p>
+  <ul>
+    <li>完整实现 6 大模块 40+ 工具（模板已有 ChatRPG/DnD-MCP 可参考）</li>
+    <li>每个工具返回结构化 JSON，严格错误处理</li>
+    <li>集成现有 engine/* 确定性引擎 + knowledge/* Qdrant RAG</li>
+    <li>测试：每个工具独立单元测试 + 集成测试</li>
+  </ul>
+</div>
+
+<div class="card card-teal">
+  <h3>Phase 2: 多智能体架构改造 (~ 3 周)</h3>
+  <p><strong>目标</strong>: 将现有单 graph 改造为 5-Agent 协作架构</p>
+  <ul>
+    <li>Director Agent 作为新入口（替代现有 graph.run 直调）</li>
+    <li>Narrator / Combat / World Manager / Rule Judge 四个专项 Agent</li>
+    <li>统一 GameState 模型（Pydantic v2）</li>
+    <li>LangGraph StateGraph 条件路由</li>
+    <li>测试：单元测试每个 Agent + 端到端集成测试</li>
+  </ul>
+</div>
+
+<div class="card card-blue">
+  <h3>Phase 3: 记忆系统升级 (~ 2 周)</h3>
+  <p><strong>目标</strong>: 实现跨 Session 可玩性</p>
+  <ul>
+    <li>三层记忆架构落地：工作记忆（对话缓冲）+ 中期记忆（滚动摘要）+ 长期记忆（Qdrant 向量检索）</li>
+    <li>Observation/Memory 工具实现（回合后自动提取关键信息）</li>
+    <li>记忆检索流水线：语义搜索 → 重要性加权 → 时间衰减 → Rerank → Top-K 注入</li>
+    <li>Session 存档/读档功能</li>
+  </ul>
+</div>
+
+<div class="card card-green">
+  <h3>Phase 4: 体验优化 & 模型调优 (~ 2 周)</h3>
+  <p><strong>目标</strong>: 打磨叙事质量 + 减少幻觉</p>
+  <ul>
+    <li>中文叙事 prompt 优化（融合 Oracle-RPG + Bilibili RPG-Bot + 机核语法）</li>
+    <li>RAG 规则索引优化（5echm 核心文件精选索引）</li>
+    <li>反刍/幻觉监控指标</li>
+    <li>A/B 测试不同模型组合（GPT-4o vs Claude 叙事质量对比）</li>
+    <li>多玩家并发 + 断线重连（同步多人同玩架构调研方案）</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>十、全网参考资源索引</h2>
+<!-- ============================================================ -->
+
+<table class="comparison-table">
+  <tr><th>资源</th><th>类型</th><th>核心价值</th><th>链接</th></tr>
+  <tr>
+    <td>Critical Miss</td>
+    <td>技术博客</td>
+    <td>最详细的记忆系统设计（MongoDB+ChromaDB+观察提取流水线）</td>
+    <td>convnet.ai/critical-miss</td>
+  </tr>
+  <tr>
+    <td>ITMO AI Dungeon Master</td>
+    <td>开源项目</td>
+    <td>最完整的 8-Agent 多智能体架构 + LangGraph 实现</td>
+    <td>github.com/ITMO-Agentic-AI/ai-dungeon-master</td>
+  </tr>
+  <tr>
+    <td>ChatRPG 论文</td>
+    <td>学术论文</td>
+    <td>多智能体 ReAct vs 纯 Prompt 的对照实验（统计显著）</td>
+    <td>arxiv: 2502.19519</td>
+  </tr>
+  <tr>
+    <td>tegridydev/dnd-llm-game</td>
+    <td>开源项目</td>
+    <td>"一个核心+两层管理+多方协作"设计理念</td>
+    <td>github.com/tegridydev/dnd-llm-game</td>
+  </tr>
+  <tr>
+    <td>Multi-agent D&D with LangChain</td>
+    <td>技术教程</td>
+    <td>最详细的 LangGraph 编排实现教程（含完整代码示例）</td>
+    <td>emasterlabs.com</td>
+  </tr>
+  <tr>
+    <td>FRPG Creator (GM-ENGINE)</td>
+    <td>开源项目</td>
+    <td>LangGraph+Tool Calling+RAG+动态摘要实战（Streamlit前端）</td>
+    <td>github.com/mfurkan03/GM-ENGINE-Frpg-Creator</td>
+  </tr>
+  <tr>
+    <td>llm-dungeon-master</td>
+    <td>开源项目</td>
+    <td>多模型 agent 分拆（setting/rules/memory 三类 agent）</td>
+    <td>github.com/anthuswilliams/llm-dungeon-master</td>
+  </tr>
+  <tr>
+    <td>Narra·Gym</td>
+    <td>评估框架</td>
+    <td>LLM 交互叙事能力五维评估（含主流模型排行榜）</td>
+    <td>narra-gym.github.io</td>
+  </tr>
+  <tr>
+    <td>ChatRPG MCP Server</td>
+    <td>MCP 工具</td>
+    <td>最完整的 D&D 5e 工具集（30+ 工具，可参考实现）</td>
+    <td>Glama.ai (MCP marketplace)</td>
+  </tr>
+  <tr>
+    <td>DnD-MCP Server</td>
+    <td>MCP 工具</td>
+    <td>90+ 工具 + checkpoint + rewind</td>
+    <td>LobeHub</td>
+  </tr>
+  <tr>
+    <td>nekro_trpg_dice_plugin</td>
+    <td>开源项目</td>
+    <td>Qdrant RAG + 跨会话记忆 + QQ Bot 集成（中文 CoC/D&D）</td>
+    <td>github.com/1A7432/nekro_trpg_dice_plugin</td>
+  </tr>
+  <tr>
+    <td>AI-DM (xxkiba)</td>
+    <td>开源项目</td>
+    <td>多 Agent + RAG + GenAI 插图 + 战斗状态持久化</td>
+    <td>github.com/xxkiba/AIDND</td>
+  </tr>
+  <tr>
+    <td>ScriptoriumGM</td>
+    <td>商业产品</td>
+    <td>RAG 记忆力在 GM 场景的实际应用案例分析</td>
+    <td>scriptoriumgm.com</td>
+  </tr>
+</table>
+
+<div class="footnote">
+  <p><strong>数据来源</strong>: Narra·Gym v0.1 排行榜 (2026-05) | Critical Miss 技术博客 (convnet.ai) | ITMO AI Dungeon Master GitHub | tegridydev/dnd-llm-game CSDN 分析 | emasterlabs LangChain 教程 | ChatRPG 论文 (arXiv 2502.19519) | FRPG Creator GitHub | llm-dungeon-master GitHub | ScriptoriumGM RAG 分析 | AWS re:Invent DEV330 多智能体演示 | 本项目的 AI 跑团全网调研报告 / 流程调研报告 / 规则书使用指南 / 多人同玩架构报告</p>
+  <p><strong>与已有项目文档的关系</strong>: 本报告是"模型技术视角"的深度扩展——之前调研报告（全网调研、流程调研、规则书指南）覆盖了产品/体验/规则层面，多人同玩报告覆盖了网络架构层面；本报告补全了<strong>模型技术/Agent架构/Tool Calling/记忆系统</strong>这一缺失的关键维度。四份报告构成完整的 AIDM 知识体系。</p>
+  <p>本报告生成于 2026-07-15，供 AIDM 项目技术决策参考。</p>
+</div>
+
+</div>
+</div>
+</body>
+</html>

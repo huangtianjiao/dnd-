@@ -1,0 +1,4581 @@
+{
+  "batch": "batch2 COMPLETE",
+  "model": "senseaudio-image-2.0-260319",
+  "updated_at": "2026-07-15 10:17:37",
+  "count": 571,
+  "summary": {
+    "ok": 571,
+    "pending": 0,
+    "failed": 0
+  },
+  "items": [
+    {
+      "category": "magic-items",
+      "name": "Scroll of Titan Summoning",
+      "cn_name": "召唤泰坦卷轴",
+      "file": "data/images/magic-items/Scroll_召唤泰坦卷轴.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Spell Scroll",
+      "cn_name": "法术卷轴",
+      "file": "data/images/magic-items/Spell_法术卷轴.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Scroll of Protection",
+      "cn_name": "守护卷轴",
+      "file": "data/images/magic-items/Scroll_守护卷轴.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Apparatus of Kwalish",
+      "cn_name": "夸力许装置",
+      "file": "data/images/magic-items/Apparatus_夸力许装置.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Crystal Ball of Mind Reading",
+      "cn_name": "读心水晶球",
+      "file": "data/images/magic-items/Crystal_读心水晶球.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Crystal Ball of Telepathy",
+      "cn_name": "心灵感应水晶球",
+      "file": "data/images/magic-items/Crystal_心灵感应水晶球.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Crystal Ball of True Seeing",
+      "cn_name": "真知水晶球",
+      "file": "data/images/magic-items/Crystal_真知水晶球.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Cubic Gate",
+      "cn_name": "异界之门魔方",
+      "file": "data/images/magic-items/Cubic_异界之门魔方.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Deck of Many Things",
+      "cn_name": "万象无常牌",
+      "file": "data/images/magic-items/Deck_万象无常牌.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Iron Flask",
+      "cn_name": "收妖瓶",
+      "file": "data/images/magic-items/Iron_收妖瓶.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Sovereign Glue",
+      "cn_name": "至尊胶",
+      "file": "data/images/magic-items/Sovereign_至尊胶.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Sphere of Annihilation",
+      "cn_name": "湮灭法球",
+      "file": "data/images/magic-items/Sphere_湮灭法球.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Tome of The Stilled Tongue",
+      "cn_name": "静语卷册",
+      "file": "data/images/magic-items/Tome_静语卷册.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Universal Solvent",
+      "cn_name": "万溶剂",
+      "file": "data/images/magic-items/Universal_万溶剂.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Well of Many Worlds",
+      "cn_name": "诸界之井",
+      "file": "data/images/magic-items/Well_诸界之井.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Figurine of Wondrous Power",
+      "cn_name": "异能塑像",
+      "file": "data/images/magic-items/Figurine_异能塑像.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Horn of Valhalla",
+      "cn_name": "瓦尔哈拉号角",
+      "file": "data/images/magic-items/Horn_瓦尔哈拉号角.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Instrument of the Bards",
+      "cn_name": "吟游诗人乐器",
+      "file": "data/images/magic-items/Instrument_吟游诗人乐器.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ioun Stone",
+      "cn_name": "艾恩石",
+      "file": "data/images/magic-items/Ioun_艾恩石.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Quaal’s Feather Token",
+      "cn_name": "夸尔羽符",
+      "file": "data/images/magic-items/Quaal’s_夸尔羽符.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Bead of Nourishment",
+      "cn_name": "营养珠",
+      "file": "data/images/magic-items/Bead_营养珠.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Bead of Refreshment",
+      "cn_name": "净水珠",
+      "file": "data/images/magic-items/Bead_净水珠.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Candle of the Deep",
+      "cn_name": "渊海蜡烛",
+      "file": "data/images/magic-items/Candle_渊海蜡烛.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Charlatan's Die",
+      "cn_name": "骗子骰",
+      "file": "data/images/magic-items/Charlatan's_骗子骰.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Clockwork Amulet",
+      "cn_name": "发条护符",
+      "file": "data/images/magic-items/Clockwork_发条护符.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ear Horn of Hearing",
+      "cn_name": "聆听耳号",
+      "file": "data/images/magic-items/Ear_聆听耳号.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Enduring Spellbook",
+      "cn_name": "耐久法术书",
+      "file": "data/images/magic-items/Enduring_耐久法术书.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Heward's Handy Spice Pouch",
+      "cn_name": "霍华德香料包",
+      "file": "data/images/magic-items/Heward's_霍华德香料包.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Horn of Silent Alarm",
+      "cn_name": "静报号角",
+      "file": "data/images/magic-items/Horn_静报号角.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Instrument of Illusions",
+      "cn_name": "幻象乐器",
+      "file": "data/images/magic-items/Instrument_幻象乐器.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Instrument of Scribing",
+      "cn_name": "撰写乐器",
+      "file": "data/images/magic-items/Instrument_撰写乐器.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Lock of Trickery",
+      "cn_name": "骗术锁",
+      "file": "data/images/magic-items/Lock_骗术锁.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Mystery Key",
+      "cn_name": "谜之钥",
+      "file": "data/images/magic-items/Mystery_谜之钥.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Orb of Direction",
+      "cn_name": "方向法球",
+      "file": "data/images/magic-items/Orb_方向法球.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Orb of Time",
+      "cn_name": "时间法球",
+      "file": "data/images/magic-items/Orb_时间法球.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Perfume of Bewitching",
+      "cn_name": "迷醉香水",
+      "file": "data/images/magic-items/Perfume_迷醉香水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Pipe of Smoke Monsters",
+      "cn_name": "怪物烟斗",
+      "file": "data/images/magic-items/Pipe_怪物烟斗.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Pole of Angling",
+      "cn_name": "垂钓之杆",
+      "file": "data/images/magic-items/Pole_垂钓之杆.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Pole of Collapsing",
+      "cn_name": "压缩之杆",
+      "file": "data/images/magic-items/Pole_压缩之杆.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Pot of Awakening",
+      "cn_name": "启蒙花盆",
+      "file": "data/images/magic-items/Pot_启蒙花盆.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Rival Coin",
+      "cn_name": "劲敌硬币",
+      "file": "data/images/magic-items/Rival_劲敌硬币.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Rope of Mending",
+      "cn_name": "修补绳",
+      "file": "data/images/magic-items/Rope_修补绳.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ruby of the War Mage",
+      "cn_name": "战法红石",
+      "file": "data/images/magic-items/Ruby_战法红石.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Talking Doll",
+      "cn_name": "说话玩偶",
+      "file": "data/images/magic-items/Talking_说话玩偶.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Tankard of Sobriety",
+      "cn_name": "清醒杯",
+      "file": "data/images/magic-items/Tankard_清醒杯.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Veteran's Cane",
+      "cn_name": "老兵手杖",
+      "file": "data/images/magic-items/Veteran's_老兵手杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Bag of Devouring",
+      "cn_name": "吞噬袋",
+      "file": "data/images/magic-items/Bag_吞噬袋.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Candle of Invocation",
+      "cn_name": "祈神蜡烛",
+      "file": "data/images/magic-items/Candle_祈神蜡烛.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Carpet of Flying",
+      "cn_name": "飞毯",
+      "file": "data/images/magic-items/Carpet_飞毯.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Cauldron of Rebirth",
+      "cn_name": "重生坩埚",
+      "file": "data/images/magic-items/Cauldron_重生坩埚.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Crystal Ball",
+      "cn_name": "水晶球",
+      "file": "data/images/magic-items/Crystal_水晶球.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Efreeti Bottle",
+      "cn_name": "火巨灵囚瓶",
+      "file": "data/images/magic-items/Efreeti_火巨灵囚瓶.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Horseshoes of Zephyr",
+      "cn_name": "西风马蹄铁",
+      "file": "data/images/magic-items/Horseshoes_西风马蹄铁.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Manual of Bodily Health",
+      "cn_name": "强身手册",
+      "file": "data/images/magic-items/Manual_强身手册.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Manual of Gainful Exercise",
+      "cn_name": "健体手册",
+      "file": "data/images/magic-items/Manual_健体手册.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Manual of Golems",
+      "cn_name": "魔像手册",
+      "file": "data/images/magic-items/Manual_魔像手册.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Manual of Quickness of Action",
+      "cn_name": "灵巧手册",
+      "file": "data/images/magic-items/Manual_灵巧手册.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Mirror of Life Trapping",
+      "cn_name": "摄心镜",
+      "file": "data/images/magic-items/Mirror_摄心镜.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Nolzur's Marvelous Pigments",
+      "cn_name": "诺泽尔的惊奇颜料",
+      "file": "data/images/magic-items/Nolzur's_诺泽尔的惊奇颜料.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Spirit Board",
+      "cn_name": "通灵板",
+      "file": "data/images/magic-items/Spirit_通灵板.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Tome of Clear Thought",
+      "cn_name": "静思卷册",
+      "file": "data/images/magic-items/Tome_静思卷册.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Tome of Leadership And Influence",
+      "cn_name": "统御卷册",
+      "file": "data/images/magic-items/Tome_统御卷册.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Tome of Understanding",
+      "cn_name": "通晓卷册",
+      "file": "data/images/magic-items/Tome_通晓卷册.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Bag of Beans",
+      "cn_name": "魔豆之袋",
+      "file": "data/images/magic-items/Bag_魔豆之袋.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Bead of Force",
+      "cn_name": "力场珠",
+      "file": "data/images/magic-items/Bead_力场珠.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Bowl of Commanding Water Elementals",
+      "cn_name": "命令水元素水钵",
+      "file": "data/images/magic-items/Bowl_命令水元素水钵.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Brazier of Commanding Fire Elementals",
+      "cn_name": "命令火元素火盆",
+      "file": "data/images/magic-items/Brazier_命令火元素火盆.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Censer of Controlling Air Elementals",
+      "cn_name": "命令气元素香炉",
+      "file": "data/images/magic-items/Censer_命令气元素香炉.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Chime of Opening",
+      "cn_name": "开门钟琴",
+      "file": "data/images/magic-items/Chime_开门钟琴.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Cube of Summoning",
+      "cn_name": "召唤魔方",
+      "file": "data/images/magic-items/Cube_召唤魔方.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Daern's Instant Fortress",
+      "cn_name": "迪恩的折叠要塞",
+      "file": "data/images/magic-items/Daern's_迪恩的折叠要塞.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Dimensional Shackles",
+      "cn_name": "次元镣铐",
+      "file": "data/images/magic-items/Dimensional_次元镣铐.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Folding Boat",
+      "cn_name": "折叠船",
+      "file": "data/images/magic-items/Folding_折叠船.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Gem of Seeing",
+      "cn_name": "真视宝石",
+      "file": "data/images/magic-items/Gem_真视宝石.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Heward's Handy Haversack",
+      "cn_name": "霍华德便利袋",
+      "file": "data/images/magic-items/Heward's_霍华德便利袋.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Horn of Blasting",
+      "cn_name": "音爆号角",
+      "file": "data/images/magic-items/Horn_音爆号角.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Horseshoes of Speed",
+      "cn_name": "加速马蹄铁",
+      "file": "data/images/magic-items/Horseshoes_加速马蹄铁.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Portable Hole",
+      "cn_name": "次元洞",
+      "file": "data/images/magic-items/Portable_次元洞.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Rope of Entanglement",
+      "cn_name": "纠缠绳",
+      "file": "data/images/magic-items/Rope_纠缠绳.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Stone of Controlling Earth Elementals",
+      "cn_name": "命令土元素石核",
+      "file": "data/images/magic-items/Stone_命令土元素石核.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Book of Exalted Deeds",
+      "cn_name": "崇善之书",
+      "file": "data/images/magic-items/Book_崇善之书.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Book of Vile Darkness",
+      "cn_name": "秽恶之书",
+      "file": "data/images/magic-items/Book_秽恶之书.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Demonomicon of Iggwilv",
+      "cn_name": "伊格薇尔伏恶魔志",
+      "file": "data/images/magic-items/Demonomicon_伊格薇尔伏恶魔志.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Orb of Dragonkind",
+      "cn_name": "龙珠",
+      "file": "data/images/magic-items/Orb_龙珠.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Alchemy Jug",
+      "cn_name": "炼金壶",
+      "file": "data/images/magic-items/Alchemy_炼金壶.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Baba Yaga's Dancing Broom",
+      "cn_name": "芭芭·雅嘎的舞空帚",
+      "file": "data/images/magic-items/Baba_芭芭·雅嘎的舞空帚.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Bag of Holding",
+      "cn_name": "次元袋",
+      "file": "data/images/magic-items/Bag_次元袋.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Bag of Tricks",
+      "cn_name": "魔术袋",
+      "file": "data/images/magic-items/Bag_魔术袋.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Broom of Flying",
+      "cn_name": "飞天扫帚",
+      "file": "data/images/magic-items/Broom_飞天扫帚.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Decanter of Endless Water",
+      "cn_name": "无尽水瓶",
+      "file": "data/images/magic-items/Decanter_无尽水瓶.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Deck of Illusions",
+      "cn_name": "幻象牌组",
+      "file": "data/images/magic-items/Deck_幻象牌组.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Driftglobe",
+      "cn_name": "漂浮之球",
+      "file": "data/images/magic-items/Driftglobe_漂浮之球.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Dust of Disappearance",
+      "cn_name": "无踪粉",
+      "file": "data/images/magic-items/Dust_无踪粉.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Dust of Dryness",
+      "cn_name": "干燥粉",
+      "file": "data/images/magic-items/Dust_干燥粉.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Dust of Sneezing and Choking",
+      "cn_name": "喷嚏粉",
+      "file": "data/images/magic-items/Dust_喷嚏粉.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Elemental Gem",
+      "cn_name": "元素宝石",
+      "file": "data/images/magic-items/Elemental_元素宝石.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Eversmoking Bottle",
+      "cn_name": "无尽烟壶",
+      "file": "data/images/magic-items/Eversmoking_无尽烟壶.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Gem of Brightness",
+      "cn_name": "光彩夺目宝石",
+      "file": "data/images/magic-items/Gem_光彩夺目宝石.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Hag Eye",
+      "cn_name": "鬼婆之眼",
+      "file": "data/images/magic-items/Hag_鬼婆之眼.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Keoghtom's Ointment",
+      "cn_name": "卡夫统灵药",
+      "file": "data/images/magic-items/Keoghtom's_卡夫统灵药.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Lantern of Revealing",
+      "cn_name": "显像提灯",
+      "file": "data/images/magic-items/Lantern_显像提灯.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Pearl of Power",
+      "cn_name": "法力再生珍珠",
+      "file": "data/images/magic-items/Pearl_法力再生珍珠.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Pipes of Haunting",
+      "cn_name": "颤栗乐笙",
+      "file": "data/images/magic-items/Pipes_颤栗乐笙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Pipes of the Sewers",
+      "cn_name": "唤鼠乐笙",
+      "file": "data/images/magic-items/Pipes_唤鼠乐笙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Quiver of Ehlonna",
+      "cn_name": "艾罗娜的箭袋",
+      "file": "data/images/magic-items/Quiver_艾罗娜的箭袋.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Rope of Climbing",
+      "cn_name": "攀爬绳",
+      "file": "data/images/magic-items/Rope_攀爬绳.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Saddle of the Cavalier",
+      "cn_name": "铁骑马鞍",
+      "file": "data/images/magic-items/Saddle_铁骑马鞍.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Sending Stones",
+      "cn_name": "短讯石",
+      "file": "data/images/magic-items/Sending_短讯石.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wind Fan",
+      "cn_name": "造风之扇",
+      "file": "data/images/magic-items/Wind_造风之扇.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Cloak of Invisibility",
+      "cn_name": "隐身斗篷",
+      "file": "data/images/magic-items/Cloak_隐身斗篷.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Robe of the Archmagi",
+      "cn_name": "大法师法袍",
+      "file": "data/images/magic-items/Robe_大法师法袍.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Belt of Giant Strength",
+      "cn_name": "巨人之力腰带",
+      "file": "data/images/magic-items/Belt_巨人之力腰带.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wraps of Unarmed Power",
+      "cn_name": "神威绑带",
+      "file": "data/images/magic-items/Wraps_神威绑带.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Boots of False Tracks",
+      "cn_name": "伪迹之靴",
+      "file": "data/images/magic-items/Boots_伪迹之靴.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Cloak of Billowing",
+      "cn_name": "飘扬斗篷",
+      "file": "data/images/magic-items/Cloak_飘扬斗篷.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Cloak of Many Fashions",
+      "cn_name": "万众时尚斗篷",
+      "file": "data/images/magic-items/Cloak_万众时尚斗篷.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Clothes of Mending",
+      "cn_name": "修补之衣",
+      "file": "data/images/magic-items/Clothes_修补之衣.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Dread Helm",
+      "cn_name": "恐怖头盔",
+      "file": "data/images/magic-items/Dread_恐怖头盔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Hat of Vermin",
+      "cn_name": "害兽帽",
+      "file": "data/images/magic-items/Hat_害兽帽.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Hat of Wizardy",
+      "cn_name": "巫术帽",
+      "file": "data/images/magic-items/Hat_巫术帽.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Cloak of Arachnida",
+      "cn_name": "节肢斗篷",
+      "file": "data/images/magic-items/Cloak_节肢斗篷.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Hat of Many Spells",
+      "cn_name": "万法无常帽",
+      "file": "data/images/magic-items/Hat_万法无常帽.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Helm of Brilliance",
+      "cn_name": "光辉头盔",
+      "file": "data/images/magic-items/Helm_光辉头盔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Robe of Scintillating Colors",
+      "cn_name": "虹光法袍",
+      "file": "data/images/magic-items/Robe_虹光法袍.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Robe of Stars",
+      "cn_name": "星辰法袍",
+      "file": "data/images/magic-items/Robe_星辰法袍.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Belt of Dwarvenkind",
+      "cn_name": "矮人腰带",
+      "file": "data/images/magic-items/Belt_矮人腰带.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Boots of Levitate",
+      "cn_name": "浮空之靴",
+      "file": "data/images/magic-items/Boots_浮空之靴.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Boots of Speed",
+      "cn_name": "速度之靴",
+      "file": "data/images/magic-items/Boots_速度之靴.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Bracers of Defense",
+      "cn_name": "防御护腕",
+      "file": "data/images/magic-items/Bracers_防御护腕.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Cape of the Mountebank",
+      "cn_name": "江湖骗子披风",
+      "file": "data/images/magic-items/Cape_江湖骗子披风.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Cloak of Displacement",
+      "cn_name": "移位斗篷",
+      "file": "data/images/magic-items/Cloak_移位斗篷.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Cloak of the Bat",
+      "cn_name": "蝙蝠斗篷",
+      "file": "data/images/magic-items/Cloak_蝙蝠斗篷.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Helm of Teleportation",
+      "cn_name": "传送头盔",
+      "file": "data/images/magic-items/Helm_传送头盔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Mantle of Spell Resistance",
+      "cn_name": "法术抗性斗篷",
+      "file": "data/images/magic-items/Mantle_法术抗性斗篷.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Robe of Eyes",
+      "cn_name": "百眼法袍",
+      "file": "data/images/magic-items/Robe_百眼法袍.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wings of Flying",
+      "cn_name": "飞翼斗篷",
+      "file": "data/images/magic-items/Wings_飞翼斗篷.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Cloak of Elvenkind",
+      "cn_name": "精灵斗篷",
+      "file": "data/images/magic-items/Cloak_精灵斗篷.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Cloak of Protection",
+      "cn_name": "防护斗篷",
+      "file": "data/images/magic-items/Cloak_防护斗篷.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Cloak of the Manta Ray",
+      "cn_name": "蝠鲼斗篷",
+      "file": "data/images/magic-items/Cloak_蝠鲼斗篷.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Gauntlets of Ogre Power",
+      "cn_name": "食人魔力量护手",
+      "file": "data/images/magic-items/Gauntlets_食人魔力量护手.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Gloves of Missile Snaring",
+      "cn_name": "辟矢夺箭手套",
+      "file": "data/images/magic-items/Gloves_辟矢夺箭手套.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Gloves of Swimming and Climbing",
+      "cn_name": "攀泳手套",
+      "file": "data/images/magic-items/Gloves_攀泳手套.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Gloves of Thievery",
+      "cn_name": "窃贼手套",
+      "file": "data/images/magic-items/Gloves_窃贼手套.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Hat of Disguise",
+      "cn_name": "易容帽",
+      "file": "data/images/magic-items/Hat_易容帽.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Headband of Intellect",
+      "cn_name": "智力头带",
+      "file": "data/images/magic-items/Headband_智力头带.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Helm of Comprehending Languages",
+      "cn_name": "通晓语言头盔",
+      "file": "data/images/magic-items/Helm_通晓语言头盔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Helm of Telepathy",
+      "cn_name": "心灵感应头盔",
+      "file": "data/images/magic-items/Helm_心灵感应头盔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Nature's Mantle",
+      "cn_name": "自然斗篷",
+      "file": "data/images/magic-items/Nature's_自然斗篷.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Robe of Useful Items",
+      "cn_name": "杂货法袍",
+      "file": "data/images/magic-items/Robe_杂货法袍.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Slippers of Spider Climbing",
+      "cn_name": "蛛行便鞋",
+      "file": "data/images/magic-items/Slippers_蛛行便鞋.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Winged Boots",
+      "cn_name": "飞翼之靴",
+      "file": "data/images/magic-items/Winged_飞翼之靴.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Scarab of Protection",
+      "cn_name": "防护圣甲虫",
+      "file": "data/images/magic-items/Scarab_防护圣甲虫.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Talisman of Pure Good",
+      "cn_name": "纯善护符",
+      "file": "data/images/magic-items/Talisman_纯善护符.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Talisman of The Sphere",
+      "cn_name": "法球护符",
+      "file": "data/images/magic-items/Talisman_法球护符.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Talisman of Ultimate Evil",
+      "cn_name": "至恶护符",
+      "file": "data/images/magic-items/Talisman_至恶护符.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Dark Shard Amulet",
+      "cn_name": "黑暗碎片护符",
+      "file": "data/images/magic-items/Dark_黑暗碎片护符.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ersatz Eye",
+      "cn_name": "义眼",
+      "file": "data/images/magic-items/Ersatz_义眼.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Prosthetic Limb",
+      "cn_name": "假肢",
+      "file": "data/images/magic-items/Prosthetic_假肢.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Amulet of the planes",
+      "cn_name": "位面护符",
+      "file": "data/images/magic-items/Amulet_位面护符.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Amulet of Health",
+      "cn_name": "健康护符",
+      "file": "data/images/magic-items/Amulet_健康护符.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Necklace of Fireballs",
+      "cn_name": "火球项链",
+      "file": "data/images/magic-items/Necklace_火球项链.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Necklace of Prayer Beads",
+      "cn_name": "念珠项链",
+      "file": "data/images/magic-items/Necklace_念珠项链.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Periapt of Proof Against Poison",
+      "cn_name": "辟毒护符",
+      "file": "data/images/magic-items/Periapt_辟毒护符.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Eye and Hand of Vecna",
+      "cn_name": "维克那法眼和魔掌",
+      "file": "data/images/magic-items/Eye_维克那法眼和魔掌.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Amulet of Proof Against Detection and Loc",
+      "cn_name": "反侦护符",
+      "file": "data/images/magic-items/Amulet_反侦护符.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Brooch of Shielding",
+      "cn_name": "护盾胸针",
+      "file": "data/images/magic-items/Brooch_护盾胸针.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Circlet of Blasting",
+      "cn_name": "爆裂头饰",
+      "file": "data/images/magic-items/Circlet_爆裂头饰.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Eyes of Charming",
+      "cn_name": "魅惑镜片",
+      "file": "data/images/magic-items/Eyes_魅惑镜片.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Eyes of Minute Seeing",
+      "cn_name": "微视镜片",
+      "file": "data/images/magic-items/Eyes_微视镜片.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Eyes of the Eagle",
+      "cn_name": "鹰眼镜片",
+      "file": "data/images/magic-items/Eyes_鹰眼镜片.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Goggles of Night",
+      "cn_name": "夜视镜",
+      "file": "data/images/magic-items/Goggles_夜视镜.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Medallion of Thoughts",
+      "cn_name": "读心勋章",
+      "file": "data/images/magic-items/Medallion_读心勋章.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Necklace of Adaptation",
+      "cn_name": "适应项链",
+      "file": "data/images/magic-items/Necklace_适应项链.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Periapt of Health",
+      "cn_name": "保健护符",
+      "file": "data/images/magic-items/Periapt_保健护符.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Periapt of Wound Closure",
+      "cn_name": "愈合护符",
+      "file": "data/images/magic-items/Periapt_愈合护符.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Djinni Summoning",
+      "cn_name": "召唤气巨灵戒指",
+      "file": "data/images/magic-items/Ring_召唤气巨灵戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Element Command",
+      "cn_name": "命令元素戒指",
+      "file": "data/images/magic-items/Ring_命令元素戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Invisibility",
+      "cn_name": "隐身戒指",
+      "file": "data/images/magic-items/Ring_隐身戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Spell Turning",
+      "cn_name": "法术反转戒指",
+      "file": "data/images/magic-items/Ring_法术反转戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Three Wishes",
+      "cn_name": "三愿戒指",
+      "file": "data/images/magic-items/Ring_三愿戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Regeneration",
+      "cn_name": "再生戒指",
+      "file": "data/images/magic-items/Ring_再生戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Shooting Stars",
+      "cn_name": "流星戒指",
+      "file": "data/images/magic-items/Ring_流星戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Telekinesis",
+      "cn_name": "心灵遥控戒指",
+      "file": "data/images/magic-items/Ring_心灵遥控戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Animal Influence",
+      "cn_name": "影响动物戒指",
+      "file": "data/images/magic-items/Ring_影响动物戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Evasion",
+      "cn_name": "反射闪避戒指",
+      "file": "data/images/magic-items/Ring_反射闪避戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Feather Falling",
+      "cn_name": "羽落戒指",
+      "file": "data/images/magic-items/Ring_羽落戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Free Action",
+      "cn_name": "自由行动戒指",
+      "file": "data/images/magic-items/Ring_自由行动戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Protection",
+      "cn_name": "防护戒指",
+      "file": "data/images/magic-items/Ring_防护戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Resistance",
+      "cn_name": "抗性戒指",
+      "file": "data/images/magic-items/Ring_抗性戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Spell Storing",
+      "cn_name": "储法戒指",
+      "file": "data/images/magic-items/Ring_储法戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of the Ram",
+      "cn_name": "公羊戒指",
+      "file": "data/images/magic-items/Ring_公羊戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Jumping",
+      "cn_name": "跳跃戒指",
+      "file": "data/images/magic-items/Ring_跳跃戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Mind Shielding",
+      "cn_name": "心灵护盾戒指",
+      "file": "data/images/magic-items/Ring_心灵护盾戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Swimming",
+      "cn_name": "善泳戒指",
+      "file": "data/images/magic-items/Ring_善泳戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Warmth",
+      "cn_name": "温暖戒指",
+      "file": "data/images/magic-items/Ring_温暖戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ring of Water Walking",
+      "cn_name": "水上行走戒指",
+      "file": "data/images/magic-items/Ring_水上行走戒指.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Armor of Invulnerability",
+      "cn_name": "坚不可摧护甲",
+      "file": "data/images/magic-items/Armor_坚不可摧护甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Efreeti Chain",
+      "cn_name": "火巨灵链甲",
+      "file": "data/images/magic-items/Efreeti_火巨灵链甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Plate Armor of Etherealness",
+      "cn_name": "以太化板甲",
+      "file": "data/images/magic-items/Plate_以太化板甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Armor",
+      "cn_name": "护甲",
+      "file": "data/images/magic-items/Armor_护甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Enspelled Armor",
+      "cn_name": "魔咒护甲",
+      "file": "data/images/magic-items/Enspelled_魔咒护甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Shield",
+      "cn_name": "盾牌",
+      "file": "data/images/magic-items/Shield_盾牌.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Armor of Gleaming",
+      "cn_name": "闪烁甲",
+      "file": "data/images/magic-items/Armor_闪烁甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Cast-Off Armor",
+      "cn_name": "速脱甲",
+      "file": "data/images/magic-items/Cast-Off_速脱甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Shield of Expression",
+      "cn_name": "表情盾",
+      "file": "data/images/magic-items/Shield_表情盾.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Smoldering Armor",
+      "cn_name": "焖燃护甲",
+      "file": "data/images/magic-items/Smoldering_焖燃护甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Animated Shield",
+      "cn_name": "活化盾",
+      "file": "data/images/magic-items/Animated_活化盾.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Demon Armor",
+      "cn_name": "恶魔护甲",
+      "file": "data/images/magic-items/Demon_恶魔护甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Dragon Scale Mail",
+      "cn_name": "龙鳞甲",
+      "file": "data/images/magic-items/Dragon_龙鳞甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Dwarven Plate",
+      "cn_name": "矮人板甲",
+      "file": "data/images/magic-items/Dwarven_矮人板甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Shield of the Cavalier",
+      "cn_name": "骑士之盾",
+      "file": "data/images/magic-items/Shield_骑士之盾.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Spellguard Shield",
+      "cn_name": "抗法盾",
+      "file": "data/images/magic-items/Spellguard_抗法盾.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Armor of Resistance",
+      "cn_name": "抗性护甲",
+      "file": "data/images/magic-items/Armor_抗性护甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Armor of Vulnerability",
+      "cn_name": "易伤护甲",
+      "file": "data/images/magic-items/Armor_易伤护甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Arrow-Catching Shield",
+      "cn_name": "吸矢盾",
+      "file": "data/images/magic-items/Arrow-Catching_吸矢盾.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Elven Chain",
+      "cn_name": "精灵链甲",
+      "file": "data/images/magic-items/Elven_精灵链甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Glamoured Studded Leather",
+      "cn_name": "幻惑镶钉皮甲",
+      "file": "data/images/magic-items/Glamoured_幻惑镶钉皮甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Shield of Missile Attraction",
+      "cn_name": "引弹盾",
+      "file": "data/images/magic-items/Shield_引弹盾.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Adamantine Armor",
+      "cn_name": "精金护甲",
+      "file": "data/images/magic-items/Adamantine_精金护甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Mariner's Armor",
+      "cn_name": "水手护甲",
+      "file": "data/images/magic-items/Mariner's_水手护甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Mithral Armor",
+      "cn_name": "秘银甲",
+      "file": "data/images/magic-items/Mithral_秘银甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Sentinel Shield",
+      "cn_name": "警戒之盾",
+      "file": "data/images/magic-items/Sentinel_警戒之盾.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Rod of Lordly Might",
+      "cn_name": "王者权杖",
+      "file": "data/images/magic-items/Rod_王者权杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Rod of Resurrection",
+      "cn_name": "复生权杖",
+      "file": "data/images/magic-items/Rod_复生权杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Rod of the Pact Keeper",
+      "cn_name": "契约掌控者权杖",
+      "file": "data/images/magic-items/Rod_契约掌控者权杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Rod of Absorption",
+      "cn_name": "吸收权杖",
+      "file": "data/images/magic-items/Rod_吸收权杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Rod of Alertness",
+      "cn_name": "警示权杖",
+      "file": "data/images/magic-items/Rod_警示权杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Rod of Security",
+      "cn_name": "庇护权杖",
+      "file": "data/images/magic-items/Rod_庇护权杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Rod of Rulership",
+      "cn_name": "统御权杖",
+      "file": "data/images/magic-items/Rod_统御权杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Tentacle Rod",
+      "cn_name": "触须权杖",
+      "file": "data/images/magic-items/Tentacle_触须权杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Immovable rod",
+      "cn_name": "不动权杖",
+      "file": "data/images/magic-items/Immovable_不动权杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Defender",
+      "cn_name": "防御者",
+      "file": "data/images/magic-items/Defender_防御者.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Hammer of Thunderbolts",
+      "cn_name": "雷神之锤",
+      "file": "data/images/magic-items/Hammer_雷神之锤.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Holy Avenger",
+      "cn_name": "神圣复仇者",
+      "file": "data/images/magic-items/Holy_神圣复仇者.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Luck Blade",
+      "cn_name": "吉兆之刃",
+      "file": "data/images/magic-items/Luck_吉兆之刃.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Moonblade",
+      "cn_name": "月刃",
+      "file": "data/images/magic-items/Moonblade_月刃.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Sword of Answering",
+      "cn_name": "应答之剑",
+      "file": "data/images/magic-items/Sword_应答之剑.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Vorpal Sword",
+      "cn_name": "斩首剑",
+      "file": "data/images/magic-items/Vorpal_斩首剑.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ammunition",
+      "cn_name": "弹药",
+      "file": "data/images/magic-items/Ammunition_弹药.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Weapon",
+      "cn_name": "武器",
+      "file": "data/images/magic-items/Weapon_武器.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Moon-Touched Sword",
+      "cn_name": "触月剑",
+      "file": "data/images/magic-items/Moon-Touched_触月剑.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Silvered Weapon",
+      "cn_name": "镀银武器",
+      "file": "data/images/magic-items/Silvered_镀银武器.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Sylvan Talon",
+      "cn_name": "木族利爪",
+      "file": "data/images/magic-items/Sylvan_木族利爪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Walloping Ammunition",
+      "cn_name": "冲击弹",
+      "file": "data/images/magic-items/Walloping_冲击弹.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Ammunition of Slaying",
+      "cn_name": "屠杀弹药",
+      "file": "data/images/magic-items/Ammunition_屠杀弹药.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Dancing Sword",
+      "cn_name": "舞空剑",
+      "file": "data/images/magic-items/Dancing_舞空剑.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Dwarven Thrower",
+      "cn_name": "矮人飞锤",
+      "file": "data/images/magic-items/Dwarven_矮人飞锤.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Energy Bow",
+      "cn_name": "能量弓",
+      "file": "data/images/magic-items/Energy_能量弓.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Executioner’s Axe",
+      "cn_name": "处刑者之斧",
+      "file": "data/images/magic-items/Executioner’s_处刑者之斧.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Frost Brand",
+      "cn_name": "霜铭",
+      "file": "data/images/magic-items/Frost_霜铭.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Lute of Thunderous Thumping",
+      "cn_name": "轰天震雷鲁特琴",
+      "file": "data/images/magic-items/Lute_轰天震雷鲁特琴.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Nine Lives Stealer",
+      "cn_name": "九命夺杀者",
+      "file": "data/images/magic-items/Nine_九命夺杀者.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Oathbow",
+      "cn_name": "誓仇弓",
+      "file": "data/images/magic-items/Oathbow_誓仇弓.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Quarterstaff of the Acrobat",
+      "cn_name": "杂技长棍",
+      "file": "data/images/magic-items/Quarterstaff_杂技长棍.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Scimitar of Speed",
+      "cn_name": "急速弯刀",
+      "file": "data/images/magic-items/Scimitar_急速弯刀.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Sword of Sharpness",
+      "cn_name": "锐锋之剑",
+      "file": "data/images/magic-items/Sword_锐锋之剑.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Thunderous Greatclub",
+      "cn_name": "雷霆巨棒",
+      "file": "data/images/magic-items/Thunderous_雷霆巨棒.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Berserker Axe",
+      "cn_name": "狂战斧",
+      "file": "data/images/magic-items/Berserker_狂战斧.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Dagger of Venom",
+      "cn_name": "淬毒匕首",
+      "file": "data/images/magic-items/Dagger_淬毒匕首.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Dragon Slayer",
+      "cn_name": "屠龙者",
+      "file": "data/images/magic-items/Dragon_屠龙者.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Flame Tongue",
+      "cn_name": "焰舌",
+      "file": "data/images/magic-items/Flame_焰舌.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Giant Slayer",
+      "cn_name": "巨人屠杀者",
+      "file": "data/images/magic-items/Giant_巨人屠杀者.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Mace of Disruption",
+      "cn_name": "瓦解之锤",
+      "file": "data/images/magic-items/Mace_瓦解之锤.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Mace of Smiting",
+      "cn_name": "打击之锤",
+      "file": "data/images/magic-items/Mace_打击之锤.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Mace of Terror",
+      "cn_name": "恐惧之锤",
+      "file": "data/images/magic-items/Mace_恐惧之锤.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Sun Blade",
+      "cn_name": "阳炎剑",
+      "file": "data/images/magic-items/Sun_阳炎剑.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Sword of Life Stealing",
+      "cn_name": "窃命剑",
+      "file": "data/images/magic-items/Sword_窃命剑.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Sword of Wounding",
+      "cn_name": "血光剑",
+      "file": "data/images/magic-items/Sword_血光剑.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Vicious Weapon",
+      "cn_name": "恶毒武器",
+      "file": "data/images/magic-items/Vicious_恶毒武器.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Axe of The Dwarvish Lords",
+      "cn_name": "矮人王圣斧",
+      "file": "data/images/magic-items/Axe_矮人王圣斧.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Blackrazor",
+      "cn_name": "黑刃",
+      "file": "data/images/magic-items/Blackrazor_黑刃.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Sword of Kas",
+      "cn_name": "凯斯之剑",
+      "file": "data/images/magic-items/Sword_凯斯之剑.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wave",
+      "cn_name": "波涛",
+      "file": "data/images/magic-items/Wave_波涛.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Whelm",
+      "cn_name": "征服",
+      "file": "data/images/magic-items/Whelm_征服.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Adamantine Weapon",
+      "cn_name": "精金武器",
+      "file": "data/images/magic-items/Adamantine_精金武器.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Javelin of Lightning",
+      "cn_name": "闪电标枪",
+      "file": "data/images/magic-items/Javelin_闪电标枪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Sword of Vengeance",
+      "cn_name": "复仇之剑",
+      "file": "data/images/magic-items/Sword_复仇之剑.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Trident of Fish Command",
+      "cn_name": "唤鱼三叉戟",
+      "file": "data/images/magic-items/Trident_唤鱼三叉戟.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Weapon of Warning",
+      "cn_name": "警戒武器",
+      "file": "data/images/magic-items/Weapon_警戒武器.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of The Magi",
+      "cn_name": "贤者法杖",
+      "file": "data/images/magic-items/Staff_贤者法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Enspelled Staff",
+      "cn_name": "魔咒法杖",
+      "file": "data/images/magic-items/Enspelled_魔咒法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of Adornment",
+      "cn_name": "饰品法杖",
+      "file": "data/images/magic-items/Staff_饰品法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of Birdcalls",
+      "cn_name": "鸟鸣法杖",
+      "file": "data/images/magic-items/Staff_鸟鸣法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of Flowers",
+      "cn_name": "鲜花法杖",
+      "file": "data/images/magic-items/Staff_鲜花法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of Fire",
+      "cn_name": "火焰法杖",
+      "file": "data/images/magic-items/Staff_火焰法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of Frost",
+      "cn_name": "冰霜法杖",
+      "file": "data/images/magic-items/Staff_冰霜法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of Power",
+      "cn_name": "威力法杖",
+      "file": "data/images/magic-items/Staff_威力法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of Striking",
+      "cn_name": "强袭法杖",
+      "file": "data/images/magic-items/Staff_强袭法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of Thunder and Lightning",
+      "cn_name": "雷霆法杖",
+      "file": "data/images/magic-items/Staff_雷霆法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of Charming",
+      "cn_name": "魅惑法杖",
+      "file": "data/images/magic-items/Staff_魅惑法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of Healing",
+      "cn_name": "治愈法杖",
+      "file": "data/images/magic-items/Staff_治愈法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of Swarming Insects",
+      "cn_name": "虫群法杖",
+      "file": "data/images/magic-items/Staff_虫群法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of The Woodlands",
+      "cn_name": "丛林法杖",
+      "file": "data/images/magic-items/Staff_丛林法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of Withering",
+      "cn_name": "凋零法杖",
+      "file": "data/images/magic-items/Staff_凋零法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of The Adder",
+      "cn_name": "蝰蛇法杖",
+      "file": "data/images/magic-items/Staff_蝰蛇法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Staff of The Python",
+      "cn_name": "蟒蛇法杖",
+      "file": "data/images/magic-items/Staff_蟒蛇法杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Giant Strength",
+      "cn_name": "巨人之力药水",
+      "file": "data/images/magic-items/Potion_巨人之力药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potions of Healing",
+      "cn_name": "治疗药水",
+      "file": "data/images/magic-items/Potions_治疗药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Climbing",
+      "cn_name": "攀爬药水",
+      "file": "data/images/magic-items/Potion_攀爬药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Comprehension",
+      "cn_name": "通晓药水",
+      "file": "data/images/magic-items/Potion_通晓药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Oil of Sharpness",
+      "cn_name": "锐锋之油",
+      "file": "data/images/magic-items/Oil_锐锋之油.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Flying",
+      "cn_name": "飞行药水",
+      "file": "data/images/magic-items/Potion_飞行药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Greater Invisibility",
+      "cn_name": "高等隐身药水",
+      "file": "data/images/magic-items/Potion_高等隐身药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Longevity",
+      "cn_name": "延寿药水",
+      "file": "data/images/magic-items/Potion_延寿药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Speed",
+      "cn_name": "加速药水",
+      "file": "data/images/magic-items/Potion_加速药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Vitality",
+      "cn_name": "活力药水",
+      "file": "data/images/magic-items/Potion_活力药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Oil of Etherealness",
+      "cn_name": "以太化之油",
+      "file": "data/images/magic-items/Oil_以太化之油.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Clairvoyance",
+      "cn_name": "鹰眼术药水",
+      "file": "data/images/magic-items/Potion_鹰眼术药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Diminution",
+      "cn_name": "衰减药水",
+      "file": "data/images/magic-items/Potion_衰减药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Gaseous Form",
+      "cn_name": "气化形体药水",
+      "file": "data/images/magic-items/Potion_气化形体药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Heroism",
+      "cn_name": "英勇药水",
+      "file": "data/images/magic-items/Potion_英勇药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Invisibility",
+      "cn_name": "隐身药水",
+      "file": "data/images/magic-items/Potion_隐身药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Invulnerability",
+      "cn_name": "坚不可摧药水",
+      "file": "data/images/magic-items/Potion_坚不可摧药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Mind Reading",
+      "cn_name": "读心药水",
+      "file": "data/images/magic-items/Potion_读心药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Oil of Slipperiness",
+      "cn_name": "滑溜之油",
+      "file": "data/images/magic-items/Oil_滑溜之油.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Philter of Love",
+      "cn_name": "迷情媚药",
+      "file": "data/images/magic-items/Philter_迷情媚药.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Animal Friendship",
+      "cn_name": "化兽为友药水",
+      "file": "data/images/magic-items/Potion_化兽为友药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Fire Breath",
+      "cn_name": "火焰吐息药水",
+      "file": "data/images/magic-items/Potion_火焰吐息药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Growth",
+      "cn_name": "成长药水",
+      "file": "data/images/magic-items/Potion_成长药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Poison",
+      "cn_name": "剧毒药水",
+      "file": "data/images/magic-items/Potion_剧毒药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Pugilism",
+      "cn_name": "重拳药水",
+      "file": "data/images/magic-items/Potion_重拳药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Resistance",
+      "cn_name": "抗性药水",
+      "file": "data/images/magic-items/Potion_抗性药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Potion of Water Breathing",
+      "cn_name": "水下呼吸药水",
+      "file": "data/images/magic-items/Potion_水下呼吸药水.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of The War Mage",
+      "cn_name": "战法师魔杖",
+      "file": "data/images/magic-items/Wand_战法师魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Conducting",
+      "cn_name": "指挥魔杖",
+      "file": "data/images/magic-items/Wand_指挥魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Pyrotechnics",
+      "cn_name": "烟火魔杖",
+      "file": "data/images/magic-items/Wand_烟火魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Polymorph",
+      "cn_name": "变形魔杖",
+      "file": "data/images/magic-items/Wand_变形魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Binding",
+      "cn_name": "约束魔杖",
+      "file": "data/images/magic-items/Wand_约束魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Enemy Detection",
+      "cn_name": "搜敌魔杖",
+      "file": "data/images/magic-items/Wand_搜敌魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Fear",
+      "cn_name": "恐惧魔杖",
+      "file": "data/images/magic-items/Wand_恐惧魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Fireballs",
+      "cn_name": "火球魔杖",
+      "file": "data/images/magic-items/Wand_火球魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Lightning Bolts",
+      "cn_name": "闪电束魔杖",
+      "file": "data/images/magic-items/Wand_闪电束魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Paralysis",
+      "cn_name": "麻痹魔杖",
+      "file": "data/images/magic-items/Wand_麻痹魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Wonder",
+      "cn_name": "惊异魔杖",
+      "file": "data/images/magic-items/Wand_惊异魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Orcus",
+      "cn_name": "奥喀斯之杖",
+      "file": "data/images/magic-items/Wand_奥喀斯之杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Magic Detection",
+      "cn_name": "搜魔魔杖",
+      "file": "data/images/magic-items/Wand_搜魔魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Magic Missiles",
+      "cn_name": "魔法飞弹魔杖",
+      "file": "data/images/magic-items/Wand_魔法飞弹魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Secrets",
+      "cn_name": "探秘魔杖",
+      "file": "data/images/magic-items/Wand_探秘魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "magic-items",
+      "name": "Wand of Web",
+      "cn_name": "蛛网魔杖",
+      "file": "data/images/magic-items/Wand_蛛网魔杖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "storeroom",
+      "cn_name": "仓库",
+      "file": "data/images/stronghold/仓库.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "teleportation circle",
+      "cn_name": "传送法阵",
+      "file": "data/images/stronghold/传送法阵.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "guildhall",
+      "cn_name": "公会大厅",
+      "file": "data/images/stronghold/公会大厅.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "barracks",
+      "cn_name": "兵营",
+      "file": "data/images/stronghold/兵营.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "armory",
+      "cn_name": "军械库",
+      "file": "data/images/stronghold/军械库.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "meditation chamber",
+      "cn_name": "冥想间",
+      "file": "data/images/stronghold/冥想间.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "theater",
+      "cn_name": "剧院",
+      "file": "data/images/stronghold/剧院.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "menagerie",
+      "cn_name": "动物园",
+      "file": "data/images/stronghold/动物园.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "demiplane",
+      "cn_name": "半位面",
+      "file": "data/images/stronghold/半位面.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "library",
+      "cn_name": "图书馆",
+      "file": "data/images/stronghold/图书馆.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "reliquary",
+      "cn_name": "圣器室",
+      "file": "data/images/stronghold/圣器室.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "altar",
+      "cn_name": "圣坛",
+      "file": "data/images/stronghold/圣坛.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "sanctuary",
+      "cn_name": "圣所",
+      "file": "data/images/stronghold/圣所.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "reliquary vault",
+      "cn_name": "圣物库",
+      "file": "data/images/stronghold/圣物库.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "observatory",
+      "cn_name": "天文台",
+      "file": "data/images/stronghold/天文台.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "arcane study",
+      "cn_name": "奥术研究室",
+      "file": "data/images/stronghold/奥术研究室.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "laboratory",
+      "cn_name": "实验室",
+      "file": "data/images/stronghold/实验室.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "workshop",
+      "cn_name": "工坊",
+      "file": "data/images/stronghold/工坊.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "war room",
+      "cn_name": "战事中心",
+      "file": "data/images/stronghold/战事中心.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "scribing chamber",
+      "cn_name": "抄写室",
+      "file": "data/images/stronghold/抄写室.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "archive",
+      "cn_name": "档案室",
+      "file": "data/images/stronghold/档案室.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "greenhouse",
+      "cn_name": "温室",
+      "file": "data/images/stronghold/温室.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "gaming hall",
+      "cn_name": "游戏厅",
+      "file": "data/images/stronghold/游戏厅.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "plantation",
+      "cn_name": "种植园",
+      "file": "data/images/stronghold/种植园.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "training ground",
+      "cn_name": "训练场",
+      "file": "data/images/stronghold/训练场.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "tavern",
+      "cn_name": "酒馆",
+      "file": "data/images/stronghold/酒馆.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "blacksmith forge",
+      "cn_name": "铁匠铺",
+      "file": "data/images/stronghold/铁匠铺.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "exhibition hall",
+      "cn_name": "陈列室",
+      "file": "data/images/stronghold/陈列室.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "stronghold",
+      "name": "stable",
+      "cn_name": "马厩",
+      "file": "data/images/stronghold/马厩.png",
+      "size": "1536x864",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Demilich",
+      "cn_name": "半巫妖",
+      "file": "data/images/monsters/Demilich_半巫妖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Wight",
+      "cn_name": "尸妖",
+      "file": "data/images/monsters/Wight_尸妖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Lich",
+      "cn_name": "巫妖",
+      "file": "data/images/monsters/Lich_巫妖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Shadow",
+      "cn_name": "幽影",
+      "file": "data/images/monsters/Shadow_幽影.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Ghost",
+      "cn_name": "幽魂",
+      "file": "data/images/monsters/Ghost_幽魂.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Specter",
+      "cn_name": "恶灵",
+      "file": "data/images/monsters/Specter_恶灵.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Banshee",
+      "cn_name": "报丧妖",
+      "file": "data/images/monsters/Banshee_报丧妖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Flameskull",
+      "cn_name": "燃焰之颅",
+      "file": "data/images/monsters/Flameskull_燃焰之颅.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Wraith",
+      "cn_name": "邪灵",
+      "file": "data/images/monsters/Wraith_邪灵.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Poltergeist",
+      "cn_name": "骚灵",
+      "file": "data/images/monsters/Poltergeist_骚灵.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Will-o’-Wisp",
+      "cn_name": "鬼火",
+      "file": "data/images/monsters/Will-o’-Wisp_鬼火.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Dracolich",
+      "cn_name": "龙巫妖",
+      "file": "data/images/monsters/Dracolich_龙巫妖.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Zombie",
+      "cn_name": "丧尸",
+      "file": "data/images/monsters/Zombie_丧尸.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Beholder Zombie",
+      "cn_name": "眼魔丧尸",
+      "file": "data/images/monsters/Beholder_眼魔丧尸.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Ogre Zombie",
+      "cn_name": "食人魔丧尸",
+      "file": "data/images/monsters/Ogre_食人魔丧尸.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Ghast",
+      "cn_name": "妖鬼",
+      "file": "data/images/monsters/Ghast_妖鬼.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Water Weird",
+      "cn_name": "水诡",
+      "file": "data/images/monsters/Water_水诡.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Magmin",
+      "cn_name": "火童",
+      "file": "data/images/monsters/Magmin_火童.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Galeb Duhr",
+      "cn_name": "石人",
+      "file": "data/images/monsters/Galeb_石人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Xorn",
+      "cn_name": "石鼎兽",
+      "file": "data/images/monsters/Xorn_石鼎兽.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Invisible Stalker",
+      "cn_name": "隐形追猎者",
+      "file": "data/images/monsters/Invisible_隐形追猎者.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Merfolk",
+      "cn_name": "人鱼",
+      "file": "data/images/monsters/Merfolk_人鱼.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Merfolk Wavebender",
+      "cn_name": "御浪人鱼",
+      "file": "data/images/monsters/Merfolk_御浪人鱼.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Earth Elemental",
+      "cn_name": "土元素",
+      "file": "data/images/monsters/Earth_土元素.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Air Elemental",
+      "cn_name": "气元素",
+      "file": "data/images/monsters/Air_气元素.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Water Elemental",
+      "cn_name": "水元素",
+      "file": "data/images/monsters/Water_水元素.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Fire Elemental",
+      "cn_name": "火元素",
+      "file": "data/images/monsters/Fire_火元素.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Dao",
+      "cn_name": "土巨灵",
+      "file": "data/images/monsters/Dao_土巨灵.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Djinni",
+      "cn_name": "气巨灵",
+      "file": "data/images/monsters/Djinni_气巨灵.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Marid",
+      "cn_name": "水巨灵",
+      "file": "data/images/monsters/Marid_水巨灵.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Efreeti",
+      "cn_name": "火巨灵",
+      "file": "data/images/monsters/Efreeti_火巨灵.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Azer",
+      "cn_name": "火矮人",
+      "file": "data/images/monsters/Azer_火矮人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Vampire Nightbringer",
+      "cn_name": "吸血夜魇",
+      "file": "data/images/monsters/Vampire_吸血夜魇.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Vampire",
+      "cn_name": "吸血鬼",
+      "file": "data/images/monsters/Vampire_吸血鬼.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Vampire Umbral Lord",
+      "cn_name": "吸血鬼暗影尊主",
+      "file": "data/images/monsters/Vampire_吸血鬼暗影尊主.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Vampire Familiar",
+      "cn_name": "血仆",
+      "file": "data/images/monsters/Vampire_血仆.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Elemental Cataclysm",
+      "cn_name": "元初天劫",
+      "file": "data/images/monsters/Elemental_元初天劫.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Kraken",
+      "cn_name": "克拉肯",
+      "file": "data/images/monsters/Kraken_克拉肯.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Colossus",
+      "cn_name": "巨神兵",
+      "file": "data/images/monsters/Colossus_巨神兵.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Tarrasque",
+      "cn_name": "泰拉斯奎",
+      "file": "data/images/monsters/Tarrasque_泰拉斯奎.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Empyrean",
+      "cn_name": "至高天",
+      "file": "data/images/monsters/Empyrean_至高天.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Death Tyrant",
+      "cn_name": "亡眼暴君",
+      "file": "data/images/monsters/Death_亡眼暴君.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Beholder",
+      "cn_name": "眼魔",
+      "file": "data/images/monsters/Beholder_眼魔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Spectator",
+      "cn_name": "观察者眼魔",
+      "file": "data/images/monsters/Spectator_观察者眼魔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Guardian Naga",
+      "cn_name": "守秘纳迦",
+      "file": "data/images/monsters/Guardian_守秘纳迦.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Spirit Naga",
+      "cn_name": "阴魂纳迦",
+      "file": "data/images/monsters/Spirit_阴魂纳迦.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Bone Naga",
+      "cn_name": "骸骨纳迦",
+      "file": "data/images/monsters/Bone_骸骨纳迦.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Night Hag",
+      "cn_name": "夜鬼婆",
+      "file": "data/images/monsters/Night_夜鬼婆.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Animal Lord",
+      "cn_name": "兽主",
+      "file": "data/images/monsters/Animal_兽主.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Pegasus",
+      "cn_name": "天马",
+      "file": "data/images/monsters/Pegasus_天马.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Unicorn",
+      "cn_name": "独角兽",
+      "file": "data/images/monsters/Unicorn_独角兽.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Couatl",
+      "cn_name": "羽蛇",
+      "file": "data/images/monsters/Couatl_羽蛇.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Deva",
+      "cn_name": "天神使徒",
+      "file": "data/images/monsters/Deva_天神使徒.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Planetar",
+      "cn_name": "星天神使",
+      "file": "data/images/monsters/Planetar_星天神使.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Solar",
+      "cn_name": "炽天神使",
+      "file": "data/images/monsters/Solar_炽天神使.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Sphinx",
+      "cn_name": "斯芬克斯",
+      "file": "data/images/monsters/Sphinx_斯芬克斯.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Sphinx of Wonder",
+      "cn_name": "求索斯芬克斯",
+      "file": "data/images/monsters/Sphinx_求索斯芬克斯.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Sphinx of Secrets",
+      "cn_name": "隐秘斯芬克斯",
+      "file": "data/images/monsters/Sphinx_隐秘斯芬克斯.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Sprite",
+      "cn_name": "小仙灵",
+      "file": "data/images/monsters/Sprite_小仙灵.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Dryad",
+      "cn_name": "树精",
+      "file": "data/images/monsters/Dryad_树精.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Blink Dog",
+      "cn_name": "闪现犬",
+      "file": "data/images/monsters/Blink_闪现犬.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Centaurs",
+      "cn_name": "人马",
+      "file": "data/images/monsters/Centaurs_人马.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Centaur Warden",
+      "cn_name": "人马守望者",
+      "file": "data/images/monsters/Centaur_人马守望者.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Centaur Trooper",
+      "cn_name": "人马骠骑",
+      "file": "data/images/monsters/Centaur_人马骠骑.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Satyr",
+      "cn_name": "半羊人",
+      "file": "data/images/monsters/Satyr_半羊人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Satyr Revelmaster",
+      "cn_name": "半羊人欢庆之主",
+      "file": "data/images/monsters/Satyr_半羊人欢庆之主.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Bullywug",
+      "cn_name": "啵灵蛙",
+      "file": "data/images/monsters/Bullywug_啵灵蛙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Bullywug Warrior",
+      "cn_name": "啵灵蛙武者",
+      "file": "data/images/monsters/Bullywug_啵灵蛙武者.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Bullywug Bog Sage",
+      "cn_name": "啵灵蛙沼地大贤",
+      "file": "data/images/monsters/Bullywug_啵灵蛙沼地大贤.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Goblins",
+      "cn_name": "地精",
+      "file": "data/images/monsters/Goblins_地精.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Goblin Hexer",
+      "cn_name": "地精咒术师",
+      "file": "data/images/monsters/Goblin_地精咒术师.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Goblin Minion",
+      "cn_name": "地精喽啰",
+      "file": "data/images/monsters/Goblin_地精喽啰.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Goblin Warrior",
+      "cn_name": "地精武者",
+      "file": "data/images/monsters/Goblin_地精武者.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Goblin Boss",
+      "cn_name": "地精老大",
+      "file": "data/images/monsters/Goblin_地精老大.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Ettin",
+      "cn_name": "双头巨人",
+      "file": "data/images/monsters/Ettin_双头巨人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Fomorian",
+      "cn_name": "废陋巨人",
+      "file": "data/images/monsters/Fomorian_废陋巨人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Troll",
+      "cn_name": "巨魔",
+      "file": "data/images/monsters/Troll_巨魔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Cloud Giant",
+      "cn_name": "云巨人",
+      "file": "data/images/monsters/Cloud_云巨人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Hill Giant",
+      "cn_name": "山丘巨人",
+      "file": "data/images/monsters/Hill_山丘巨人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Fire Giant",
+      "cn_name": "火巨人",
+      "file": "data/images/monsters/Fire_火巨人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Stone Giant",
+      "cn_name": "石巨人",
+      "file": "data/images/monsters/Stone_石巨人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Frost Giant",
+      "cn_name": "霜巨人",
+      "file": "data/images/monsters/Frost_霜巨人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Storm Giant",
+      "cn_name": "风暴巨人",
+      "file": "data/images/monsters/Storm_风暴巨人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Cyclopes",
+      "cn_name": "独眼巨人",
+      "file": "data/images/monsters/Cyclopes_独眼巨人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Ogrillon Ogre",
+      "cn_name": "半食人魔",
+      "file": "data/images/monsters/Ogrillon_半食人魔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Ogre",
+      "cn_name": "食人魔",
+      "file": "data/images/monsters/Ogre_食人魔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Flumph",
+      "cn_name": "呋噜",
+      "file": "data/images/monsters/Flumph_呋噜.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Gibbering Mouther",
+      "cn_name": "呓语之口",
+      "file": "data/images/monsters/Gibbering_呓语之口.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Intellect Devourer",
+      "cn_name": "噬脑怪",
+      "file": "data/images/monsters/Intellect_噬脑怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Grimlock",
+      "cn_name": "幽邃盲族",
+      "file": "data/images/monsters/Grimlock_幽邃盲族.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Aboleth",
+      "cn_name": "底栖魔鱼",
+      "file": "data/images/monsters/Aboleth_底栖魔鱼.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Cloaker",
+      "cn_name": "斗篷怪",
+      "file": "data/images/monsters/Cloaker_斗篷怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Darkmantle",
+      "cn_name": "暗幕魔兽",
+      "file": "data/images/monsters/Darkmantle_暗幕魔兽.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Chuul",
+      "cn_name": "甲伏怪",
+      "file": "data/images/monsters/Chuul_甲伏怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Roper",
+      "cn_name": "石绳怪",
+      "file": "data/images/monsters/Roper_石绳怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Piercer",
+      "cn_name": "石锥怪",
+      "file": "data/images/monsters/Piercer_石锥怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Grell",
+      "cn_name": "触须怪",
+      "file": "data/images/monsters/Grell_触须怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Nothic",
+      "cn_name": "诺斯怪",
+      "file": "data/images/monsters/Nothic_诺斯怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Otyugh",
+      "cn_name": "食腐兽",
+      "file": "data/images/monsters/Otyugh_食腐兽.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Death Slaad",
+      "cn_name": "史拉亡蟾",
+      "file": "data/images/monsters/Death_史拉亡蟾.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Gray Slaad",
+      "cn_name": "史拉灰蟾",
+      "file": "data/images/monsters/Gray_史拉灰蟾.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Red Slaad",
+      "cn_name": "史拉红蟾",
+      "file": "data/images/monsters/Red_史拉红蟾.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Death Dog",
+      "cn_name": "亡命恶犬",
+      "file": "data/images/monsters/Death_亡命恶犬.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Ettercap",
+      "cn_name": "伊特怪",
+      "file": "data/images/monsters/Ettercap_伊特怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Manticore",
+      "cn_name": "刺尾狮",
+      "file": "data/images/monsters/Manticore_刺尾狮.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Chimera",
+      "cn_name": "奇美拉",
+      "file": "data/images/monsters/Chimera_奇美拉.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Minotaur of Baphomet",
+      "cn_name": "巴弗灭的牛头人",
+      "file": "data/images/monsters/Minotaur_巴弗灭的牛头人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Hook Horror",
+      "cn_name": "恐爪怪",
+      "file": "data/images/monsters/Hook_恐爪怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Mimic",
+      "cn_name": "拟身怪",
+      "file": "data/images/monsters/Mimic_拟身怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Umber Hulk",
+      "cn_name": "掘土巨怪",
+      "file": "data/images/monsters/Umber_掘土巨怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Merrow",
+      "cn_name": "梅洛人鱼",
+      "file": "data/images/monsters/Merrow_梅洛人鱼.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Griffon",
+      "cn_name": "狮鹫",
+      "file": "data/images/monsters/Griffon_狮鹫.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Phase Spider",
+      "cn_name": "相位蜘蛛",
+      "file": "data/images/monsters/Phase_相位蜘蛛.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Basilisk",
+      "cn_name": "石化蜥蜴",
+      "file": "data/images/monsters/Basilisk_石化蜥蜴.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Displacer Beast",
+      "cn_name": "移位兽",
+      "file": "data/images/monsters/Displacer_移位兽.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Purple Worm",
+      "cn_name": "紫虫",
+      "file": "data/images/monsters/Purple_紫虫.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Medusa",
+      "cn_name": "美杜莎",
+      "file": "data/images/monsters/Medusa_美杜莎.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Drider",
+      "cn_name": "蛛化卓尔",
+      "file": "data/images/monsters/Drider_蛛化卓尔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Homunculus",
+      "cn_name": "人工生命体",
+      "file": "data/images/monsters/Homunculus_人工生命体.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Helmed Horror",
+      "cn_name": "恐怖铠甲",
+      "file": "data/images/monsters/Helmed_恐怖铠甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Shield Guardian",
+      "cn_name": "盾卫",
+      "file": "data/images/monsters/Shield_盾卫.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Scarecrow",
+      "cn_name": "稻草人",
+      "file": "data/images/monsters/Scarecrow_稻草人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Animated Flying Sword",
+      "cn_name": "活化凌空剑",
+      "file": "data/images/monsters/Animated_活化凌空剑.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Animated Broom",
+      "cn_name": "活化扫帚",
+      "file": "data/images/monsters/Animated_活化扫帚.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Animated Objects",
+      "cn_name": "活化物件",
+      "file": "data/images/monsters/Animated_活化物件.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Animated Armor",
+      "cn_name": "活化盔甲",
+      "file": "data/images/monsters/Animated_活化盔甲.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Animated Rug of Smothering",
+      "cn_name": "活化闷人毯",
+      "file": "data/images/monsters/Animated_活化闷人毯.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Brazen Gorgon",
+      "cn_name": "焚化铜牛",
+      "file": "data/images/monsters/Brazen_焚化铜牛.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Gorgon",
+      "cn_name": "石化铁牛",
+      "file": "data/images/monsters/Gorgon_石化铁牛.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Stone Golem",
+      "cn_name": "石魔像",
+      "file": "data/images/monsters/Stone_石魔像.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Flesh Golem",
+      "cn_name": "血肉魔像",
+      "file": "data/images/monsters/Flesh_血肉魔像.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Iron Golem",
+      "cn_name": "铁魔像",
+      "file": "data/images/monsters/Iron_铁魔像.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Clay Golem",
+      "cn_name": "黏土魔像",
+      "file": "data/images/monsters/Clay_黏土魔像.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Modrons",
+      "cn_name": "魔冢",
+      "file": "data/images/monsters/Modrons_魔冢.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Treant",
+      "cn_name": "树人",
+      "file": "data/images/monsters/Treant_树人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Shambling Mound",
+      "cn_name": "蔓生怪",
+      "file": "data/images/monsters/Shambling_蔓生怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Awakened Tree",
+      "cn_name": "启蒙大树",
+      "file": "data/images/monsters/Awakened_启蒙大树.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Awakened Plants",
+      "cn_name": "启蒙植物",
+      "file": "data/images/monsters/Awakened_启蒙植物.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Awakened Shrub",
+      "cn_name": "启蒙灌木",
+      "file": "data/images/monsters/Awakened_启蒙灌木.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Twig Blight",
+      "cn_name": "枯枝怪",
+      "file": "data/images/monsters/Twig_枯枝怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Tree Blight",
+      "cn_name": "枯树怪",
+      "file": "data/images/monsters/Tree_枯树怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Vine Blight",
+      "cn_name": "枯藤怪",
+      "file": "data/images/monsters/Vine_枯藤怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Shrieker Fungus",
+      "cn_name": "尖叫菌",
+      "file": "data/images/monsters/Shrieker_尖叫菌.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Gas Spore Fungus",
+      "cn_name": "气孢菌",
+      "file": "data/images/monsters/Gas_气孢菌.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Fungi",
+      "cn_name": "真菌",
+      "file": "data/images/monsters/Fungi_真菌.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Violet Fungus",
+      "cn_name": "紫腐菌",
+      "file": "data/images/monsters/Violet_紫腐菌.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Violet Fungus Necrohulk",
+      "cn_name": "紫腐菌尸聚怪",
+      "file": "data/images/monsters/Violet_紫腐菌尸聚怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Myconids",
+      "cn_name": "蕈人",
+      "file": "data/images/monsters/Myconids_蕈人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Actions",
+      "cn_name": "动作",
+      "file": "data/images/monsters/Actions_动作.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Myconid Sprout",
+      "cn_name": "蕈人幼体",
+      "file": "data/images/monsters/Myconid_蕈人幼体.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Gelatinous Cube",
+      "cn_name": "凝胶方块",
+      "file": "data/images/monsters/Gelatinous_凝胶方块.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Ochre Jelly",
+      "cn_name": "赭果冻",
+      "file": "data/images/monsters/Ochre_赭果冻.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Black Pudding",
+      "cn_name": "黑布丁",
+      "file": "data/images/monsters/Black_黑布丁.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Psychic Gray Ooze",
+      "cn_name": "心能灰泥怪",
+      "file": "data/images/monsters/Psychic_心能灰泥怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Gray Ooze",
+      "cn_name": "灰泥怪",
+      "file": "data/images/monsters/Gray_灰泥怪.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Commoner",
+      "cn_name": "平民",
+      "file": "data/images/monsters/Commoner_平民.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Druid",
+      "cn_name": "德鲁伊",
+      "file": "data/images/monsters/Druid_德鲁伊.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Bandit",
+      "cn_name": "匪徒",
+      "file": "data/images/monsters/Bandit_匪徒.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Tough",
+      "cn_name": "打手",
+      "file": "data/images/monsters/Tough_打手.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Tough Boss",
+      "cn_name": "打手老大",
+      "file": "data/images/monsters/Tough_打手老大.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Scout",
+      "cn_name": "斥候",
+      "file": "data/images/monsters/Scout_斥候.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Scout Captain",
+      "cn_name": "斥候队长",
+      "file": "data/images/monsters/Scout_斥候队长.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Warrior Commander",
+      "cn_name": "武将",
+      "file": "data/images/monsters/Warrior_武将.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Pirate Admiral",
+      "cn_name": "海盗将军",
+      "file": "data/images/monsters/Pirate_海盗将军.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Berserker",
+      "cn_name": "狂战士",
+      "file": "data/images/monsters/Berserker_狂战士.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Berserker Commander",
+      "cn_name": "狂战将",
+      "file": "data/images/monsters/Berserker_狂战将.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Priest",
+      "cn_name": "祭司",
+      "file": "data/images/monsters/Priest_祭司.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Guard",
+      "cn_name": "警卫",
+      "file": "data/images/monsters/Guard_警卫.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Guard Captain",
+      "cn_name": "警卫队长",
+      "file": "data/images/monsters/Guard_警卫队长.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Noble",
+      "cn_name": "贵族",
+      "file": "data/images/monsters/Noble_贵族.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Noble Prodigy",
+      "cn_name": "贵血天骄",
+      "file": "data/images/monsters/Noble_贵血天骄.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Jackalwere",
+      "cn_name": "化形胡狼",
+      "file": "data/images/monsters/Jackalwere_化形胡狼.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Hell Hound",
+      "cn_name": "地狱犬",
+      "file": "data/images/monsters/Hell_地狱犬.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Cambion",
+      "cn_name": "坎比翁",
+      "file": "data/images/monsters/Cambion_坎比翁.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Oni",
+      "cn_name": "恶鬼",
+      "file": "data/images/monsters/Oni_恶鬼.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Lamia",
+      "cn_name": "拉迷亚",
+      "file": "data/images/monsters/Lamia_拉迷亚.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Rakshasa",
+      "cn_name": "罗刹",
+      "file": "data/images/monsters/Rakshasa_罗刹.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Succubus",
+      "cn_name": "魅魔",
+      "file": "data/images/monsters/Succubus_魅魔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Arcanaloth",
+      "cn_name": "奥法罗斯魔",
+      "file": "data/images/monsters/Arcanaloth_奥法罗斯魔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Nycaloth",
+      "cn_name": "征伐罗斯魔",
+      "file": "data/images/monsters/Nycaloth_征伐罗斯魔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Mezzoloth",
+      "cn_name": "毒虫罗斯魔",
+      "file": "data/images/monsters/Mezzoloth_毒虫罗斯魔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Ultroloth",
+      "cn_name": "超等罗斯魔",
+      "file": "data/images/monsters/Ultroloth_超等罗斯魔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Larva",
+      "cn_name": "幼虫魔",
+      "file": "data/images/monsters/Larva_幼虫魔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Swarm of Larvae",
+      "cn_name": "幼虫魔集群",
+      "file": "data/images/monsters/Swarm_幼虫魔集群.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Marilith",
+      "cn_name": "六臂蛇魔",
+      "file": "data/images/monsters/Marilith_六臂蛇魔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Nalfeshnee",
+      "cn_name": "判魂魔",
+      "file": "data/images/monsters/Nalfeshnee_判魂魔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Chasme",
+      "cn_name": "喀嘶魔",
+      "file": "data/images/monsters/Chasme_喀嘶魔.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Pseudodragon",
+      "cn_name": "伪龙",
+      "file": "data/images/monsters/Pseudodragon_伪龙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Half-Dragon",
+      "cn_name": "半龙",
+      "file": "data/images/monsters/Half-Dragon_半龙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Wyvern",
+      "cn_name": "飞龙",
+      "file": "data/images/monsters/Wyvern_飞龙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Dragon Turtle",
+      "cn_name": "龙龟",
+      "file": "data/images/monsters/Dragon_龙龟.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Shadow Dragons",
+      "cn_name": "幽影龙",
+      "file": "data/images/monsters/Shadow_幽影龙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Kobolds",
+      "cn_name": "狗头人",
+      "file": "data/images/monsters/Kobolds_狗头人.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Kobold Warrior",
+      "cn_name": "狗头人武者",
+      "file": "data/images/monsters/Kobold_狗头人武者.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Adult White Dragon",
+      "cn_name": "成年白龙",
+      "file": "data/images/monsters/Adult_成年白龙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "White Dragon Wyrmling",
+      "cn_name": "白龙雏龙",
+      "file": "data/images/monsters/White_白龙雏龙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Adult Red Dragon",
+      "cn_name": "成年红龙",
+      "file": "data/images/monsters/Adult_成年红龙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Red Dragon Wyrmling",
+      "cn_name": "红龙雏龙",
+      "file": "data/images/monsters/Red_红龙雏龙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Adult Green Dragon",
+      "cn_name": "成年绿龙",
+      "file": "data/images/monsters/Adult_成年绿龙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Adult Blue Dragon",
+      "cn_name": "成年蓝龙",
+      "file": "data/images/monsters/Adult_成年蓝龙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Blue Dragon Wyrmling",
+      "cn_name": "蓝龙雏龙",
+      "file": "data/images/monsters/Blue_蓝龙雏龙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Copper Dragons",
+      "cn_name": "赤铜龙",
+      "file": "data/images/monsters/Copper_赤铜龙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    },
+    {
+      "category": "monsters",
+      "name": "Adult Gold Dragon",
+      "cn_name": "成年金龙",
+      "file": "data/images/monsters/Adult_成年金龙.png",
+      "size": "1024x1024",
+      "status": "ok"
+    }
+  ]
+}

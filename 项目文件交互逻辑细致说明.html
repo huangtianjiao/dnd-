@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DND AI DM 项目文件交互逻辑细致说明</title>
+<style>
+:root{--bg:#fbfaf7;--paper:#fff;--ink:#24231f;--muted:#67645c;--line:#d8d4c8;--blue:#185fa5;--purple:#534ab7;--green:#0f6e56;--amber:#ba7517;--pink:#993556;--red:#a32d2d;--soft-blue:#e6f1fb;--soft-purple:#eeedfe;--soft-green:#e1f5ee;--soft-amber:#faeeda;--soft-pink:#fbeaf0;--code:#f3f1eb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Microsoft YaHei",Arial,sans-serif;line-height:1.72}.wrap{max-width:1180px;margin:0 auto;padding:36px 22px 72px}header{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:28px 30px;margin-bottom:22px}h1{margin:0 0 8px;font-size:30px;letter-spacing:.02em}h2{font-size:22px;margin:34px 0 14px;border-left:5px solid var(--blue);padding-left:12px}h3{font-size:17px;margin:24px 0 10px}.lead{color:var(--muted);font-size:15px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px}.card b{display:block;margin-bottom:6px}.tag{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--code);border:1px solid var(--line);font-size:12px;color:var(--muted);margin:2px 4px 2px 0}.section{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:24px;margin:18px 0}table{width:100%;border-collapse:collapse;margin:12px 0 18px;background:#fff}th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}th{background:#f4f2ec;font-weight:600}code{background:var(--code);padding:2px 5px;border-radius:5px;font-family:Consolas,monospace;font-size:.92em}.flow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}.node{border-radius:12px;padding:12px 14px;border:1px solid var(--line);background:#fff;min-width:130px}.arrow{color:var(--muted)}.blue{background:var(--soft-blue);border-color:#9bbfe4}.purple{background:var(--soft-purple);border-color:#b8b2ef}.green{background:var(--soft-green);border-color:#8dd1ba}.amber{background:var(--soft-amber);border-color:#e3b461}.pink{background:var(--soft-pink);border-color:#e0a0bb}.warn{border-left:5px solid var(--amber);background:#fff9ec;padding:12px 14px;border-radius:10px}.risk{border-left:5px solid var(--red);background:#fff0f0;padding:12px 14px;border-radius:10px}.toc a{color:var(--blue);text-decoration:none}.toc li{margin:4px 0}.small{font-size:13px;color:var(--muted)}.mono{font-family:Consolas,monospace}.matrix td:first-child{white-space:nowrap;font-family:Consolas,monospace}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:900px){.grid,.cols{grid-template-columns:1fr}.wrap{padding:20px 12px}table{font-size:13px}.flow{display:block}.arrow{display:block;margin:6px 0}}</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>DND AI DM 项目文件交互逻辑细致说明</h1>
+<p class="lead">本文基于当前工作区 <code>E:\Project\dnd--master</code> 的实际文件结构和关键源码阅读整理。重点解释每类文件做什么、依赖谁、被谁调用，以及一次玩家行动如何在系统内部流转。</p>
+<div class="grid">
+<div class="card"><b>项目性质</b><span>AI DM 跑团系统 + D&D 5e 静态规则库</span></div>
+<div class="card"><b>规则源</b><code>5echm_web/data.js</code><br><code>5echm_web/topics/</code><br><code>aidm/data/rules_text/</code></div>
+<div class="card"><b>运行主线</b><code>api/cli → brain/graph → knowledge + engine + stats</code></div>
+<div class="card"><b>交互界面</b><code>ui/static</code> 静态页<br><code>ui/app</code> Next.js 原型<br><code>api/ws.py</code> 多人同步</div>
+</div>
+</header>
+
+<section class="section toc">
+<h2>目录</h2>
+<ol>
+<li><a href="#overview">总览：两套东西，不要混淆</a></li>
+<li><a href="#root">根目录文件用途</a></li>
+<li><a href="#5echm">5echm_web 静态规则库</a></li>
+<li><a href="#aidm-docs">aidm/docs 文档体系</a></li>
+<li><a href="#backend">aidm/src/aidm 后端源码</a></li>
+<li><a href="#api">API 端点细分</a></li>
+<li><a href="#frontend">前端与多人交互</a></li>
+<li><a href="#data">数据资产和产物</a></li>
+<li><a href="#flows">核心交互流程</a></li>
+<li><a href="#issues">当前结构风险和注意点</a></li>
+</ol>
+</section>
+
+<section class="section" id="overview">
+<h2>1. 总览：两套东西，不要混淆</h2>
+<p>这个工作区不是单一网站，而是由两大部分组成：</p>
+<table>
+<tr><th>部分</th><th>定位</th><th>是否运行业务逻辑</th><th>对系统的作用</th></tr>
+<tr><td><code>5echm_web/</code></td><td>D&D 5e 中文规则书静态站点</td><td>基本不运行后端业务，只是静态 HTML/JS</td><td>给 AI DM 提供规则源、原文页面、检索语料</td></tr>
+<tr><td><code>aidm/</code></td><td>AI DM 跑团系统</td><td>是，包含后端、规则引擎、RAG、状态库、前端</td><td>让玩家输入自然语言，由 AI DM 叙事并由代码执行规则判定</td></tr>
+</table>
+<div class="flow">
+<div class="node blue">玩家 / 前端</div><span class="arrow">→</span>
+<div class="node amber">API 或 CLI</div><span class="arrow">→</span>
+<div class="node pink">brain/graph</div><span class="arrow">→</span>
+<div class="node purple">knowledge 查规则</div><span class="arrow">+</span>
+<div class="node green">engine 算规则</div><span class="arrow">→</span>
+<div class="node green">stats 存档</div>
+</div>
+<p>核心原则：<b>LLM 负责理解和叙事，规则数值和骰子由代码执行。</b></p>
+</section>
+
+<section class="section" id="root">
+<h2>2. 根目录文件用途</h2>
+<table class="matrix">
+<tr><th>文件/目录</th><th>用途</th><th>依赖/被调用关系</th></tr>
+<tr><td><code>aidm/</code></td><td>AI DM 主工程，包含源码、文档、数据、前端、脚本。</td><td>核心运行体。API、CLI、UI 都在这里。</td></tr>
+<tr><td><code>5echm_web/</code></td><td>5e 不全书静态网页版本，规则源。</td><td><code>aidm/src/aidm/config.py</code> 指向它的 <code>data.js</code> 和 <code>topics</code>。</td></tr>
+<tr><td><code>AI_DM模型技术能力与架构总报告.html</code></td><td>关于 AI DM 模型能力和架构的调研/总结报告。</td><td>文档产物，不参与运行。</td></tr>
+<tr><td><code>AI跑团全网调研报告.html</code></td><td>AI 跑团相关产品、方案和资料的调研报告。</td><td>文档产物，不参与运行。</td></tr>
+<tr><td><code>AI跑团规则书使用指南.html</code></td><td>面向 AI 跑团系统如何使用 D&D 规则书的说明。</td><td>文档产物，可作为需求/设计参考。</td></tr>
+<tr><td><code>DND5e_UI_交互原型.html</code></td><td>DND5e UI 交互原型。</td><td>静态原型，不等同于 <code>aidm/ui</code> 的运行前端。</td></tr>
+<tr><td><code>DND5e完整游玩流程指南.html</code></td><td>DND5e 游玩流程指南。</td><td>规则/产品参考文档。</td></tr>
+<tr><td><code>DND5e完整游玩流程深度调研报告.html</code></td><td>完整跑团流程深度调研。</td><td>规则/产品参考文档。</td></tr>
+<tr><td><code>多人同玩架构设计调研报告.html</code></td><td>多人同玩架构调研。</td><td><code>api/ws.py</code> 的 Socket.IO/Room 设计注释明确参考此报告。</td></tr>
+<tr><td><code>跑团流程深度调研报告.html</code></td><td>跑团流程分析文档。</td><td>需求/设计参考。</td></tr>
+<tr><td><code>security_report.md</code></td><td>安全检查报告。</td><td>文档产物，不参与运行。</td></tr>
+</table>
+</section>
+
+<section class="section" id="5echm">
+<h2>3. 5echm_web 静态规则库</h2>
+<h3>3.1 静态站点框架</h3>
+<table class="matrix">
+<tr><th>文件</th><th>做什么</th><th>交互逻辑</th></tr>
+<tr><td><code>5echm_web/index.html</code></td><td>主入口，创建上下 frameset。</td><td>上方加载 <code>webhelptop.htm</code>，主体加载 <code>webhelpframe.htm#page=...</code>。如果 URL 没有 <code>page</code>，默认打开 <code>写在前面.html</code>。</td></tr>
+<tr><td><code>webhelpframe.htm</code></td><td>中间框架页，把页面分成左导航和右内容。</td><td>左侧 frame 加载 <code>webhelpleft.htm</code>，右侧 frame 加载 <code>topics/{DefaultPage}</code>。</td></tr>
+<tr><td><code>webhelpleft.htm</code></td><td>左侧导航容器。</td><td>上方工具栏 <code>webhelptoolbar.htm</code>，下方目录树 <code>webhelpcontents.htm</code>。</td></tr>
+<tr><td><code>webhelpcontents.htm</code></td><td>目录树核心文件。</td><td>包含大量树节点脚本：展开/折叠、选中节点、点击后让右侧 <code>content</code> frame 跳转到对应 topic。</td></tr>
+<tr><td><code>webhelpsearch.htm</code></td><td>搜索页。</td><td>通常会加载 <code>data.js</code> 作为搜索索引。</td></tr>
+<tr><td><code>webhelpindex.htm</code></td><td>索引页。</td><td>辅助按关键词/主题浏览。</td></tr>
+<tr><td><code>webhelpbookmark.htm</code></td><td>书签页。</td><td>WinCHM 静态帮助系统功能。</td></tr>
+<tr><td><code>webhelptop.htm</code> / <code>webhelptoph.htm</code></td><td>顶部栏。</td><td>展示站点标题或工具入口。</td></tr>
+<tr><td><code>indexh.htm</code></td><td>简化版本入口。</td><td>给不支持脚本/frameset 的场景兜底。</td></tr>
+</table>
+<h3>3.2 内容和资源文件</h3>
+<table class="matrix">
+<tr><th>文件/目录</th><th>用途</th><th>被谁使用</th></tr>
+<tr><td><code>topics/</code></td><td>几千个规则 HTML 页面，包含怪物、法术、装备、DM 速查、官方扩展等。</td><td>静态站点右侧内容 frame 直接加载；AI DM 可用它作原文兜底。</td></tr>
+<tr><td><code>topics/写在前面.html</code></td><td>默认首页，介绍 5E 不全书、版本、贡献方式、目录说明。</td><td><code>index.html</code> 默认打开它。</td></tr>
+<tr><td><code>topics/*/style.css</code> / <code>stat-block.css</code></td><td>局部内容页面样式，特别是怪物 stat block 样式。</td><td>对应 topic 页面引用。</td></tr>
+<tr><td><code>data.js</code></td><td>最重要的数据索引，结构接近 <code>正文, 标题/标签, 来源路径</code> 的重复数组。</td><td>静态搜索使用；<code>aidm/knowledge/parse_datajs.py</code> 解析它并写入 Qdrant。</td></tr>
+<tr><td><code>languages.js</code></td><td>WinCHM 多语言 UI 文案表，当前强制为中文。</td><td>搜索、目录、书签等帮助页脚本使用。</td></tr>
+<tr><td><code>icons/</code></td><td>目录树展开/折叠/节点图标。</td><td><code>webhelpcontents.htm</code> 使用。</td></tr>
+<tr><td><code>images/</code></td><td>顶部/按钮等静态图片。</td><td>帮助系统工具栏和导航页使用。</td></tr>
+<tr><td><code>CNAME</code></td><td>GitHub Pages 自定义域名配置。</td><td>部署用，不参与本地运行。</td></tr>
+<tr><td><code>.github/workflows/static.yml</code></td><td>GitHub Pages 静态部署流水线。</td><td>远程仓库部署用。</td></tr>
+</table>
+<p class="warn">关键点：<code>5echm_web</code> 本身是规则书阅读站，不是 AI DM 的运行后端。AI DM 只把它当规则数据源和原文依据。</p>
+</section>
+
+<section class="section" id="aidm-docs">
+<h2>4. aidm/docs 文档体系</h2>
+<table class="matrix">
+<tr><th>文件</th><th>职责</th><th>开发时作用</th></tr>
+<tr><td><code>README.md</code></td><td>文档索引和维护约定。</td><td>告诉你 PRD、架构、规则规格、变更日志分别在哪里。</td></tr>
+<tr><td><code>PRD.md</code></td><td>产品需求。</td><td>定义 AI DM 要做什么、范围是什么、验收标准是什么。</td></tr>
+<tr><td><code>ARCHITECTURE.md</code></td><td>系统架构说明。</td><td>核心依据。明确“叙事交给 LLM，规则判定交给代码”。</td></tr>
+<tr><td><code>BUILD.md</code></td><td>搭建指南和 P0-P5 路线图。</td><td>说明如何自检、如何运行、每个阶段交付了什么。</td></tr>
+<tr><td><code>RULE_SPEC.md</code></td><td>规则规格书，约 400 条规则点。</td><td>最高优先级规则语料之一，给 <code>knowledge/parse_rulespec.py</code> 解析。</td></tr>
+<tr><td><code>IMAGE_ASSETS.md</code></td><td>图片资产盘点和生成方案。</td><td>解释 <code>data/images</code> 的图像来源、manifest 和生成脚本。</td></tr>
+<tr><td><code>FRONTEND_DESIGN.md</code></td><td>前端设计说明。</td><td>解释 UI 设计方向和组件构想。</td></tr>
+<tr><td><code>CHANGELOG.md</code></td><td>实际变更日志。</td><td>记录做了什么。</td></tr>
+<tr><td><code>DECISIONS.md</code></td><td>ADR 式决策记录。</td><td>记录为什么这么做、发现了什么漂移、还有什么待确认。</td></tr>
+<tr><td><code>REFACTOR_PLAN.md</code></td><td>重构计划。</td><td>描述模型、字段、持久化、重构方向。</td></tr>
+</table>
+</section>
+
+<section class="section" id="backend">
+<h2>5. aidm/src/aidm 后端源码</h2>
+<h3>5.1 配置和入口</h3>
+<table class="matrix">
+<tr><th>文件</th><th>职责</th><th>依赖谁</th><th>被谁调用</th></tr>
+<tr><td><code>config.py</code></td><td>读取 LLM、embedding、Qdrant、规则路径配置。</td><td><code>.env</code>，默认路径写成 <code>D:\game\dnd\.env</code>。</td><td><code>brain/llm.py</code>、<code>knowledge/indexer.py</code> 等。</td></tr>
+<tr><td><code>api/main.py</code></td><td>FastAPI 总入口，挂载静态前端，暴露所有 HTTP API。</td><td><code>stats/store</code>、<code>stats/models</code>、<code>brain/graph</code>、<code>brain/world</code>、<code>brain/loot</code> 等。</td><td>浏览器前端、HTTP 客户端、多人房间管理。</td></tr>
+<tr><td><code>api/ws.py</code></td><td>Socket.IO 多人同桌服务。</td><td><code>brain/graph</code>、<code>brain/world</code>、<code>engine/combat</code>、<code>stats/store</code>。</td><td><code>api/main.py</code> 引入并组合 ASGI。</td></tr>
+<tr><td><code>cli.py</code></td><td>命令行跑团入口。</td><td><code>brain/graph</code>、<code>stats/store</code>、<code>stats/models</code>。</td><td>用户运行 <code>python -m aidm.cli</code>。</td></tr>
+</table>
+
+<h3>5.2 brain：AI DM 编排和玩法模块</h3>
+<table class="matrix">
+<tr><th>文件</th><th>职责</th><th>关键函数/类</th><th>交互位置</th></tr>
+<tr><td><code>brain/graph.py</code></td><td>核心 LangGraph 编排链。</td><td><code>classify</code>、<code>retrieve</code>、<code>verify</code>、<code>resolve</code>、<code>narrate</code>、<code>apply_node</code>、<code>run</code>。</td><td>所有玩家行动最终都进这里。它调用 knowledge 查规则，调用 engine 算骰子，调用 stats 写库。</td></tr>
+<tr><td><code>brain/state.py</code></td><td>定义每轮流程状态对象。</td><td><code>GameState</code>。</td><td><code>graph.py</code> 的节点之间传递 intent/evidence/dice/narration 等。</td></tr>
+<tr><td><code>brain/llm.py</code></td><td>LLM 客户端封装。</td><td><code>get_llm</code>、<code>chat</code>。</td><td><code>graph.py</code> 的 classify/narrate 和 <code>world.py</code> 调用。</td></tr>
+<tr><td><code>brain/world.py</code></td><td>生成跑团开场、场景上下文、场景面板数据。</td><td><code>open_campaign</code>、<code>scene_context</code>、<code>get_scene</code>。</td><td><code>/open</code>、<code>/scene/{campaign_id}</code>、<code>graph.narrate</code>。</td></tr>
+<tr><td><code>brain/char_create.py</code></td><td>角色创建规则。</td><td>属性调整、熟练加值、HP、AC、五步建卡。</td><td>可服务角色创建流程，目前 API 创建角色主要直接构造 <code>models.Character</code>。</td></tr>
+<tr><td><code>brain/rest.py</code></td><td>短休/长休机制。</td><td><code>short_rest</code>、<code>long_rest</code>。</td><td><code>graph._resolve_rest</code> 调用。</td></tr>
+<tr><td><code>brain/social.py</code></td><td>社交互动和 NPC 态度。</td><td><code>check_social_dc</code>、<code>update_attitude</code>、<code>social_interaction</code>。</td><td><code>graph._resolve_social</code> 调用。</td></tr>
+<tr><td><code>brain/exploration.py</code></td><td>探索、旅行、天气、觅食、导航、随机遭遇。</td><td><code>travel_day</code>、<code>dungeon_turn</code>、<code>navigation</code>、<code>random_encounter_check</code>。</td><td><code>graph._resolve_travel</code> 等探索行为使用。</td></tr>
+<tr><td><code>brain/levelup.py</code></td><td>升级、XP、专长选择。</td><td><code>level_up</code>、<code>available_feats</code>、<code>select_feat</code>。</td><td><code>graph._resolve_levelup</code> 和专长 API 调用。</td></tr>
+<tr><td><code>brain/loot.py</code></td><td>战利品生成、分配、同调。</td><td><code>generate_loot</code>、<code>distribute_loot</code>、<code>attune_magic_item</code>。</td><td><code>/loot/*</code>、<code>/character/{cid}/attune</code> API 调用。</td></tr>
+<tr><td><code>brain/loot_distribution.py</code></td><td>另一套战利品池/分配策略。</td><td><code>generate_loot_pool</code>、<code>distribute_items_* </code>。</td><td><code>api/main.py</code> 后半段 loot history/pool 相关接口可能使用。</td></tr>
+<tr><td><code>brain/stronghold.py</code></td><td>据点系统。</td><td><code>create_stronghold</code>、<code>build_facility</code>、<code>run_stronghold_turn</code>。</td><td><code>/stronghold/*</code> API 调用。</td></tr>
+<tr><td><code>brain/room.py</code></td><td>房间模型和房间生命周期。</td><td>房间 ID、房主、踢人、转让房主等。</td><td><code>/room/*</code> API 使用。</td></tr>
+<tr><td><code>brain/session0.py</code></td><td>Session 0 安全边界和跑团偏好配置。</td><td><code>default_session0</code>、<code>validate_session0</code>。</td><td>当前主链路未深度接入，属于会前配置能力。</td></tr>
+<tr><td><code>brain/plane_travel.py</code></td><td>位面旅行和位面危害。</td><td><code>travel_to_plane</code>、<code>apply_plane_hazards</code>。</td><td>旅行/高级冒险模块可接入。</td></tr>
+<tr><td><code>brain/adventure_builder.py</code></td><td>冒险生成器。</td><td><code>create_adventure</code>、<code>add_encounter</code>、<code>generate_rewards</code>。</td><td>用于构建预设冒险，不是当前聊天主链路必经。</td></tr>
+<tr><td><code>brain/campaign_manager.py</code></td><td>战役生命周期管理。</td><td><code>create_campaign</code>、<code>add_session</code>、<code>end_campaign</code>。</td><td>比 <code>stats/store</code> 更偏业务层的战役管理。</td></tr>
+</table>
+
+<h3>5.3 engine：确定性规则引擎</h3>
+<table class="matrix">
+<tr><th>文件</th><th>职责</th><th>关键函数/类</th><th>被谁调用</th></tr>
+<tr><td><code>engine/dice.py</code></td><td>骰子和基础数值。</td><td><code>roll_die</code>、<code>roll_dice</code>、<code>roll_d20</code>、<code>ability_modifier</code>、<code>proficiency_bonus</code>。</td><td><code>check.py</code>、<code>damage.py</code>、角色模型。</td></tr>
+<tr><td><code>engine/check.py</code></td><td>D20 检定、攻击、豁免、DC。</td><td><code>ability_check</code>、<code>saving_throw</code>、<code>attack_roll</code>、<code>calc_save_dc</code>。</td><td><code>brain/graph.py</code> 的 resolve 节点。</td></tr>
+<tr><td><code>engine/damage.py</code></td><td>伤害、抗性/易伤/免疫、HP、治疗、死亡豁免。</td><td><code>roll_damage</code>、<code>apply_damage_to_hp</code>、<code>death_save</code>。</td><td><code>graph._resolve_attack/_resolve_cast/apply_node</code>。</td></tr>
+<tr><td><code>engine/conditions.py</code></td><td>状态集合、状态对检定/移动/攻击的影响。</td><td><code>ConditionState</code>、<code>attack_modifiers</code>、<code>speed_after_conditions</code>。</td><td><code>stats/models.Character</code> 可转换状态。</td></tr>
+<tr><td><code>engine/combat.py</code></td><td>战斗状态机。</td><td><code>Combatant</code>、<code>Combat</code>、<code>start_combat</code>、<code>advance_turn</code>、<code>current_combatant</code>。</td><td><code>graph._resolve_start_combat</code>、<code>api/ws.py</code>、<code>stats/store.py</code>。</td></tr>
+<tr><td><code>engine/actions.py</code></td><td>战斗动作封装。</td><td><code>action_attack</code>、<code>action_dash</code>、<code>action_dodge</code>、<code>resolve_combat_action</code>。</td><td>可被更完整的战斗行动系统调用。</td></tr>
+<tr><td><code>engine/spellcasting.py</code></td><td>施法完整规则。</td><td><code>CasterState</code>、<code>compute_spell_save_dc</code>、<code>consume_spell_slot</code>、<code>cast_spell</code>。</td><td>当前 <code>graph._resolve_cast</code> 有简化实现，后续可接入此模块。</td></tr>
+<tr><td><code>engine/concentration.py</code></td><td>专注法术管理。</td><td><code>ConcentrationManager</code>、<code>concentration_save_dc</code>。</td><td>战斗受伤、施法系统可调用。</td></tr>
+<tr><td><code>engine/opportunity_attack.py</code></td><td>借机攻击。</td><td><code>can_make_opportunity_attack</code>、<code>opportunity_attack</code>。</td><td>战斗移动系统可调用。</td></tr>
+<tr><td><code>engine/core_loop.py</code></td><td>核心游戏循环抽象。</td><td><code>should_roll_dice</code>、<code>resolve_action</code>、<code>CoreLoopMachine</code>。</td><td>当前主链路未作为核心入口，属于规则循环抽象层。</td></tr>
+</table>
+
+<h3>5.4 knowledge：规则知识库/RAG</h3>
+<table class="matrix">
+<tr><th>文件</th><th>职责</th><th>关键函数</th><th>数据来源</th></tr>
+<tr><td><code>knowledge/parse_datajs.py</code></td><td>解析 <code>5echm_web/data.js</code>。</td><td>解析 JS 字符串数组为条目。</td><td><code>5echm_web/data.js</code>。</td></tr>
+<tr><td><code>knowledge/parse_rulespec.py</code></td><td>解析 <code>RULE_SPEC.md</code>。</td><td>按规则 ID 切块。</td><td><code>aidm/docs/RULE_SPEC.md</code>。</td></tr>
+<tr><td><code>knowledge/embedding.py</code></td><td>本地 embedding。</td><td><code>embed_texts</code>、<code>embed_query</code>。</td><td>配置里的 bge-small-zh。</td></tr>
+<tr><td><code>knowledge/indexer.py</code></td><td>构建 Qdrant 本地索引。</td><td><code>build_index</code>、<code>index_text_files</code>、<code>index_chunks</code>、<code>search</code>。</td><td><code>data.js</code>、<code>rules_text</code>、<code>RULE_SPEC</code>。</td></tr>
+<tr><td><code>knowledge/retriever.py</code></td><td>规则检索封装。</td><td><code>query_rules</code>、<code>format_for_llm</code>、<code>query_formatted</code>。</td><td>Qdrant 检索结果。</td></tr>
+<tr><td><code>knowledge/hybrid.py</code></td><td>BM25 + 向量 RRF 混合检索。</td><td><code>search_spec_hybrid</code>。</td><td>RULE_SPEC 等结构化规则。</td></tr>
+<tr><td><code>knowledge/aliases.py</code></td><td>同义词/别名桥接。</td><td>把玩家说法映射到规则原词。</td><td>规则术语表。</td></tr>
+<tr><td><code>knowledge/verifier.py</code></td><td>用检索证据校验判定参数。</td><td><code>verify</code>、<code>gather_evidence</code>、<code>keyword_preflight</code>。</td><td><code>hybrid.search_spec_hybrid</code>。</td></tr>
+<tr><td><code>knowledge/eval_retrieval.py</code></td><td>检索评测。</td><td>recall@3/5 等评测。</td><td>评测查询集。</td></tr>
+</table>
+
+<h3>5.5 stats：状态和存档</h3>
+<table class="matrix">
+<tr><th>文件</th><th>职责</th><th>关键对象/函数</th><th>交互位置</th></tr>
+<tr><td><code>stats/models.py</code></td><td>SQLModel 数据模型。</td><td><code>Character</code>、<code>Campaign</code>、<code>Scene</code>、<code>CombatState</code>、<code>Log</code>。</td><td>定义 SQLite 表结构，给 API/brain/engine 使用。</td></tr>
+<tr><td><code>stats/store.py</code></td><td>CRUD、迁移、持久化。</td><td><code>create_campaign</code>、<code>save_character</code>、<code>get_scene</code>、<code>save_combat</code>、<code>append_log</code>。</td><td>API、graph、world、ws 都调用它。</td></tr>
+</table>
+
+<h3>5.6 data：规则数据表</h3>
+<table class="matrix">
+<tr><th>文件</th><th>职责</th><th>被谁使用</th></tr>
+<tr><td><code>data/equipment.py</code></td><td>武器、护甲、钱币、装备数据。</td><td><code>graph._resolve_attack</code> 查武器伤害骰和伤害类型。</td></tr>
+<tr><td><code>data/magic_items.py</code></td><td>魔法物品库。</td><td><code>/magic-items</code>、战利品、同调逻辑。</td></tr>
+<tr><td><code>data/feats.py</code></td><td>专长数据。</td><td><code>/feats</code> 和升级/专长选择。</td></tr>
+<tr><td><code>data/classes.py</code>、<code>races.py</code>、<code>backgrounds.py</code>、<code>spells.py</code></td><td>角色创建和施法相关规则数据。</td><td>角色创建、法术、升级模块。</td></tr>
+<tr><td><code>data/planes.py</code></td><td>位面旅行数据。</td><td><code>brain/plane_travel.py</code>。</td></tr>
+<tr><td><code>data/strongholds.py</code></td><td>据点设施/等级/事件数据。</td><td><code>brain/stronghold.py</code>。</td></tr>
+</table>
+</section>
+
+<section class="section" id="api">
+<h2>6. API 端点细分</h2>
+<table>
+<tr><th>端点类别</th><th>端点</th><th>职责</th><th>主要调用</th></tr>
+<tr><td>基础</td><td><code>GET /</code>、<code>GET /health</code></td><td>前端首页、健康检查。</td><td>静态文件、FastAPI。</td></tr>
+<tr><td>战役/角色</td><td><code>POST /campaign</code>、<code>GET /campaigns</code>、<code>GET /campaign/{id}/state</code>、<code>POST /character</code>、<code>GET /character/{cid}</code></td><td>创建/读取战役和角色状态。</td><td><code>stats/store</code>、<code>stats/models</code>。</td></tr>
+<tr><td>开场/场景</td><td><code>POST /open</code>、<code>GET /scene/{campaign_id}</code>、<code>POST /generate_setting</code></td><td>生成世界设定、开场叙事、读取当前场景。</td><td><code>brain/world.py</code>、<code>brain/llm.py</code>。</td></tr>
+<tr><td>核心聊天</td><td><code>POST /chat</code>、<code>POST /chat/resume</code>、<code>GET /summary/{campaign_id}</code></td><td>跑一轮判定链；HITL 中断恢复；读取剧情摘要。</td><td><code>brain/graph.py</code>、<code>stats/store</code>。</td></tr>
+<tr><td>战斗/怪物</td><td><code>GET /combat/{campaign_id}</code>、<code>GET /monster/{name}</code></td><td>读取战斗状态、检索怪物属性块。</td><td><code>stats/store</code>、<code>knowledge/indexer</code>。</td></tr>
+<tr><td>多人</td><td><code>POST /join</code>、<code>GET /players/{campaign_id}</code>、<code>/room/*</code></td><td>玩家加入、在线玩家、房间创建/加入/踢人/转让房主。</td><td><code>api/ws.py</code>、<code>brain/room.py</code>。</td></tr>
+<tr><td>战利品</td><td><code>/loot/generate</code>、<code>/loot/pool</code>、<code>/loot/distribute</code>、<code>/loot/history/{campaign_id}</code></td><td>生成战利品池、分配物品/金币、历史。</td><td><code>brain/loot.py</code>、<code>brain/loot_distribution.py</code>。</td></tr>
+<tr><td>魔法物品</td><td><code>GET /magic-items</code>、<code>GET /magic-items/{name}</code>、<code>POST /character/{cid}/attune</code>、<code>POST /character/{cid}/break-attunement</code></td><td>查询魔法物品、同调/解除同调。</td><td><code>data/magic_items.py</code>、<code>brain/loot.py</code>。</td></tr>
+<tr><td>专长</td><td><code>GET /feats</code>、<code>POST /character/{cid}/feat</code>、<code>GET /character/{cid}/available-feats</code>、<code>POST /character/{cid}/select-feat</code></td><td>专长查询和选择。</td><td><code>data/feats.py</code>、<code>brain/levelup.py</code>。</td></tr>
+<tr><td>据点</td><td><code>/stronghold/create</code>、<code>/stronghold/{campaign_id}</code>、<code>/stronghold/build</code>、<code>/stronghold/turn</code>、<code>/strongholds/facilities</code></td><td>据点创建、设施建设、据点回合和设施列表。</td><td><code>brain/stronghold.py</code>。</td></tr>
+</table>
+<p class="risk">注意：<code>api/main.py</code> 中出现了两组 <code>/loot/distribute</code> 路由定义。FastAPI 对重复路径/方法会产生覆盖或冲突风险，后续应统一命名或拆分。</p>
+</section>
+
+<section class="section" id="frontend">
+<h2>7. 前端与多人交互</h2>
+<h3>7.1 静态前端 <code>aidm/ui/static</code></h3>
+<table class="matrix">
+<tr><th>文件</th><th>职责</th><th>调用关系</th></tr>
+<tr><td><code>ui/static/index.html</code></td><td>浏览器跑团主页面骨架。</td><td>加载 Socket.IO CDN 和 <code>/static/app.js</code>。</td></tr>
+<tr><td><code>ui/static/app.js</code></td><td>前端主逻辑：创建战役、建角色、开场、读取场景/战斗、连接 Socket.IO、发送玩家行动。</td><td>调用 <code>/campaigns</code>、<code>/campaign</code>、<code>/character</code>、<code>/open</code>、<code>/campaign/{id}/state</code>、<code>/scene/{id}</code>、<code>/combat/{id}</code>。通过 <code>socket.emit('action')</code> 发行动。</td></tr>
+<tr><td><code>ui/static/style.css</code></td><td>静态前端样式。</td><td><code>index.html</code> 引用。</td></tr>
+</table>
+<h3>7.2 Next.js 前端 <code>aidm/ui/app</code></h3>
+<table class="matrix">
+<tr><th>文件</th><th>职责</th><th>调用关系</th></tr>
+<tr><td><code>ui/app/page.tsx</code></td><td>Next.js 客户端页面原型，集成 3D DiceBox。</td><td>调用 <code>POST /chat</code>，把玩家输入、战役 ID、角色 ID 和 thread_id 发送给后端；收到 dice/narration/state_changes 后更新页面。</td></tr>
+<tr><td><code>ui/app/layout.tsx</code></td><td>Next.js 根布局。</td><td>承载全局页面结构、metadata 和样式入口。</td></tr>
+<tr><td><code>ui/app/globals.css</code></td><td>Next.js 全局样式。</td><td><code>layout.tsx</code> 引入。</td></tr>
+<tr><td><code>ui/package.json</code></td><td>前端依赖和脚本。</td><td>定义 Next.js、React、DiceBox 等依赖。</td></tr>
+<tr><td><code>ui/public/assets/dice-box/</code></td><td>3D 骰子资源。</td><td><code>page.tsx</code> 中 DiceBox 初始化时通过 <code>assetPath: "/assets/dice-box"</code> 使用。</td></tr>
+</table>
+<h3>7.3 多人同玩链路</h3>
+<table class="matrix">
+<tr><th>层级</th><th>文件/对象</th><th>职责</th><th>数据流位置</th></tr>
+<tr><td>前端连接</td><td><code>ui/static/app.js</code></td><td>通过 <code>io(API, { transports: ['websocket'] })</code> 建立 WebSocket。</td><td>玩家进入战役后加入 campaign room。</td></tr>
+<tr><td>ASGI 服务</td><td><code>api/ws.py</code></td><td>创建 Socket.IO AsyncServer，处理 connect、join、action、disconnect。</td><td>多人实时同步入口。</td></tr>
+<tr><td>房间状态</td><td><code>CampaignRoom</code></td><td>记录房间内玩家、DM、连接状态、最近活动时间。</td><td>用于广播玩家列表、断线重连和房间状态。</td></tr>
+<tr><td>行动处理</td><td><code>graph.run_turn</code></td><td>收到 socket action 后跑一轮 AI DM 判定。</td><td>多人行动最终仍走单人核心判定链。</td></tr>
+<tr><td>广播更新</td><td><code>sio.emit(..., room=...)</code></td><td>把 narration、dice、state_changes、scene/combat 更新发给房间内成员。</td><td>让所有客户端看到同一轮结果。</td></tr>
+</table>
+</section>
+
+<section class="section" id="data">
+<h2>8. 数据资产和运行产物</h2>
+<table class="matrix">
+<tr><th>路径</th><th>用途</th><th>生成/消费关系</th></tr>
+<tr><td><code>aidm/data/rules_text/</code></td><td>规则文本切块或抽取产物。</td><td><code>knowledge/indexer.py</code> 可以索引这些文本，供 RAG 检索。</td></tr>
+<tr><td><code>aidm/data/rules.db</code></td><td>Qdrant 本地向量库路径。</td><td><code>knowledge/indexer.py</code> 写入；<code>knowledge/retriever.py</code> 查询。</td></tr>
+<tr><td><code>aidm/data/saves/save.db</code></td><td>SQLite 存档库。</td><td><code>stats/store.py</code> 保存 campaign、character、scene、combat、log。</td></tr>
+<tr><td><code>aidm/data/images/</code></td><td>角色、怪物、场景或 UI 图片资产。</td><td>由图片脚本或前端静态展示使用。</td></tr>
+<tr><td><code>aidm/data/image_manifest.json</code></td><td>图片资产清单。</td><td>配合 <code>docs/IMAGE_ASSETS.md</code> 和资产生成脚本管理图片。</td></tr>
+<tr><td><code>aidm/scripts/</code></td><td>辅助脚本。</td><td>用于生成图片、构建索引、迁移或一次性处理数据。</td></tr>
+<tr><td><code>aidm/tests/</code></td><td>测试用例。</td><td>验证 engine、knowledge、stats、api 等模块行为。</td></tr>
+</table>
+<p>数据流里最关键的三类持久化分别是：规则索引 <code>rules.db</code>、游戏存档 <code>save.db</code>、图片/规则文本等静态资产。规则索引用于回答“应该怎么判”，存档库用于保存“当前发生了什么”。</p>
+</section>
+
+<section class="section" id="flows">
+<h2>9. 核心交互流程</h2>
+<h3>9.1 单轮玩家行动</h3>
+<div class="flow">
+<div class="node blue">玩家输入自然语言</div><span class="arrow">→</span>
+<div class="node amber">/chat 或 socket action</div><span class="arrow">→</span>
+<div class="node pink">graph.classify</div><span class="arrow">→</span>
+<div class="node purple">retrieve + verify</div><span class="arrow">→</span>
+<div class="node green">resolve 掷骰/结算</div><span class="arrow">→</span>
+<div class="node pink">narrate 叙事</div><span class="arrow">→</span>
+<div class="node green">apply 写库</div>
+</div>
+<table>
+<tr><th>阶段</th><th>文件/函数</th><th>输入</th><th>输出</th></tr>
+<tr><td>意图识别</td><td><code>brain/graph.py classify</code></td><td>玩家原文、战役/角色上下文。</td><td><code>intent</code>：行动类型、目标、技能、DC、攻击/施法等结构化信息。</td></tr>
+<tr><td>规则检索</td><td><code>retrieve</code>、<code>knowledge/retriever.py</code></td><td>玩家行动和意图。</td><td>规则证据片段。</td></tr>
+<tr><td>规则校验</td><td><code>verify</code>、<code>knowledge/verifier.py</code></td><td>意图中的 check type/DC 和证据。</td><td>是否需要重检索、是否需要人工确认、规则问题列表。</td></tr>
+<tr><td>确定性结算</td><td><code>resolve</code> + <code>engine/*</code></td><td>角色属性、武器/法术、战斗状态、DC。</td><td>骰子结果、伤害、状态变化。</td></tr>
+<tr><td>叙事生成</td><td><code>narrate</code> + <code>brain/llm.py</code></td><td>玩家输入、规则证据、骰子结果、场景上下文。</td><td>给玩家看的 DM 叙事文本。</td></tr>
+<tr><td>落库</td><td><code>apply_node</code> + <code>stats/store.py</code></td><td>state_changes、narration、dice。</td><td>更新 character/combat/scene/log。</td></tr>
+</table>
+<h3>9.2 创建战役并开场</h3>
+<div class="flow">
+<div class="node blue">前端创建战役</div><span class="arrow">→</span>
+<div class="node amber">POST /campaign</div><span class="arrow">→</span>
+<div class="node green">stats/store.create_campaign</div><span class="arrow">→</span>
+<div class="node blue">创建角色</div><span class="arrow">→</span>
+<div class="node amber">POST /open</div><span class="arrow">→</span>
+<div class="node pink">world.open_campaign</div><span class="arrow">→</span>
+<div class="node green">保存 Scene</div>
+</div>
+<p><code>/open</code> 是开场关键点：它不是简单返回模板，而是通过 <code>brain/world.py</code> 调用 LLM 生成世界起点、当前场景、可行动线索，然后写入 <code>Scene</code>。</p>
+<h3>9.3 规则知识库构建</h3>
+<div class="flow">
+<div class="node purple">5echm_web/data.js</div><span class="arrow">→</span>
+<div class="node purple">parse_datajs.py</div><span class="arrow">→</span>
+<div class="node green">embedding.py</div><span class="arrow">→</span>
+<div class="node green">indexer.py</div><span class="arrow">→</span>
+<div class="node purple">rules.db / Qdrant</div><span class="arrow">→</span>
+<div class="node pink">retriever/verifier</div>
+</div>
+<p>这里的核心价值是把静态规则书变成可检索证据。它不是直接把整本规则书塞给 LLM，而是每轮按行动找相关片段，再让规则校验器和叙事节点引用这些片段。</p>
+</section>
+
+<section class="section" id="issues">
+<h2>10. 当前结构风险和注意点</h2>
+<table class="matrix">
+<tr><th>风险</th><th>涉及文件</th><th>影响</th><th>建议</th></tr>
+<tr><td>硬编码路径</td><td><code>config.py</code>、<code>knowledge/indexer.py</code>、<code>stats/store.py</code>、部分业务模块</td><td>当前实际工作区是 <code>E:\Project\dnd--master</code>，但源码中多处默认路径是 <code>D:\game\dnd\...</code>，会导致索引、存档或 .env 读取失败。</td><td>统一改为基于项目根目录自动推导，或全部通过环境变量配置。</td></tr>
+<tr><td>重复路由</td><td><code>api/main.py</code></td><td><code>/loot/distribute</code> 出现两组定义，可能覆盖、冲突或让调用方拿到非预期实现。</td><td>合并两个战利品分发模型，或改名为 <code>/loot/distribute-simple</code> 和 <code>/loot/distribute-pool</code>。</td></tr>
+<tr><td>规则模块有主链路和扩展链路并存</td><td><code>engine/spellcasting.py</code>、<code>engine/core_loop.py</code>、<code>brain/char_create.py</code></td><td>存在实现了但未完全接入主流程的能力，容易误判“已经可用”。</td><td>在文档或代码注释中标明哪些模块是主链路必经，哪些是后续扩展。</td></tr>
+<tr><td>前端有两个版本</td><td><code>ui/static</code>、<code>ui/app</code></td><td>静态前端和 Next.js 原型调用方式不同，维护时可能混淆。</td><td>明确一个为当前主前端，另一个作为实验原型；或逐步合并。</td></tr>
+<tr><td>RAG 依赖本地索引产物</td><td><code>aidm/data/rules.db</code></td><td>如果未构建索引，规则检索和校验会弱化或失败。</td><td>在启动前增加健康检查，提示是否需要运行索引构建。</td></tr>
+</table>
+<p class="warn">最应该优先处理的是硬编码路径和重复路由。这两个问题会直接影响本地启动、API 行为和后续调试效率。</p>
+</section>
+
+<section class="section">
+<h2>结论</h2>
+<p>这个项目已经形成了比较清晰的 AI DM 架构：静态规则库提供语料，knowledge 层把规则变成检索证据，brain 层负责任务编排和 LLM 叙事，engine 层负责确定性 D&D 规则计算，stats 层负责持久化，api/ui/ws 层负责把这些能力暴露给单人和多人交互。</p>
+<p>如果下一步要继续推进，建议先修两类工程问题：路径配置改为项目相对路径，清理重复 API 路由。修完后再运行测试和本地服务验证，能更快判断系统当前可用程度。</p>
+</section>
+
+</div>
+</body>
+</html>

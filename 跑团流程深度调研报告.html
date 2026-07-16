@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跑团流程深度调研报告</title>
+    <style>
+        :root {
+            --bg: #fafbfc;
+            --card-bg: #ffffff;
+            --text: #2c2c2c;
+            --text-light: #666;
+            --accent: #8b5cf6;
+            --accent-light: #f3eeff;
+            --border: #e5e7eb;
+            --red: #ef4444;
+            --green: #10b981;
+            --orange: #f59e0b;
+            --blue: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+
+        /* Header */
+        .report-header {
+            text-align: center;
+            margin-bottom: 48px;
+            padding: 48px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            color: white;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+
+        .report-header h1 {
+            font-size: 32px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .report-header .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .report-header .meta {
+            display: inline-flex;
+            gap: 24px;
+            font-size: 13px;
+            opacity: 0.85;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .report-header .meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Table of Contents */
+        .toc {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 48px;
+        }
+
+        .toc h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: var(--text);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 8px;
+            display: inline-block;
+        }
+
+        .toc ol {
+            list-style: none;
+            counter-reset: toc;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 24px;
+        }
+
+        .toc li {
+            counter-increment: toc;
+            font-size: 14px;
+        }
+
+        .toc li::before {
+            content: counter(toc);
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            background: var(--accent-light);
+            color: var(--accent);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 22px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .toc a {
+            color: var(--text);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: var(--accent);
+        }
+
+        @media (max-width: 600px) {
+            .toc ol { grid-template-columns: 1fr; }
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 48px;
+        }
+
+        .section h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h2 .icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .section h3 {
+            font-size: 18px;
+            margin: 24px 0 12px;
+            color: var(--text);
+            padding-left: 12px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .section p {
+            margin-bottom: 14px;
+            font-size: 15px;
+        }
+
+        .section ul, .section ol {
+            margin: 12px 0 16px 20px;
+        }
+
+        .section li {
+            margin-bottom: 6px;
+            font-size: 15px;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+
+        .card h4 {
+            font-size: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card p {
+            font-size: 13px;
+            color: var(--text-light);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .card .badge {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        /* Role cards */
+        .role-card {
+            display: flex;
+            gap: 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 12px;
+        }
+
+        .role-card .role-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .role-card.gm .role-icon { background: #fee2e2; }
+        .role-card.player .role-icon { background: #dbeafe; }
+        .role-card.observer .role-icon { background: #fef3c7; }
+
+        .role-card .role-content h4 {
+            font-size: 16px;
+            margin-bottom: 6px;
+        }
+
+        .role-card .role-content p {
+            font-size: 13px;
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        /* Process Flow */
+        .flow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin: 24px 0;
+        }
+
+        .flow-step {
+            display: flex;
+            gap: 16px;
+            position: relative;
+        }
+
+        .flow-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 23px;
+            top: 52px;
+            bottom: -8px;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .flow-step .step-num {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #6d28d9);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            flex-shrink: 0;
+            z-index: 1;
+        }
+
+        .flow-step .step-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            flex: 1;
+        }
+
+        .flow-step .step-content h4 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .flow-step .step-content p {
+            font-size: 13px;
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        .flow-step .step-content .tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .flow-step .step-content .tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            background: var(--accent-light);
+            color: var(--accent);
+            border-radius: 4px;
+        }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .data-table thead {
+            background: #f9fafb;
+        }
+
+        .data-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover {
+            background: #f9fafb;
+        }
+
+        /* System comparison */
+        .system-compare {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .system-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            border-top: 4px solid var(--accent);
+        }
+
+        .system-card.dnd { border-top-color: var(--red); }
+        .system-card.coc { border-top-color: var(--green); }
+        .system-card.pf { border-top-color: var(--orange); }
+        .system-card.wod { border-top-color: var(--blue); }
+
+        .system-card h4 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .system-card .full-name {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-bottom: 12px;
+        }
+
+        .system-card .feature-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .system-card .feature-list li {
+            font-size: 13px;
+            padding: 4px 0;
+            color: var(--text-light);
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .system-card .feature-list li::before {
+            content: '▸';
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .system-card .for-whom {
+            margin-top: 12px;
+            padding: 8px 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text);
+        }
+
+        /* Dice */
+        .dice-grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+        }
+
+        .dice-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dice-visual {
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .dice-item .dice-label {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        /* Callout */
+        .callout {
+            background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+
+        .callout.warning {
+            background: linear-gradient(135deg, #fff4ed 0%, #fef2f2 100%);
+            border-left-color: var(--orange);
+        }
+
+        .callout.tip {
+            background: linear-gradient(135deg, #f0fdf4 0%, #f0fdfa 100%);
+            border-left-color: var(--green);
+        }
+
+        .callout strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* Combat flow */
+        .combat-flow {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 16px 0;
+        }
+
+        .combat-step {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .combat-arrow {
+            color: var(--accent);
+            font-size: 18px;
+        }
+
+        /* Tool list */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .tool-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .tool-item h5 {
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+
+        .tool-item p {
+            font-size: 12px;
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        .tool-item .tool-badge {
+            display: inline-block;
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 3px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .report-footer {
+            text-align: center;
+            padding: 32px;
+            margin-top: 48px;
+            border-top: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .report-footer p {
+            margin-bottom: 4px;
+        }
+
+        /* Highlight */
+        .highlight {
+            background: var(--accent-light);
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .red-text { color: var(--red); font-weight: 600; }
+        .green-text { color: var(--green); font-weight: 600; }
+        .blue-text { color: var(--blue); font-weight: 600; }
+        .orange-text { color: var(--orange); font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div class="report-header">
+            <h1>🎲 跑团流程深度调研报告</h1>
+            <p class="subtitle">Tabletop Role-Playing Game (TRPG) 全流程解析</p>
+            <div class="meta">
+                <span>📅 2026年7月15日</span>
+                <span>🔍 多源调研</span>
+                <span>📋 覆盖主流系统</span>
+            </div>
+        </div>
+
+        <!-- TOC -->
+        <div class="toc">
+            <h2>📑 目录</h2>
+            <ol>
+                <li><a href="#intro">跑团概述：什么是 TRPG？</a></li>
+                <li><a href="#roles">参与者角色定位</a></li>
+                <li><a href="#systems">主流规则系统对比</a></li>
+                <li><a href="#prereq">跑团前的准备工作</a></li>
+                <li><a href="#charcreate">角色创建（车卡）流程</a></li>
+                <li><a href="#dice">骰子与判定机制</a></li>
+                <li><a href="#session">游戏进行流程</a></li>
+                <li><a href="#combat">战斗系统详解</a></li>
+                <li><a href="#tools">跑团工具与平台</a></li>
+                <li><a href="#gm">GM/KP/DM 修炼指南</a></li>
+                <li><a href="#newbie">新手入坑建议</a></li>
+            </ol>
+        </div>
+
+        <!-- 1. Overview -->
+        <div class="section" id="intro">
+            <h2><span class="icon">📖</span> 一、跑团概述：什么是 TRPG？</h2>
+            <p><strong>跑团</strong>，即 <strong>桌上角色扮演游戏（Tabletop Role-Playing Game, TRPG）</strong>，是一种以故事叙述为核心、玩家通过扮演角色进行互动与冒险的集体娱乐方式。它由一名"游戏主持人"引导，其他玩家扮演各自的角色，在一个设定好的世界观中展开探索、战斗、解谜和剧情发展。</p>
+
+            <div class="callout">
+                <strong>核心理念</strong>
+                跑团的本质是<strong>协作叙事</strong>——没有固定的剧本结局，玩家和主持人共同创造独一无二的故事。每次跑团都是"一期一会"，即便是同一个模组，不同的玩家组合也会产生截然不同的体验。
+            </div>
+
+            <h3>跑团 vs 剧本杀 vs 语C</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>维度</th>
+                        <th>跑团 (TRPG)</th>
+                        <th>剧本杀</th>
+                        <th>语C（语言Cosplay）</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>自由度</td>
+                        <td>极高，玩家可自由决定行动</td>
+                        <td>中等，有固定剧本框架</td>
+                        <td>高，但无系统判定</td>
+                    </tr>
+                    <tr>
+                        <td>规则系统</td>
+                        <td>有完整规则书、骰子判定</td>
+                        <td>轻规则或无规则</td>
+                        <td>无规则系统</td>
+                    </tr>
+                    <tr>
+                        <td>结局</td>
+                        <td>开放，由玩家行为决定</td>
+                        <td>有预设结局</td>
+                        <td>开放</td>
+                    </tr>
+                    <tr>
+                        <td>角色卡</td>
+                        <td>有属性、技能数值</td>
+                        <td>有角色背景但无数值</td>
+                        <td>无或极简</td>
+                    </tr>
+                    <tr>
+                        <td>时长</td>
+                        <td>单场3-5小时，长团可达数月</td>
+                        <td>4-6小时</td>
+                        <td>不固定</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>面团 vs 网团</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>🏠 面团（面对面跑团）</h4>
+                    <p>主持人和全体玩家围坐在一起进行游戏。早期跑团的主流形式，国外仍占相当比例。优点是氛围感强、沟通直接；缺点是受地理限制。</p>
+                </div>
+                <div class="card">
+                    <h4>💻 网团（线上跑团）</h4>
+                    <p>通过网络平台进行，是国内主流形式。分为文字团、语音团和视频团。文字团节奏较慢但线索清晰，语音团节奏明快更接近面团体验。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Roles -->
+        <div class="section" id="roles">
+            <h2><span class="icon">🎭</span> 二、参与者角色定位</h2>
+            <p>一场跑团通常由 <strong>1名主持人 + 3~5名玩家</strong> 组成，各自的职责截然不同：</p>
+
+            <div class="role-card gm">
+                <div class="role-icon">👑</div>
+                <div class="role-content">
+                    <h4>GM / DM / KP — 游戏主持人</h4>
+                    <p>跑团的核心角色，"没有GM就跑不起来"。职责包括：<strong>设计/运行模组</strong>、<strong>描述世界</strong>、<strong>扮演所有NPC</strong>、<strong>裁决规则争议</strong>。不同系统的称呼不同：D&D称DM（地下城主）、CoC称KP（守秘人）、通用称GM。</p>
+                </div>
+            </div>
+
+            <div class="role-card player">
+                <div class="role-icon">⚔️</div>
+                <div class="role-content">
+                    <h4>PL / PC — 玩家 / 玩家角色</h4>
+                    <p>创建并扮演自己的角色（Player Character），通过行动和对话推动故事发展。玩家需要根据角色性格、背景进行行为和对话，增强代入感。核心任务是：<strong>车卡（创建角色）</strong>→ <strong>角色扮演</strong>→ <strong>团队协作</strong>。</p>
+                </div>
+            </div>
+
+            <div class="role-card observer">
+                <div class="role-icon">👥</div>
+                <div class="role-content">
+                    <h4>旁观者（可选）</h4>
+                    <p>部分团会有旁观者角色，不直接参与但可以观看。在某些社区中，旁观也是一种学习和入坑的方式。</p>
+                </div>
+            </div>
+
+            <div class="callout tip">
+                <strong>💡 成长路径</strong>
+                一般路径为：<strong>新手玩家 → 老手玩家 → GM</strong>。建议跑过5-10场团后再尝试当GM，积累足够的规则理解和临场经验。
+            </div>
+        </div>
+
+        <!-- 3. Systems -->
+        <div class="section" id="systems">
+            <h2><span class="icon">📚</span> 三、主流规则系统对比</h2>
+            <p>TRPG下有不同的"系统"，每个系统有截然不同的世界观与主题。以下是最主流的几大系统：</p>
+
+            <div class="system-compare">
+                <div class="system-card dnd">
+                    <h4>D&D 5e</h4>
+                    <div class="full-name">Dungeons & Dragons 5th Edition — 龙与地下城第五版</div>
+                    <ul class="feature-list">
+                        <li>市场占有率约 40-50%，全球最流行</li>
+                        <li>高奇幻风格：剑与魔法</li>
+                        <li>骰子系统：D20为核心</li>
+                        <li>玩家扮演"英雄"，有成长路径</li>
+                        <li>规则相对简单，易于上手</li>
+                        <li>资源最丰富，社区最活跃</li>
+                    </ul>
+                    <div class="for-whom">🎯 适合：TRPG新手、喜欢奇幻冒险</div>
+                </div>
+
+                <div class="system-card coc">
+                    <h4>CoC 7e</h4>
+                    <div class="full-name">Call of Cthulhu 7th Edition — 克苏鲁的呼唤第七版</div>
+                    <ul class="feature-list">
+                        <li>洛夫克拉夫特式恐怖</li>
+                        <li>玩家扮演"普通人"（调查员）</li>
+                        <li>骰子系统：D100百分比判定</li>
+                        <li>侧重调查、推理、解谜</li>
+                        <li>角色容易死亡或疯狂（SAN值系统）</li>
+                        <li>中文社区非常活跃</li>
+                    </ul>
+                    <div class="for-whom">🎯 适合：喜欢恐怖调查、重故事轻战斗</div>
+                </div>
+
+                <div class="system-card pf">
+                    <h4>Pathfinder 2e</h4>
+                    <div class="full-name">探路者第二版</div>
+                    <ul class="feature-list">
+                        <li>D&D 3.5的精神继承者</li>
+                        <li>三动作经济系统（战术性极强）</li>
+                        <li>角色构建深度极高</li>
+                        <li>规则全部免费在线（Archives of Nethys）</li>
+                        <li>适合D&D毕业后的进阶选择</li>
+                    </ul>
+                    <div class="for-whom">🎯 适合：喜欢复杂角色构建、战术战斗</div>
+                </div>
+
+                <div class="system-card wod">
+                    <h4>WoD / SW</h4>
+                    <div class="full-name">World of Darkness / Sword World</div>
+                    <ul class="feature-list">
+                        <li>WoD：超自然政治（吸血鬼/狼人）</li>
+                        <li>侧重社交与人际关系</li>
+                        <li>骰池系统（Dice Pool）</li>
+                        <li>SW：日式奇幻，2D6系统</li>
+                        <li>SW在日本是原创TRPG No.1</li>
+                    </ul>
+                    <div class="for-whom">🎯 适合：喜欢社交/黑暗风格/日式奇幻</div>
+                </div>
+            </div>
+
+            <div class="callout">
+                <strong>选择建议</strong>
+                <span class="highlight">奇幻冒险 → D&D 5e</span> |
+                <span class="highlight">恐怖调查 → CoC 7e</span> |
+                <span class="highlight">复杂构建 → Pathfinder 2e</span> |
+                <span class="highlight">超自然政治 → WoD</span>
+            </div>
+        </div>
+
+        <!-- 4. Prerequisites -->
+        <div class="section" id="prereq">
+            <h2><span class="icon">🛠️</span> 四、跑团前的准备工作</h2>
+
+            <h3>GM 的准备清单</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>准备项</th>
+                        <th>说明</th>
+                        <th>必需度</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>规则书</td>
+                        <td>熟悉对应系统的核心规则（如D&D三宝书：玩家手册/城主指南/怪物图鉴）</td>
+                        <td><span class="red-text">必需</span></td>
+                    </tr>
+                    <tr>
+                        <td>模组</td>
+                        <td>使用官方模组或自创剧本，包含地图、敌人、谜题、NPC等</td>
+                        <td><span class="red-text">必需</span></td>
+                    </tr>
+                    <tr>
+                        <td>世界设定</td>
+                        <td>构建游戏世界背景：地图、势力、历史事件等</td>
+                        <td><span class="orange-text">重要</span></td>
+                    </tr>
+                    <tr>
+                        <td>NPC设计</td>
+                        <td>为主要NPC预设台词模板、行为动机和反应逻辑</td>
+                        <td><span class="orange-text">重要</span></td>
+                    </tr>
+                    <tr>
+                        <td>备用分支</td>
+                        <td>准备2-3个备用剧情分支，应对玩家跳脱预设路线</td>
+                        <td><span class="blue-text">推荐</span></td>
+                    </tr>
+                    <tr>
+                        <td>音乐/氛围</td>
+                        <td>准备BGM、环境音效，增强沉浸感</td>
+                        <td><span class="green-text">加分</span></td>
+                    </tr>
+                    <tr>
+                        <td>骰子/工具</td>
+                        <td>面团：实体骰子、地图、棋子；网团：骰子机器人、虚拟桌面</td>
+                        <td><span class="red-text">必需</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>玩家 的准备清单</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>📝 阅读规则</h4>
+                    <p>至少浏览对应系统的基本规则，了解骰子判定方式和角色创建流程。GM通常会帮新人解答疑问，但事先了解能让团务更顺畅。</p>
+                </div>
+                <div class="card">
+                    <h4>🎯 创建角色</h4>
+                    <p>根据规则书创建角色卡（俗称"车卡"），包括属性值、职业、技能、背景故事等。有些团提供预设角色卡。</p>
+                </div>
+                <div class="card">
+                    <h4>🎭 准备扮演</h4>
+                    <p>思考角色的性格、说话方式、行为动机。好的角色扮演能大幅提升游戏体验，也是跑团的核心乐趣。</p>
+                </div>
+                <div class="card">
+                    <h4>⏰ 确认时间</h4>
+                    <p>与GM和其他玩家确认跑团时间。跑团通常持续2-5小时，长团可能持续数月，需要长期commitment。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Character Creation -->
+        <div class="section" id="charcreate">
+            <h2><span class="icon">🧙</span> 五、角色创建（车卡）流程</h2>
+            <p>角色创建是跑团的第一步，也是最重要的环节之一。角色卡（Character Sheet）记录了角色的全部数值依据。</p>
+
+            <h3>D&D 5e 角色创建</h3>
+            <div class="flow-container">
+                <div class="flow-step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h4>确定六维属性</h4>
+                        <p>力量(STR)、敏捷(DEX)、体质(CON)、智力(INT)、感知(WIS)、魅力(CHA)。通过掷骰（4d6弃最低）或点数分配确定。</p>
+                        <div class="tags">
+                            <span class="tag">掷骰法</span>
+                            <span class="tag">标准阵列</span>
+                            <span class="tag">购点法</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h4>选择种族与职业</h4>
+                        <p>如精灵游侠、矮人战士、人类法师等。不同组合赋予特殊能力（如精灵的黑暗视觉、法师的法术位）。</p>
+                        <div class="tags">
+                            <span class="tag">种族特性</span>
+                            <span class="tag">职业技能</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h4>设定背景与阵营</h4>
+                        <p>角色的出身、动机和人际关系。背景影响剧情互动（如"被通缉的盗贼"可能引发NPC敌意）。阵营决定道德取向。</p>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <h4>分配技能与装备</h4>
+                        <p>根据职业选择熟练技能（如潜行、医药等），购买初始装备，计算AC（护甲等级）、HP（生命值）等衍生属性。</p>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">5</div>
+                    <div class="step-content">
+                        <h4>撰写角色背景故事</h4>
+                        <p>为角色创作背景故事，包括成长经历、冒险动机、人际关系等。好的背景故事能让GM更好地将角色融入剧情。</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>CoC 7e 角色创建</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>🎲 掷属性骰</h4>
+                    <p>力量(3d6×5)、体质(3d6×5)、敏捷(3d6×5)、外貌(3d6×5)、意志(3d6×5=SAN值)、体型(2d6+6)×5、智力(2d6+6)×5、教育(2d6+6)×5。幸运单独掷3d6×5。</p>
+                </div>
+                <div class="card">
+                    <h4>💼 选择职业</h4>
+                    <p>调查员职业决定本职技能。如侦探侧重侦查/聆听/心理学；医生侧重医学/药学/急救。职业点数=教育×4，兴趣点数=智力×2。</p>
+                </div>
+                <div class="card">
+                    <h4>🧠 核心衍生属性</h4>
+                    <p><strong>SAN值（理智值）</strong>=意志值，是CoC最具特色的机制。遭遇恐怖事物时进行SAN检定，失败则损失理智，可能导致临时或永久疯狂。</p>
+                </div>
+                <div class="card">
+                    <h4>⚠️ 新手注意</h4>
+                    <p>克苏鲁神话技能<strong>必须保持为0</strong>（新手常见误区）。所有角色应适当投资信用评级和四大社交技能。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. Dice -->
+        <div class="section" id="dice">
+            <h2><span class="icon">🎲</span> 六、骰子与判定机制</h2>
+            <p>骰子是跑团中决定行动成败的核心工具。不同系统使用不同的骰子类型和判定方式。</p>
+
+            <h3>骰子类型一览</h3>
+            <div class="dice-grid">
+                <div class="dice-item">
+                    <div class="dice-visual" style="background: #ef4444;">D4</div>
+                    <span class="dice-label">四面骰</span>
+                </div>
+                <div class="dice-item">
+                    <div class="dice-visual" style="background: #f59e0b;">D6</div>
+                    <span class="dice-label">六面骰</span>
+                </div>
+                <div class="dice-item">
+                    <div class="dice-visual" style="background: #10b981;">D8</div>
+                    <span class="dice-label">八面骰</span>
+                </div>
+                <div class="dice-item">
+                    <div class="dice-visual" style="background: #3b82f6;">D10</div>
+                    <span class="dice-label">十面骰</span>
+                </div>
+                <div class="dice-item">
+                    <div class="dice-visual" style="background: #8b5cf6;">D12</div>
+                    <span class="dice-label">十二面骰</span>
+                </div>
+                <div class="dice-item">
+                    <div class="dice-visual" style="background: #ec4899;">D20</div>
+                    <span class="dice-label">二十面骰</span>
+                </div>
+                <div class="dice-item">
+                    <div class="dice-visual" style="background: #6366f1;">D100</div>
+                    <span class="dice-label">百分骰</span>
+                </div>
+            </div>
+
+            <h3>D&D 5e：D20 检定系统</h3>
+            <div class="callout">
+                <strong>核心公式</strong>
+                <strong>d20 + 属性修正值 + 熟练加值（如有） ≥ DC（难度等级）</strong> = 成功
+            </div>
+            <ul>
+                <li><strong>DC（Difficulty Class）</strong>：由DM设定的难度等级。如跳跃悬崖DC=15，开简单锁DC=10</li>
+                <li><strong>优势/劣势</strong>：某些情况下投2次D20，取高值（优势）或低值（劣势）</li>
+                <li><strong>自然1 / 自然20</strong>：投出原始1为大失败，原始20为大成功（暴击）</li>
+                <li><strong>属性检定</strong>：力量检定、敏捷检定等，加上对应属性调整值</li>
+                <li><strong>豁免检定</strong>：对抗法术或陷阱等效果的检定，如体质豁免对抗毒素</li>
+            </ul>
+
+            <h3>CoC 7e：D100 百分比判定系统</h3>
+            <div class="callout">
+                <strong>核心公式</strong>
+                投 <strong>1d100 ≤ 技能值</strong> = 成功
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>成功等级</th>
+                        <th>条件</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>大成功</td>
+                        <td>1-5（或技能值的1/5以下）</td>
+                        <td>极佳结果，可能有额外奖励</td>
+                    </tr>
+                    <tr>
+                        <td>困难成功</td>
+                        <td>≤ 技能值的一半</td>
+                        <td>在困难条件下仍成功</td>
+                    </tr>
+                    <tr>
+                        <td>极难成功</td>
+                        <td>≤ 技能值的1/5</td>
+                        <td>极难条件下的成功</td>
+                    </tr>
+                    <tr>
+                        <td>常规成功</td>
+                        <td>≤ 技能值</td>
+                        <td>普通成功</td>
+                    </tr>
+                    <tr>
+                        <td>失败</td>
+                        <td>> 技能值</td>
+                        <td>行动失败</td>
+                    </tr>
+                    <tr>
+                        <td>大失败</td>
+                        <td>96-100（或95+）</td>
+                        <td>灾难性后果</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>CoC 特有：奖励骰与惩罚骰</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>🟢 奖励骰（Bonus Die）</h4>
+                    <p>投2个十位骰，取<strong>较低</strong>值。用于有利情况。指令：<code>.rap 技能名</code></p>
+                </div>
+                <div class="card">
+                    <h4>🔴 惩罚骰（Penalty Die）</h4>
+                    <p>投2个十位骰，取<strong>较高</strong>值。用于不利情况。指令：<code>.rab 技能名</code></p>
+                </div>
+            </div>
+
+            <div class="callout tip">
+                <strong>💡 RP 优于骰子</strong>
+                CoC鼓励通过角色扮演（RP）代替骰子判定。优质的RP应当获得鼓励——申请判定加值、奖励骰，甚至直接免骰。
+            </div>
+        </div>
+
+        <!-- 7. Session Flow -->
+        <div class="section" id="session">
+            <h2><span class="icon">🗺️</span> 七、游戏进行流程</h2>
+            <p>一场完整的跑团从招募到结束，经历以下阶段：</p>
+
+            <div class="flow-container">
+                <div class="flow-step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h4>招募与组队</h4>
+                        <p>在QQ群、Discord、论坛等渠道寻找或发布招募信息。仔细阅读团务信息（系统、模组、时间、人数限制等），确定后报名。</p>
+                        <div class="tags">
+                            <span class="tag">QQ群</span>
+                            <span class="tag">Discord</span>
+                            <span class="tag">贴吧/论坛</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h4>Session Zero（零号会议）</h4>
+                        <p>GM召集所有玩家进行开团前的准备会议：介绍世界观、讨论创建角色、确定跑团时间、确认安全词/禁忌内容等。面团可能当天直接进行。</p>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h4>正式开团 — 导入</h4>
+                        <p>GM做开场介绍，为玩家介绍故事背景和此行目的。玩家提交角色卡，GM逐一记住每个角色的信息，带入剧情。</p>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <h4>探索与调查</h4>
+                        <p>玩家进入故事世界，进行探索、对话或战斗。GM分幕介绍剧情走向，当剧情出现NPC时，GM需要扮演NPC角色代入对话。玩家可以自由探索、询问、调查。</p>
+                        <div class="tags">
+                            <span class="tag">自由探索</span>
+                            <span class="tag">NPC互动</span>
+                            <span class="tag">线索收集</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">5</div>
+                    <div class="step-content">
+                        <h4>决策与行动</h4>
+                        <p>玩家根据角色能力做出选择，触发事件。剧情会出现分支选择——自由活动环节时，玩家可以自由探索预设的地点或自行决定行动方向。</p>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">6</div>
+                    <div class="step-content">
+                        <h4>骰子判定</h4>
+                        <p>当行动结果存在不确定性时，GM要求玩家进行技能检定。投骰决定行动是否成功，GM根据结果推进剧情。连续失败时，GM应自动推进关键剧情（"剧情保护"机制）。</p>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">7</div>
+                    <div class="step-content">
+                        <h4>高潮与结局</h4>
+                        <p>剧情走向高潮——可能是BOSS战、真相揭露或逃出生天。根据玩家选择和骰子结果，故事可能有多种结局。</p>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">8</div>
+                    <div class="step-content">
+                        <h4>后日谈与结算</h4>
+                        <p>模组完结后进行经验值/奖励结算，玩家修改角色卡。进行跑团反馈和经验分享，约定下次跑团时间。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout">
+                <strong>团务时长参考</strong>
+                <span class="highlight">单场（One-shot）：3-5小时</span>，适合新手入门 |
+                <span class="highlight">短团（3-5场）：完成一个完整故事</span> |
+                <span class="highlight">长团（10+场）：半年至1年</span> |
+                <span class="highlight">战役（Campaign）：数年</span>
+            </div>
+        </div>
+
+        <!-- 8. Combat -->
+        <div class="section" id="combat">
+            <h2><span class="icon">⚔️</span> 八、战斗系统详解</h2>
+
+            <h3>D&D 5e 战斗流程</h3>
+            <p>D&D战斗采用<strong>回合制</strong>，核心是"动作经济"（Action Economy）系统：</p>
+
+            <div class="combat-flow">
+                <div class="combat-step">① 先攻判定</div>
+                <span class="combat-arrow">→</span>
+                <div class="combat-step">② 轮到你（回合开始）</div>
+                <span class="combat-arrow">→</span>
+                <div class="combat-step">③ 移动 + 动作 + 附赠动作</div>
+                <span class="combat-arrow">→</span>
+                <div class="combat-step">④ 可能的反应</div>
+                <span class="combat-arrow">→</span>
+                <div class="combat-step">⑤ 回合结束</div>
+                <span class="combat-arrow">→</span>
+                <div class="combat-step">⑥ 下一位</div>
+            </div>
+
+            <h3>每回合可执行的内容</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>类型</th>
+                        <th>每回合数量</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>动作（Action）</strong></td>
+                        <td>1次</td>
+                        <td>主要行动：攻击、施法、冲刺、闪避、逃离、帮助、准备、搜索、使用物品等</td>
+                    </tr>
+                    <tr>
+                        <td><strong>附赠动作（Bonus Action）</strong></td>
+                        <td>0-1次</td>
+                        <td>次要行动：特定能力/法术提供，如二持攻击、游荡者的狡诈动作等</td>
+                    </tr>
+                    <tr>
+                        <td><strong>反应（Reaction）</strong></td>
+                        <td>0-1次</td>
+                        <td>触发式行动：借机攻击、护盾术等。在你的回合之外触发</td>
+                    </tr>
+                    <tr>
+                        <td><strong>移动（Movement）</strong></td>
+                        <td>速度值</td>
+                        <td>可拆分移动：走15尺→攻击→再走15尺</td>
+                    </tr>
+                    <tr>
+                        <td><strong>自由动作</strong></td>
+                        <td>不限</td>
+                        <td>说话、掉落物品等简单动作</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>攻击与伤害判定</h3>
+            <div class="callout">
+                <strong>命中判定</strong>
+                <strong>d20 + 属性修正 + 熟练加值 ≥ 目标AC（护甲等级）</strong> = 命中！<br>
+                <strong>伤害计算</strong>：伤害骰 + 属性修正值<br>
+                <strong>暴击</strong>：投出自然20，伤害骰翻倍
+            </div>
+
+            <h3>CoC 7e 战斗系统</h3>
+            <p>CoC的战斗强调<strong>真实性和危险性</strong>，战斗分为近战和远程两种：</p>
+            <ul>
+                <li><strong>先攻</strong>：由敏捷值决定行动顺序</li>
+                <li><strong>每回合</strong>：选择攻击、战技或闪避</li>
+                <li><strong>对抗检定</strong>：比较双方成功等级，高者胜出</li>
+                <li><strong>战技</strong>：受体格差影响，每差1级增减1个奖励/惩罚骰</li>
+                <li><strong>战斗轮</strong>：宣言阶段 → 解析阶段 → 结算阶段</li>
+            </ul>
+
+            <div class="callout warning">
+                <strong>⚠️ CoC 战斗忠告</strong>
+                CoC不是战斗游戏！调查员是普通人，战斗极为危险。初期模组建议尽量减少战斗场景，能逃就逃，调查和推理才是核心玩法。
+            </div>
+        </div>
+
+        <!-- 9. Tools -->
+        <div class="section" id="tools">
+            <h2><span class="icon">🖥️</span> 九、跑团工具与平台</h2>
+
+            <h3>虚拟桌面（VTT）</h3>
+            <div class="tool-grid">
+                <div class="tool-item">
+                    <span class="tool-badge" style="background: #dbeafe; color: #3b82f6;">强烈推荐</span>
+                    <h5>Foundry VTT</h5>
+                    <p>功能最强大，一次性买断制。DM购买后玩家免费加入。支持动态光照、战棋地图、规则自动化。DM最爱用的平台之一。</p>
+                </div>
+                <div class="tool-item">
+                    <span class="tool-badge" style="background: #fef3c7; color: #f59e0b;">入门首选</span>
+                    <h5>Roll20</h5>
+                    <p>老牌网页版VTT，基本功能免费。无需安装，入行门槛最低。有部分中文界面，但D&D资料库主要为英文。</p>
+                </div>
+                <div class="tool-item">
+                    <span class="tool-badge" style="background: #d1fae5; color: #10b981;">轻量免费</span>
+                    <h5>Owbear Rodeo</h5>
+                    <p>极简、轻量化、完全免费。只提供地图和骰子功能，适合专注说故事的轻度团。几乎不需要语言支持。</p>
+                </div>
+                <div class="tool-item">
+                    <span class="tool-badge" style="background: #f3e8ff; color: #8b5cf6;">Steam平台</span>
+                    <h5>Tabletop Simulator</h5>
+                    <p>Steam上的物理模拟桌面，可以模拟实体棋盘和骰子。沉浸感强但操作较复杂。</p>
+                </div>
+                <div class="tool-item">
+                    <span class="tool-badge" style="background: #fce7f3; color: #ec4899;">国内平台</span>
+                    <h5>菠萝 / 猫爷TRPG / ccfolia</h5>
+                    <p>国内跑团人常用的平台。ccfolia在日本和国内都有一定用户群，界面友好。</p>
+                </div>
+            </div>
+
+            <h3>骰子机器人</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>🤖 豹骰（TRPG骰子机器人）</h4>
+                    <p>国内网团标配。常用指令：<br>
+                    <code>.ra 技能名</code> — 技能检定<br>
+                    <code>.r 3d6+5</code> — 投骰<br>
+                    <code>.rh 4d6k3</code> — 暗骰/保留最高<br>
+                    <code>.coc10</code> — CoC天命车卡<br>
+                    <code>.dnd</code> — D&D车卡</p>
+                </div>
+                <div class="card">
+                    <h4>💬 Discord / QQ 语音</h4>
+                    <p>线上跑团主流通讯方式。Discord免费语音+集成骰子机器人，QQ群配合豹骰也是国内常见组合。</p>
+                </div>
+            </div>
+
+            <h3>电子角色卡工具</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>📋 D&D Beyond</h4>
+                    <p>D&D官方数字工具，最佳集成的角色管理平台。支持角色创建、管理、规则查询。</p>
+                </div>
+                <div class="card">
+                    <h4>📑 电子角色卡模板</h4>
+                    <p>CoC 7e有大量社区制作的Excel/在线角色卡模板，自动计算衍生属性，比纸质卡更方便。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 10. GM Guide -->
+        <div class="section" id="gm">
+            <h2><span class="icon">👑</span> 十、GM/KP/DM 修炼指南</h2>
+
+            <h3>GM 的三重身份</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>🏗️ 世界架构师</h4>
+                    <p>提前构建含支线节点的模组，设定地图、势力、事件等。为玩家提供探索的舞台。</p>
+                </div>
+                <div class="card">
+                    <h4>🎭 NPC 扮演者</h4>
+                    <p>扮演所有NPC，预设台词模板与行为动机。无论NPC出现多少，均由一名GM扮演。必要时需要肢体动作配合。</p>
+                </div>
+                <div class="card">
+                    <h4>⚖️ 规则裁决者</h4>
+                    <p>裁决规则争议，根据叙事合理性优先裁决。记住：<strong>乐趣 &gt; 剧情 &gt; 规则</strong>。</p>
+                </div>
+            </div>
+
+            <h3>模组设计心法</h3>
+            <div class="callout">
+                <strong>写模组如做菜</strong>
+                定一个主题 → 围绕主题建立逻辑 → 添油加醋（丰富场景与人物）→ 端菜上桌 → 随机应变
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>设计要素</th>
+                        <th>要点</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>线索链设计</td>
+                        <td>每个关键线索至少设置3个发现途径，避免调查陷入死胡同</td>
+                    </tr>
+                    <tr>
+                        <td>剧情保护</td>
+                        <td>玩家连续3次检定失败时，KP应自动推进关键剧情，确保故事流畅</td>
+                    </tr>
+                    <tr>
+                        <td>NPC设计</td>
+                        <td>写清楚NPC的动机、经历、身份、反应逻辑。当发生事件时NPC会有什么反应？为什么？</td>
+                    </tr>
+                    <tr>
+                        <td>探索动力</td>
+                        <td>一定有让玩家探索下去的理由——固定时间发生事件，或有压力逼迫玩家行动</td>
+                    </tr>
+                    <tr>
+                        <td>氛围营造</td>
+                        <td>渐进式恐怖提示、感官错位法、配合语音语调变化，提升沉浸感</td>
+                    </tr>
+                    <tr>
+                        <td>备用分支</td>
+                        <td>准备2-3个备用剧情分支。当玩家跳过预设剧情时，启动备用方案维持叙事连贯</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>控场技巧</h3>
+            <ul>
+                <li><strong>情绪放大法</strong>：通过音乐+肢体动作渲染场景氛围</li>
+                <li><strong>目标明确法</strong>：玩家积极性不足时点名互动</li>
+                <li><strong>叙事优先</strong>：规则争议时以叙事合理性优先裁决</li>
+                <li><strong>动态调整</strong>：根据玩家反应灵活调整剧情，保持游戏趣味性和挑战性</li>
+                <li><strong>安全词机制</strong>：设置安全词过滤敏感内容，确保所有玩家舒适</li>
+            </ul>
+
+            <div class="callout warning">
+                <strong>⚠️ GM 常见陷阱</strong>
+                不要把GM当成"上帝"或"导演"——GM更像一个<strong>高级处理器</strong>，依托模组对NPC、怪物等进行演算。好的故事是GM与PC互相配合演绎而成的。打破规则的前提是熟悉规则。
+            </div>
+        </div>
+
+        <!-- 11. Newbie Guide -->
+        <div class="section" id="newbie">
+            <h2><span class="icon">🚀</span> 十一、新手入坑建议</h2>
+
+            <div class="flow-container">
+                <div class="flow-step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h4>看 Actual Play 视频</h4>
+                        <p>先看实际跑团视频，知道跑团"实际长什么样"。比直接看规则书亲切得多。国内外都有相关频道，如Critical Role等。</p>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h4>加入 TRPG 社团</h4>
+                        <p>QQ群、Discord、贴吧都有活跃的跑团社区。寻找新手友善的招募帖。</p>
+                        <div class="tags">
+                            <span class="tag">QQ群</span>
+                            <span class="tag">Discord</span>
+                            <span class="tag">跑团营地</span>
+                            <span class="tag">百度贴吧</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h4>找新手友善剧本团</h4>
+                        <p>不必懂规则就能玩——很多GM会带新人入门并耐心解说规则。推荐从单场（One-shot）开始，3-5小时即可体验完整流程。</p>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <h4>先当玩家，后当 GM</h4>
+                        <p>积累5-10场经验后再尝试当GM。GM是核心角色，责任重但乐趣也独特。</p>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">5</div>
+                    <div class="step-content">
+                        <h4>购买新手规则包</h4>
+                        <p>D&D新手包/Starter Set包含简化规则和短冒险模组，CoC也有快速入门指南。从官方入门包开始最省心。</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>系统选择建议</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h4>🟢 推荐首选：D&D 5e 或 CoC 7e</h4>
+                    <p>D&D国际资源多、社区大；CoC中文社区活跃、入门资源丰富。两者都是从零开始的最佳选择。</p>
+                </div>
+                <div class="card">
+                    <h4>🟡 线上跑团最方便</h4>
+                    <p>距离不是问题——Discord/QQ免费语音 + Roll20/Foundry 配合，即可随时开团。</p>
+                </div>
+                <div class="card">
+                    <h4>🔵 推荐入门模组</h4>
+                    <p>D&D：《迷失矿坑》（新手包自带）；CoC：《无尽食欲》（适合新人KP和PL练手，结构简单，重扮演）</p>
+                </div>
+                <div class="card">
+                    <h4>🟠 心态准备</h4>
+                    <p>跑团的本质是<strong>社交</strong>。乐趣 &gt; 剧情 &gt; 规则。不要怕犯错，享受创造故事的乐趣。</p>
+                </div>
+            </div>
+
+            <div class="callout tip">
+                <strong>🎯 一句话总结</strong>
+                跑团是一种"以骰子为裁判、以想象为画面、以语言为引擎"的协作叙事游戏。找几个朋友，拿几颗骰子，就可以开始一场独一无二的冒险。
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="report-footer">
+            <p>📊 本报告基于多源网络调研整理，涵盖微信公众号、B站、知乎、百度、TRPG社区论坛等渠道</p>
+            <p>🎲 跑团快乐！愿骰子女神眷顾你！</p>
+            <p style="margin-top: 8px; opacity: 0.6;">Generated by WorkBuddy · 2026-07-15</p>
+        </div>
+
+    </div>
+</body>
+</html>

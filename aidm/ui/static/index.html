@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>AI DM — D&D 5E 跑团</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<h1>🐉 AI DM — D&D 5E 跑团</h1>
+
+<!-- ===== 主菜单 ===== -->
+<div class="menu" id="mainMenu">
+  <h2>选择你的冒险</h2>
+  <div class="menu-card" onclick="showNewGame()">
+    <h3><span class="icon">🎲</span> 开始新游戏</h3>
+    <p>设定世界背景，DM 生成完整开场+场景+3个行动选项</p>
+  </div>
+  <div class="menu-card" onclick="showContinue()">
+    <h3><span class="icon">📖</span> 继续游戏</h3>
+    <p>读取已保存的战役，加载场景/角色/战斗状态，继续冒险</p>
+  </div>
+  <div class="menu-card" onclick="showJoin()">
+    <h3><span class="icon">🚪</span> 加入房间</h3>
+    <p>输入房间号，加入朋友的战役，WebSocket 实时同桌</p>
+  </div>
+</div>
+
+<!-- ===== 开始新游戏表单 ===== -->
+<div class="form-box" id="newGameForm">
+  <h2>🎲 开始新游戏</h2>
+  <label for="ngName">角色名</label>
+  <input id="ngName" type="text" value="阿拉贡" autocomplete="off">
+  <label for="ngSetting">世界设定（DM 将据此生成开场背景+场景）</label>
+  <textarea id="ngSetting" rows="4" placeholder="如：被诅咒的村庄黑木镇：三周前镇民开始失踪，夜里能听见地底传来的钟声。镇长悬赏冒险者查清真相。村庄北缘有一座废弃神殿，地窖入口半掩在藤蔓下。"></textarea>
+  <div style="margin:6px 0">
+    <button class="btn" onclick="generateWorld()" id="genWorldBtn">✨ AI 生成世界设定</button>
+    <button class="btn back" onclick="backToMenu()">返回</button>
+  </div>
+  <div>
+    <button class="btn" onclick="startNewGame()" id="startGameBtn">🗺️ 开始冒险</button>
+  </div>
+</div>
+
+<!-- ===== 继续游戏列表 ===== -->
+<div class="form-box" id="continueForm">
+  <h2>📖 继续游戏</h2>
+  <ul class="camp-list" id="campList"></ul>
+  <button class="btn back" onclick="backToMenu()">返回</button>
+</div>
+
+<!-- ===== 加入房间表单 ===== -->
+<div class="form-box" id="joinForm">
+  <h2>🚪 加入房间</h2>
+  <label for="joinCampId">房间号（Campaign ID）</label>
+  <input id="joinCampId" type="text" placeholder="向房主获取" autocomplete="off">
+  <label for="joinName">角色名</label>
+  <input id="joinName" type="text" value="梅莉" autocomplete="off">
+  <div>
+    <button class="btn" onclick="joinGame()">🚪 加入</button>
+    <button class="btn back" onclick="backToMenu()">返回</button>
+  </div>
+</div>
+
+<!-- ===== 游戏界面（3栏） ===== -->
+<div class="layout" id="gameLayout">
+  <!-- 左栏：角色面板 -->
+  <div class="col char">
+    <h2 id="charName">角色</h2>
+    <div class="hp-bar">
+      <div class="hp-fill" id="hpFill" style="width:100%;background:#2a2"></div>
+      <div class="hp-text" id="hpText">HP 0/0</div>
+    </div>
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="char-row"><b>AC</b><span id="charAC">—</span></div>
+    <div class="char-row"><b>速度</b><span id="charSpeed">—</span></div>
+    <div class="char-row"><b>熟练</b><span id="charProf">—</span></div>
+    <div class="char-row"><b>状态</b><span id="charCond"></span></div>
+  </div>
+
+  <!-- 中栏：场景+日志+输入 -->
+  <div class="col" style="display:flex;flex-direction:column">
+    <div class="player-list" id="playerList"></div>
+    <div class="turn-ind" id="turnInd" style="display:none"></div>
+    <div class="scene-box" id="sceneBox" style="display:none">
+      <h3>📍 场景</h3>
+      <div class="sr"><b>地点</b><span id="scLoc">—</span></div>
+      <div class="sr"><b>氛围</b><span id="scAtm">—</span></div>
+      <div class="sr"><b>在场</b><span id="scNpc">—</span></div>
+      <div class="sr"><b>可做</b><span id="scExit">—</span></div>
+      <div class="scene-sit" id="scSit">—</div>
+    </div>
+    <div class="log-box" id="log"></div>
+    <div class="choices" id="choices"></div>
+    <div class="input-row">
+      <input id="inp" type="text" placeholder="输入行动..." autocomplete="off">
+      <button class="btn" id="sendBtn" onclick="send()">🎲掷骰</button>
+    </div>
+  </div>
+
+  <!-- 右栏：战斗+怪物 -->
+  <div class="col" id="rightPanel" style="display:none">
+    <div class="combat-box" id="combatBox" style="display:none">
+      <h3>⚔️ 战斗</h3>
+      <div style="font-size:.7em;color:#888">第 <span id="cmbRound">0</span> 轮</div>
+      <div id="cmbOrder"></div>
+    </div>
+    <div class="monster-box" id="monsterBox" style="display:none">
+      <h3>👾 怪物</h3>
+      <pre id="monsterData"></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 骰子动画覆盖层 ===== -->
+<div class="dice-overlay" id="diceOverlay">
+  <div style="text-align:center">
+    <div class="dice-face rolling" id="diceFace">d20</div>
+    <div class="dice-label" id="diceLabel">掷骰中...</div>
+  </div>
+</div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

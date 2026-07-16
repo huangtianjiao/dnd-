@@ -1,0 +1,2437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D&D 5e AI 跑团 — UI 交互原型</title>
+<style>
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f7f4;
+    --bg-tertiary: #f1efe8;
+    --bg-purple: #eeedfe;
+    --bg-red: #fcebeb;
+    --bg-blue: #e6f1fb;
+    --bg-green: #e1f5ee;
+    --bg-amber: #faeeda;
+    --text-primary: #2c2c2a;
+    --text-secondary: #5f5e5a;
+    --text-tertiary: #888780;
+    --text-purple: #534ab7;
+    --text-red: #a32d2d;
+    --text-blue: #185fa5;
+    --text-green: #0f6e56;
+    --text-amber: #854f0b;
+    --border: #d3d1c7;
+    --border-light: #e8e6df;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-serif: Georgia, "Songti SC", "SimSun", serif;
+    --font-mono: "Cascadia Code", "Fira Code", Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+    line-height: 1.5;
+  }
+
+  /* ===== Top Bar ===== */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    height: 48px;
+    background: var(--bg-primary);
+    border-bottom: 0.5px solid var(--border);
+    flex-shrink: 0;
+  }
+  .campaign-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .campaign-info .title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .campaign-info .session {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+  .mode-switcher {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    padding: 2px;
+  }
+  .mode-btn {
+    padding: 6px 16px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font-sans);
+  }
+  .mode-btn:hover { background: var(--bg-secondary); }
+  .mode-btn.active {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+  .top-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .icon-btn {
+    width: 32px; height: 32px;
+    border: 0.5px solid var(--border);
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  .icon-btn:hover { background: var(--bg-secondary); }
+
+  /* ===== Main Layout ===== */
+  .main-layout {
+    display: flex;
+    height: calc(100vh - 48px);
+    gap: 0;
+  }
+
+  /* ===== Left Panel — Character ===== */
+  .left-panel {
+    width: 220px;
+    background: var(--bg-primary);
+    border-right: 0.5px solid var(--border);
+    overflow-y: auto;
+    padding: 12px;
+    flex-shrink: 0;
+  }
+  .char-portrait {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .char-portrait .avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: var(--bg-purple);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text-purple);
+  }
+  .char-portrait .info .name {
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .char-portrait .info .sub {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  .hp-section {
+    background: var(--bg-red);
+    border-radius: var(--radius-md);
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  .hp-section .label {
+    font-size: 11px;
+    color: var(--text-red);
+    margin-bottom: 4px;
+  }
+  .hp-bar-container {
+    height: 8px;
+    background: #f7c1c1;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .hp-bar-fill {
+    height: 100%;
+    background: #e24b4a;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+  .hp-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-red);
+  }
+  .ac-speed {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .ac-speed .stat-box {
+    flex: 1;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 6px 8px;
+    text-align: center;
+  }
+  .ac-speed .stat-box .val {
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .ac-speed .stat-box .lbl {
+    font-size: 10px;
+    color: var(--text-tertiary);
+  }
+
+  .ability-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+  .ability-box {
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    padding: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .ability-box:hover { background: var(--bg-tertiary); }
+  .ability-box .abi-name {
+    font-size: 10px;
+    color: var(--text-tertiary);
+  }
+  .ability-box .abi-val {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .ability-box .abi-mod {
+    font-size: 10px;
+    color: var(--text-secondary);
+  }
+
+  .panel-section {
+    margin-bottom: 10px;
+  }
+  .panel-section .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .skill-list {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 4px 8px;
+  }
+  .skill-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 11px;
+    cursor: pointer;
+    border-bottom: 0.5px solid var(--border-light);
+  }
+  .skill-item:last-child { border-bottom: none; }
+  .skill-item:hover { color: var(--text-purple); }
+  .skill-item .mod { font-weight: 500; }
+  .skill-item.proficient .mod::before { content: "● "; color: var(--text-green); font-size: 8px; }
+
+  .spell-slots {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .spell-slot {
+    width: 22px; height: 22px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .spell-slot.used {
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+    border: 0.5px solid var(--border);
+  }
+  .spell-slot.available {
+    background: var(--bg-blue);
+    color: var(--text-blue);
+    border: 0.5px solid #85b7eb;
+  }
+
+  .condition-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    margin-right: 4px;
+    margin-bottom: 4px;
+  }
+  .condition-badge.poisoned { background: #eaf3de; color: #3b6d11; }
+  .condition-badge.inspired { background: #faeeda; color: #854f0b; }
+
+  /* ===== Center Panel — Main Stage ===== */
+  .center-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary);
+    overflow: hidden;
+  }
+
+  /* Initiative Bar (combat mode) */
+  .initiative-bar {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+    background: var(--bg-primary);
+    border-bottom: 0.5px solid var(--border);
+    overflow-x: auto;
+    flex-shrink: 0;
+  }
+  .initiative-bar.visible { display: flex; }
+  .init-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-right: 8px;
+    white-space: nowrap;
+  }
+  .init-card {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border-light);
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .init-card .init-val {
+    font-weight: 500;
+    color: var(--text-tertiary);
+    font-size: 11px;
+  }
+  .init-card.current {
+    background: var(--bg-amber);
+    border-color: #ef9f27;
+    border-width: 1.5px;
+  }
+  .init-card.current .init-val { color: var(--text-amber); }
+  .init-card.done { opacity: 0.5; }
+  .init-card.enemy .name { color: var(--text-red); }
+
+  /* Narrative Area */
+  .narrative-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .narrative-area::-webkit-scrollbar { width: 6px; }
+  .narrative-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .msg-dm {
+    background: var(--bg-primary);
+    border-left: 3px solid #b5d4f4;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    padding: 12px 16px;
+    max-width: 85%;
+  }
+  .msg-dm .speaker {
+    font-size: 11px;
+    color: var(--text-blue);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .msg-dm .content {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-primary);
+  }
+
+  .msg-player {
+    background: var(--bg-purple);
+    border-radius: var(--radius-lg);
+    padding: 10px 14px;
+    max-width: 75%;
+    align-self: flex-end;
+  }
+  .msg-player .speaker {
+    font-size: 11px;
+    color: var(--text-purple);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .msg-player .content {
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+
+  .msg-system {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    padding: 4px 0;
+  }
+  .msg-system::before, .msg-system::after { content: " — "; }
+
+  .msg-roll {
+    align-self: center;
+    background: var(--bg-green);
+    border: 0.5px solid #5dcaa5;
+    border-radius: var(--radius-md);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .msg-roll .dice-icon {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-green);
+  }
+  .msg-roll .roll-detail {
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .msg-roll .roll-result {
+    font-weight: 500;
+    color: var(--text-green);
+    font-size: 15px;
+  }
+  .msg-roll .roll-tag {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: #9fe1cb;
+    color: #085041;
+  }
+
+  .msg-npc {
+    background: var(--bg-amber);
+    border-left: 3px solid #ef9f27;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    padding: 10px 14px;
+    max-width: 80%;
+  }
+  .msg-npc .speaker {
+    font-size: 11px;
+    color: var(--text-amber);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .msg-npc .content {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .msg-damage {
+    align-self: center;
+    background: var(--bg-red);
+    border-radius: var(--radius-md);
+    padding: 6px 16px;
+    font-size: 13px;
+    color: var(--text-red);
+    font-weight: 500;
+  }
+
+  /* Action Panel (combat mode) */
+  .action-panel {
+    display: none;
+    padding: 8px 16px;
+    background: var(--bg-primary);
+    border-top: 0.5px solid var(--border);
+    flex-shrink: 0;
+  }
+  .action-panel.visible { display: block; }
+  .action-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .action-group-label {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .action-btn {
+    padding: 6px 12px;
+    border: 0.5px solid var(--border);
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .action-btn:hover { background: var(--bg-tertiary); border-color: var(--text-secondary); }
+  .action-btn.primary {
+    background: var(--bg-purple);
+    border-color: #afae9c;
+    color: var(--text-purple);
+    font-weight: 500;
+  }
+  .action-btn.primary:hover { background: #cecbf6; }
+  .action-btn.used {
+    opacity: 0.4;
+    text-decoration: line-through;
+    cursor: not-allowed;
+  }
+  .action-btn .ap-tag {
+    font-size: 9px;
+    padding: 1px 4px;
+    border-radius: 4px;
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+  }
+  .action-btn.primary .ap-tag { background: rgba(83,74,183,0.15); color: var(--text-purple); }
+
+  /* Quick Actions (exploration/social) */
+  .quick-actions {
+    padding: 8px 16px;
+    background: var(--bg-primary);
+    border-top: 0.5px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .qa-label {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-right: 4px;
+  }
+  .qa-btn {
+    padding: 4px 10px;
+    border: 0.5px solid var(--border);
+    background: var(--bg-secondary);
+    border-radius: 14px;
+    font-size: 11px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+  }
+  .qa-btn:hover { background: var(--bg-purple); color: var(--text-purple); border-color: #cecbf6; }
+
+  /* Player Input */
+  .player-input-area {
+    padding: 10px 16px;
+    background: var(--bg-primary);
+    border-top: 0.5px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .player-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    font-size: 13px;
+    font-family: var(--font-sans);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    outline: none;
+    transition: border 0.15s;
+  }
+  .player-input:focus { border-color: #afae9c; background: var(--bg-primary); }
+  .send-btn {
+    padding: 8px 16px;
+    background: var(--text-purple);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-sans);
+  }
+  .send-btn:hover { background: #3c3489; }
+
+  /* ===== Right Panel — Dice & Log ===== */
+  .right-panel {
+    width: 240px;
+    background: var(--bg-primary);
+    border-left: 0.5px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  /* Dice Roller */
+  .dice-section {
+    padding: 12px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .dice-section .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+  .dice-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .die-btn {
+    aspect-ratio: 1;
+    border: 0.5px solid var(--border);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: all 0.15s;
+  }
+  .die-btn:hover { background: var(--bg-green); border-color: #5dcaa5; color: var(--text-green); }
+  .die-btn:active { transform: scale(0.92); }
+
+  .adv-toggle {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .adv-btn {
+    flex: 1;
+    padding: 4px;
+    border: 0.5px solid var(--border);
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .adv-btn.active.normal { background: var(--bg-green); color: var(--text-green); border-color: #5dcaa5; }
+  .adv-btn.active.adv { background: var(--bg-blue); color: var(--text-blue); border-color: #85b7eb; }
+  .adv-btn.active.dis { background: var(--bg-red); color: var(--text-red); border-color: #f09595; }
+
+  .mod-input-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .mod-input-row label { font-size: 11px; color: var(--text-tertiary); }
+  .mod-input {
+    width: 50px;
+    padding: 4px 6px;
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    text-align: center;
+    background: var(--bg-secondary);
+  }
+
+  .roll-display {
+    background: var(--bg-green);
+    border-radius: var(--radius-md);
+    padding: 10px;
+    text-align: center;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .roll-display.empty {
+    background: var(--bg-secondary);
+    color: var(--text-tertiary);
+    font-size: 11px;
+  }
+  .roll-display .roll-num {
+    font-size: 28px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    color: var(--text-green);
+    line-height: 1;
+  }
+  .roll-display .roll-breakdown {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-family: var(--font-mono);
+  }
+
+  /* Action Log */
+  .log-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .log-section .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    padding: 10px 12px 6px;
+    flex-shrink: 0;
+  }
+  .log-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 12px 12px;
+  }
+  .log-list::-webkit-scrollbar { width: 4px; }
+  .log-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .log-entry {
+    font-size: 11px;
+    padding: 4px 0;
+    border-bottom: 0.5px solid var(--border-light);
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+  .log-entry .log-time {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+  }
+  .log-entry .log-highlight { color: var(--text-green); font-weight: 500; }
+  .log-entry .log-damage { color: var(--text-red); font-weight: 500; }
+
+  /* Rest Buttons */
+  .rest-section {
+    padding: 10px 12px;
+    border-top: 0.5px solid var(--border);
+    display: flex;
+    gap: 6px;
+  }
+  .rest-btn {
+    flex: 1;
+    padding: 6px;
+    border: 0.5px solid var(--border);
+    background: var(--bg-amber);
+    border-radius: var(--radius-md);
+    font-size: 11px;
+    cursor: pointer;
+    color: var(--text-amber);
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .rest-btn:hover { background: #fac775; }
+
+  /* Hidden */
+  .hidden { display: none !important; }
+
+  /* Combatant HP mini */
+  .combatant-hp {
+    display: none;
+    padding: 8px 16px;
+    background: var(--bg-primary);
+    border-top: 0.5px solid var(--border);
+    flex-shrink: 0;
+    gap: 8px;
+    overflow-x: auto;
+  }
+  .combatant-hp.visible { display: flex; }
+  .combatant-mini {
+    min-width: 100px;
+    padding: 6px 8px;
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border-light);
+  }
+  .combatant-mini.enemy { border-color: #f09595; background: var(--bg-red); }
+  .combatant-mini .cm-name {
+    font-size: 11px;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .combatant-mini .cm-hp-bar {
+    height: 4px;
+    background: #f7c1c1;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 2px;
+  }
+  .combatant-mini .cm-hp-fill {
+    height: 100%;
+    background: #e24b4a;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .combatant-mini .cm-hp-text {
+    font-size: 10px;
+    color: var(--text-tertiary);
+  }
+
+  /* ===== Party Panel ===== */
+  .party-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 0.5px solid var(--border-light);
+  }
+  .party-member {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+    padding: 4px 2px;
+    border-radius: var(--radius-md);
+    transition: background 0.15s;
+    position: relative;
+  }
+  .party-member:hover { background: var(--bg-secondary); }
+  .party-member.active { background: var(--bg-purple); }
+  .party-member .pm-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    margin: 0 auto 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .party-member .pm-name {
+    font-size: 9px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .party-member .pm-hp-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px; right: 2px;
+  }
+  .pm-hp-dot.full { background: #1d9e75; }
+  .pm-hp-dot.hurt { background: #ef9f27; }
+  .pm-hp-dot.critical { background: #e24b4a; }
+  .pm-hp-dot.down { background: #2c2c2a; }
+
+  /* ===== Condition Tracker ===== */
+  .condition-tracker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    min-height: 24px;
+  }
+  .cond-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px 2px 4px;
+    border-radius: 10px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 0.5px solid transparent;
+  }
+  .cond-chip:hover { opacity: 0.7; }
+  .cond-chip .cond-x { font-size: 9px; opacity: 0.6; }
+  .cond-chip.cond-poisoned { background: #eaf3de; color: #3b6d11; border-color: #c0dd97; }
+  .cond-chip.cond-concentrating { background: #e6f1fb; color: #185fa5; border-color: #85b7eb; }
+  .cond-chip.cond-prone { background: #faeeda; color: #854f0b; border-color: #fac775; }
+  .cond-chip.cond-frightened { background: #fcebeb; color: #a32d2d; border-color: #f09595; }
+  .cond-chip.cond-blessed { background: #eeedfe; color: #534ab7; border-color: #cecbf6; }
+  .cond-chip.cond-inspired { background: #faeeda; color: #854f0b; border-color: #fac775; }
+  .cond-chip.cond-restrained { background: #f1efe8; color: #5f5e5a; border-color: #d3d1c7; }
+  .cond-chip.cond-blinded { background: #2c2c2a; color: #f1efe8; border-color: #444441; }
+  .cond-add-btn {
+    padding: 2px 8px;
+    border: 0.5px dashed var(--border);
+    border-radius: 10px;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    background: transparent;
+  }
+  .cond-add-btn:hover { border-color: var(--text-secondary); color: var(--text-secondary); }
+  .cond-dropdown {
+    display: none;
+    position: absolute;
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 120px;
+  }
+  .cond-dropdown.visible { display: flex; }
+  .cond-dropdown-item {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .cond-dropdown-item:hover { background: var(--bg-secondary); }
+
+  /* ===== Death Save Tracker ===== */
+  .death-save-box {
+    background: #2c2c2a;
+    border-radius: var(--radius-md);
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  .death-save-box .ds-title {
+    font-size: 11px;
+    color: #f1efe8;
+    font-weight: 500;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  .death-save-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .death-save-row .ds-label {
+    font-size: 10px;
+    color: #b4b2a9;
+  }
+  .death-save-dots {
+    display: flex;
+    gap: 4px;
+  }
+  .ds-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1px solid #5f5e5a;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: transparent;
+    transition: all 0.15s;
+  }
+  .ds-dot.success { background: #1d9e75; border-color: #1d9e75; color: white; }
+  .ds-dot.failure { background: #e24b4a; border-color: #e24b4a; color: white; }
+  .ds-roll-btn {
+    width: 100%;
+    padding: 4px;
+    background: #5f5e5a;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 11px;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .ds-roll-btn:hover { background: #888780; }
+
+  /* ===== Hit Dice ===== */
+  .hit-dice-row {
+    display: flex;
+    gap: 3px;
+    margin-top: 4px;
+  }
+  .hd-die {
+    width: 24px; height: 24px;
+    border-radius: 4px;
+    border: 0.5px solid #85b7eb;
+    background: var(--bg-blue);
+    color: var(--text-blue);
+    font-size: 10px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-family: var(--font-mono);
+  }
+  .hd-die.used { background: var(--bg-tertiary); color: var(--text-tertiary); border-color: var(--border); }
+  .hd-die:hover:not(.used) { background: #b5d4f4; }
+
+  /* ===== Inventory ===== */
+  .inv-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    font-size: 11px;
+    border-bottom: 0.5px solid var(--border-light);
+    cursor: pointer;
+  }
+  .inv-item:last-child { border-bottom: none; }
+  .inv-item .inv-name { display: flex; align-items: center; gap: 4px; }
+  .inv-item .inv-qty { font-size: 10px; color: var(--text-tertiary); }
+  .inv-item.equipped .inv-name::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--text-green); }
+  .inv-item:hover { color: var(--text-purple); }
+
+  /* ===== Tabs ===== */
+  .right-tabs {
+    display: flex;
+    border-bottom: 0.5px solid var(--border);
+    flex-shrink: 0;
+  }
+  .right-tab {
+    flex: 1;
+    padding: 8px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .right-tab.active { color: var(--text-primary); border-bottom-color: var(--text-purple); }
+  .right-tab:hover { color: var(--text-secondary); }
+  .tab-content { display: none; }
+  .tab-content.active { display: flex; flex-direction: column; }
+
+  /* Rules reference */
+  .rules-ref {
+    padding: 12px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .rules-section { margin-bottom: 12px; }
+  .rules-section .rs-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .rules-section .rs-content {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+  }
+  .rules-section .rs-content b { color: var(--text-primary); }
+
+  /* ===== Modal ===== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(44,44,42,0.4);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    border: 0.5px solid var(--border);
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--border);
+    flex-shrink: 0;
+  }
+  .modal-header .mh-title {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .modal-close {
+    width: 28px; height: 28px;
+    border: none;
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  .modal-close:hover { background: var(--bg-tertiary); }
+  .modal-body { padding: 16px; }
+
+  /* Spell cards */
+  .spell-card {
+    border: 0.5px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .spell-card:hover { border-color: #85b7eb; background: var(--bg-blue); }
+  .spell-card .sc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .spell-card .sc-name {
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .spell-card .sc-level {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: var(--bg-blue);
+    color: var(--text-blue);
+  }
+  .spell-card .sc-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-bottom: 4px;
+  }
+  .spell-card .sc-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    display: none;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 0.5px solid var(--border-light);
+  }
+  .spell-card.expanded .sc-desc { display: block; }
+  .spell-card .sc-cast {
+    margin-top: 6px;
+    padding: 4px 12px;
+    background: var(--bg-purple);
+    color: var(--text-purple);
+    border: 0.5px solid #cecbf6;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    display: none;
+  }
+  .spell-card.expanded .sc-cast { display: inline-block; }
+  .sc-cast:hover { background: #cecbf6; }
+
+  /* Concentration tracker */
+  .concentration-track {
+    background: var(--bg-blue);
+    border-radius: var(--radius-md);
+    padding: 6px 8px;
+    margin-top: 4px;
+    font-size: 10px;
+    color: var(--text-blue);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .concentration-track .conc-break {
+    font-size: 9px;
+    padding: 1px 6px;
+    border: 0.5px solid #85b7eb;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .concentration-track .conc-break:hover { background: #b5d4f4; }
+
+  /* Tactical grid */
+  .tac-grid {
+    display: none;
+    padding: 8px 16px;
+    background: var(--bg-primary);
+    border-bottom: 0.5px solid var(--border);
+    flex-shrink: 0;
+    justify-content: center;
+  }
+  .tac-grid.visible { display: flex; }
+  .tac-grid-inner {
+    display: grid;
+    grid-template-columns: repeat(10, 24px);
+    grid-template-rows: repeat(6, 24px);
+    gap: 1px;
+  }
+  .tac-cell {
+    width: 24px; height: 24px;
+    border: 0.5px solid var(--border-light);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .tac-cell:hover { background: var(--bg-tertiary); }
+  .tac-cell.tac-player { background: var(--bg-purple); color: var(--text-purple); font-weight: 500; }
+  .tac-cell.tac-enemy { background: var(--bg-red); color: var(--text-red); font-weight: 500; }
+  .tac-cell.tac-wall { background: #5f5e5a; }
+  .tac-cell.tac-difficult { background: var(--bg-amber); }
+</style>
+</head>
+<body>
+
+<!-- ===== Top Bar ===== -->
+<div class="top-bar">
+  <div class="campaign-info">
+    <span class="title">Lost Mine of Phandelver</span>
+    <span class="session">第 3 次会话 · 探索阶段</span>
+  </div>
+  <div class="mode-switcher">
+    <button class="mode-btn active" data-mode="exploration">探索</button>
+    <button class="mode-btn" data-mode="combat">战斗</button>
+    <button class="mode-btn" data-mode="social">社交</button>
+  </div>
+  <div class="top-right">
+    <button class="icon-btn" title="规则参考">i</button>
+    <button class="icon-btn" title="设置">gear</button>
+  </div>
+</div>
+
+<!-- ===== Main Layout ===== -->
+<div class="main-layout">
+
+  <!-- ===== Left Panel ===== -->
+  <div class="left-panel">
+    <!-- Party Bar -->
+    <div class="party-bar" id="partyBar">
+      <div class="party-member active" onclick="switchCharacter(this, 'grom')">
+        <div class="pm-avatar" style="background:var(--bg-purple);color:var(--text-purple)">G</div>
+        <div class="pm-name">格罗姆</div>
+        <div class="pm-hp-dot hurt" title="32/45"></div>
+      </div>
+      <div class="party-member" onclick="switchCharacter(this, 'elda')">
+        <div class="pm-avatar" style="background:var(--bg-blue);color:var(--text-blue)">E</div>
+        <div class="pm-name">埃尔达</div>
+        <div class="pm-hp-dot hurt" title="16/20"></div>
+      </div>
+      <div class="party-member" onclick="switchCharacter(this, 'thor')">
+        <div class="pm-avatar" style="background:var(--bg-green);color:var(--text-green)">T</div>
+        <div class="pm-name">索林</div>
+        <div class="pm-hp-dot full" title="28/28"></div>
+      </div>
+    </div>
+
+    <div class="char-portrait">
+      <div class="avatar">G</div>
+      <div class="info">
+        <div class="name">格罗姆</div>
+        <div class="sub">人类 圣武士 Lv.3</div>
+      </div>
+    </div>
+
+    <div class="hp-section">
+      <div class="label">生命值</div>
+      <div class="hp-bar-container">
+        <div class="hp-bar-fill" id="hpBar" style="width: 71%;"></div>
+      </div>
+      <div class="hp-text"><span id="hpCurrent">32</span> / 45</div>
+    </div>
+
+    <div class="ac-speed">
+      <div class="stat-box">
+        <div class="val">16</div>
+        <div class="lbl">AC</div>
+      </div>
+      <div class="stat-box">
+        <div class="val">30</div>
+        <div class="lbl">速度 ft</div>
+      </div>
+      <div class="stat-box">
+        <div class="val">+2</div>
+        <div class="lbl">先攻</div>
+      </div>
+    </div>
+
+    <div class="ability-grid">
+      <div class="ability-box" title="力量"><div class="abi-name">STR</div><div class="abi-val">16</div><div class="abi-mod">+3</div></div>
+      <div class="ability-box" title="敏捷"><div class="abi-name">DEX</div><div class="abi-val">12</div><div class="abi-mod">+1</div></div>
+      <div class="ability-box" title="体质"><div class="abi-name">CON</div><div class="abi-val">15</div><div class="abi-mod">+2</div></div>
+      <div class="ability-box" title="智力"><div class="abi-name">INT</div><div class="abi-val">10</div><div class="abi-mod">+0</div></div>
+      <div class="ability-box" title="感知"><div class="abi-name">WIS</div><div class="abi-val">14</div><div class="abi-mod">+2</div></div>
+      <div class="ability-box" title="魅力"><div class="abi-name">CHA</div><div class="abi-val">16</div><div class="abi-mod">+3</div></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">技能</div>
+      <div class="skill-list">
+        <div class="skill-item proficient"><span>运动</span><span class="mod">+5</span></div>
+        <div class="skill-item proficient"><span>洞悉</span><span class="mod">+4</span></div>
+        <div class="skill-item"><span>威吓</span><span class="mod">+3</span></div>
+        <div class="skill-item proficient"><span>察觉</span><span class="mod">+4</span></div>
+        <div class="skill-item"><span>说服</span><span class="mod">+3</span></div>
+        <div class="skill-item"><span>调查</span><span class="mod">+0</span></div>
+      </div>
+    </div>
+
+    <!-- Death Save Tracker (hidden normally) -->
+    <div class="death-save-box hidden" id="deathSaveBox">
+      <div class="ds-title">死亡豁免检定</div>
+      <div class="death-save-row">
+        <span class="ds-label">成功</span>
+        <div class="death-save-dots">
+          <div class="ds-dot" onclick="toggleDeathSave('success', 0)"></div>
+          <div class="ds-dot" onclick="toggleDeathSave('success', 1)"></div>
+          <div class="ds-dot" onclick="toggleDeathSave('success', 2)"></div>
+        </div>
+      </div>
+      <div class="death-save-row">
+        <span class="ds-label">失败</span>
+        <div class="death-save-dots">
+          <div class="ds-dot" onclick="toggleDeathSave('failure', 0)"></div>
+          <div class="ds-dot" onclick="toggleDeathSave('failure', 1)"></div>
+          <div class="ds-dot" onclick="toggleDeathSave('failure', 2)"></div>
+        </div>
+      </div>
+      <button class="ds-roll-btn" onclick="rollDeathSave()">掷死亡豁免 d20</button>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">状态效果</div>
+      <div class="condition-tracker" id="conditionTracker" style="position:relative;">
+        <span class="cond-chip cond-inspired" onclick="removeCondition(this)">灵感 <span class="cond-x">x</span></span>
+        <span class="cond-chip cond-concentrating" onclick="removeCondition(this)">专注 <span class="cond-x">x</span></span>
+        <button class="cond-add-btn" onclick="toggleCondDropdown()">+ 添加</button>
+        <div class="cond-dropdown" id="condDropdown">
+          <div class="cond-dropdown-item" onclick="addCondition('poisoned')">中毒</div>
+          <div class="cond-dropdown-item" onclick="addCondition('prone')">倒地</div>
+          <div class="cond-dropdown-item" onclick="addCondition('frightened')">恐惧</div>
+          <div class="cond-dropdown-item" onclick="addCondition('restrained')">束缚</div>
+          <div class="cond-dropdown-item" onclick="addCondition('blinded')">目盲</div>
+          <div class="cond-dropdown-item" onclick="addCondition('blessed')">祝福术</div>
+        </div>
+      </div>
+      <div class="concentration-track" id="concTrack">
+        <span>正在专注: 祝福术 (最多1分钟)</span>
+        <span class="conc-break" onclick="breakConcentration()">打断专注</span>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">
+        <span>法术位</span>
+        <span style="font-size:10px;color:var(--text-blue);cursor:pointer;text-decoration:underline;" onclick="openSpellbook()">法术列表</span>
+      </div>
+      <div style="margin-bottom:4px;">
+        <span style="font-size:10px;color:var(--text-tertiary)">1环 (3/4)</span>
+        <div class="spell-slots" style="margin-top:2px;">
+          <div class="spell-slot available" onclick="useSlot(this)">1</div>
+          <div class="spell-slot available" onclick="useSlot(this)">2</div>
+          <div class="spell-slot available" onclick="useSlot(this)">3</div>
+          <div class="spell-slot used">4</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">特性 & 动作</div>
+      <div class="skill-list">
+        <div class="skill-item" style="cursor:pointer;" onclick="addLog('使用 Divine Sense')"><span>神圣感知</span><span class="mod">1/日</span></div>
+        <div class="skill-item" style="cursor:pointer;" onclick="addLog('使用 Lay on Hands')"><span>圣疗</span><span class="mod">15hp</span></div>
+        <div class="skill-item" style="cursor:pointer;" onclick="addLog('使用 Divine Smite')"><span>神圣伤害</span><span class="mod">2d8</span></div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">
+        <span>Hit Dice</span>
+        <span style="font-size:10px;color:var(--text-tertiary)">d8 x3</span>
+      </div>
+      <div class="hit-dice-row" id="hitDiceRow">
+        <div class="hd-die" onclick="rollHitDice(this)">d8</div>
+        <div class="hd-die" onclick="rollHitDice(this)">d8</div>
+        <div class="hd-die" onclick="rollHitDice(this)">d8</div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">
+        <span>背包 & 装备</span>
+        <span style="font-size:10px;color:var(--text-tertiary)">42/60 lb</span>
+      </div>
+      <div class="skill-list">
+        <div class="inv-item equipped"><span class="inv-name">长剑</span><span class="inv-qty">1d8挥砍</span></div>
+        <div class="inv-item equipped"><span class="inv-name">链甲</span><span class="inv-qty">AC 16</span></div>
+        <div class="inv-item equipped"><span class="inv-name">盾牌</span><span class="inv-qty">+2 AC</span></div>
+        <div class="inv-item"><span class="inv-name">治疗药水</span><span class="inv-qty">x3</span></div>
+        <div class="inv-item"><span class="inv-name">圣徽</span><span class="inv-qty">法器</span></div>
+        <div class="inv-item"><span class="inv-name">口粮</span><span class="inv-qty">x5</span></div>
+        <div class="inv-item"><span class="inv-name">绳索(50ft)</span><span class="inv-qty">x1</span></div>
+        <div class="inv-item"><span class="inv-name">火把</span><span class="inv-qty">x10</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Center Panel ===== -->
+  <div class="center-panel">
+
+    <!-- Initiative Bar -->
+    <div class="initiative-bar" id="initBar">
+      <span class="init-label">先攻顺序 · 第 <span id="roundNum">1</span> 轮</span>
+      <div class="init-card current" data-name="格罗姆"><span class="init-val">18</span><span class="name">格罗姆</span></div>
+      <div class="init-card enemy" data-name="哥布林A"><span class="init-val">14</span><span class="name">哥布林A</span></div>
+      <div class="init-card enemy" data-name="哥布林B"><span class="init-val">12</span><span class="name">哥布林B</span></div>
+      <div class="init-card" data-name="埃尔达"><span class="init-val">10</span><span class="name">埃尔达(法师)</span></div>
+    </div>
+
+    <!-- Tactical Grid (combat mode) -->
+    <div class="tac-grid" id="tacGrid">
+      <div class="tac-grid-inner" id="tacGridInner">
+        <!-- Grid will be generated by JS -->
+      </div>
+    </div>
+
+    <!-- Combatant HP (combat mode) -->
+    <div class="combatant-hp" id="combatantHP">
+      <div class="combatant-mini">
+        <div class="cm-name">格罗姆</div>
+        <div class="cm-hp-bar"><div class="cm-hp-fill" style="width:71%"></div></div>
+        <div class="cm-hp-text">32/45</div>
+      </div>
+      <div class="combatant-mini enemy">
+        <div class="cm-name">哥布林A</div>
+        <div class="cm-hp-bar"><div class="cm-hp-fill" style="width:60%"></div></div>
+        <div class="cm-hp-text">4/7</div>
+      </div>
+      <div class="combatant-mini enemy">
+        <div class="cm-name">哥布林B</div>
+        <div class="cm-hp-bar"><div class="cm-hp-fill" style="width:100%"></div></div>
+        <div class="cm-hp-text">7/7</div>
+      </div>
+      <div class="combatant-mini">
+        <div class="cm-name">埃尔达</div>
+        <div class="cm-hp-bar"><div class="cm-hp-fill" style="width:80%"></div></div>
+        <div class="cm-hp-text">16/20</div>
+      </div>
+    </div>
+
+    <!-- Narrative Area -->
+    <div class="narrative-area" id="narrativeArea">
+      <!-- Content will be injected by JS -->
+    </div>
+
+    <!-- Action Panel (combat) -->
+    <div class="action-panel" id="actionPanel">
+      <div class="action-row">
+        <div class="action-group-label">移动</div>
+        <button class="action-btn" onclick="combatAction('move')">
+          移动 <span class="ap-tag">30ft</span>
+        </button>
+        <button class="action-btn" onclick="combatAction('dash')">
+          疾步 <span class="ap-tag">+30ft</span>
+        </button>
+      </div>
+      <div class="action-row">
+        <div class="action-group-label">动作</div>
+        <button class="action-btn primary" onclick="combatAction('attack')">
+          攻击 <span class="ap-tag">1动作</span>
+        </button>
+        <button class="action-btn" onclick="combatAction('cast')">
+          施法 <span class="ap-tag">1动作</span>
+        </button>
+        <button class="action-btn" onclick="combatAction('dodge')">闪避</button>
+        <button class="action-btn" onclick="combatAction('help')">协助</button>
+        <button class="action-btn" onclick="combatAction('disengage')">脱离</button>
+        <button class="action-btn" onclick="combatAction('hide')">躲藏</button>
+      </div>
+      <div class="action-row">
+        <div class="action-group-label">附赠动作</div>
+        <button class="action-btn" onclick="combatAction('bonus')">
+          专用附赠 <span class="ap-tag">1附赠</span>
+        </button>
+        <div class="action-group-label" style="margin-left:12px;">反应</div>
+        <button class="action-btn" onclick="combatAction('reaction')">
+          反应 <span class="ap-tag">每轮1次</span>
+        </button>
+        <button class="action-btn" onclick="combatAction('endturn')" style="margin-left:auto;background:var(--bg-green);color:var(--text-green);border-color:#5dcaa5;font-weight:500;">
+          结束回合
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Actions (exploration/social) -->
+    <div class="quick-actions" id="quickActions">
+      <span class="qa-label">快捷检定:</span>
+      <button class="qa-btn" onclick="quickCheck('investigation')">调查</button>
+      <button class="qa-btn" onclick="quickCheck('perception')">感知</button>
+      <button class="qa-btn" onclick="quickCheck('stealth')">潜行</button>
+      <button class="qa-btn" onclick="quickCheck('athletics')">运动</button>
+      <button class="qa-btn" onclick="quickCheck('insight')">洞悉</button>
+      <button class="qa-btn" onclick="quickCheck('survival')">生存</button>
+    </div>
+
+    <!-- Player Input -->
+    <div class="player-input-area">
+      <input type="text" class="player-input" id="playerInput" placeholder="描述你的行动...（如：我要用长剑攻击哥布林A）" onkeydown="if(event.key==='Enter')sendPlayerInput()">
+      <button class="send-btn" onclick="sendPlayerInput()">发送</button>
+    </div>
+  </div>
+
+  <!-- ===== Right Panel ===== -->
+  <div class="right-panel">
+    <!-- Tab Header -->
+    <div class="right-tabs">
+      <div class="right-tab active" onclick="switchTab('dice')">骰子</div>
+      <div class="right-tab" onclick="switchTab('rules')">规则参考</div>
+    </div>
+
+    <!-- Tab: Dice -->
+    <div class="tab-content active" id="tabDice">
+    <!-- Dice Roller -->
+    <div class="dice-section">
+      <div class="section-title">骰子</div>
+      <div class="dice-grid">
+        <div class="die-btn" onclick="rollDice(20)">d20</div>
+        <div class="die-btn" onclick="rollDice(4)">d4</div>
+        <div class="die-btn" onclick="rollDice(6)">d6</div>
+        <div class="die-btn" onclick="rollDice(8)">d8</div>
+        <div class="die-btn" onclick="rollDice(10)">d10</div>
+        <div class="die-btn" onclick="rollDice(12)">d12</div>
+        <div class="die-btn" onclick="rollDice(100)">d100</div>
+        <div class="die-btn" onclick="rollDice(6,2)">2d6</div>
+      </div>
+      <div class="adv-toggle">
+        <div class="adv-btn active normal" data-adv="normal" onclick="setAdv('normal')">正常</div>
+        <div class="adv-btn adv" data-adv="adv" onclick="setAdv('adv')">优势</div>
+        <div class="adv-btn dis" data-adv="dis" onclick="setAdv('dis')">劣势</div>
+      </div>
+      <div class="mod-input-row">
+        <label>修饰值:</label>
+        <input type="number" class="mod-input" id="modInput" value="0">
+      </div>
+      <div class="roll-display empty" id="rollDisplay">
+        点击骰子进行投掷
+      </div>
+    </div>
+
+    <!-- Action Log -->
+    <div class="log-section">
+      <div class="section-title">行动日志</div>
+      <div class="log-list" id="logList">
+        <div class="log-entry"><span class="log-time">10:04</span> 会话开始</div>
+      </div>
+    </div>
+
+    <!-- Rest -->
+    <div class="rest-section">
+      <button class="rest-btn" onclick="takeRest('short')">短休 1h</button>
+      <button class="rest-btn" onclick="takeRest('long')">长休 8h</button>
+    </div>
+    </div><!-- /tabDice -->
+
+    <!-- Tab: Rules -->
+    <div class="tab-content" id="tabRules" style="flex:1;overflow:hidden;">
+      <div class="rules-ref">
+        <div class="rules-section">
+          <div class="rs-title">d20 检定公式</div>
+          <div class="rs-content">d20 + 修正值 vs DC<br><b>修正值</b> = 属性调整值 + 熟练加值(如熟练)<br><b>自然1</b> = 总是失败 · <b>自然20</b> = 总是成功</div>
+        </div>
+        <div class="rules-section">
+          <div class="rs-title">DC 难度表</div>
+          <div class="rs-content">
+            <b>5</b> 非常简单 · <b>10</b> 简单<br>
+            <b>15</b> 中等 · <b>20</b> 困难<br>
+            <b>25</b> 非常困难 · <b>30</b> 几乎不可能
+          </div>
+        </div>
+        <div class="rules-section">
+          <div class="rs-title">优势 / 劣势</div>
+          <div class="rs-content"><b>优势</b>: 掷两个d20取高<br><b>劣势</b>: 掷两个d20取低<br>多个优势/劣势不叠加——只要有任一来源的优势和劣势就互相抵消</div>
+        </div>
+        <div class="rules-section">
+          <div class="rs-title">回合结构</div>
+          <div class="rs-content">
+            每回合可执行：<br>
+            · <b>移动</b> (速度尺数，可拆分)<br>
+            · <b>动作</b> (攻击/施法/闪避/协助/疾步/脱离/躲藏/使用物品)<br>
+            · <b>附赠动作</b> (仅当特性/法术允许)<br>
+            · <b>反应</b> (每轮1次，在他人回合触发)<br>
+            · <b>免费互动</b> (拔武器/开门等)
+          </div>
+        </div>
+        <div class="rules-section">
+          <div class="rs-title">攻击流程</div>
+          <div class="rs-content">
+            1. 声明攻击目标<br>
+            2. 投 d20 + 攻击修正值<br>
+            3. 与目标 AC 比较 → 命中/未命中<br>
+            4. 命中则投伤害骰<br>
+            5. 暴击(自然20): 伤害骰翻倍
+          </div>
+        </div>
+        <div class="rules-section">
+          <div class="rs-title">施法检查清单</div>
+          <div class="rs-content">
+            1. <b>施法时间</b>: 动作/附赠/反应/分钟<br>
+            2. <b>法术位</b>: 消耗对应环阶<br>
+            3. <b>成分</b>: V(言语) S(姿态) M(材料)<br>
+            4. <b>效果解决</b>: 攻击检定 or 豁免检定<br>
+            5. <b>专注</b>: 部分法术需专注维持<br>
+            <span style="color:var(--text-red)">受伤害时专注DC = 10 或 伤害值/2(取高)</span>
+          </div>
+        </div>
+        <div class="rules-section">
+          <div class="rs-title">休息机制</div>
+          <div class="rs-content">
+            <b>短休</b> (1小时): 消耗Hit Dice回HP, 恢复部分职业特性<br>
+            <b>长休</b> (8小时): HP回满, 恢复一半Hit Dice, 法术位全恢复<br>
+            <span style="color:var(--text-tertiary)">长休后需消耗1份口粮</span>
+          </div>
+        </div>
+        <div class="rules-section">
+          <div class="rs-title">死亡豁免</div>
+          <div class="rs-content">
+            HP = 0 时开始:<br>
+            · 每回合掷 d20 (无修饰)<br>
+            · <b>10+</b>: 1次成功<br>
+            · <b>9-</b>: 1次失败<br>
+            · <b>自然20</b>: 恢复1HP<br>
+            · <b>自然1</b>: 2次失败<br>
+            · 3次成功 → 稳定<br>
+            · 3次失败 → 死亡
+          </div>
+        </div>
+      </div>
+    </div><!-- /tabRules -->
+  </div>
+</div>
+
+<!-- ===== Spellbook Modal ===== -->
+<div class="modal-overlay" id="spellbookModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="mh-title">法术书 — 格罗姆 (圣武士 Lv.3)</span>
+      <button class="modal-close" onclick="closeModal('spellbookModal')">x</button>
+    </div>
+    <div class="modal-body" id="spellbookBody">
+      <!-- Generated by JS -->
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== State =====
+let currentMode = 'exploration';
+let advMode = 'normal';
+let usedActions = { move: false, action: false, bonus: false, reaction: false, dash: false };
+let roundCount = 1;
+let currentInitIndex = 0;
+let initCards = [];
+
+// ===== Mode Switching =====
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const mode = btn.dataset.mode;
+    switchMode(mode);
+  });
+});
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+
+  const initBar = document.getElementById('initBar');
+  const combatantHP = document.getElementById('combatantHP');
+  const actionPanel = document.getElementById('actionPanel');
+  const quickActions = document.getElementById('quickActions');
+
+  if (mode === 'combat') {
+    initBar.classList.add('visible');
+    combatantHP.classList.add('visible');
+    actionPanel.classList.add('visible');
+    quickActions.classList.add('hidden');
+    document.getElementById('tacGrid').classList.add('visible');
+    resetActions();
+    loadCombatNarrative();
+  } else if (mode === 'exploration') {
+    initBar.classList.remove('visible');
+    combatantHP.classList.remove('visible');
+    actionPanel.classList.remove('visible');
+    quickActions.classList.remove('hidden');
+    document.getElementById('tacGrid').classList.remove('visible');
+    loadExplorationNarrative();
+  } else if (mode === 'social') {
+    initBar.classList.remove('visible');
+    combatantHP.classList.remove('visible');
+    actionPanel.classList.remove('visible');
+    quickActions.classList.remove('hidden');
+    document.getElementById('tacGrid').classList.remove('visible');
+    loadSocialNarrative();
+  }
+}
+
+// ===== Narrative Content =====
+function loadExplorationNarrative() {
+  const area = document.getElementById('narrativeArea');
+  area.innerHTML = `
+    <div class="msg-system">会话 3 开始 — 探索模式</div>
+    <div class="msg-dm">
+      <div class="speaker">DM (AI)</div>
+      <div class="content">
+        你们沿着蜿蜒的山路前行，终于来到了一座古老的废墟前。石墙上爬满了青苔，入口处矗立着两根断裂的柱子。空气中弥漫着潮湿的泥土气息，你隐约听到废墟深处传来微弱的金属碰撞声。<br><br>
+        <em>你们要怎么做？</em>
+      </div>
+    </div>
+    <div class="msg-player">
+      <div class="speaker">格罗姆</div>
+      <div class="content">我靠近入口，仔细观察有没有陷阱或危险的迹象。</div>
+    </div>
+    <div class="msg-dm">
+      <div class="speaker">DM (AI)</div>
+      <div class="content">进行一次<b>感知(察觉)</b>检定。</div>
+    </div>
+    <div class="msg-roll">
+      <span class="dice-icon">d20</span>
+      <span class="roll-detail">d20(14) + 4</span>
+      <span class="roll-result">18</span>
+      <span class="roll-tag">察觉</span>
+    </div>
+    <div class="msg-dm">
+      <div class="speaker">DM (AI)</div>
+      <div class="content">
+        你注意到入口右侧的地面上有一块颜色略深的石板——那是一个压力触发装置。看起来如果踩上去，可能会触发某种机关。你还注意到左侧墙壁上有一个小孔，像是弩箭发射口。<br><br>
+        你们可以选择：绕过陷阱、解除陷阱、或者直接冒险通过。
+      </div>
+    </div>
+  `;
+  area.scrollTop = area.scrollHeight;
+}
+
+function loadCombatNarrative() {
+  const area = document.getElementById('narrativeArea');
+  area.innerHTML = `
+    <div class="msg-system">战斗开始 — 先攻已投掷</div>
+    <div class="msg-dm">
+      <div class="speaker">DM (AI)</div>
+      <div class="content">
+        就在你们踏入废墟大厅的那一刻，两个矮小的绿色身影从阴影中窜出——<b>哥布林</b>！它们手持短剑，露出尖锐的牙齿，发出刺耳的战吼。<br><br>
+        <em>突袭检定：双方均未突袭成功。投掷先攻！</em>
+      </div>
+    </div>
+    <div class="msg-system">先攻顺序：格罗姆(18) > 哥布林A(14) > 哥布林B(12) > 埃尔达(10)</div>
+    <div class="msg-dm">
+      <div class="speaker">DM (AI)</div>
+      <div class="content">
+        格罗姆，你先行动。两个哥布林在你前方约 20 尺处。你的回合——你可以在你的回合内执行<b>移动</b>、一个<b>动作</b>、一个<b>附赠动作</b>。你还可以在轮到你之外的任何时候使用一个<b>反应</b>。
+      </div>
+    </div>
+    <div class="msg-player">
+      <div class="speaker">格罗姆</div>
+      <div class="content">我冲向哥布林A，用长剑劈砍它！</div>
+    </div>
+    <div class="msg-dm">
+      <div class="speaker">DM (AI)</div>
+      <div class="content">移动 20 尺接近哥布林A。进行<b>攻击检定</b>——投 d20 + 攻击修正值。</div>
+    </div>
+    <div class="msg-roll">
+      <span class="dice-icon">d20</span>
+      <span class="roll-detail">d20(18) + 5</span>
+      <span class="roll-result">23</span>
+      <span class="roll-tag">攻击</span>
+    </div>
+    <div class="msg-dm">
+      <div class="speaker">DM (AI)</div>
+      <div class="content"><b>命中！</b>哥布林A的AC只有15，23轻松命中。投伤害骰——长剑是 1d8+3。</div>
+    </div>
+    <div class="msg-roll">
+      <span class="dice-icon">d8</span>
+      <span class="roll-detail">d8(5) + 3</span>
+      <span class="roll-result">8</span>
+      <span class="roll-tag">挥砍</span>
+    </div>
+    <div class="msg-damage">哥布林A 受到 8 点伤害！剩余 HP: 0/7 — 已倒下</div>
+    <div class="msg-dm">
+      <div class="speaker">DM (AI)</div>
+      <div class="content">
+        你的长剑划出一道银光，哥布林A应声倒地。另一个哥布林B惊恐地后退了一步，但随即举起短剑准备反击。<br><br>
+        你还有<b>附赠动作</b>可用。要继续吗？或者<b>结束回合</b>。
+      </div>
+    </div>
+  `;
+  area.scrollTop = area.scrollHeight;
+}
+
+function loadSocialNarrative() {
+  const area = document.getElementById('narrativeArea');
+  area.innerHTML = `
+    <div class="msg-system">社交互动 — 与 NPC 对话</div>
+    <div class="msg-dm">
+      <div class="speaker">DM (AI)</div>
+      <div class="content">
+        在废墟的深处，你们遇到了一个独自居住的老学者——萨多。他穿着褪色的长袍，手里拿着一支快要燃尽的蜡烛，警惕地看着你们。<br><br>
+        <em>NPC 态度：中立</em>
+      </div>
+    </div>
+    <div class="msg-npc">
+      <div class="speaker">萨多 (NPC)</div>
+      <div class="content">"你们是谁？为什么来这里？这里不欢迎外人……"他的声音沙哑，但眼中闪烁着好奇的光。</div>
+    </div>
+    <div class="msg-player">
+      <div class="speaker">格罗姆</div>
+      <div class="content">"我们是冒险者，正在寻找失落矿脉的线索。我们对您没有恶意——也许我们可以互相帮助？"</div>
+    </div>
+    <div class="msg-dm">
+      <div class="speaker">DM (AI)</div>
+      <div class="content">
+        萨多犹豫了一下。进行<b>魅力(说服)</b>检定。DC 为 15（中立态度）。
+      </div>
+    </div>
+    <div class="msg-roll">
+      <span class="dice-icon">d20</span>
+      <span class="roll-detail">d20(12) + 3</span>
+      <span class="roll-result">15</span>
+      <span class="roll-tag">说服</span>
+    </div>
+    <div class="msg-dm">
+      <div class="speaker">DM (AI)</div>
+      <div class="content">
+        刚好达到DC。萨多放下蜡烛，叹了口气。<em>NPC态度变化：中立 -> 友好</em>
+      </div>
+    </div>
+    <div class="msg-npc">
+      <div class="speaker">萨多 (NPC)</div>
+      <div class="content">"好吧……你们看起来不像那些强盗。我可以告诉你们一些关于这地方的事，但你们得答应我一件事——帮我找回被那些哥布林抢走的一本旧书。"</div>
+    </div>
+    <div class="msg-dm">
+      <div class="speaker">DM (AI)</div>
+      <div class="content">
+        <b>任务触发</b>：找回萨多的古书。<br>
+        你可以选择继续对话、询问更多信息、或者接受任务。
+      </div>
+    </div>
+  `;
+  area.scrollTop = area.scrollHeight;
+}
+
+// ===== Dice Rolling =====
+function rollDice(sides, count = 1) {
+  let rolls = [];
+  let total = 0;
+  let isD20 = sides === 20;
+
+  if (isD20 && advMode !== 'normal') {
+    let r1 = Math.floor(Math.random() * sides) + 1;
+    let r2 = Math.floor(Math.random() * sides) + 1;
+    if (advMode === 'adv') {
+      rolls = [r1, r2];
+      total = Math.max(r1, r2);
+    } else {
+      rolls = [r1, r2];
+      total = Math.min(r1, r2);
+    }
+  } else {
+    for (let i = 0; i < count; i++) {
+      let r = Math.floor(Math.random() * sides) + 1;
+      rolls.push(r);
+      total += r;
+    }
+  }
+
+  let mod = parseInt(document.getElementById('modInput').value) || 0;
+  let finalTotal = total + mod;
+
+  let display = document.getElementById('rollDisplay');
+  let rollText = isD20 && advMode !== 'normal'
+    ? (advMode === 'adv' ? `取高: ${total}` : `取低: ${total}`)
+    : (count > 1 ? rolls.join(' + ') + ' = ' + total : total.toString());
+
+  display.className = 'roll-display';
+  display.innerHTML = `
+    <div class="roll-num">${finalTotal}</div>
+    <div class="roll-breakdown">
+      ${isD20 && advMode !== 'normal' ? `[${rolls.join(', ')}] ` : ''}
+      ${count > 1 && !(isD20 && advMode !== 'normal') ? `[${rolls.join('+')}]` : ''}
+      ${mod !== 0 ? ` ${mod > 0 ? '+' : ''}${mod}` : ''}
+      ${isD20 && advMode !== 'normal' ? (advMode === 'adv' ? '(优势)' : '(劣势)') : ''}
+    </div>
+  `;
+
+  let diceLabel = count > 1 ? `${count}d${sides}` : `d${sides}`;
+  let advLabel = isD20 && advMode !== 'normal' ? (advMode === 'adv' ? '(优势)' : '(劣势)') : '';
+  addLog(`掷 ${diceLabel}${advLabel} = ${finalTotal}`, 'highlight');
+
+  // Also show in narrative
+  showRollInNarrative(sides, rolls, total, mod, finalTotal);
+}
+
+function showRollInNarrative(sides, rolls, total, mod, finalTotal) {
+  let area = document.getElementById('narrativeArea');
+  let isD20 = sides === 20;
+  let rollTag = isD20 ? '检定' : `d${sides}`;
+  let advLabel = isD20 && advMode !== 'normal' ? (advMode === 'adv' ? '(优势)' : '(劣势)') : '';
+
+  let rollDiv = document.createElement('div');
+  rollDiv.className = 'msg-roll';
+  rollDiv.innerHTML = `
+    <span class="dice-icon">${isD20 ? 'd20' : `d${sides}`}</span>
+    <span class="roll-detail">
+      ${isD20 && advMode !== 'normal' ? `[${rolls.join(', ')}] → ${total}` : ''}
+      ${!(isD20 && advMode !== 'normal') && rolls.length > 1 ? `${rolls.join('+')} = ${total}` : ''}
+      ${rolls.length === 1 ? `d${sides}(${total})` : ''}
+      ${mod !== 0 ? ` ${mod > 0 ? '+' : ''}${mod}` : ''}
+    </span>
+    <span class="roll-result">${finalTotal}</span>
+    <span class="roll-tag">${rollTag}${advLabel}</span>
+  `;
+  area.appendChild(rollDiv);
+  area.scrollTop = area.scrollHeight;
+}
+
+function setAdv(mode) {
+  advMode = mode;
+  document.querySelectorAll('.adv-btn').forEach(b => {
+    b.classList.remove('active', 'normal', 'adv', 'dis');
+    if (b.dataset.adv === mode) {
+      b.classList.add('active', mode);
+    }
+  });
+}
+
+// ===== Combat Actions =====
+function combatAction(action) {
+  const actionNames = {
+    move: '移动', dash: '疾步', attack: '攻击', cast: '施法',
+    dodge: '闪避', help: '协助', disengage: '脱离', hide: '躲藏',
+    bonus: '附赠动作', reaction: '反应', endturn: '结束回合'
+  };
+
+  if (action === 'endturn') {
+    endTurn();
+    return;
+  }
+
+  if (action === 'attack') {
+    addNarrative('player', '格罗姆', '我用长剑攻击最近的敌人！');
+    setTimeout(() => {
+      addNarrative('dm', 'DM (AI)', '进行攻击检定——投 d20 + 攻击修正值 (+5)。');
+      setTimeout(() => {
+        rollDice(20);
+        let mod = parseInt(document.getElementById('modInput').value);
+        if (!mod) {
+          document.getElementById('modInput').value = 5;
+        }
+      }, 500);
+    }, 300);
+    markActionUsed('attack');
+    return;
+  }
+
+  if (action === 'cast') {
+    addNarrative('player', '格罗姆', '我要施放一个法术。');
+    openSpellbook();
+    markActionUsed('cast');
+    return;
+  }
+
+  addNarrative('player', '格罗姆', `执行：${actionNames[action]}`);
+  addLog(`使用动作: ${actionNames[action]}`, 'highlight');
+  markActionUsed(action);
+}
+
+function markActionUsed(action) {
+  const btns = document.querySelectorAll('.action-btn');
+  btns.forEach(btn => {
+    if (btn.textContent.includes(action) || (action === 'attack' && btn.textContent.includes('攻击'))) {
+      btn.classList.add('used');
+    }
+  });
+}
+
+function endTurn() {
+  addNarrative('dm', 'DM (AI)', '格罗姆的回合结束。哥布林A的回合——它冲向埃尔达，挥出短剑！');
+  setTimeout(() => {
+    addNarrative('roll', null, { dice: 'd20', detail: 'd20(8) + 4', result: '12', tag: '攻击' });
+    setTimeout(() => {
+      addNarrative('dm', 'DM (AI)', '12 对埃尔达的 AC 14——未命中！短剑划过空气，埃尔达灵活地侧身躲开。');
+      setTimeout(() => {
+        addNarrative('dm', 'DM (AI)', '哥布林B的回合——它看到同伴A倒下，选择<b>脱离</b>动作并后退。埃尔达的回合——施放<b>魔法飞弹</b>！');
+        setTimeout(() => {
+          addNarrative('roll', null, { dice: '3d4', detail: '3d4(2+3+1)+0', result: '6', tag: '力场' });
+          setTimeout(() => {
+            addNarrative('damage', null, '哥布林B 受到 6 点力场伤害！剩余 HP: 1/7');
+            setTimeout(() => {
+              addNarrative('dm', 'DM (AI)', `第 ${roundCount} 轮结束。<b>第 ${++roundCount} 轮开始</b>——格罗姆，轮到你了。`);
+              document.getElementById('roundNum').textContent = roundCount;
+              resetActions();
+            }, 600);
+          }, 500);
+        }, 600);
+      }, 500);
+    }, 500);
+  }, 500);
+}
+
+function resetActions() {
+  document.querySelectorAll('.action-btn').forEach(btn => btn.classList.remove('used'));
+  usedActions = { move: false, action: false, bonus: false, reaction: false, dash: false };
+}
+
+// ===== Quick Checks (exploration/social) =====
+function quickCheck(skill) {
+  const skillNames = {
+    investigation: '调查', perception: '感知', stealth: '潜行',
+    athletics: '运动', insight: '洞悉', survival: '生存'
+  };
+  const skillMods = {
+    investigation: 0, perception: 4, stealth: 1,
+    athletics: 5, insight: 4, survival: 2
+  };
+
+  addNarrative('player', '格罗姆', `我进行${skillNames[skill]}检定。`);
+  document.getElementById('modInput').value = skillMods[skill];
+  setTimeout(() => rollDice(20), 200);
+}
+
+// ===== Narrative Helpers =====
+function addNarrative(type, speaker, content) {
+  let area = document.getElementById('narrativeArea');
+  let div = document.createElement('div');
+
+  if (type === 'dm') {
+    div.className = 'msg-dm';
+    div.innerHTML = `<div class="speaker">${speaker}</div><div class="content">${content}</div>`;
+  } else if (type === 'player') {
+    div.className = 'msg-player';
+    div.innerHTML = `<div class="speaker">${speaker}</div><div class="content">${content}</div>`;
+  } else if (type === 'npc') {
+    div.className = 'msg-npc';
+    div.innerHTML = `<div class="speaker">${speaker}</div><div class="content">${content}</div>`;
+  } else if (type === 'roll') {
+    div.className = 'msg-roll';
+    div.innerHTML = `
+      <span class="dice-icon">${content.dice}</span>
+      <span class="roll-detail">${content.detail}</span>
+      <span class="roll-result">${content.result}</span>
+      <span class="roll-tag">${content.tag}</span>
+    `;
+  } else if (type === 'damage') {
+    div.className = 'msg-damage';
+    div.textContent = content;
+  } else if (type === 'system') {
+    div.className = 'msg-system';
+    div.textContent = content;
+  }
+
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+// ===== Player Input =====
+function sendPlayerInput() {
+  let input = document.getElementById('playerInput');
+  let text = input.value.trim();
+  if (!text) return;
+
+  addNarrative('player', '格罗姆', text);
+  input.value = '';
+
+  // Simulate DM response
+  setTimeout(() => {
+    let response = generateDMResponse(text);
+    if (response) {
+      addNarrative('dm', 'DM (AI)', response);
+    }
+  }, 800);
+}
+
+function generateDMResponse(text) {
+  let lower = text.toLowerCase();
+  if (lower.includes('攻击') || lower.includes('attack')) {
+    return '确定目标后，进行<b>攻击检定</b>——投 d20 + 攻击修正值。点击右侧骰子或下方"攻击"按钮。';
+  }
+  if (lower.includes('搜索') || lower.includes('调查') || lower.includes('investigate')) {
+    return '进行<b>智力(调查)</b>检定。你可以点击下方"调查"快捷按钮。';
+  }
+  if (lower.includes('潜行') || lower.includes('隐')) {
+    return '进行<b>敏捷(隐匿)</b>检定。注意：如果你移动速度不超过一半，可以进行隐匿检定。';
+  }
+  if (lower.includes('法术') || lower.includes('施法') || lower.includes('cast')) {
+    return '选择要施放的法术。记住检查：1) 施法时间（动作/附赠）2) 法术位是否可用 3) 成分（言语/姿态/材料）4) 是否需要专注。';
+  }
+  if (lower.includes('说服') || lower.includes('交谈') || lower.includes('talk')) {
+    return '进行<b>魅力(说服)</b>检定。NPC 当前态度会影响 DC。记住：说服不是精神控制——合理的要求更容易成功。';
+  }
+  return '好的。根据情况，你可能需要进行一次检定——选择相应的技能投 d20，或使用下方的快捷按钮。';
+}
+
+// ===== Log =====
+function addLog(text, cls = '') {
+  let now = new Date();
+  let time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  let log = document.getElementById('logList');
+  let entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span class="log-time">${time}</span> <span class="${cls}">${text}</span>`;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ===== Spell Slots =====
+function useSlot(el) {
+  if (el.classList.contains('available')) {
+    el.classList.remove('available');
+    el.classList.add('used');
+    addLog('消耗 1环 法术位', 'highlight');
+  } else {
+    el.classList.remove('used');
+    el.classList.add('available');
+    addLog('恢复 1环 法术位');
+  }
+}
+
+// ===== Rest =====
+function takeRest(type) {
+  if (type === 'short') {
+    addNarrative('system', null, '短休 — 1小时');
+    addNarrative('dm', 'DM (AI)', '你们在废墟一角找到掩蔽处进行短休。<br><br><b>短休效果</b>：<br>· 可消耗 Hit Dice 恢复 HP<br>· 恢复部分职业技能（如战士的回风转息）<br>· 恢复法术位（仅特定职业，如邪术师）<br><br>你要消耗几个 Hit Dice？你当前有 3d8 可用。');
+    addLog('短休完成 (1小时)', 'highlight');
+  } else {
+    addNarrative('system', null, '长休 — 8小时');
+    addNarrative('dm', 'DM (AI)', '你们在安全的角落设营休息了8小时。<br><br><b>长休效果</b>：<br>· HP 恢复至满值（45/45）<br>· 恢复全部 Hit Dice 的一半（最低1个）<br>· 恢复所有法术位<br>· 恢复所有职业特性使用次数<br><br><em>注意：长休后需消耗1份口粮，否则可能受 Exhaustion 状态影响。</em>');
+    document.getElementById('hpCurrent').textContent = '45';
+    document.getElementById('hpBar').style.width = '100%';
+    document.querySelectorAll('.spell-slot.used').forEach(s => {
+      s.classList.remove('used');
+      s.classList.add('available');
+    });
+    document.querySelectorAll('.hd-die.used').forEach(d => d.classList.remove('used'));
+    addLog('长休完成 — HP/法术位/Hit Dice 全部恢复', 'highlight');
+  }
+}
+
+// ===== Spellbook =====
+const spells = [
+  { name: '祝福术', level: '1环', school: '附魔', time: '1动作', range: '30尺', duration: '专注, 最多1分钟', components: 'V S M', desc: '最多3个友方生物在攻击检定和豁免检定中获得 +1d4。每升一环多1个目标。', type: 'buff' },
+  { name: '治愈微伤', level: '1环', school: '防护', time: '1动作', range: '触碰', duration: '即时', components: 'V S', desc: '触碰一个生物恢复 1d8+施法属性调整值 HP。每升一环多 1d8。', type: 'heal' },
+  { name: '神圣武器', level: '1环', school: '塑能', time: '1附赠动作', range: '自身', duration: '专注, 最多1分钟', components: 'V', desc: '武器散发圣光。命中时额外造成 1d8 光辉伤害。结束时可命令武器爆发光芒，周围10尺内生物做体质豁免或目盲。', type: 'buff' },
+  { name: '命令术', level: '1环', school: '附魔', time: '1动作', range: '60尺', duration: '1轮', components: 'V', desc: '目标生物做感知豁免，失败则服从你的一句话命令（如"逃跑""趴下"）。', type: 'debuff' },
+  { name: '庇护术', level: '1环', school: '防护', time: '1附赠动作', range: '触碰', duration: '1分钟', components: 'V S M', desc: '目标生物不被攻击，攻击者需做感知豁免，失败则转移目标或浪费攻击。', type: 'buff' },
+  { name: '侦测魔法', level: '1环', school: '预言', time: '1动作', range: '自身', duration: '专注, 最多10分钟', components: 'V S', desc: '感知30尺内的魔法光源和魔法物品，看到魔法灵光。', type: 'utility' },
+  { name: '神圣感知', level: '特性', school: '职业', time: '1动作', range: '60尺', duration: '即时', components: '-', desc: '感知范围内不死生物、邪魔等天界生物的存在。', type: 'utility' }
+];
+
+function openSpellbook() {
+  let body = document.getElementById('spellbookBody');
+  body.innerHTML = spells.map((s, i) => `
+    <div class="spell-card" onclick="toggleSpellCard(this)">
+      <div class="sc-header">
+        <span class="sc-name">${s.name}</span>
+        <span class="sc-level">${s.level}</span>
+      </div>
+      <div class="sc-meta">
+        <span>${s.time}</span>
+        <span>${s.range}</span>
+        <span>${s.components}</span>
+        <span>${s.duration}</span>
+      </div>
+      <div class="sc-desc">${s.desc}</div>
+      ${s.level === '1环' ? `<button class="sc-cast" onclick="event.stopPropagation();castSpell('${s.name}')">施放 ${s.name}</button>` : ''}
+    </div>
+  `).join('');
+  document.getElementById('spellbookModal').classList.add('visible');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('visible');
+}
+
+function toggleSpellCard(el) {
+  el.classList.toggle('expanded');
+}
+
+function castSpell(name) {
+  let spell = spells.find(s => s.name === name);
+  if (!spell) return;
+  addNarrative('player', '格罗姆', `施放 ${name}！`);
+  addNarrative('dm', 'DM (AI)', `<b>${name}</b> · ${spell.time} · ${spell.components}<br><br>${spell.desc}`);
+  addLog(`施放法术: ${name}`, 'highlight');
+
+  if (spell.time.includes('附赠')) {
+    addLog('消耗附赠动作', 'highlight');
+  } else if (spell.time.includes('动作')) {
+    addLog('消耗动作', 'highlight');
+  }
+
+  if (spell.level === '1环') {
+    let slots = document.querySelectorAll('.spell-slot.available');
+    if (slots.length > 0) {
+      useSlot(slots[0]);
+    }
+  }
+
+  if (name === '祝福术') {
+    addCondition('blessed');
+    addCondition('concentrating');
+    addNarrative('dm', 'DM (AI)', '你和最多2个友方获得祝福术效果。攻击检定和豁免检定 +1d4。需要在主面板标记专注状态——受到伤害时需做体质豁免维持专注。');
+  } else if (name === '治愈微伤') {
+    let heal = Math.floor(Math.random() * 8) + 1 + 3;
+    addNarrative('roll', null, { dice: '1d8+3', detail: `d8(${heal-3}) + 3`, result: `${heal}`, tag: '治疗' });
+    addNarrative('damage', null, `恢复 ${heal} 点HP！`);
+    let hpEl = document.getElementById('hpCurrent');
+    let curHp = parseInt(hpEl.textContent) + heal;
+    if (curHp > 45) curHp = 45;
+    hpEl.textContent = curHp;
+    document.getElementById('hpBar').style.width = (curHp / 45 * 100) + '%';
+  }
+
+  closeModal('spellbookModal');
+}
+
+// ===== Conditions =====
+const conditionNames = {
+  poisoned: { name: '中毒', desc: '攻击检定和能力检定劣势' },
+  concentrating: { name: '专注', desc: '正在维持一个法术' },
+  prone: { name: '倒地', desc: '爬起需半个速度; 近战攻击劣势, 远程攻击优势' },
+  frightened: { name: '恐惧', desc: '恐惧源可见时无法主动靠近; 检定劣势' },
+  restrained: { name: '束缚', desc: '速度0; 攻击劣势; 敏捷豁免劣势; 攻击你优势' },
+  blinded: { name: '目盲', desc: '攻击劣势; 被攻击优势; 视觉自动失败' },
+  blessed: { name: '祝福术', desc: '攻击和豁免检定 +1d4' },
+  inspired: { name: '灵感', desc: '可重掷一次检定' }
+};
+
+function addCondition(type) {
+  let tracker = document.getElementById('conditionTracker');
+  let info = conditionNames[type];
+  let chip = document.createElement('span');
+  chip.className = `cond-chip cond-${type}`;
+  chip.title = info.desc;
+  chip.innerHTML = `${info.name} <span class="cond-x">x</span>`;
+  chip.onclick = function() { removeCondition(this); };
+  let addBtn = tracker.querySelector('.cond-add-btn');
+  tracker.insertBefore(chip, addBtn);
+  document.getElementById('condDropdown').classList.remove('visible');
+  addLog(`添加状态: ${info.name}`, 'highlight');
+
+  if (type === 'concentrating') {
+    document.getElementById('concTrack').style.display = 'flex';
+  }
+}
+
+function removeCondition(el) {
+  let name = el.textContent.trim().replace('x', '').trim();
+  el.remove();
+  addLog(`移除状态: ${name}`);
+  if (name === '专注') {
+    document.getElementById('concTrack').style.display = 'none';
+  }
+}
+
+function toggleCondDropdown() {
+  let dd = document.getElementById('condDropdown');
+  dd.classList.toggle('visible');
+}
+
+function breakConcentration() {
+  let chips = document.querySelectorAll('.cond-chip');
+  chips.forEach(c => {
+    if (c.textContent.includes('专注')) c.remove();
+  });
+  document.getElementById('concTrack').style.display = 'none';
+  addLog('专注被打断 — 法术效果结束', 'damage');
+  addNarrative('system', null, '专注被打断');
+}
+
+// ===== Death Saves =====
+let deathSaves = { successes: [false, false, false], failures: [false, false, false] };
+
+function toggleDeathSave(type, idx) {
+  deathSaves[type + 'es'][idx] = !deathSaves[type + 'es'][idx];
+  updateDeathSaveUI();
+}
+
+function updateDeathSaveUI() {
+  let dots = document.querySelectorAll('.death-save-dots .ds-dot');
+  dots[0].className = 'ds-dot' + (deathSaves.successes[0] ? ' success' : '');
+  dots[0].textContent = deathSaves.successes[0] ? 'check' : '';
+  dots[1].className = 'ds-dot' + (deathSaves.successes[1] ? ' success' : '');
+  dots[1].textContent = deathSaves.successes[1] ? 'check' : '';
+  dots[2].className = 'ds-dot' + (deathSaves.successes[2] ? ' success' : '');
+  dots[2].textContent = deathSaves.successes[2] ? 'check' : '';
+  dots[3].className = 'ds-dot' + (deathSaves.failures[0] ? ' failure' : '');
+  dots[3].textContent = deathSaves.failures[0] ? 'x' : '';
+  dots[4].className = 'ds-dot' + (deathSaves.failures[1] ? ' failure' : '');
+  dots[4].textContent = deathSaves.failures[1] ? 'x' : '';
+  dots[5].className = 'ds-dot' + (deathSaves.failures[2] ? ' failure' : '');
+  dots[5].textContent = deathSaves.failures[2] ? 'x' : '';
+}
+
+function rollDeathSave() {
+  let roll = Math.floor(Math.random() * 20) + 1;
+  let result = '';
+  if (roll === 20) {
+    result = `自然20! 恢复1HP — 稳定并恢复意识!`;
+    addNarrative('roll', null, { dice: 'd20', detail: `d20(${roll})`, result: `${roll}`, tag: '死亡豁免' });
+    addNarrative('dm', 'DM (AI)', result);
+    document.getElementById('deathSaveBox').classList.add('hidden');
+    let hpEl = document.getElementById('hpCurrent');
+    hpEl.textContent = '1';
+    document.getElementById('hpBar').style.width = (1/45*100) + '%';
+  } else if (roll === 1) {
+    let idx = deathSaves.failures.indexOf(false);
+    if (idx >= 0) deathSaves.failures[idx] = true;
+    if (idx + 1 >= 2) {
+      deathSaves.failures[2] = true;
+    }
+    result = `自然1! 记2次失败!`;
+    addNarrative('roll', null, { dice: 'd20', detail: `d20(${roll})`, result: `${roll}`, tag: '死亡豁免' });
+    addNarrative('dm', 'DM (AI)', result);
+  } else if (roll >= 10) {
+    let idx = deathSaves.successes.indexOf(false);
+    if (idx >= 0) deathSaves.successes[idx] = true;
+    result = `${roll} >= 10 — 1次成功`;
+    addNarrative('roll', null, { dice: 'd20', detail: `d20(${roll})`, result: `${roll}`, tag: '死亡豁免' });
+    addNarrative('dm', 'DM (AI)', result);
+  } else {
+    let idx = deathSaves.failures.indexOf(false);
+    if (idx >= 0) deathSaves.failures[idx] = true;
+    result = `${roll} < 10 — 1次失败`;
+    addNarrative('roll', null, { dice: 'd20', detail: `d20(${roll})`, result: `${roll}`, tag: '死亡豁免' });
+    addNarrative('dm', 'DM (AI)', result);
+  }
+  updateDeathSaveUI();
+
+  let succCount = deathSaves.successes.filter(Boolean).length;
+  let failCount = deathSaves.failures.filter(Boolean).length;
+  if (succCount >= 3) {
+    addNarrative('dm', 'DM (AI)', '3次成功 — 你已稳定! 不再需要死亡豁免检定。');
+    document.getElementById('deathSaveBox').classList.add('hidden');
+  } else if (failCount >= 3) {
+    addNarrative('dm', 'DM (AI)', '<b>3次失败 — 你已经死亡。</b>只有复活术类的法术才能将你带回。');
+  }
+}
+
+// ===== Party Switching =====
+function switchCharacter(el, charId) {
+  document.querySelectorAll('.party-member').forEach(m => m.classList.remove('active'));
+  el.classList.add('active');
+  let names = { grom: '格罗姆', elda: '埃尔达', thor: '索林' };
+  addLog(`切换查看: ${names[charId]}`);
+}
+
+// ===== Hit Dice =====
+function rollHitDice(el) {
+  if (el.classList.contains('used')) return;
+  let roll = Math.floor(Math.random() * 8) + 1;
+  let conMod = 2;
+  let heal = roll + conMod;
+  el.classList.add('used');
+  addNarrative('roll', null, { dice: '1d8+2', detail: `d8(${roll}) + ${conMod}`, result: `${heal}`, tag: 'Hit Dice' });
+  let hpEl = document.getElementById('hpCurrent');
+  let curHp = parseInt(hpEl.textContent) + heal;
+  if (curHp > 45) curHp = 45;
+  hpEl.textContent = curHp;
+  document.getElementById('hpBar').style.width = (curHp / 45 * 100) + '%';
+  addLog(`Hit Dice 恢复 ${heal} HP`, 'highlight');
+}
+
+// ===== Tabs =====
+function switchTab(tab) {
+  document.querySelectorAll('.right-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  if (tab === 'dice') document.getElementById('tabDice').classList.add('active');
+  if (tab === 'rules') document.getElementById('tabRules').classList.add('active');
+}
+
+// ===== Tactical Grid =====
+function initTacticalGrid() {
+  let grid = document.getElementById('tacGridInner');
+  let cells = '';
+  for (let r = 0; r < 6; r++) {
+    for (let c = 0; c < 10; c++) {
+      let cls = 'tac-cell';
+      let content = '';
+      if (r === 3 && c === 2) { cls += ' tac-player'; content = 'G'; }
+      else if (r === 3 && c === 4) { cls += ' tac-player'; content = 'E'; }
+      else if (r === 2 && c === 6) { cls += ' tac-enemy'; content = 'g1'; }
+      else if (r === 4 && c === 6) { cls += ' tac-enemy'; content = 'g2'; }
+      else if (r === 0 && (c === 0 || c === 1)) { cls += ' tac-wall'; }
+      else if (r === 5 && c === 9) { cls += ' tac-wall'; }
+      else if ((r === 1 && c >= 7) || (r === 2 && c === 7)) { cls += ' tac-difficult'; }
+      cells += `<div class="${cls}" onclick="moveOnGrid(this)">${content}</div>`;
+    }
+  }
+  grid.innerHTML = cells;
+}
+
+let gridSelected = null;
+function moveOnGrid(cell) {
+  if (cell.classList.contains('tac-wall')) return;
+  if (cell.classList.contains('tac-player') || cell.classList.contains('tac-enemy')) {
+    if (gridSelected) gridSelected.style.outline = '';
+    gridSelected = cell;
+    cell.style.outline = '2px solid #534ab7';
+    addLog(`选中: ${cell.textContent}`);
+  } else if (gridSelected) {
+    let unit = gridSelected.textContent;
+    gridSelected.classList.remove('tac-player', 'tac-enemy');
+    gridSelected.textContent = '';
+    if (unit === 'G' || unit === 'E' || unit === 'T') {
+      cell.classList.add('tac-player');
+    } else {
+      cell.classList.add('tac-enemy');
+    }
+    cell.textContent = unit;
+    gridSelected.style.outline = '';
+    gridSelected = null;
+    addLog(`移动 ${unit} 到新位置`, 'highlight');
+  }
+}
+
+// ===== Enhanced takeRest =====
+
+// ===== Init =====
+initTacticalGrid();
+loadExplorationNarrative();
+addLog('探索模式激活', 'highlight');
+addLog('提示: 切换"战斗"模式查看完整战斗界面', '');
+
+document.getElementById('spellbookModal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('visible');
+});
+</script>
+</body>
+</html>
