@@ -136,7 +136,12 @@ def parse_dice_expression(expression: str) -> tuple[list[tuple[int, int, int]], 
         if "d" in tok:
             cnt_str, sides_str = tok.split("d")
             cnt = int(cnt_str) if cnt_str else 1  # R-CHK-025: NdM，N省略为1
+            if cnt <= 0:
+                # 0 颗骰的表达式（如 "0d6"）无意义，几乎总是上游 bug，显式拒绝
+                raise ValueError(f"骰子数量必须 ≥1，得到 {expression!r}（{tok!r}）")
             sides = int(sides_str)
+            if sides <= 0:
+                raise ValueError(f"骰子面数必须 ≥1，得到 {expression!r}（{tok!r}）")
             terms.append((cnt, sides, sign))
         else:
             constant += sign * int(tok)

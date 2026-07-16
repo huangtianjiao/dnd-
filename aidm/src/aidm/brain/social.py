@@ -1,7 +1,14 @@
 """社交流程 — DM 扮演 NPC / 玩家角色扮演回应 / 判断掷骰 / 态度转换。
 
-依据 DMG「运作游戏/运作交涉」(R-CON-012 NPC态度层级, R-DM-047 NPC态度分类,
-R-GLS-017 态度对影响检定的优劣势) 与报告§7社交互动循环：
+依据 DMG「运作游戏/运作交涉」(R-CON-012 NPC态度层级, R-DM-047 NPC态度分类)
+与 PHB 术语汇编「态度」(R-GLS-017 态度对影响检定的优劣势——友好→优势/敌对→劣势，
+出处: topics/玩家手册2024/术语汇编/态度.txt)，以及报告§7社交互动循环。
+
+【规则书 vs 设计决策】（详见 _SOCIAL_DC_MODIFIER / ATTITUDE_THRESHOLDS 处注释）
+  - 三种态度（友好/冷漠/敌对）：规则书原文（运作交涉/态度.txt + 术语汇编/态度.txt）
+  - 态度对影响检定的优劣势（友好→优势、敌对→劣势）：规则书原文（术语汇编/态度.txt）
+  - 态度 DC ±5 修正：⚠ 设计决策（项目报告§7，非规则书）；规则书用 adv/disadv 而非 ±5
+  - 态度转换阈值 10/5/15/10：⚠ 设计决策（项目报告§7，非规则书）；规则书仅定性可改变
 
   1. DM 扮演 NPC（以 NPC 的口吻说话，描述表情/姿态/语气；NPC 有自己的目标、
      态度和知识——DM 扮演他们就像扮演另一个角色）
@@ -47,30 +54,33 @@ ATTITUDE_HOSTILE = "hostile"          # 敌对：会试图妨碍、攻击或拒�
 
 ALL_ATTITUDES = (ATTITUDE_FRIENDLY, ATTITUDE_INDIFFERENT, ATTITUDE_HOSTILE)
 
-# 社交 DC 修正表（报告§7）
-# 态度 → DC 修正（加到基础 DC 上）
-#   友好 → -5（更容易被影响）
-#   冷漠 →  0（中性基准）
-#   敌对 → +5（更难被影响）
-# 规则: R-CON-012 NPC态度层级（态度影响检定 DC）
-#       R-GLS-017 态度对影响检定的优劣势（友好→优势，敌对→劣势）
-# 出处: topics/城主指南2024/2.运作游戏/运作交涉/态度.htm
+# 社交 DC 修正表 —— 【设计决策，非规则书原文】
+# ⚠ 规则书原文（术语汇编/态度.txt）对态度的影响采用 *优势/劣势* 机制，而非 DC ±5：
+#     友好 Friendly  → 影响该生物的属性检定具有 *优势*
+#     敌对 Hostile   → 影响该生物的属性检定具有 *劣势*
+#     冷漠 Indifferent → 无优劣势
+#   即规则出处: topics/玩家手册2024/术语汇编/态度.txt（参见"友好""敌对""冷漠"词条）。
+#
+# 本模块采用 *DC ±5 修正* 作为该优势/劣势机制的数值近似（出处: 项目报告§7，
+# 非规则书）。这与规则书的 adv/disadv 并不等价（±5 ≈ ±5 成功率，而 adv/disadv
+# 的期望偏移随 DC 变化）。理想做法是在 check_engine.ability_check 中按态度传入
+# advantage/disadvantage 而非调整 DC；当前实现保留 ±5 作为简化设计决策。
+# 规则点引用 R-GLS-017 为项目自拟，规则书无对应编号。
 _SOCIAL_DC_MODIFIER = {
     ATTITUDE_FRIENDLY: -5,
     ATTITUDE_INDIFFERENT: 0,
     ATTITUDE_HOSTILE: +5,
 }
 
-# 态度转换阈值（报告§7）
-# 连续失败/成功达到阈值后，NPC 态度向相邻层级转换：
-#   friendly → indifferent : 连续失败 10 次
-#   indifferent → hostile  : 连续失败  5 次
-#   hostile → indifferent  : 连续成功 15 次
-#   indifferent → friendly : 连续成功 10 次
-# 规则: R-DM-047 NPC态度分类（态度可由言行改变）
-# 出处: topics/城主指南2024/2.运作游戏/运作交涉/态度.htm
+# 态度转换阈值 —— 【设计决策，非规则书原文】
+# ⚠ 规则书原文（运作交涉/态度.txt）仅定性说明"角色可以通过言行改变生物的态度"
+#   （例：为冷漠的矿工买饮料可能使其变为友好），并要求 DM 在态度变化时向玩家描述，
+#   但 *未给出* 任何连续成功/失败次数阈值。下表的 10/5/15/10 阈值为项目自拟调参
+#   （出处: 项目报告§7，非规则书），仅用于量化态度转换节奏。
+# 规则: R-DM-047 NPC态度分类（态度可由言行改变——定性，无具体次数）
+# 出处: topics/城主指南2024/2.运作游戏/运作交涉/态度.txt
 ATTITUDE_THRESHOLDS = {
-    # (当前态度, 方向) → 所需连续次数
+    # (当前态度, 方向) → 所需连续次数（设计决策，见上方说明）
     ("friendly", "degrade"): 10,      # 友好→冷漠
     ("indifferent", "degrade"): 5,    # 冷漠→敌对
     ("hostile", "improve"): 15,       # 敌对→冷漠
@@ -157,13 +167,14 @@ class SocialState:
 def check_social_dc(npc_attitude: str) -> int:
     """计算社交 DC 修正值（按 NPC 态度）。
 
-    社交 DC 修正表（报告§7）：
+    【设计决策，非规则书原文】
+    规则书（术语汇编/态度.txt）对态度的影响采用 *优势/劣势*：
+      友好 → 影响检定具有优势；敌对 → 影响检定具有劣势；冷漠 → 无。
+    本函数返回 *DC ±5 修正* 作为该机制的数值近似（项目报告§7，非规则书）：
       友好 → -5
       冷漠 →  0
       敌对 → +5
-
-    规则: R-CON-012 NPC态度层级（态度影响检定 DC）
-    出处: topics/城主指南2024/2.运作游戏/运作交涉/态度.htm
+    理想实现应在检定时按态度传入 advantage/disadvantage；此处保留 ±5 简化。
 
     Args:
         npc_attitude: NPC 当前态度 friendly|indifferent|hostile
@@ -185,14 +196,16 @@ def check_social_dc(npc_attitude: str) -> int:
 def update_attitude(npc: NPC, success_count: int, failure_count: int) -> Optional[str]:
     """根据连续成功/失败次数更新 NPC 态度。
 
-    态度转换阈值（报告§7）：
+    【设计决策，非规则书原文】
+    规则书（运作交涉/态度.txt）仅定性说明态度可由言行改变（无具体次数阈值）。
+    下述 10/5/15/10 阈值为项目自拟调参（报告§7，非规则书）：
       friendly → indifferent : 连续失败 10 次
       indifferent → hostile  : 连续失败  5 次
       hostile → indifferent  : 连续成功 15 次
       indifferent → friendly : 连续成功 10 次
 
-    规则: R-DM-047 NPC态度分类（态度可由言行改变）/ R-CON-012
-    出处: topics/城主指南2024/2.运作游戏/运作交涉/态度.htm
+    规则: R-DM-047 NPC态度分类（态度可由言行改变——定性，无具体次数）
+    出处: topics/城主指南2024/2.运作游戏/运作交涉/态度.txt
 
     当态度发生转换时，直接修改 npc.attitude 并返回新态度字符串；
     若无转换发生，返回 None。

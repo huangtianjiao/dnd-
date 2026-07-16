@@ -571,20 +571,24 @@ def _self_test() -> None:
     assert d["background"] == "士兵"
     assert d["alignment"] == "守序善良"
     assert d["prof_bonus"] == 2
-    # 标准数列建议：战士 STR15 DEX14 CON13 INT8 WIS10 CHA12
-    assert d["scores"]["STR"] == 15
-    assert d["scores"]["DEX"] == 14
+    # 标准数列建议（战士）：STR15 DEX14 CON13 INT8 WIS10 CHA12
+    # 士兵背景三项属性 [STR,DEX,CON]，默认 2/1：STR+2、DEX+1 → STR17 DEX15 CON13
+    assert d["scores"]["STR"] == 17
+    assert d["scores"]["DEX"] == 15
     assert d["scores"]["CON"] == 13
-    # CON mod = +1 → HP = 10 + 1 = 11
+    # CON mod = +1 → HP = 10 + 1 = 11（人类无刚毅）
     assert d["mods"]["CON"] == 1
     assert d["max_hp"] == 11
-    # DEX mod = +2 → 无甲AC = 12, 先攻+2
+    # DEX mod = +2（15→+2）→ 无甲AC = 12, 先攻+2
     assert d["mods"]["DEX"] == 2
     assert d["ac_unarmored"] == 12
     assert d["initiative_bonus"] == 2
     # 战士无施法属性
     assert d["spellcasting"] is None
     assert d["spell_save_dc"] is None
+    # 起源专长（背景给予）+ 语言
+    assert d["feats"] == ["凶蛮打手"]
+    assert d["languages"] == ["通用语", "矮人语", "精灵语"]
     # 端到端：创建一个1级法师（施法者）
     mage = create_character(
         class_name="法师",
@@ -598,15 +602,32 @@ def _self_test() -> None:
     assert md["class"] == "法师"
     assert md["hit_die"] == 6
     assert md["spellcasting"] == "INT"
-    # 法师标准数列建议：INT15 WIS14 CON13 ... → INT mod +2
-    assert md["scores"]["INT"] == 15
-    assert md["mods"]["INT"] == 2
-    # 法术豁免DC = 8 + 2 + 2 = 12
-    assert md["spell_save_dc"] == 12
-    # 法术攻击加值 = 2 + 2 = 4
-    assert md["spell_attack_bonus"] == 4
-    # HP = 6 + CON mod; CON=13→+1 → HP=7
-    assert md["max_hp"] == 7
+    # 法师标准数列建议：INT15 WIS14 CON13 ...
+    # 智者背景三项属性 [CON,INT,WIS]，默认 2/1：CON+2、INT+1 → CON15 INT16 WIS14
+    assert md["scores"]["INT"] == 16
+    assert md["mods"]["INT"] == 3   # 16→+3
+    # 法术豁免DC = 8 + 3 + 2 = 13
+    assert md["spell_save_dc"] == 13
+    # 法术攻击加值 = 3 + 2 = 5
+    assert md["spell_attack_bonus"] == 5
+    # HP = 6 + CON mod; CON=15→+2 → HP=8
+    assert md["max_hp"] == 8
+    # 起源专长（背景给予）
+    assert md["feats"] == ["魔法学徒（法师）"]
+    # 端到端：矮人野蛮人（矮人刚毅 +1HP；野蛮人无甲防御）
+    dwarf_barb = create_character(
+        class_name="野蛮人", race="矮人", background="农民",
+        scores_method="standard_array", name="矮蛮子",
+    )
+    db = dwarf_barb.to_dict()
+    # 野蛮人标准数列建议：STR15 DEX13 CON14 INT10 WIS12 CHA8
+    # 农民背景三项属性 [STR,CON,WIS]，默认 2/1：STR+2、CON+1 → STR17 CON15 WIS12
+    assert db["scores"]["CON"] == 15
+    # 矮人刚毅：1级HP = 12(生命骰) + CON(+2) + 1(刚毅) = 15
+    assert db["max_hp"] == 15
+    # 野蛮人无甲防御 = 10 + DEX(13→+1) + CON(15→+2) = 13
+    assert db["ac_unarmored"] == 13
+    assert db["feats"] == ["健壮"]
     print("[char_create] 自检通过 ✓")
 
 

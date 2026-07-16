@@ -118,18 +118,69 @@ class RestState:
 #   hit_dice: int           — 可用生命骰数量
 #   max_hit_dice: int       — 生命骰上限
 #   con_mod: int            — 体质调整值
+#   hit_die_faces: int      — 生命骰面数
+#   base_max_hp: int        — 未被减少的原始HP上限
 #   exhaustion: int         — 力竭等级（0..6）
 #   spell_slots: dict       — {环阶: 剩余}（施法者）
 #   max_spell_slots: dict   — {环阶: 上限}（施法者）
 #
-# 这些字段在 stats/models.py 的 Character 中已有对应（hp_current/hp_max 等），
-# 调用方负责桥接。rest 函数返回结构化结果字典，不直接修改角色卡——
+# MockCharacter（自检用）直接具备上述字段。而 stats/models.py 的
+# Character(SQLModel) 字段名为 hp_current/hp_max/level/char_class/abilities 等，
+# 并未直接提供 hp/max_hit_dice/con_mod/hit_die_faces/base_max_hp。
+# 故 _get 在直接属性缺失时，按 Character 模型推导这些值（适配层）：
+#   hp          → hp_current
+#   max_hp      → hp_max
+#   base_max_hp → hp_max（Character 不追踪HP上限减少，以当前上限为准）
+#   con_mod     → ability_mod("con")
+#   hit_die_faces → CLASSES[char_class]["hit_die"]
+#   hit_dice / max_hit_dice → level（假定全部生命骰可用，上限=等级）
+# rest 函数返回结构化结果字典，不直接修改角色卡——
 # 由上层编排（graph.py）应用 state_changes。
 
 
+def _derive_for_character(character: Any, attr: str, default: Any) -> Any:
+    """为 Character(SQLModel) 推导 rest 协议所需但未直接提供的字段。
+
+    仅当直接属性缺失时调用。出处见上方鸭子类型协议注释。
+    """
+    # hp → 当前生命值
+    if attr == "hp":
+        return getattr(character, "hp_current", default)
+    # max_hp / base_max_hp → hp_max（Character 不追踪HP上限的临时减少）
+    if attr in ("max_hp", "base_max_hp"):
+        return getattr(character, "hp_max", default)
+    # con_mod → 体质调整值
+    if attr == "con_mod":
+        if hasattr(character, "ability_mod"):
+            return character.ability_mod("con")
+        return default
+    # hit_die_faces → 职业生命骰面数
+    if attr == "hit_die_faces":
+        cls_name = getattr(character, "char_class", "") or getattr(character, "class_name", "")
+        try:
+            from aidm.data.classes import get_class
+            return get_class(cls_name)["hit_die"]
+        except Exception:
+            return default
+    # hit_dice / max_hit_dice → 等级（假定全部生命骰可用，上限=等级）
+    if attr in ("hit_dice", "max_hit_dice"):
+        return getattr(character, "level", default)
+    # max_spell_slots → Character 无上限追踪；以当前 spell_slots 非空判定施法者
+    if attr == "max_spell_slots":
+        if hasattr(character, "spell_slots"):
+            slots = character.spell_slots
+            return slots if slots else default
+        return default
+    return default
+
+
 def _get(character: Any, attr: str, default: Any = 0) -> Any:
-    """安全取角色属性，缺失时返回默认值。"""
-    return getattr(character, attr, default)
+    """安全取角色属性，缺失时按 Character 模型推导，再不行返回默认值。"""
+    direct = getattr(character, attr, None)
+    if direct is not None:
+        return direct
+    # 直接属性缺失 → 为 Character(SQLModel) 推导适配字段
+    return _derive_for_character(character, attr, default)
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -166,6 +217,8 @@ def short_rest(
         hit_dice_spent: int — 实际消耗的生命骰数
         hit_dice_remaining: int — 剩余可用生命骰
         features_recharged: list[str] — 本次恢复的职业特性名
+        feature_recharge_amounts: dict[str, int|str] — 特性→短休恢复次数
+            （int=固定次数，"all"=恢复全部；野蛮人狂暴=1）
         errors: list[str] — 失败原因列表
     """
     errors: list[str] = []
@@ -214,6 +267,10 @@ def short_rest(
     # 规则: R-ADD-017 短休特性恢复钩子
     # 出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
     features_recharged = recharge_features_on_short_rest(character)
+    # 各特性短休恢复次数（野蛮人狂暴=1，其余默认"all"）
+    feature_recharge_amounts = {
+        f: short_rest_recharge_amount(f) for f in features_recharged
+    }
 
     return {
         "success": True,
@@ -224,6 +281,7 @@ def short_rest(
         "hd_rolls": hd_rolls,
         "con_mod": con_mod,
         "features_recharged": features_recharged,
+        "feature_recharge_amounts": feature_recharge_amounts,
         "errors": [],
     }
 
@@ -239,6 +297,7 @@ def _fail_short(errors: list[str]) -> dict:
         "hd_rolls": [],
         "con_mod": 0,
         "features_recharged": [],
+        "feature_recharge_amounts": {},
         "errors": errors,
     }
 
@@ -282,6 +341,9 @@ def long_rest(character: Any) -> dict:
         ability_scores_restored: bool — 是否恢复了被减少的属性值
         max_hp_restored: bool — 是否恢复了被减少的HP上限
         features_recharged: list[str] — 本次恢复的职业特性名
+        temp_hp_cleared: bool — 是否清空了临时生命值（长休后消失）
+        temp_hp_before: int — 长休前的临时生命值（信息性）
+        temp_hp: int — 长休后的临时生命值（恒为0）
         errors: list[str] — 失败原因列表
     """
     errors: list[str] = []
@@ -336,6 +398,12 @@ def long_rest(character: Any) -> dict:
     # 收益6: 特殊特性在长休时恢复
     features_recharged = recharge_features_on_long_rest(character)
 
+    # 收益7: 临时生命值清空
+    # 规则: 临时生命值持续直至被消耗或完成一次长休
+    # 出处: 进行游戏/临时生命值.txt（持续时间 Duration）
+    temp_hp_before = _get(character, "temp_hp", 0)
+    temp_hp_cleared = temp_hp_before > 0  # 仅有临时生命值时才标记为"已清空"
+
     return {
         "success": True,
         "type": "long",
@@ -348,6 +416,9 @@ def long_rest(character: Any) -> dict:
         "spell_slots_restored": spell_slots_restored,
         "ability_scores_restored": ability_scores_restored,
         "features_recharged": features_recharged,
+        "temp_hp_cleared": temp_hp_cleared,  # 长休清空临时生命值（仅原有值>0时）
+        "temp_hp_before": temp_hp_before,    # 长休前的临时生命值（信息性）
+        "temp_hp": 0,                        # 长休后临时生命值归零
         "errors": [],
     }
 
@@ -366,6 +437,9 @@ def _fail_long(errors: list[str]) -> dict:
         "spell_slots_restored": False,
         "ability_scores_restored": False,
         "features_recharged": [],
+        "temp_hp_cleared": False,  # 失败时不清空临时生命值
+        "temp_hp_before": 0,
+        "temp_hp": 0,
         "errors": errors,
     }
 
@@ -490,17 +564,28 @@ def _fail_interrupt(errors: list[str], cause: str) -> dict:
 # 规则: R-ADD-017 短休特性恢复钩子
 # 出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
 # 说明: 以下特性在短休完成时恢复使用次数（按各自描述）。
+#   - 野蛮人狂暴（短休恢复1次/长休恢复全部）
 #   - 邪务师（Warlock）法术位：邪务师的法术位在短休时恢复（而非长休）。
 #   - 战士行动涌动（Action Surge）：短休或长休后恢复。
 #   - 武僧真气（Ki）：短休时恢复。
 #   - 吟游诗人灵感（Bardic Inspiration）：短休时恢复（5级及以上）。
 #   - 德鲁伊野性变身（Wild Shape）：短休时恢复（月亮结社可在短休时恢复）。
 SHORT_REST_RECHARGE_FEATURES: dict[str, list[str]] = {
+    "野蛮人": ["狂暴"],          # 短休：恢复1次已消耗的狂暴使用次数
     "战士": ["行动涌动"],
     "武僧": ["真气"],
     "吟游诗人": ["吟游诗人灵感"],
     "德鲁伊": ["野性变身"],
     "魔契师": ["邪务师法术位"],  # 邪务师法术位在短休时恢复
+}
+
+# 短休部分恢复表：特性名 → 短休恢复的使用次数。
+# 不在此表中的特性默认短休恢复全部使用次数（"all"）。
+# 规则出处: 玩家手册2024/角色职业/野蛮人/野蛮人.htm:85
+#   "当你完成一次短休时，你重获一次已消耗的使用次数；
+#    当你完成一次长休时，你重获所有已消耗的使用次数。"
+SHORT_REST_PARTIAL_RECHARGE: dict[str, int] = {
+    "狂暴": 1,  # 野蛮人狂暴：短休仅恢复1次
 }
 
 # 长休恢复的特性映射：职业名 → 特性名列表
@@ -529,17 +614,21 @@ def recharge_features_on_short_rest(character: Any) -> list[str]:
     出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
 
     恢复的特性（按各自描述）：
-        - 邪务师法术位（魔契师）：短休时恢复
-        - 战士行动涌动：短休或长休后恢复
-        - 武僧真气：短休时恢复
-        - 吟游诗人灵感：短休时恢复
+        - 野蛮人狂暴：短休恢复1次已消耗的使用次数
+          （出处: 玩家手册2024/角色职业/野蛮人/野蛮人.htm:85）
+        - 邪务师法术位（魔契师）：短休时恢复全部
+        - 战士行动涌动：短休或长休后恢复全部
+        - 武僧真气：短休时恢复全部
+        - 吟游诗人灵感：短休时恢复全部
         - 德鲁伊野性变身：短休时恢复（月亮结社）
 
     参数:
         character: 角色对象，需有 char_class 或 class_name 属性
 
     返回:
-        恢复的特性名列表
+        恢复的特性名列表。
+        每个特性短休恢复的使用次数由 short_rest_recharge_amount(feature) 查询：
+        默认恢复全部("all")，除非在 SHORT_REST_PARTIAL_RECHARGE 中指定固定次数。
     """
     class_name = (
         _get(character, "char_class", None)
@@ -551,6 +640,19 @@ def recharge_features_on_short_rest(character: Any) -> list[str]:
     for feature in features:
         recharged.append(feature)
     return recharged
+
+
+def short_rest_recharge_amount(feature: str) -> Any:
+    """查询某特性在短休时恢复的使用次数。
+
+    返回:
+        int — 固定恢复次数（如野蛮人狂暴=1）
+        "all" — 恢复全部已消耗的使用次数（默认）
+
+    规则出处: 玩家手册2024/角色职业/野蛮人/野蛮人.htm:85
+        短休恢复1次、长休恢复全部。
+    """
+    return SHORT_REST_PARTIAL_RECHARGE.get(feature, "all")
 
 
 def recharge_features_on_long_rest(character: Any) -> list[str]:
@@ -606,6 +708,7 @@ class MockCharacter:
     reduced_ability_scores: bool = False
     spell_slots: dict = field(default_factory=lambda: {1: 2})
     max_spell_slots: dict = field(default_factory=lambda: {1: 4})
+    temp_hp: int = 0
 
 
 def _self_test() -> None:
@@ -678,6 +781,20 @@ def _self_test() -> None:
     assert r["success"] is True
     assert "邪务师法术位" in r["features_recharged"]
 
+    # 短休：恢复职业特性（野蛮人狂暴——仅恢复1次）
+    # 规则: 玩家手册2024/角色职业/野蛮人/野蛮人.htm:85
+    #   短休恢复1次已消耗的使用次数；长休恢复全部。
+    c = MockCharacter(hp=10, max_hp=20, char_class="野蛮人")
+    r = short_rest(c, hit_dice_to_spend=0)
+    assert r["success"] is True
+    assert "狂暴" in r["features_recharged"]
+    assert r["feature_recharge_amounts"]["狂暴"] == 1  # 短休仅恢复1次
+
+    # 短休：默认特性恢复全部使用次数（"all"）
+    c = MockCharacter(hp=10, max_hp=20, char_class="战士")
+    r = short_rest(c, hit_dice_to_spend=0)
+    assert r["feature_recharge_amounts"]["行动涌动"] == "all"
+
     # === 长休测试 ===
 
     # 长休：基本恢复
@@ -746,6 +863,29 @@ def _self_test() -> None:
     r = long_rest(c)
     assert r["success"] is True
     assert "行动涌动" in r["features_recharged"]
+
+    # 长休：清空临时生命值（长休后临时HP消失）
+    # 规则: 临时生命值持续至被消耗或完成一次长休
+    # 出处: 进行游戏/临时生命值.txt
+    c = MockCharacter(hp=5, max_hp=20, temp_hp=8)
+    r = long_rest(c)
+    assert r["success"] is True
+    assert r["temp_hp_cleared"] is True
+    assert r["temp_hp_before"] == 8
+    assert r["temp_hp"] == 0
+
+    # 长休：无临时生命值时不报"已清空"
+    c = MockCharacter(hp=5, max_hp=20, temp_hp=0)
+    r = long_rest(c)
+    assert r["success"] is True
+    assert r["temp_hp_cleared"] is False
+    assert r["temp_hp"] == 0
+
+    # 长休失败：不清空临时生命值
+    c = MockCharacter(hp=0, max_hp=20, temp_hp=5)
+    r = long_rest(c)
+    assert r["success"] is False
+    assert r["temp_hp_cleared"] is False
 
     # === 打断休息测试 ===
 

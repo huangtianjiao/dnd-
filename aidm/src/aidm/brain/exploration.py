@@ -33,36 +33,43 @@ from ..engine import dice
 class TravelPace:
     """旅行步调：每分钟/每小时/每天行进距离 + 游戏效果。
 
-    出处: topics/城主指南2024/2.运作游戏/运作探索/旅行.htm
+    出处: topics/玩家手册2024/进行游戏/旅行.htm（旅行步调表 + 游戏效果）
     """
     name: str               # 快速/中速/慢速
     per_minute_ft: int      # 每分钟尺数
     per_hour_miles: int     # 每小时英里
     per_day_miles: int      # 每天英里（8小时旅行）
-    stealth_disadvantage: bool = False   # 该步调下隐匿检定劣势
-    perception_disadvantage: bool = False  # 察觉/生存检定劣势
+    stealth_disadvantage: bool = False   # 该步调下隐匿（敏捷）检定劣势
+    perception_disadvantage: bool = False  # 察觉/生存（感知）检定劣势
+    perception_advantage: bool = False    # 察觉/生存（感知）检定优势
 
 
-# 旅行步调表  出处: 旅行.htm  规则: R-DM-032
+# 旅行步调表 + 游戏效果  出处: 玩家手册2024/进行游戏/旅行.htm（旅行步调）
+# 规则: R-DM-032 / R-GLS-048 旅行步调效应
+#   快速 Fast：感知（察觉或生存）与 敏捷（隐匿）检定均劣势
+#   中速 Normal：敏捷（隐匿）检定劣势
+#   慢速 Slow：感知（察觉或生存）检定优势
+# 距离：快速 400尺/分 4里/时 30里/天；中速 300尺/分 3里/时 24里/天；慢速 200尺/分 2里/时 18里/天
 TRAVEL_PACES: dict[str, TravelPace] = {
     "快速": TravelPace(
         name="快速", per_minute_ft=400, per_hour_miles=4, per_day_miles=30,
-        stealth_disadvantage=False, perception_disadvantage=True,
+        stealth_disadvantage=True, perception_disadvantage=True,
+        perception_advantage=False,
     ),
     "中速": TravelPace(
         name="中速", per_minute_ft=300, per_hour_miles=3, per_day_miles=24,
-        stealth_disadvantage=False, perception_disadvantage=False,
+        stealth_disadvantage=True, perception_disadvantage=False,
+        perception_advantage=False,
     ),
     "慢速": TravelPace(
         name="慢速", per_minute_ft=200, per_hour_miles=2, per_day_miles=18,
         stealth_disadvantage=False, perception_disadvantage=False,
+        perception_advantage=True,
     ),
 }
 
-# 注：报告§6描述"快速→察觉/生存+隐匿均劣势；中速→隐匿劣势；慢速→察觉/生存优势"。
-# 但权威旅行.htm表中快速步调的效应是"察觉/生存检定劣势"，中速/慢速无隐匿劣势描述。
-# 此处以权威旅行.htm为准：fast→perception劣势；medium/slow→无额外效应。
-# （若需启用报告§6变体，可在 ExplorationState 中通过 flags 覆盖。）
+# 注：坐骑可在1小时内以双倍步调移动，之后需短休或长休才能再次加速。
+# 出处: 玩家手册2024/进行游戏/旅行.htm（旅行步调）
 
 
 def get_travel_pace(pace_name: str) -> TravelPace:
@@ -982,15 +989,25 @@ def _self_test() -> None:
     """基本正确性自检（非穷尽）。"""
 
     # ── 旅行步调表 ──
-    # 规则: R-DM-032  出处: 旅行.htm
+    # 规则: R-DM-032 / R-GLS-048  出处: 玩家手册2024/进行游戏/旅行.htm
     fast = get_travel_pace("快速")
     assert fast.per_minute_ft == 400 and fast.per_day_miles == 30
     med = get_travel_pace("中速")
     assert med.per_hour_miles == 3 and med.per_day_miles == 24
     slow = get_travel_pace("慢速")
     assert slow.per_minute_ft == 200 and slow.per_day_miles == 18
-    # 快速步调：察觉/生存检定劣势
+    # 快速：感知(察觉/生存)与敏捷(隐匿)检定均劣势
     assert fast.perception_disadvantage is True
+    assert fast.stealth_disadvantage is True
+    assert fast.perception_advantage is False
+    # 中速：敏捷(隐匿)检定劣势，感知无优劣势
+    assert med.stealth_disadvantage is True
+    assert med.perception_disadvantage is False
+    assert med.perception_advantage is False
+    # 慢速：感知(察觉/生存)检定优势，隐匿无劣势
+    assert slow.perception_advantage is True
+    assert slow.perception_disadvantage is False
+    assert slow.stealth_disadvantage is False
 
     # ── 旅行地形表 ──
     # 规则: R-DM-033  出处: 旅行.htm

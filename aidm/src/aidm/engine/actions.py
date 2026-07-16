@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
 from . import check, damage, conditions
-from .combat import Combatant, use_action, use_reaction
+from .combat import Combatant, use_action, use_bonus_action, use_reaction
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -43,15 +43,17 @@ class WeaponProfile:
     """武器攻击档案（简化版，完整武器数据见 data/equipment.py）。
 
     规则: R-CMB-018 攻击检定属性映射 / R-CMB-019 灵巧武器
-          R-CMB-029 重击伤害骰翻倍
+          R-CMB-029 重击伤害骰翻倍（含附加伤害骰如偷袭/圣斩）
     """
     name: str                              # 武器名称
     attack_bonus: int = 0                  # 命中加值（含属性调整值+熟练加值）
     damage_dice: str = "1d6"               # 伤害骰表达式，如 "1d8"
-    damage_type: str = "slashing"          # 伤害类型
+    damage_type: str = "挥砍"              # 伤害类型（中文）
     ability_mod: int = 0                   # 伤害加的属性调整值
     add_ability_mod_to_damage: bool = True # 是否将属性调整值加到伤害
     crit: bool = False                     # 本次攻击是否为重击（由 attack 设置）
+    extra_damage_dice: str = ""            # 附加伤害骰（如偷袭"1d6"/圣斩"2d8"），重击时也翻倍
+    extra_damage_type: str = ""            # 附加伤害类型（如"暗蚀"/"光耀"）
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -61,7 +63,10 @@ class WeaponProfile:
 def action_attack(attacker: Combatant, target: Combatant,
                   weapon: WeaponProfile,
                   advantage: bool = False, disadvantage: bool = False,
-                  target_ac: int = 10, distance_ft: int = 5) -> ActionResult:
+                  target_ac: int = 10, distance_ft: int = 5,
+                  resistances: list[str] | None = None,
+                  vulnerabilities: list[str] | None = None,
+                  immunities: list[str] | None = None) -> ActionResult:
     """攻击动作：选择目标 → 攻击检定 → （命中则）掷伤害。
 
     规则: R-CMB-014 攻击流程 / R-CMB-017 命中判定 / R-CMB-022 天然20必出重击
@@ -112,10 +117,143 @@ def action_attack(attacker: Combatant, target: Combatant,
         add_mod=weapon.add_ability_mod_to_damage,
         crit=crit,
     )
-    dmg = damage.roll_damage(req)
+    # 经伤害管线：抗性→数值修正→易伤→免疫（R-DMG-004~009）
+    dmg = damage.roll_damage(req, resistances=resistances or [],
+                             vulnerabilities=vulnerabilities or [],
+                             immunities=immunities or [])
+
+    # R-CMB-029: 附加伤害骰（偷袭/圣斩等）重击时也翻倍
+    extra_total = 0
+    if weapon.extra_damage_dice:
+        extra_req = damage.DamageRequest(
+            dice_expr=weapon.extra_damage_dice,
+            damage_type=weapon.extra_damage_type or weapon.damage_type,
+            ability_mod=0,
+            add_mod=False,
+            crit=crit,  # 重击翻倍附加骰
+        )
+        extra_dmg = damage.roll_damage(extra_req, resistances=resistances or [],
+                                        vulnerabilities=vulnerabilities or [],
+                                        immunities=immunities or [])
+        extra_total = extra_dmg.final
+
+    total_damage = dmg.final + extra_total
     result.damage_result = dmg
-    result.message += f"：命中{'（重击）' if crit else ''}，造成 {dmg.final} 点{weapon.damage_type}伤害"
+    if extra_total:
+        result.extra["extra_damage"] = extra_total
+        result.extra["extra_damage_type"] = weapon.extra_damage_type or weapon.damage_type
+    result.message += (f"：命中{'（重击）' if crit else ''}，"
+                       f"造成 {total_damage} 点伤害"
+                       + (f"（含{extra_total}点{weapon.extra_damage_type or weapon.damage_type}）" if extra_total else ""))
     return result
+
+
+def _is_light_weapon(weapon: WeaponProfile) -> bool:
+    """判断武器是否具有"轻型"词条（按名称查 data.equipment 武器表）。
+
+    规则: R-ITM-014 武器词条「轻型」  出处: 装备/词条.txt
+    说明: 未知武器（不在武器表中）默认视为非轻型——规则要求副手须为轻型；
+          调用方可用 off_hand_is_light 参数显式覆写以支持自定义轻型武器。
+    """
+    try:
+        from ..data import equipment
+        return "轻型" in equipment.get_weapon_entry(weapon.name)["props"]
+    except KeyError:
+        return False
+
+
+def action_two_weapon_attack(attacker: Combatant, target: Combatant,
+                             main_weapon: WeaponProfile, off_hand_weapon: WeaponProfile,
+                             advantage: bool = False, disadvantage: bool = False,
+                             target_ac: int = 10, distance_ft: int = 5,
+                             off_advantage: bool = False, off_disadvantage: bool = False,
+                             off_hand_is_light: Optional[bool] = None) -> ActionResult:
+    """双武器战斗：用攻击动作以主手武器攻击，再以附赠动作用另一把轻型武器攻击。
+
+    规则: R-ITM-014 武器词条「轻型」  出处: 装备/词条.txt
+          当你在自己回合中执行攻击动作、并用一把轻型武器发动一次攻击后，
+          可用附赠动作用另一把轻型武器再攻击一次；该次额外攻击的伤害
+          不加入属性调整值（除非该调整值为负数）。
+    说明:
+      - 主手攻击消耗动作（复用 action_attack 的命中/重击/条件优劣势逻辑）。
+      - 副手攻击消耗附赠动作；副手须为轻型武器（默认按名称查 data.equipment
+        武器表，off_hand_is_light 可显式覆写以支持自定义武器）。
+      - 副手伤害不加属性调整值（ability_mod < 0 时仍施加负值）。
+      - 返回的 ActionResult.attack_result/damage_result 为主手结果；副手结果存于
+        extra["off_hand"]，extra["bonus_action_used"] 标示是否消耗了附赠动作。
+    """
+    # 主手攻击：消耗动作（若无可用动作则整体失败）
+    main_result = action_attack(attacker, target, main_weapon,
+                                advantage=advantage, disadvantage=disadvantage,
+                                target_ac=target_ac, distance_ft=distance_ft)
+    if not main_result.success:
+        return ActionResult("two_weapon_attack", success=False,
+                            message=main_result.message or "无可用动作")
+
+    # 副手须为轻型武器
+    off_light = (off_hand_is_light if off_hand_is_light is not None
+                 else _is_light_weapon(off_hand_weapon))
+    if not off_light:
+        return ActionResult("two_weapon_attack", success=True,
+                            message=(main_result.message
+                                     + f"；副手 {off_hand_weapon.name} 非轻型武器，未发动额外攻击"),
+                            attack_result=main_result.attack_result,
+                            damage_result=main_result.damage_result,
+                            extra={"main": {"attack_result": main_result.attack_result,
+                                            "damage_result": main_result.damage_result},
+                                   "off_hand": {"attempted": False, "reason": "not_light"},
+                                   "bonus_action_used": False})
+
+    # 消耗附赠动作
+    if not use_bonus_action(attacker):
+        return ActionResult("two_weapon_attack", success=True,
+                            message=(main_result.message + "；无可用附赠动作，未发动副手攻击"),
+                            attack_result=main_result.attack_result,
+                            damage_result=main_result.damage_result,
+                            extra={"main": {"attack_result": main_result.attack_result,
+                                            "damage_result": main_result.damage_result},
+                                   "off_hand": {"attempted": False, "reason": "no_bonus_action"},
+                                   "bonus_action_used": False})
+
+    # 副手攻击检定（条件优劣势与主手一致：同攻击者/目标/距离）
+    mods = conditions.attack_modifiers(attacker.conditions, target.conditions, distance_ft)
+    off_adv = off_advantage or mods.attacker_advantage
+    off_dis = off_disadvantage or mods.attacker_disadvantage
+    if target.dodge_active:                          # R-CMB-008 目标回避 → 攻击劣势
+        off_dis = True
+    exh = -conditions.d20_penalty(attacker.conditions)   # 力竭 d20 惩罚
+    off_atk = check.attack_roll(bonus=off_hand_weapon.attack_bonus, ac=target_ac,
+                                advantage=off_adv, disadvantage=off_dis, circ=exh)
+
+    off_hand: dict[str, Any] = {"attempted": True, "attack_result": off_atk,
+                                "damage_result": None}
+    message = main_result.message + f"；{attacker.name} 用 {off_hand_weapon.name} 发动副手攻击"
+
+    if not off_atk.hit:
+        message += "：未命中"
+    else:
+        # 副手伤害不加属性调整值（负数除外）— R-ITM-014「轻型」
+        off_add_mod = off_hand_weapon.ability_mod < 0
+        off_crit = off_atk.crit or mods.target_auto_crit_if_hit
+        req = damage.DamageRequest(
+            dice_expr=off_hand_weapon.damage_dice,
+            damage_type=off_hand_weapon.damage_type,
+            ability_mod=off_hand_weapon.ability_mod,
+            add_mod=off_add_mod,
+            crit=off_crit,
+        )
+        off_dmg = damage.roll_damage(req)
+        off_hand["damage_result"] = off_dmg
+        message += (f"：命中{'（重击）' if off_crit else ''}，"
+                    f"造成 {off_dmg.final} 点{off_hand_weapon.damage_type}伤害")
+
+    return ActionResult("two_weapon_attack", success=True, message=message,
+                        attack_result=main_result.attack_result,
+                        damage_result=main_result.damage_result,
+                        extra={"main": {"attack_result": main_result.attack_result,
+                                        "damage_result": main_result.damage_result},
+                               "off_hand": off_hand,
+                               "bonus_action_used": True})
 
 
 def action_dash(attacker: Combatant) -> ActionResult:
@@ -167,7 +305,9 @@ def action_dodge(attacker: Combatant) -> ActionResult:
 
 def action_help(attacker: Combatant, ally: Combatant,
                 target: Optional[Combatant] = None,
-                mode: str = "attack") -> ActionResult:
+                mode: str = "attack",
+                medicine_mod: int = 0, medicine_prof: int = 0,
+                medicine_proficient: bool = False) -> ActionResult:
     """协助动作：盟友下次对该目标的攻击检定具有优势；或进行急救（医药检定DC10稳定伤势）。
 
     规则: 术语汇编/动作.txt「协助」— 两种模式：属性检定协助/攻击协助
@@ -178,8 +318,11 @@ def action_help(attacker: Combatant, ally: Combatant,
     if not use_action(attacker):
         return ActionResult("help", success=False, message="无可用动作")
     if mode == "first_aid":
-        # 急救：DC10 医药检定稳定伤势
-        r = check.ability_check(mod=0, prof=0, proficient=False, dc=10)
+        # 急救：DC10 感知(医药)检定稳定伤势。
+        # 用医疗者感知调整值 + 医药熟练加值（R-CHK-010），由调用方传入。
+        exh = -conditions.d20_penalty(attacker.conditions)  # R-GLS-047 力竭惩罚
+        r = check.ability_check(mod=medicine_mod, prof=medicine_prof,
+                                proficient=medicine_proficient, dc=10, circ=exh)
         return ActionResult("help", success=r.success,
                             message=f"{attacker.name} 急救检定 {r.total} vs DC10："
                                     + ("成功，伤势稳定" if r.success else "失败"),
@@ -220,7 +363,8 @@ def action_hide(attacker: Combatant, stealth_mod: int, stealth_prof: int,
                             extra={"hidden": False, "reason": "no_obscurement"})
     r = check.ability_check(mod=stealth_mod, prof=stealth_prof,
                             proficient=proficient, dc=dc,
-                            advantage=advantage, disadvantage=disadvantage)
+                            advantage=advantage, disadvantage=disadvantage,
+                            circ=-conditions.d20_penalty(attacker.conditions))  # R-GLS-047
     if r.success:
         attacker.hidden = True                           # 躲藏成功 → 隐形
     return ActionResult("hide", success=r.success,
@@ -305,7 +449,8 @@ def action_search(attacker: Combatant, perception_mod: int,
         return ActionResult("search", success=False, message="无可用动作")
     r = check.ability_check(mod=perception_mod, prof=perception_prof,
                             proficient=proficient, dc=dc,
-                            advantage=advantage, disadvantage=disadvantage)
+                            advantage=advantage, disadvantage=disadvantage,
+                            circ=-conditions.d20_penalty(attacker.conditions))  # R-GLS-047
     return ActionResult("search", success=r.success,
                         message=f"{attacker.name} 搜索检定 {r.total} vs DC{dc}："
                                 + ("成功" if r.success else "失败"),
@@ -325,7 +470,8 @@ def action_study(attacker: Combatant, intelligence_mod: int,
         return ActionResult("study", success=False, message="无可用动作")
     r = check.ability_check(mod=intelligence_mod, prof=intelligence_prof,
                             proficient=proficient, dc=dc,
-                            advantage=advantage, disadvantage=disadvantage)
+                            advantage=advantage, disadvantage=disadvantage,
+                            circ=-conditions.d20_penalty(attacker.conditions))  # R-GLS-047
     return ActionResult("study", success=r.success,
                         message=f"{attacker.name} 研究检定 {r.total} vs DC{dc}："
                                 + ("成功" if r.success else "失败"),
@@ -348,7 +494,8 @@ def action_utilize(attacker: Combatant, object_name: str = "",
     if dc > 0:
         r = check.ability_check(mod=ability_mod, prof=prof,
                                 proficient=proficient, dc=dc,
-                                advantage=advantage, disadvantage=disadvantage)
+                                advantage=advantage, disadvantage=disadvantage,
+                                circ=-conditions.d20_penalty(attacker.conditions))  # R-GLS-047
         return ActionResult("utilize", success=r.success,
                             message=f"{attacker.name} 操作{object_name}："
                                     + ("成功" if r.success else "失败"),
@@ -397,6 +544,7 @@ COMBAT_ACTIONS: dict[str, Callable[..., ActionResult]] = {
     "ready":      action_ready,
     "search":     action_search,
     "study":      action_study,
+    "two_weapon_attack": action_two_weapon_attack,
     "utilize":    action_utilize,
 }
 
@@ -436,6 +584,18 @@ def resolve_combat_action(action_type: str, attacker: Combatant,
                                 message="攻击动作需要 target 参数")
         return action_attack(attacker=attacker, target=target, weapon=weapon,
                              **kwargs)
+    elif action_type == "two_weapon_attack":
+        if target is None:
+            return ActionResult("two_weapon_attack", success=False,
+                                message="双武器攻击需要 target 参数")
+        main_weapon = kwargs.pop("main_weapon", weapon)
+        off_hand_weapon = kwargs.pop("off_hand_weapon", None)
+        if off_hand_weapon is None:
+            return ActionResult("two_weapon_attack", success=False,
+                                message="双武器攻击需要 off_hand_weapon 参数")
+        return action_two_weapon_attack(attacker=attacker, target=target,
+                                        main_weapon=main_weapon,
+                                        off_hand_weapon=off_hand_weapon, **kwargs)
     elif action_type in ("dash", "disengage", "dodge"):
         return handler(attacker=attacker)
     elif action_type == "help":
@@ -605,6 +765,85 @@ def _self_test() -> None:
     # 未知动作
     rbad = resolve_combat_action("fly", attacker5)
     assert rbad.success is False
+
+    # ── 双武器战斗（R-ITM-014「轻型」）──
+    main_w = WeaponProfile(name="短剑", attack_bonus=5, damage_dice="1d6",
+                           damage_type="piercing", ability_mod=3,
+                           add_ability_mod_to_damage=True)
+    off_w = WeaponProfile(name="匕首", attack_bonus=5, damage_dice="1d4",
+                          damage_type="piercing", ability_mod=3,
+                          add_ability_mod_to_damage=True)
+    # 1) 主+副均轻型、正属性调整值：主手6+3=9；副手6+0=6（不加属性）
+    _dice.roll_d20 = lambda advantage=False, disadvantage=False: \
+        type("R", (), {"used": 15, "rolls": [15], "mode": "normal"})()
+    _dice.roll_dice = lambda expr, *, crit=False: \
+        type("R", (), {"total": 6, "dice_rolls": [6], "expression": expr,
+                       "modifier": 0, "crit": crit, "notes": ""})()
+    a = Combatant(cid="tw", name="游荡者", side="player")
+    t = Combatant(cid="twT", name="兽人", side="enemy")
+    r = action_two_weapon_attack(a, t, main_w, off_w, target_ac=10)
+    assert r.success and r.attack_result.hit, r.message
+    assert r.damage_result.final == 9                          # 主手 6+3
+    assert a.action_used and a.bonus_action_used
+    off = r.extra["off_hand"]
+    assert off["attempted"] and off["attack_result"].hit
+    assert off["damage_result"].final == 6, off["damage_result"]   # 副手不加属性(3≥0)
+    assert r.extra["bonus_action_used"] is True
+
+    # 2) 副手非轻型 → 不发动额外攻击，附赠不消耗
+    a2 = Combatant(cid="tw2", name="战士", side="player")
+    t2 = Combatant(cid="tw2T", name="兽人2", side="enemy")
+    off_heavy = WeaponProfile(name="长剑", attack_bonus=5, damage_dice="1d8",
+                              damage_type="slashing", ability_mod=3,
+                              add_ability_mod_to_damage=True)
+    r2 = action_two_weapon_attack(a2, t2, main_w, off_heavy, target_ac=10)
+    assert r2.success and r2.attack_result.hit
+    assert r2.extra["off_hand"]["attempted"] is False
+    assert r2.extra["off_hand"]["reason"] == "not_light"
+    assert a2.action_used and not a2.bonus_action_used
+
+    # 3) 无可用附赠动作 → 仅主手
+    a3 = Combatant(cid="tw3", name="战士2", side="player")
+    a3.bonus_action_used = True
+    t3 = Combatant(cid="tw3T", name="兽人3", side="enemy")
+    r3 = action_two_weapon_attack(a3, t3, main_w, off_w, target_ac=10)
+    assert r3.success and r3.attack_result.hit
+    assert r3.extra["off_hand"]["attempted"] is False
+    assert r3.extra["off_hand"]["reason"] == "no_bonus_action"
+    assert r3.extra["bonus_action_used"] is False
+
+    # 4) 通过分派器调用
+    a4 = Combatant(cid="tw4", name="战士3", side="player")
+    t4 = Combatant(cid="tw4T", name="兽人4", side="enemy")
+    r4 = resolve_combat_action("two_weapon_attack", a4, target=t4,
+                               main_weapon=main_w, off_hand_weapon=off_w,
+                               target_ac=10)
+    assert r4.success and r4.extra["off_hand"]["attempted"]
+    assert a4.action_used and a4.bonus_action_used
+
+    _dice.roll_d20 = orig
+    _dice.roll_dice = orig_rd
+
+    # 5) 副手负属性调整值仍施加（"负数除外"）
+    _dice.roll_d20 = lambda advantage=False, disadvantage=False: \
+        type("R", (), {"used": 15, "rolls": [15], "mode": "normal"})()
+    _dice.roll_dice = lambda expr, *, crit=False: \
+        type("R", (), {"total": 4, "dice_rolls": [4], "expression": expr,
+                       "modifier": 0, "crit": crit, "notes": ""})()
+    a5 = Combatant(cid="tw5", name="虚弱盗贼", side="player")
+    t5 = Combatant(cid="tw5T", name="兽人5", side="enemy")
+    mw = WeaponProfile(name="短剑", attack_bonus=0, damage_dice="1d6",
+                       damage_type="piercing", ability_mod=-1,
+                       add_ability_mod_to_damage=True)
+    ow = WeaponProfile(name="匕首", attack_bonus=0, damage_dice="1d4",
+                       damage_type="piercing", ability_mod=-1,
+                       add_ability_mod_to_damage=True)
+    r5 = action_two_weapon_attack(a5, t5, mw, ow, target_ac=10)
+    assert r5.success and r5.attack_result.hit
+    assert r5.damage_result.final == 3                          # 主手 4+(-1)
+    assert r5.extra["off_hand"]["damage_result"].final == 3      # 副手施加负值 4+(-1)
+    _dice.roll_d20 = orig
+    _dice.roll_dice = orig_rd
 
     print("[actions] 自检通过 ✓")
 

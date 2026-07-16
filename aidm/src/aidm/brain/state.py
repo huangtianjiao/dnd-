@@ -25,6 +25,8 @@ class GameState(TypedDict):
     dice: dict                 # resolve 产物(硬性): {hit, crit, attack_total, damage, ...} 或 {save_dc, save_success, damage} 或 {check_total, success}
     narration: str             # narrate 产物: DM 叙事
     state_changes: list        # narrate 产物: 结构化状态变更
+    scene_update: str          # narrate 产物: 行动后场景新状态叙事（apply_node 据此更新 Scene.situation）
+    action_options: list       # narrate 产物: 玩家下一步可做的3个行动选项（透传给前端）
     combat: dict               # 战斗状态: {active, combat_id, round, current_index, combatants}
     # 元
     error: str

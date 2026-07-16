@@ -177,6 +177,113 @@ def dwarven_toughness(race_name: str) -> bool:
     return has_trait(race_name, "Dwarven Toughness")
 
 
+def get_darkvision(race_name: str) -> int:
+    """种族黑暗视觉范围（尺）。0=无黑暗视觉。
+
+    规则: 术语汇编/状态.txt「黑暗视觉」
+    出处: topics/玩家手册2024/角色起源/种族/<种族>.htm
+    """
+    if race_name not in RACES:
+        return 0
+    return RACES[race_name].get("darkvision", 0)
+
+
+def halfling_lucky(race_name: str) -> bool:
+    """半身人幸运 Lucky：d20掷出1时可重骰（必须采用新结果）。
+
+    规则: 种族/半身人.htm「幸运」
+    出处: topics/玩家手册2024/角色起源/种族/半身人.htm
+    """
+    return has_trait(race_name, "Lucky")
+
+
+def dwarven_resilience(race_name: str) -> dict:
+    """矮人体魄 Dwarven Resilience：毒素抗性 + 中毒豁免优势。
+
+    规则: 种族/矮人.htm「体魄」
+    出处: topics/玩家手册2024/角色起源/种族/矮人.htm
+    返回: {"poison_resistance": bool, "poison_save_advantage": bool}
+    """
+    if has_trait(race_name, "Dwarven Resilience"):
+        return {"poison_resistance": True, "poison_save_advantage": True}
+    return {"poison_resistance": False, "poison_save_advantage": False}
+
+
+def gnome_cunning(race_name: str) -> dict:
+    """侏儒狡黠 Gnome Cunning：INT/WIS/CHA 豁免优势。
+
+    规则: 种族/侏儒.htm「狡黠」
+    出处: topics/玩家手册2024/角色起源/种族/侏儒.htm
+    """
+    if has_trait(race_name, "Gnome Cunning"):
+        return {"save_advantage_abilities": ["int", "wis", "cha"]}
+    return {"save_advantage_abilities": []}
+
+
+def halfling_brave(race_name: str) -> bool:
+    """半身人勇气 Brave：恐慌豁免优势。
+
+    规则: 种族/半身人.htm「勇气」
+    出处: topics/玩家手册2024/角色起源/种族/半身人.htm
+    """
+    return has_trait(race_name, "Brave")
+
+
+def dragonborn_breath_weapon(race_name: str) -> dict:
+    """龙裔吐息武器 Breath Weapon：DC=8+CON+PB, 1d10 逐级提升。
+
+    规则: 种族/龙裔.htm「吐息武器」
+    出处: topics/玩家手册2024/角色起源/种族/龙裔.htm
+    返回: {"has_breath": bool, "save_dc_formula": "8+CON+PB", "damage_dice": "1d10"}
+    """
+    if has_trait(race_name, "Breath Weapon"):
+        return {"has_breath": True, "save_dc_formula": "8+CON+PB",
+                "damage_dice": "1d10", "damage_type": "未知(依龙族血系)"}
+    return {"has_breath": False}
+
+
+def orc_relentless_endurance(race_name: str) -> bool:
+    """兽人坚韧不屈 Relentless Endurance：HP降至0时改为1HP（每次长休恢复1次）。
+
+    规则: 种族/兽人.htm「坚韧不屈」
+    出处: topics/玩家手册2024/角色起源/种族/兽人.htm
+    """
+    return has_trait(race_name, "Relentless Endurance")
+
+
+def get_racial_resistances(race_name: str) -> set[str]:
+    """种族衍生的伤害抗性集合。
+
+    规则: 各种族.htm（矮人=毒素抗性）
+    出处: topics/玩家手册2024/角色起源/种族/
+    """
+    resists: set[str] = set()
+    dr = dwarven_resilience(race_name)
+    if dr["poison_resistance"]:
+        resists.add("毒素")
+    return resists
+
+
+def get_racial_save_advantages(race_name: str) -> dict:
+    """种族衍生的豁免优势。
+
+    规则: 各种族.htm
+    返回: {"save_advantage_abilities": [...], "poison_save_advantage": bool, "fear_save_advantage": bool}
+    """
+    result = {"save_advantage_abilities": [],
+              "poison_save_advantage": False,
+              "fear_save_advantage": False}
+    dr = dwarven_resilience(race_name)
+    if dr["poison_save_advantage"]:
+        result["poison_save_advantage"] = True
+    gc = gnome_cunning(race_name)
+    if gc["save_advantage_abilities"]:
+        result["save_advantage_abilities"].extend(gc["save_advantage_abilities"])
+    if halfling_brave(race_name):
+        result["fear_save_advantage"] = True
+    return result
+
+
 def race_names() -> list[str]:
     """返回全部种族名（按定义顺序）。"""
     return list(RACES)

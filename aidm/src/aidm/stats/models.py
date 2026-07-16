@@ -60,6 +60,9 @@ class Character(SQLModel, table=True):
     conditions_json: str = Field(default="[]")     # 状态集合
     attuned_items_json: str = Field(default="[]")  # 已同调魔法物品名称列表（最多3个）
     feats_json: str = Field(default="[]")          # 已选专长名列表（PHB 第五章）
+    # 当前手持武器（武器中文名）；攻击时优先于"徒手"兜底，由 /equip-weapon 或创建时按职业设默认。
+    # 详见 docs/GRAPH_DYNAMIC_REFACTOR.md 阶段A。
+    equipped_weapon: str = ""
     # 数值
     hp_current: int = 0
     hp_max: int = 0

@@ -46,8 +46,12 @@ class Settings(BaseSettings):
     llm_context_window: int = 128000
 
     # rolling_summary 占上下文窗口的比例阈值。
-    # 超过此比例时触发 LLM 压缩。0.25 = 占25%时压缩。
-    summary_compress_ratio: float = 0.25
+    # 超过此比例时触发 LLM 压缩。
+    # 调研结论：Mem0 生产环境推荐每次检索 <7000 tokens；
+    # RULER 基准显示只有一半模型在 32K 时维持满意性能。
+    # 15% 在 128K 窗口下 ≈ 19K tokens（~12000字符）触发压缩，
+    # 给 narrate prompt 其他部分（工作记忆/长期记忆/规则摘要/骰子）留足空间。
+    summary_compress_ratio: float = 0.15
 
     # —— 规则数据 ——
     rules_datajs_path: str = r"D:\game\dnd\5echm_web\data.js"

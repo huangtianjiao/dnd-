@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 import socketio
 from fastapi import FastAPI, WebSocket
@@ -21,6 +22,8 @@ from typing import Optional
 
 from ..stats import store, models
 from ..brain import graph
+from ..data import magic_items as mi_db
+from .memory_bg import _async_memory_process
 
 app = FastAPI(title="AI DM", version="0.3.0")
 
@@ -38,7 +41,7 @@ app.add_middleware(
 )
 
 # Socket.IO 实时同桌（升级版，基于 python-socketio）
-from .ws import sio, manager, CampaignRoom
+from .ws import sio, manager, CampaignRoom, _graph_lock
 
 # 静态前端（P5 交互层：Web 聊天界面）
 _UI_DIR = os.path.normpath(
@@ -71,6 +74,7 @@ class CharIn(BaseModel):
     hp_max: int = 10
     ac: int = 10
     speed: int = 30
+    equipped_weapon: str = ""   # 可选：指定起始武器，留空则按职业默认
     campaign_id: int | None = None
 
 
@@ -111,6 +115,17 @@ def create_character(c: CharIn):
                           level=c.level, campaign_id=c.campaign_id)
     ch.set_abilities(c.abilities)
     ch.hp_max = c.hp_max; ch.hp_current = c.hp_max; ch.ac = c.ac; ch.speed = c.speed
+    # 施法职业按等级初始化法术位（R-SPL-002），否则 spell_slots 默认空致施法总被拒
+    try:
+        from ..data import classes as _cls, spells as _sp
+        _cdef = _cls.get_class(c.char_class)
+        if _cdef and _cdef.get("spellcasting"):
+            ch.set_spell_slots(_sp.max_spell_slots(c.level))
+    except Exception:
+        pass
+    # 起始武器：用户指定优先，否则按职业默认（docs/GRAPH_DYNAMIC_REFACTOR.md 阶段A2）
+    from ..data.equipment import default_weapon_for_class
+    ch.equipped_weapon = c.equipped_weapon or default_weapon_for_class(c.char_class)
     ch = store.save_character(ch)
     return {"id": ch.id, "name": ch.name, "hp": ch.hp_current, "ac": ch.ac}
 
@@ -129,7 +144,7 @@ def get_character(cid: int):
             "hp": ch.hp_current, "hp_max": ch.hp_max, "temp_hp": ch.temp_hp, "ac": ch.ac,
             "speed": ch.speed, "conditions": ch.conditions_list, "exhaustion": ch.exhaustion,
             "spell_slots": ch.spell_slots, "dead": ch.dead, "stable": ch.stable,
-            "attuned_items": ch.attuned_items}
+            "attuned_items": ch.attuned_items, "equipped_weapon": ch.equipped_weapon}
 
 
 @app.get("/character/{cid}/inventory")
@@ -171,9 +186,7 @@ def get_inventory(cid: int):
 
 # ── 魔法物品 API ────────────────────────────────────────────────────────────
 # 规则依据: 城主指南2024/7.宝藏/
-
-from ..data import magic_items as mi_db
-
+# magic_items 已在文件顶部 import 为 mi_db。
 
 @app.get("/magic-items")
 def list_magic_items(rarity: str | None = None,
@@ -246,6 +259,27 @@ def break_attunement(cid: int, req: BreakAttuneIn):
     return result
 
 
+class EquipWeaponIn(BaseModel):
+    weapon_name: str
+
+
+@app.post("/character/{cid}/equip-weapon")
+def equip_weapon(cid: int, req: EquipWeaponIn):
+    """装备/更换当前手持武器（攻击结算优先读 equipped_weapon）。
+
+    详见 docs/GRAPH_DYNAMIC_REFACTOR.md 阶段A2。weapon_name 应为 equipment.WEAPONS 中的武器名。
+    """
+    from ..data import equipment as equip_db
+    ch = store.get_character(cid)
+    if ch is None:
+        return {"error": f"角色 {cid} 不存在"}
+    if req.weapon_name and req.weapon_name not in equip_db.WEAPONS:
+        return {"error": f"未知武器 {req.weapon_name!r}，可选示例: {list(equip_db.WEAPONS)[:10]}"}
+    ch.equipped_weapon = req.weapon_name
+    ch = store.save_character(ch)
+    return {"character_id": ch.id, "equipped_weapon": ch.equipped_weapon}
+
+
 class LootGenerateIn(BaseModel):
     cr: float
     count_enemies: int = 1
@@ -270,7 +304,12 @@ def generate_loot(req: LootGenerateIn):
     return pool.to_dict()
 
 
-class LootDistributeIn(BaseModel):
+class LootDistributeInV1(BaseModel):
+    """loot.py 体系（method=need_priority/...）的战利品分配请求。
+
+    与下方 loot_distribution.py 体系的 LootDistributeIn（mode=NEED_FIRST/...）同名遮蔽，
+    故本类重命名为 V1 以消除歧义；/loot/distribute 使用本类。
+    """
     gold: int = 0
     magic_item_names: list[str] = []
     players: list[str]
@@ -283,7 +322,7 @@ class LootDistributeIn(BaseModel):
 
 
 @app.post("/loot/distribute")
-def distribute_loot(req: LootDistributeIn):
+def distribute_loot_v1(req: LootDistributeInV1):
     """分配战利品（魔法物品 + 金币）。
 
     规则: 城主指南2024/7.宝藏/宝藏主题.htm
@@ -367,6 +406,7 @@ class JoinIn(BaseModel):
     abilities: dict = {"str": 16, "dex": 10, "con": 15, "int": 10, "wis": 12, "cha": 10}
     hp_max: int = 38
     ac: int = 18
+    equipped_weapon: str = ""
     campaign_id: int
 
 
@@ -377,6 +417,8 @@ def join_campaign(req: JoinIn):
                           level=req.level, campaign_id=req.campaign_id)
     ch.set_abilities(req.abilities)
     ch.hp_max = req.hp_max; ch.hp_current = req.hp_max; ch.ac = req.ac
+    from ..data.equipment import default_weapon_for_class
+    ch.equipped_weapon = req.equipped_weapon or default_weapon_for_class(req.char_class)
     ch = store.save_character(ch)
     return {"character_id": ch.id, "campaign_id": req.campaign_id,
             "name": ch.name,
@@ -457,17 +499,40 @@ def get_campaign_state(campaign_id: int):
 
 
 @app.post("/chat")
-def chat(req: ChatIn):
-    """跑一轮硬性判定链。HITL 启用时若 interrupt，返回 interrupted=True 供 /chat/resume 恢复。"""
-    out = graph.run(req.player_input, req.campaign_id, req.character_id,
-                    req.thread_id, hitl=req.hitl)
+async def chat(req: ChatIn):
+    """跑一轮硬性判定链。HITL 启用时若 interrupt，返回 interrupted=True 供 /chat/resume 恢复。
+
+    graph.run 是同步阻塞，放线程池跑（run_in_executor）避免卡事件循环；
+    复用 ws._graph_lock 串行化以避免 Qdrant 并发问题（与 ws.on_action 一致）。
+    之前是同步 def + asyncio.ensure_future：同步 endpoint 在 AnyIO worker thread
+    执行，该线程无事件循环 → ensure_future 抛 RuntimeError 500。改为 async def 后
+    在主事件循环运行，ensure_future 有 loop 可用。
+    """
+    loop = asyncio.get_event_loop()
+    async with _graph_lock:
+        out = await loop.run_in_executor(
+            None,
+            lambda: graph.run(req.player_input, req.campaign_id, req.character_id,
+                              req.thread_id, hitl=req.hitl))
     if out.get("__interrupt__"):
         v = out["__interrupt__"][0]
         q = v.value if hasattr(v, "value") else v
         return {"interrupted": True, "thread_id": req.thread_id, "question": q}
+
+    # 异步后台执行记忆处理，不阻塞响应（async endpoint 在主事件循环，ensure_future 有 loop）
+    narration = out.get("narration", "")
+    intent = out.get("intent", {})
+    if req.campaign_id and narration:
+        asyncio.ensure_future(_async_memory_process(
+            campaign_id=req.campaign_id,
+            player_input=req.player_input,
+            narration=narration,
+            intent=intent,
+        ))
+
     return {
-        "narration": out.get("narration", ""),
-        "intent": out.get("intent", {}),
+        "narration": narration,
+        "intent": intent,
         "dice": out.get("dice", {}),
         "state_changes": out.get("state_changes", []),
         "action_options": out.get("action_options", []),
@@ -716,6 +781,7 @@ class RoomJoinIn(BaseModel):
     hp_max: int = 10
     ac: int = 10
     speed: int = 30
+    equipped_weapon: str = ""
     is_host: bool = False       # 房主首次加入时为 True
 
 
@@ -740,6 +806,8 @@ def join_room(req: RoomJoinIn):
     ch.set_abilities(req.abilities)
     ch.hp_max = req.hp_max; ch.hp_current = req.hp_max
     ch.ac = req.ac; ch.speed = req.speed
+    from ..data.equipment import default_weapon_for_class
+    ch.equipped_weapon = req.equipped_weapon or default_weapon_for_class(req.char_class)
     ch = store.save_character(ch)
 
     # 加入房间（用假 ws 占位；真实连接由 WebSocket 端点建立）

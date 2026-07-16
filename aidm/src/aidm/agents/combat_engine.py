@@ -56,12 +56,10 @@ def _resolve_attack(ch, it) -> dict:
            "hit": atk.hit, "crit": atk.crit, "rolls": atk.rolls,
            "target_ac": ac, "bonus": bonus}
     if atk.hit:
-        wname = it.get("weapon") or "长剑"
-        try:
-            dice_expr = equipment.weapon_damage_dice(wname)
-            dmg_type = equipment.weapon_damage_type(wname)
-        except KeyError:
-            dice_expr, dmg_type = "1d8", "挥砍"
+        # 武器三级回退：玩家明说 → 角色卡 equipped_weapon → 徒手(1+力量)
+        # 详见 docs/GRAPH_DYNAMIC_REFACTOR.md 阶段A4/B1
+        wname = it.get("weapon") or getattr(ch, "equipped_weapon", "") or "徒手"
+        dice_expr, dmg_type = equipment.resolve_weapon_damage(wname)
         crit = atk.crit or mods.target_auto_crit_if_hit
         dr = damage.roll_damage(damage.DamageRequest(
             dice_expr=dice_expr, damage_type=dmg_type,
@@ -160,7 +158,127 @@ def resolve(state: GameState) -> dict:
         return _resolve_start_combat(state, ch, it)
     if at == "end_combat":
         return {"dice": {"kind": "end_combat"}, "combat": {"active": False}}
+    # —— 战术动作（不掷骰，仅标记状态）——
+    if at == "dash":
+        return {"dice": {"kind": "dash", "extra_movement_ft": ch.speed}}
+    if at == "dodge":
+        return {"dice": {"kind": "dodge", "effect": "对本角色的攻击具有劣势"}}
+    if at == "disengage":
+        return {"dice": {"kind": "disengage", "effect": "本回合移动不引发借机攻击"}}
+    if at == "help":
+        return {"dice": {"kind": "help",
+                         "target": it.get("target_name", ""),
+                         "effect": f"使{it.get('target_name', '盟友')}的下次检定具有优势"}}
+    if at == "ready":
+        return {"dice": {"kind": "ready",
+                         "trigger": it.get("trigger_condition", ""),
+                         "action": it.get("readied_action", "")}}
+    # —— 技能动作（需要检定）——
+    if at == "hide":
+        return {"dice": _resolve_hide(ch, it)}
+    if at == "search":
+        return {"dice": _resolve_search(ch, it)}
+    if at == "use_item":
+        return {"dice": {"kind": "use_item",
+                         "item": it.get("item_name", ""),
+                         "effect": it.get("item_effect", "")}}
+    if at == "grapple":
+        return {"dice": _resolve_grapple(ch, it)}
+    if at == "shove":
+        return {"dice": _resolve_shove(ch, it)}
+    if at == "study":
+        return {"dice": _resolve_study(ch, it)}
+    if at == "opportunity_attack":
+        return {"dice": _resolve_opportunity_attack(ch, it)}
     return {"dice": {}}  # other → 仅叙事
+
+
+# ── 技能动作的确定性检定 ──────────────────────────────────────
+
+def _resolve_hide(ch, it) -> dict:
+    """躲藏：敏捷(潜行)检定 vs 对手被动察觉。R-GLS-009"""
+    stealth_mod = ch.ability_mod("dex")
+    prof = ch.prof()
+    r = check.ability_check(mod=stealth_mod, prof=prof,
+                            proficient=True, dc=int(it.get("dc") or 15))
+    return {"kind": "hide", "check_total": r.total, "d20": r.d20,
+            "success": r.success, "dc": int(it.get("dc") or 15),
+            "effect": "隐蔽成功" if r.success else "被发现"}
+
+
+def _resolve_search(ch, it) -> dict:
+    """搜索：感知(察觉)或智力(调查)检定 vs DC。R-CHK-010"""
+    ability = it.get("ability") or "wis"
+    mod = ch.ability_mod(ability)
+    prof = ch.prof()
+    dc = int(it.get("dc") or 15)
+    r = check.ability_check(mod=mod, prof=prof, proficient=True, dc=dc)
+    return {"kind": "search", "check_total": r.total, "d20": r.d20,
+            "success": r.success, "dc": dc, "ability": ability}
+
+
+def _resolve_grapple(ch, it) -> dict:
+    """擒抱：力量或敏捷竞技检定 vs 目标力量/敏捷竞技。R-CMB-017"""
+    ability = it.get("ability") or "str"
+    mod = ch.ability_mod(ability)
+    prof = ch.prof()
+    dc = int(it.get("dc") or 10)
+    r = check.ability_check(mod=mod, prof=prof, proficient=True, dc=dc)
+    return {"kind": "grapple", "check_total": r.total, "d20": r.d20,
+            "success": r.success, "dc": dc, "ability": ability,
+            "effect": "擒抱成功" if r.success else "擒抱失败"}
+
+
+def _resolve_shove(ch, it) -> dict:
+    """推撞：力量或敏捷竞技检定,让目标倒地或移开。R-CMB-017"""
+    ability = it.get("ability") or "str"
+    mod = ch.ability_mod(ability)
+    prof = ch.prof()
+    dc = int(it.get("dc") or 10)
+    r = check.ability_check(mod=mod, prof=prof, proficient=True, dc=dc)
+    shove_type = it.get("shove_type", "prone")
+    return {"kind": "shove", "check_total": r.total, "d20": r.d20,
+            "success": r.success, "dc": dc, "ability": ability,
+            "shove_type": shove_type,
+            "effect": f"推撞成功({shove_type})" if r.success else "推撞失败"}
+
+
+def _resolve_study(ch, it) -> dict:
+    """研究：智力检定(奥秘/历史/调查/自然/宗教)。PHB 2024 Study action"""
+    ability = it.get("ability") or "int"
+    mod = ch.ability_mod(ability)
+    prof = ch.prof()
+    dc = int(it.get("dc") or 15)
+    skill = it.get("skill", "调查")
+    r = check.ability_check(mod=mod, prof=prof, proficient=True, dc=dc)
+    return {"kind": "study", "check_total": r.total, "d20": r.d20,
+            "success": r.success, "dc": dc, "ability": ability,
+            "skill": skill,
+            "effect": "获得信息" if r.success else "未能回忆起有用信息"}
+
+
+def _resolve_opportunity_attack(ch, it) -> dict:
+    """借机攻击：反应动作,目标离开触及范围时发动近战攻击。PHB Opportunity Attack"""
+    ability = it.get("ability") or "str"
+    bonus = ch.ability_mod(ability) + ch.prof()
+    ac = int(it.get("target_ac") or 10)
+    atk = check.attack_roll(bonus=bonus, ac=ac)
+    out = {"kind": "opportunity_attack",
+           "attack_total": atk.total, "d20": atk.d20,
+           "hit": atk.hit, "crit": atk.crit,
+           "target_ac": ac, "bonus": bonus,
+           "weapon": it.get("weapon", "徒手打击")}
+    if atk.hit:
+        # 武器三级回退：玩家明说 → 角色卡 equipped_weapon → 徒手(1+力量)
+        wname = it.get("weapon") or getattr(ch, "equipped_weapon", "") or "徒手"
+        dice_expr, dmg_type = equipment.resolve_weapon_damage(wname)
+        dr = damage.roll_damage(damage.DamageRequest(
+            dice_expr=dice_expr, damage_type=dmg_type,
+            ability_mod=ch.ability_mod(ability), add_mod=True, crit=atk.crit
+        ))
+        out.update({"damage": dr.final, "damage_type": dmg_type,
+                    "damage_rolls": dr.dice_rolls})
+    return out
 
 
 def _resolve_start_combat(state, ch, it) -> dict:

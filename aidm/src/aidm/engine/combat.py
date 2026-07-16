@@ -34,6 +34,16 @@ class Combatant:
     initiative: int = 0
     side: str = "player"              # player / enemy
     is_player: bool = True
+    # —— HP（参战者 HP 追踪，R-DMG-007/017）——
+    # 玩家角色卡 HP 由 stats.Character 表权威持有；此处 Combatant.hp 供战斗中
+    # 快速判定击杀/全灭。玩家参战者由 _resolve_start_combat 从 Character 同步。
+    hp: int = 0
+    hp_max: int = 0
+    dead: bool = False
+    # —— 怪物攻击档案（供 REST 自动结算怪回合用；玩家参战者不用）——
+    attack_bonus: int = 0          # 命中加值（含属性+熟练）
+    damage_dice: str = ""          # 伤害骰表达式，如 "1d6+2"
+    damage_type: str = "挥砍"
     surprised: bool = False           # R-GLS-009 突袭 → 先攻劣势
     # 同组怪物共用先攻：同组标记后由 roll_initiative 只掷一次
     group_id: Optional[str] = None
@@ -501,15 +511,18 @@ def drop_prone(c: Combatant) -> bool:
 
 
 def stand_from_prone(c: Combatant) -> bool:
-    """从倒地状态起立：消耗速度一半（向下取整），并移除倒地状态。
-    速度为0时不能起立。
+    """从倒地状态起立：消耗（条件减速后的）当前速度一半（向下取整），并移除倒地状态。
 
     规则: 术语汇编/状态.txt「倒地」起立消耗移动力=速度的一半（向下取整）
+          力竭等条件降低速度后，起立消耗应按降低后的速度计算（R-GLS-048）。
+          之前用基础速度 c.speed 会低估消耗（如速度30/2级力竭→有效20，应耗10而非15）。
     出处: topics/玩家手册2024/术语汇编/状态.htm
     """
-    if c.speed <= 0 or c.speed_remaining <= 0:
+    # 当前有效速度（经条件减速）；回合开始时 speed_remaining 已据此值初始化
+    eff_speed = conditions.speed_after_conditions(c.speed, c.conditions)
+    if eff_speed <= 0 or c.speed_remaining <= 0:
         return False
-    cost = dice.round_down(c.speed / 2)
+    cost = dice.round_down(eff_speed / 2)
     if cost > c.speed_remaining:
         return False
     c.speed_remaining -= cost
@@ -614,11 +627,18 @@ def check_combat_end(combat: Combat) -> str:
     规则: 战斗流程.txt「结束战斗」
     出处: topics/玩家手册2024/进行游戏/战斗流程.htm
     返回: "ongoing" / "players_win" / "enemies_win" / "ended"
+
+    全灭判定：怪物 hp<=0 即视为击杀；玩家 0HP 是「倒下」而非死亡（仍在投死亡豁免，
+    R-DMG-017），只有 dead=True（3 次失败）或力竭6级才算全灭——否则玩家一倒下就
+    被判 enemies_win 结束战斗，死亡豁免链路永远无法触发。
     """
-    players_alive = [c for c in combat.participants if c.side == "player"
-                     and not c.conditions.is_dead_from_exhaustion()]
-    enemies_alive = [c for c in combat.participants if c.side == "enemy"
-                     and not c.conditions.is_dead_from_exhaustion()]
+    def _down(c: Combatant) -> bool:
+        if c.is_player:
+            return c.dead or c.conditions.is_dead_from_exhaustion()
+        return c.dead or c.hp <= 0 or c.conditions.is_dead_from_exhaustion()
+
+    players_alive = [c for c in combat.participants if c.side == "player" and not _down(c)]
+    enemies_alive = [c for c in combat.participants if c.side == "enemy" and not _down(c)]
     if not enemies_alive:
         combat.active = False
         return "players_win"

@@ -20,7 +20,7 @@ from __future__ import annotations
 import random
 from typing import Any
 
-from aidm.data.classes import CLASSES, get_class
+from aidm.data.classes import CLASSES, get_class, get_extra_attacks
 from aidm.data import feats as feat_db
 
 
@@ -340,10 +340,10 @@ def _hp_gain_for_level(
     """
     fixed = FIXED_HP_GAIN.get(class_name)
     if fixed is None:
-        # 未知职业，回退到生命骰面值的一半（向上取整）作为固定值
+        # 未知职业，回退到生命骰面值的一半向上取整作为固定值
         cls = get_class(class_name)
         hd = cls["hit_die"]
-        fixed = (hd + 1) // 2  # e.g. d12→6, d10→5, d8→4, d6→3 近似
+        fixed = hd // 2 + 1  # e.g. d12→7, d10→6, d8→5, d6→4（与 FIXED_HP_GAIN 一致）
 
     if use_fixed:
         base = fixed
@@ -419,6 +419,8 @@ def select_feat(character: dict, feat_name: str) -> dict:
       - 专长必须存在于数据表。
       - 非复选专长（repeatable=False）不可重复选择。
       - 角色等级须满足专长的先决条件（简化：传奇恩惠需 19 级）。
+      - ASI 与专长二选一：若本次升级已应用属性值提升(ASI)，则不可选择专长。
+        出处: 创建角色/等级提升.htm Step 3（属性提升或专长，二选一）
 
     Args:
         character: 角色字典，需含 level 与 feats 列表。
@@ -428,7 +430,8 @@ def select_feat(character: dict, feat_name: str) -> dict:
         {"feat": name, "feats": [...], "already_taken": bool}
 
     Raises:
-        ValueError: 专长不存在 / 不可重复选择 / 等级不满足先决条件。
+        ValueError: 专长不存在 / 不可重复选择 / 等级不满足先决条件 /
+                    本次升级已选ASI（ASI与专长二选一）。
     """
     feat = feat_db.get_feat(feat_name)
     if feat is None:
@@ -444,6 +447,13 @@ def select_feat(character: dict, feat_name: str) -> dict:
     if feat["category"] == "起源":
         raise ValueError(
             f"起源专长 {feat_name!r} 仅在角色创建时由背景给予"
+        )
+    # ASI 与专长二选一：若本次升级已应用ASI，则禁止选择专长
+    # 出处: 创建角色/等级提升.htm Step 3
+    if character.get("asi_taken"):
+        raise ValueError(
+            f"本次升级已选择属性值提升(ASI)，不可同时选择专长 "
+            f"{feat_name!r}（ASI与专长二选一）"
         )
 
     current: list[str] = list(character.get("feats", []))
@@ -544,16 +554,23 @@ def level_up(
             if delta == 0:
                 continue
             old_score = scores.get(ability, 10)
-            new_score = old_score + delta
+            # 属性值上限20：任何属性提升后不得超过20
+            # 出处: 创建角色/第三步：确定属性值.htm ; 通用专长「属性值提升」
+            new_score = min(old_score + delta, 20)
+            actual_delta = new_score - old_score  # 受上限裁剪后的实际增量
             old_mod = (old_score - 10) // 2
             new_mod = (new_score - 10) // 2
             mod_change = new_mod - old_mod
             scores[ability] = new_score
-            applied_improvements[ability] = delta
+            applied_improvements[ability] = actual_delta
             if ability == "CON" and mod_change > 0:
                 con_mod_change += mod_change
                 # 体质调整值每提升1，HP上限额外提升等于当前等级（新等级）的点数
                 retroactive_hp += mod_change * next_level
+
+    # ASI 与专长二选一：若本次升级已应用属性提升(ASI)，则不可同时选择专长
+    # 出处: 创建角色/等级提升.htm Step 3（属性提升或专长，二选一）
+    asi_taken = bool(applied_improvements)
 
     # 合并 HP 增量：Step2 的增量 + Step5 的追溯增量
     total_hp_gained = hp_gained + retroactive_hp
@@ -577,10 +594,13 @@ def level_up(
         character["features"] = []
     character["features"].extend(features)
     character["proficiency_bonus"] = new_pb
+    # 记录本次升级是否已选择ASI（供 select_feat 校验二选一约束）
+    character["asi_taken"] = asi_taken
 
     # 专长选择提示：达到 4/8/12/16/19 级时，角色可选择一个专长。
+    # 但若本次升级已应用ASI，则不可再选专长（ASI与专长二选一）。
     # 出处: PHB 2024 第五章「专长」; topics/玩家手册2024/创建角色/等级提升.htm Step 3
-    feat_available = next_level in FEAT_LEVELS
+    feat_available = (next_level in FEAT_LEVELS) and not asi_taken
     available_feat_list = available_feats(character) if feat_available else []
 
     return {
@@ -591,6 +611,7 @@ def level_up(
         "pb_changed": pb_changed,
         "new_features": features,
         "ability_improvements": applied_improvements,
+        "asi_taken": asi_taken,
         "con_mod_change": con_mod_change,
         "retroactive_hp": retroactive_hp,
         "tier": get_tier(next_level),
@@ -618,6 +639,146 @@ def level_up_outside_rest(character: dict, hp_gain: int) -> dict:
     character["hp_max"] = character.get("hp_max", 0) + hp_gain
     character["hp_current"] = character.get("hp_current", 0) + hp_gain
     return character
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 兼职规则（Multiclass）
+# 出处: topics/玩家手册2024/创建角色/兼职.htm
+# ──────────────────────────────────────────────────────────────────────────
+
+# 兼职先决条件：新职业的主属性需≥13（出处: 兼职.htm「先决条件」）
+_MULTICLASS_PREREQ = {
+    "野蛮人":   ["STR"],
+    "吟游诗人": ["DEX", "CHA"],
+    "牧师":     ["WIS"],
+    "德鲁伊":   ["WIS"],
+    "战士":     ["STR", "DEX"],
+    "武僧":     ["DEX", "WIS"],
+    "圣武士":   ["STR", "CHA"],
+    "游侠":     ["DEX", "WIS"],
+    "游荡者":   ["DEX"],
+    "术士":     ["CHA"],
+    "魔契师":   ["CHA"],
+    "法师":     ["INT"],
+}
+
+
+def check_multiclass_prerequisite(character: dict, new_class: str) -> dict:
+    """检查兼职先决条件：新职业主属性≥13。
+
+    规则: 兼职.htm「先决条件」— 要兼职一个职业，你和原职业的主属性都需≥13。
+    出处: topics/玩家手册2024/创建角色/兼职.htm
+    """
+    prereqs = _MULTICLASS_PREREQ.get(new_class, [])
+    scores = character.get("scores", {})
+    failures = []
+    for ab in prereqs:
+        score = scores.get(ab, 10)
+        if score < 13:
+            failures.append(f"{ab}({score})<13")
+    return {
+        "eligible": len(failures) == 0,
+        "new_class": new_class,
+        "prerequisites": prereqs,
+        "failures": failures,
+    }
+
+
+# 兼职熟练度（新职业第1级只得部分熟练，出处: 兼职.htm「熟练度」）
+_MULTICLASS_PROFICIENCIES = {
+    "野蛮人":   {"armor": "轻甲、中甲和盾牌", "weapons": "简易和军用武器", "skills": 1, "skill_pool": ["驯兽", "运动", "威吓", "自然", "察觉", "求生"]},
+    "吟游诗人": {"armor": "轻甲", "weapons": "简易武器", "skills": 1, "skill_pool": "任意"},
+    "牧师":     {"armor": "轻甲、中甲和盾牌", "weapons": "简易武器", "skills": 0, "skill_pool": []},
+    "德鲁伊":   {"armor": "轻甲、中甲和盾牌（金属限制除外）", "weapons": "简易武器", "skills": 0, "skill_pool": []},
+    "战士":     {"armor": "轻甲、中甲和盾牌", "weapons": "简易和军用武器", "skills": 0, "skill_pool": []},
+    "武僧":     {"armor": "无", "weapons": "简易武器和短剑", "skills": 1, "skill_pool": ["运动", "洞悉", "历史", "威吓", "宗教"]},
+    "圣武士":   {"armor": "轻甲、中甲和盾牌", "weapons": "简易和军用武器", "skills": 0, "skill_pool": []},
+    "游侠":     {"armor": "轻甲、中甲和盾牌", "weapons": "简易和军用武器", "skills": 1, "skill_pool": ["驯兽", "运动", "洞悉", "自然", "察觉", "隐匿", "求生"]},
+    "游荡者":   {"armor": "轻甲", "weapons": "简易武器和短剑", "skills": 1, "skill_pool": ["运动", "杂技", "欺瞒", "洞悉", "威吓", "调查", "察觉", "表演", "游说", "巧手", "隐匿"]},
+    "术士":     {"armor": "无", "weapons": "简易武器", "skills": 0, "skill_pool": []},
+    "魔契师":   {"armor": "轻甲", "weapons": "简易武器", "skills": 0, "skill_pool": []},
+    "法师":     {"armor": "无", "weapons": "无", "skills": 0, "skill_pool": []},
+}
+
+
+def multiclass_proficiencies(class_name: str) -> dict:
+    """取兼职时该职业第1级获得的熟练度（缩减版，非完整起始熟练）。
+
+    规则: 兼职.htm「熟练度」— 你只获得该职业熟练度的一部分。
+    出处: topics/玩家手册2024/创建角色/兼职.htm
+    """
+    return _MULTICLASS_PROFICIENCIES.get(class_name, {
+        "armor": "无", "weapons": "无", "skills": 0, "skill_pool": []})
+
+
+# 兼职施法者法术位表（出处: 兼职.htm「施法」）
+# 将各施法职业等级求和后查此表，得出可用法术位
+_MULTICLASS_SPELL_SLOTS = {
+    # 总施法者等级 → {环阶: 法术位数}
+    1:  {1: 2},
+    2:  {1: 3},
+    3:  {1: 4, 2: 2},
+    4:  {1: 4, 2: 3},
+    5:  {1: 4, 2: 3, 3: 2},
+    6:  {1: 4, 2: 3, 3: 3},
+    7:  {1: 4, 2: 3, 3: 3, 4: 1},
+    8:  {1: 4, 2: 3, 3: 3, 4: 2},
+    9:  {1: 4, 2: 3, 3: 3, 4: 3, 5: 1},
+    10: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2},
+    11: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1},
+    12: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1},
+    13: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1},
+    14: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1},
+    15: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1},
+    16: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1},
+    17: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1},
+    18: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1},
+    19: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1},
+    20: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1},
+}
+
+# 各施法职业的施法等级权重（魔契师折半向下取整，圣武士/游侠折半向下取整）
+_MULTICLASS_SPELL_WEIGHT = {
+    "吟游诗人": 1.0, "牧师": 1.0, "德鲁伊": 1.0, "术士": 1.0,
+    "魔契师": 0.5, "法师": 1.0, "圣武士": 0.5, "游侠": 0.5,
+}
+
+
+def multiclass_spell_slots(class_levels: dict[str, int]) -> dict:
+    """计算兼职施法者的法术位。
+
+    规则: 兼职.htm「施法」— 各施法职业等级按权重求和后查表。
+          魔契师/圣武士/游侠 等级折半向下取整。
+    出处: topics/玩家手册2024/创建角色/兼职.htm
+
+    参数:
+      class_levels: {职业名: 该职业等级}，如 {"法师": 5, "战士": 3}
+    返回:
+      {环阶(int→str): 法术位数}
+    """
+    total = 0
+    for cls, lv in class_levels.items():
+        weight = _MULTICLASS_SPELL_WEIGHT.get(cls, 0)
+        if weight > 0:
+            total += int(lv * weight)  # 向下取整
+    if total <= 0:
+        return {}
+    total = min(total, 20)
+    return _MULTICLASS_SPELL_SLOTS.get(total, {})
+
+
+def extra_attack_stacks(class_levels: dict[str, int]) -> int:
+    """额外攻击不叠加：多源额外攻击只取最高。
+
+    规则: 兼职.htm「额外攻击」— 多个职业给予的额外攻击不叠加。
+    出处: topics/玩家手册2024/创建角色/兼职.htm
+    """
+    max_attacks = 0
+    for cls, lv in class_levels.items():
+        attacks = get_extra_attacks(cls, lv)
+        if attacks > max_attacks:
+            max_attacks = attacks
+    return max_attacks
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -809,6 +970,11 @@ def _self_test() -> None:
     assert fighter2["hp_max"] == 42  # 30 + 12
     # CON 已更新
     assert fighter2["scores"]["CON"] == 16
+    # B6: 本次升级已选ASI → asi_taken=True，4级本是专长等级但不可再选专长
+    assert up3["asi_taken"] is True
+    assert up3["feat_available"] is False
+    assert up3["available_feats"] == []
+    assert fighter2["asi_taken"] is True
 
     # 场景4: 掷骰模式（传入固定roll值便于断言）
     rogue = {
@@ -917,7 +1083,73 @@ def _self_test() -> None:
     up_feat = level_up(char_to4, use_fixed_hp=True)
     assert up_feat["new_level"] == 4
     assert up_feat["feat_available"] is True
+    assert up_feat["asi_taken"] is False
     assert len(up_feat["available_feats"]) > 0
+
+    # ── B6: ASI与专长二选一 ──────────────────────────────
+    # 升级时选ASI → feat_available=False，且 select_feat 应拒绝
+    asi_char = {
+        "level": 3, "xp": 2700, "class_name": "战士",
+        "scores": {"STR": 16, "DEX": 12, "CON": 14, "INT": 10, "WIS": 10, "CHA": 10},
+        "hp_max": 28, "hp_current": 20, "features": [],
+    }
+    up_asi = level_up(asi_char, use_fixed_hp=True, ability_improvements={"STR": 2})
+    assert up_asi["asi_taken"] is True
+    assert up_asi["feat_available"] is False  # 4级本是专长等级，但已选ASI
+    assert up_asi["available_feats"] == []
+    assert asi_char["asi_taken"] is True
+    try:
+        select_feat(asi_char, "演员")
+        assert False, "已选ASI时 select_feat 应抛出 ValueError"
+    except ValueError as e:
+        assert "ASI" in str(e) or "二选一" in str(e), f"错误信息应提及ASI二选一，实为: {e}"
+    # 升级未选ASI → select_feat 正常可用
+    no_asi_char = {
+        "level": 3, "xp": 2700, "class_name": "战士",
+        "scores": {"STR": 16, "DEX": 12, "CON": 14, "INT": 10, "WIS": 10, "CHA": 10},
+        "hp_max": 28, "hp_current": 20, "features": [],
+    }
+    up_no_asi = level_up(no_asi_char, use_fixed_hp=True)
+    assert up_no_asi["asi_taken"] is False
+    assert up_no_asi["feat_available"] is True
+    r_sel = select_feat(no_asi_char, "演员")
+    assert r_sel["feat"] == "演员"
+
+    # ── B7: 属性值上限20 ──────────────────────────────────
+    # CON 19 +2 → 截断为20，实际增量1
+    cap_char = {
+        "level": 3, "xp": 2700, "class_name": "战士",
+        "scores": {"STR": 16, "DEX": 12, "CON": 19, "INT": 10, "WIS": 10, "CHA": 10},
+        "hp_max": 30, "hp_current": 25, "features": [],
+    }
+    up_cap = level_up(cap_char, use_fixed_hp=True, ability_improvements={"CON": 2})
+    assert cap_char["scores"]["CON"] == 20  # 19+2=21→截断20
+    assert up_cap["ability_improvements"]["CON"] == 1  # 实际增量
+    # CON mod: 19→+4, 20→+5, change+1 → 追溯1×4=4
+    assert up_cap["con_mod_change"] == 1
+    assert up_cap["retroactive_hp"] == 4
+    # 已满20再加 → 仍为20，实际增量0，无追溯
+    cap_full = {
+        "level": 3, "xp": 2700, "class_name": "战士",
+        "scores": {"STR": 16, "DEX": 12, "CON": 20, "INT": 10, "WIS": 10, "CHA": 10},
+        "hp_max": 34, "hp_current": 30, "features": [],
+    }
+    up_full = level_up(cap_full, use_fixed_hp=True, ability_improvements={"CON": 2})
+    assert cap_full["scores"]["CON"] == 20  # 不超20
+    assert up_full["ability_improvements"]["CON"] == 0
+    assert up_full["con_mod_change"] == 0
+    assert up_full["retroactive_hp"] == 0
+
+    # ── B8: 未知职业HP回退公式 = hd//2+1（d12→7，修复前为6）──
+    # 各职业生命骰的回退公式与固定表一致
+    for cname, cdata in CLASSES.items():
+        hd = cdata["hit_die"]
+        assert hd // 2 + 1 == FIXED_HP_GAIN[cname], (
+            f"{cname} 回退公式 {hd//2+1} 与固定表 {FIXED_HP_GAIN[cname]} 不符"
+        )
+    # 关键：d12→7（修复前 (12+1)//2=6 是错误的）
+    assert 12 // 2 + 1 == 7
+    assert 6 // 2 + 1 == 4
 
     print("[levelup] 自检通过 ✓")
 

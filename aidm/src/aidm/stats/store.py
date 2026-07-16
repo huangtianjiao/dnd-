@@ -119,6 +119,19 @@ def list_characters(campaign_id: Optional[int] = None,
         return list(s.exec(stmt))
 
 
+def delete_character(cid: int, db_path: str = DEFAULT_DB) -> bool:
+    """删除角色卡。返回是否实际删除了一行（cid 不存在则 False）。
+
+    用于房间加入失败时回滚刚创建的临时角色卡，避免脏数据残留。
+    """
+    with session(db_path) as s:
+        ch = s.get(M.Character, cid)
+        if ch is None:
+            return False
+        s.delete(ch)
+        return True
+
+
 # ──────────────────────────────────────────────────────────────────────────
 # 战役 / rolling summary
 # ──────────────────────────────────────────────────────────────────────────
@@ -205,6 +218,9 @@ def _combatant_to_dict(c: cmb.Combatant) -> dict:
         "bonus_action_used": c.bonus_action_used, "reaction_used": c.reaction_used,
         "free_interaction_used": c.free_interaction_used,
         "concentrating_on": c.concentrating_on,
+        "hp": c.hp, "hp_max": c.hp_max, "dead": c.dead,
+        "attack_bonus": c.attack_bonus, "damage_dice": c.damage_dice,
+        "damage_type": c.damage_type,
     }
 
 

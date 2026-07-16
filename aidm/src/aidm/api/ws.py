@@ -30,6 +30,7 @@ from typing import Optional
 import socketio
 
 from ..brain import graph, world
+from .memory_bg import _async_memory_process
 from ..engine import combat as cmb
 from ..stats import store, models
 
@@ -363,6 +364,17 @@ async def on_action(sid, data):
             "ac": ch.ac,
             "conditions": ch.conditions_list,
         }, to=sid)
+
+    # 异步后台执行记忆处理，不阻塞 WebSocket 响应
+    narration = result.get("narration", "")
+    intent = result.get("intent", {})
+    if campaign_id and narration:
+        asyncio.ensure_future(_async_memory_process(
+            campaign_id=campaign_id,
+            player_input=player_input,
+            narration=narration,
+            intent=intent,
+        ))
 
 
 @sio.on("end_turn")
