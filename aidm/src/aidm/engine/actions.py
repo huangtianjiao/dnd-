@@ -1,8 +1,8 @@
 """战斗动作分派器 — 攻击 / 疾走 / 撤离 / 回避 / 协助 / 躲藏 /
-魔法 / 预备 / 搜索 / 研究 / 操作。
+影响 / 魔法 / 预备 / 搜索 / 研究 / 操作。
 
 依赖 engine.check（attack_roll, ability_check）、engine.damage（roll_damage）、
-engine.combat（Combatant, use_action）。标注规则ID+出处。
+engine.combat（Combatant, use_action, conditions）。标注规则ID+出处。
 
 规则出处:
   - topics/玩家手册2024/进行游戏/动作.htm
@@ -15,8 +15,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
-from . import check, damage
-from .combat import Combatant, use_action
+from . import check, damage, conditions
+from .combat import Combatant, use_action, use_reaction
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -61,23 +61,36 @@ class WeaponProfile:
 def action_attack(attacker: Combatant, target: Combatant,
                   weapon: WeaponProfile,
                   advantage: bool = False, disadvantage: bool = False,
-                  target_ac: int = 10) -> ActionResult:
+                  target_ac: int = 10, distance_ft: int = 5) -> ActionResult:
     """攻击动作：选择目标 → 攻击检定 → （命中则）掷伤害。
 
     规则: R-CMB-014 攻击流程 / R-CMB-017 命中判定 / R-CMB-022 天然20必出重击
           R-CMB-023 天然1必失手 / R-CMB-029 重击伤害骰翻倍
+          R-GLS-044~058 条件优劣势 / R-CMB-008 回避 → 攻击劣势
     出处: topics/玩家手册2024/进行游戏/攻击检定.htm ; 重击.htm
     说明:
       - target_ac 由调用方提供（已计入掩护加值等，见 R-CMB-015）。
       - 重击时伤害骰数量翻倍（damage.roll_damage 的 crit 参数处理）。
+      - 条件优劣势从攻守双方 ConditionState 计算（R-GLS-044~058）。
+      - 目标回避(dodge_active)→攻击劣势；目标麻痹/昏迷5尺内命中即重击。
     """
     if not use_action(attacker):
         return ActionResult("attack", success=False,
                             message="无可用动作")
 
+    # R-GLS-044~058: 条件优劣势
+    mods = conditions.attack_modifiers(attacker.conditions, target.conditions, distance_ft)
+    adv = advantage or mods.attacker_advantage
+    dis = disadvantage or mods.attacker_disadvantage
+    # R-CMB-008 目标回避 → 攻击劣势
+    if target.dodge_active:
+        dis = True
+    # 力竭 d20 惩罚
+    exh_penalty = -conditions.d20_penalty(attacker.conditions)
+
     # R-CMB-017/R-CMB-022/R-CMB-023: 攻击检定
     atk = check.attack_roll(bonus=weapon.attack_bonus, ac=target_ac,
-                            advantage=advantage, disadvantage=disadvantage)
+                            advantage=adv, disadvantage=dis, circ=exh_penalty)
 
     result = ActionResult(
         "attack",
@@ -90,17 +103,18 @@ def action_attack(attacker: Combatant, target: Combatant,
         result.message += "：未命中"
         return result
 
-    # R-CMB-029: 重击时伤害骰翻倍
+    # R-CMB-029 + R-GLS-052/058: 重击（含麻痹/昏迷5尺内自动重击）
+    crit = atk.crit or mods.target_auto_crit_if_hit
     req = damage.DamageRequest(
         dice_expr=weapon.damage_dice,
         damage_type=weapon.damage_type,
         ability_mod=weapon.ability_mod,
         add_mod=weapon.add_ability_mod_to_damage,
-        crit=atk.crit,
+        crit=crit,
     )
     dmg = damage.roll_damage(req)
     result.damage_result = dmg
-    result.message += f"：命中{'（重击）' if atk.crit else ''}，造成 {dmg.final} 点{weapon.damage_type}伤害"
+    result.message += f"：命中{'（重击）' if crit else ''}，造成 {dmg.final} 点{weapon.damage_type}伤害"
     return result
 
 
@@ -152,46 +166,69 @@ def action_dodge(attacker: Combatant) -> ActionResult:
 
 
 def action_help(attacker: Combatant, ally: Combatant,
-                target: Optional[Combatant] = None) -> ActionResult:
-    """协助动作：盟友下次对该目标的攻击检定具有优势；或进行急救。
+                target: Optional[Combatant] = None,
+                mode: str = "attack") -> ActionResult:
+    """协助动作：盟友下次对该目标的攻击检定具有优势；或进行急救（医药检定DC10稳定伤势）。
 
-    规则: R-CMB-014 协助另一个生物进行属性或攻击检定，或进行急救
-    出处: topics/玩家手册2024/进行游戏/动作.htm
-    说明: 这里在 ally 上标记 help_advantage_target，供后续攻击查询。
-          具体优势应用由调用方在 attack 时传入 advantage=True。
+    规则: 术语汇编/动作.txt「协助」— 两种模式：属性检定协助/攻击协助
+    出处: topics/玩家手册2024/术语汇编/动作.htm
+    说明: 攻击协助模式：在 ally 上标记 help_advantage_target，供攻击检定查询，
+          下回合开始时清除。急救模式：进行 DC10 感知(医药)检定稳定伤势。
     """
     if not use_action(attacker):
         return ActionResult("help", success=False, message="无可用动作")
+    if mode == "first_aid":
+        # 急救：DC10 医药检定稳定伤势
+        r = check.ability_check(mod=0, prof=0, proficient=False, dc=10)
+        return ActionResult("help", success=r.success,
+                            message=f"{attacker.name} 急救检定 {r.total} vs DC10："
+                                    + ("成功，伤势稳定" if r.success else "失败"),
+                            extra={"mode": "first_aid", "check_total": r.total,
+                                   "dc": 10, "stabilized": r.success})
+    # 攻击协助：标记 ally 下次对该 target 攻击有优势
+    if target:
+        ally.help_advantage_target = target.cid
     return ActionResult("help", success=True,
                         message=f"{attacker.name} 协助 {ally.name}"
                                 + (f" 对抗 {target.name}" if target else ""),
                         extra={"ally": ally.cid,
-                               "target": target.cid if target else None})
+                               "target": target.cid if target else None,
+                               "mode": "attack"})
 
 
 def action_hide(attacker: Combatant, stealth_mod: int, stealth_prof: int,
-                proficient: bool, dc: int,
-                advantage: bool = False, disadvantage: bool = False) -> ActionResult:
-    """躲藏动作：进行一次敏捷（隐匿）检定。
+                proficient: bool, dc: int = 15,
+                advantage: bool = False, disadvantage: bool = False,
+                has_cover: bool = False, heavily_obscured: bool = False,
+                not_in_enemy_sight: bool = True) -> ActionResult:
+    """躲藏动作：进行一次敏捷（隐匿）检定（2024规则：固定DC15）。
 
-    规则: R-CMB-009 动作:躲藏 → 敏捷(隐匿)检定
-          check = d20 + DEX_mod + stealth_proficiency(if proficient)
-    出处: topics/玩家手册2024/进行游戏/动作.htm
-    说明: 成功则进入隐形状态（hidden=True），失败则未躲藏。
-          DC 通常为对手的被动察觉（R-GLS-010）。
+    规则: 术语汇编/动作.txt「躲藏」(2024) — DC15 隐匿检定；
+          需满足前置条件：重度遮蔽/3/4掩护/全身掩护/不在敌视野内。
+          成功后检定总值成为他人察觉该生物的 DC。
+    出处: topics/玩家手册2024/术语汇编/动作.htm
+    说明: 2024 规则改为固定 DC15（非旧的被动察觉 DC）。
+          成功则进入隐形状态（hidden=True），失败则未躲藏。
     """
     if not use_action(attacker):
         return ActionResult("hide", success=False, message="无可用动作")
+    # 前置条件检查：需有遮蔽/掩护或不在敌视野内
+    can_hide = has_cover or heavily_obscured or not_in_enemy_sight
+    if not can_hide:
+        return ActionResult("hide", success=False,
+                            message=f"{attacker.name} 无法躲藏：需遮蔽或掩护",
+                            extra={"hidden": False, "reason": "no_obscurement"})
     r = check.ability_check(mod=stealth_mod, prof=stealth_prof,
                             proficient=proficient, dc=dc,
                             advantage=advantage, disadvantage=disadvantage)
     if r.success:
-        attacker.hidden = True                           # R-CMB-009 躲藏成功
+        attacker.hidden = True                           # 躲藏成功 → 隐形
     return ActionResult("hide", success=r.success,
                         message=f"{attacker.name} 躲藏检定 {r.total} vs DC{dc}："
                                 + ("成功" if r.success else "失败"),
                         extra={"check_total": r.total, "dc": dc,
-                               "hidden": attacker.hidden})
+                               "hidden": attacker.hidden,
+                               "detection_dc": r.total if r.success else None})
 
 
 def action_magic(attacker: Combatant, spell_name: str = "",
@@ -215,18 +252,44 @@ def action_ready(attacker: Combatant, trigger_condition: str,
                  ready_action: str = "attack") -> ActionResult:
     """预备动作：设定触发条件，用反应在条件满足时执行该动作。
 
-    规则: R-CMB-014 预备 做好执行某个动作的准备，触发时机/情况由你决定
-    出处: topics/玩家手册2024/进行游戏/动作.htm
-    说明: 预备本身消耗动作；真正执行时消耗反应（见 opportunity_attack.py 的模式）。
-          这里在 attacker 上记录 ready_trigger，供反应阶段查询。
+    规则: 术语汇编/动作.txt「预备」— 消耗动作设定触发条件，
+          触发时用反应执行一个动作或移动等于速度的距离。
+          预备法术：施法时间须为动作，预备时施展（耗资源）并维持专注，
+          触发时用反应释放。
+    出处: topics/玩家手册2024/术语汇编/动作.htm
+    说明: 预备本身消耗动作；在 Combatant.ready_trigger 上记录触发条件，
+          ready_action_name 上记录预备的动作/法术名。触发时消耗反应执行
+          （由上层在反应阶段查询 ready_trigger 并调用 trigger_ready）。
     """
     if not use_action(attacker):
         return ActionResult("ready", success=False, message="无可用动作")
+    attacker.ready_trigger = trigger_condition
+    attacker.ready_action_name = ready_action
     return ActionResult("ready", success=True,
                         message=f"{attacker.name} 预备{ready_action}，"
                                 f"触发条件：{trigger_condition}",
                         extra={"trigger": trigger_condition,
                                "ready_action": ready_action})
+
+
+def trigger_ready(attacker: Combatant) -> Optional[ActionResult]:
+    """触发预备动作：消耗反应执行预备的动作/移动。返回 None 表示无预备。
+
+    规则: 术语汇编/动作.txt — 触发时用反应执行。
+    说明: 清除 ready_trigger 和 ready_action_name，消耗反应。
+    """
+    if not attacker.ready_trigger:
+        return None
+    if not use_reaction(attacker):
+        return ActionResult("ready_trigger", success=False,
+                           message="无可用反应")
+    action_name = attacker.ready_action_name or "attack"
+    trigger = attacker.ready_trigger
+    attacker.ready_trigger = None
+    attacker.ready_action_name = None
+    return ActionResult("ready_trigger", success=True,
+                        message=f"{attacker.name} 触发预备：{action_name}（{trigger}）",
+                        extra={"action": action_name, "trigger": trigger})
 
 
 def action_search(attacker: Combatant, perception_mod: int,
@@ -294,6 +357,28 @@ def action_utilize(attacker: Combatant, object_name: str = "",
                         message=f"{attacker.name} 操作{object_name}")
 
 
+def action_influence(attacker: Combatant, ability_mod: int, prof: int,
+                     proficient: bool, dc: int = 15,
+                     skill: str = "persuasion",
+                     advantage: bool = False, disadvantage: bool = False) -> ActionResult:
+    """影响动作：进行社交检定（说服/欺瞒/威吓/表演）以改变 NPC 态度。
+
+    规则: 术语汇编/动作.txt「影响」— 用魅力属性技能影响 NPC 态度。
+          友好 DC-5 / 冷漠 DC+0 / 敌对 DC+5（态度修正由上层计算后传入 dc）。
+    出处: topics/玩家手册2024/术语汇编/动作.htm
+    """
+    if not use_action(attacker):
+        return ActionResult("influence", success=False, message="无可用动作")
+    r = check.ability_check(mod=ability_mod, prof=prof,
+                            proficient=proficient, dc=dc,
+                            advantage=advantage, disadvantage=disadvantage,
+                            circ=-conditions.d20_penalty(attacker.conditions))
+    return ActionResult("influence", success=r.success,
+                        message=f"{attacker.name} {skill}检定 {r.total} vs DC{dc}："
+                                + ("成功" if r.success else "失败"),
+                        extra={"check_total": r.total, "dc": dc, "skill": skill})
+
+
 # ──────────────────────────────────────────────────────────────────────────
 # 动作分派表
 # ──────────────────────────────────────────────────────────────────────────
@@ -307,6 +392,7 @@ COMBAT_ACTIONS: dict[str, Callable[..., ActionResult]] = {
     "dodge":      action_dodge,
     "help":       action_help,
     "hide":       action_hide,
+    "influence":  action_influence,
     "magic":      action_magic,
     "ready":      action_ready,
     "search":     action_search,
@@ -370,6 +456,8 @@ def resolve_combat_action(action_type: str, attacker: Combatant,
         return action_study(attacker=attacker, **kwargs)
     elif action_type == "utilize":
         return action_utilize(attacker=attacker, **kwargs)
+    elif action_type == "influence":
+        return action_influence(attacker=attacker, **kwargs)
     else:
         return handler(attacker=attacker, target=target, weapon=weapon, **kwargs)
 

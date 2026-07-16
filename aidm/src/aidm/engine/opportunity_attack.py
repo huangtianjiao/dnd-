@@ -30,21 +30,24 @@ from .actions import WeaponProfile, ActionResult
 def can_make_opportunity_attack(attacker: Combatant,
                                 target: Combatant,
                                 target_leaving_reach: bool = True,
-                                target_visible: bool = True) -> bool:
+                                target_visible: bool = True,
+                                movement_type: str = "normal") -> bool:
     """是否满足借机攻击的所有触发条件。
 
-    规则: R-CMB-025 借机攻击触发
+    规则: R-CMB-025 借机攻击触发 + R-CMB-026 避免借机攻击
           trigger = visible_creature_exits_reach
           cost = 1 reaction
           attack_type = melee weapon OR unarmed strike
+          不引发借机攻击的移动: 撤离/传送/不消耗移动力·动作·附赠·反应的移动
     出处: topics/玩家手册2024/进行游戏/近战攻击.htm
 
     条件:
       1. attacker 还有反应可用（R-CMB-013）
       2. target 正在离开 attacker 的触及范围（target_leaving_reach）
       3. target 对 attacker 可见（target_visible）
-      4. target 的移动方式会引发借机攻击（非撤离/传送/免费移动，R-CMB-026）
-         —— 由调用方通过 movement_provokes 参数传入；此处检查 disengage_active。
+      4. target 的移动方式会引发借机攻击
+         movement_type: "normal"=普通移动(引发) / "teleport"=传送(不引发) /
+                         "free"=免费移动(不引发) / "disengage"=撤离(不引发)
     """
     # R-CMB-013: 反应经济
     if attacker.reaction_used:
@@ -55,7 +58,9 @@ def can_make_opportunity_attack(attacker: Combatant,
     # R-CMB-025: 目标必须可见
     if not target_visible:
         return False
-    # R-CMB-026: 撤离动作使本回合移动不引发借机攻击
+    # R-CMB-026: 撤离/传送/免费移动不引发借机攻击
+    if movement_type in ("teleport", "free"):
+        return False
     if getattr(target, "disengage_active", False):
         return False
     return True
@@ -67,6 +72,7 @@ def opportunity_attack(attacker: Combatant,
                        target_ac: int = 10,
                        target_leaving_reach: bool = True,
                        target_visible: bool = True,
+                       movement_type: str = "normal",
                        advantage: bool = False,
                        disadvantage: bool = False) -> ActionResult:
     """执行一次借机攻击。
@@ -74,7 +80,7 @@ def opportunity_attack(attacker: Combatant,
     规则: R-CMB-025 借机攻击触发
           当一个你可见的生物离开你的触及范围时，你可以用反应对其发动
           一次近战攻击（徒手打击或武器）。该攻击发生于对方离开你触及
-          范围前的那一刻。
+          范围前的那一刻。传送/免费移动/撤离不引发。
     出处: topics/玩家手册2024/进行游戏/近战攻击.htm
 
     参数:
@@ -84,6 +90,7 @@ def opportunity_attack(attacker: Combatant,
       target_ac: 目标护甲等级（已含掩护加值等）
       target_leaving_reach: 目标是否正在离开触及范围
       target_visible: 目标对攻击者是否可见
+      movement_type: "normal"/"teleport"/"free"/"disengage"
       advantage/disadvantage: 攻击检定的优劣势
 
     返回:
@@ -91,10 +98,10 @@ def opportunity_attack(attacker: Combatant,
     """
     # 检查触发条件
     if not can_make_opportunity_attack(
-            attacker, target, target_leaving_reach, target_visible):
+            attacker, target, target_leaving_reach, target_visible, movement_type):
         return ActionResult("opportunity_attack", success=False,
                             message="借机攻击条件不满足（无反应/不可见/"
-                                    "目标撤离/未离开触及范围）")
+                                    "目标撤离/传送/未离开触及范围）")
 
     # 消耗反应（R-CMB-013 / R-CMB-025）
     if not use_reaction(attacker):
@@ -107,7 +114,7 @@ def opportunity_attack(attacker: Combatant,
             name="徒手打击",
             attack_bonus=0,           # 调用方应填入实际加值
             damage_dice="1",
-            damage_type="bludgeoning",
+            damage_type="钝击",
             ability_mod=0,
             add_ability_mod_to_damage=True,
         )
@@ -194,6 +201,16 @@ def _self_test() -> None:
     r5 = opportunity_attack(attacker, target, weapon=weapon, target_ac=10,
                             target_leaving_reach=False)
     assert r5.success is False
+
+    # 传送不引发借机攻击
+    attacker.reaction_used = False
+    r5b = opportunity_attack(attacker, target, weapon=weapon, target_ac=10,
+                             movement_type="teleport")
+    assert r5b.success is False, "传送不应引发借机攻击"
+    # 免费移动不引发
+    r5c = opportunity_attack(attacker, target, weapon=weapon, target_ac=10,
+                             movement_type="free")
+    assert r5c.success is False, "免费移动不应引发借机攻击"
 
     # 天然20重击
     _dice.roll_d20 = lambda advantage=False, disadvantage=False: \

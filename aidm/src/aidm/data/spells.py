@@ -220,6 +220,19 @@ _SPELLS_LIST: list[Spell] = [
         description="你触碰的一名生物恢复等同于2d8+你施法属性调整值点生命值。",
         class_list=("吟游诗人", "牧师", "德鲁伊", "圣武士", "游侠"),
     ),
+    Spell(
+        name="鉴定术", en_name="Identify",
+        level=1, school="预言",
+        casting_time="1分钟（仪式）", casting_time_type="TIME",
+        range="触碰", components=frozenset({"V", "S", "M"}),
+        material_desc="一颗珍珠（价值100gp）与一根猫头鹰羽毛",
+        material_cost_gp=100.0, material_consumed=False,
+        duration="立即", concentration=False,
+        ritual=True,                         # R-SPL-005 可仪式施法
+        effect_type="automatic",
+        description="你触碰一件物件，或在施法期间一直持有它。若它是魔法物品或被施法的物件，你将了解其特性。施法时间为1分钟，且可作仪式施展。",
+        class_list=("法师",),
+    ),
 
     # ── 2环 ──
     Spell(
@@ -351,6 +364,13 @@ def _self_test() -> None:
     # 隐形术: 专注 (R-SPL-019)
     inv = get_spell("隐形术")
     assert inv.concentration is True
+    # 鉴定术: 仪式 + 有价材料 (R-SPL-005 / R-SPL-013)
+    ident = get_spell("鉴定术")
+    assert ident.level == 1 and ident.ritual is True
+    assert ident.material_cost_gp == 100.0 and ident.material_consumed is False
+    assert ident.casting_time_type == "TIME"
+    # 隐形术升环多目标字段 (R-SPL-004)
+    assert inv.upcast is not None and inv.upcast.get("targets_per_level") == 1
     # 施法属性映射 (R-SPL-021)
     assert get_casting_ability("法师") == "INT"
     assert get_casting_ability("牧师") == "WIS"

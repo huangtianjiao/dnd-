@@ -27,7 +27,7 @@
 | sentence-transformers | 5.1.0 | 本地 embedding（P2 默认 bge-small-zh） |
 | beautifulsoup4 + lxml | — | HTML 解析（提取脚本用） |
 
-> 前端依赖（P5）：next、react、shadcn/ui、tailwindcss（star 数见 ARCHITECTURE §7）。
+> 前端依赖（P5，`ui/package.json`）：next 14.2.5 / react 18.3.1 / tailwindcss 3.4.7 / @3d-dice/dice-box ^1.1.4 / socket.io-client ^4.8.3（无 shadcn/ui，自研组件）。
 
 ## 3. 项目结构
 
@@ -49,8 +49,9 @@ D:\game\dnd\
 │       ├── engine/        # P0 ✅ dice/check/damage/conditions/combat
 │       ├── stats/         # P1 ✅ models(SQLModel) + store(CRUD)
 │       ├── knowledge/     # P2 ✅ parse_datajs/parse_rulespec/embedding/indexer/retriever/verifier/hybrid/aliases/eval_retrieval
-│       ├── brain/         # P3 ✅ graph(LangGraph编排)/llm(客户端)/state(GameState)
-│       └── api/           # P4 ✅ main(FastAPI)
+│       ├── brain/         # P3 ✅ graph(LangGraph编排)/llm/state + 16 业务模块（含 memory/world/image_gen/rest/social/loot/…，共 19 子模块）
+│       ├── agents/       # 多智能体层（6 Agent：Director/Narrator/Combat/WorldManager/RuleJudge/EnemyAI，渐进迁移中）
+│       └── api/           # P4 ✅ main(FastAPI 43 端点) + ws(Socket.IO 同桌)
 ```
 
 ## 4. 快速开始（自检）
@@ -79,7 +80,7 @@ PYTHONPATH=src $PY -m aidm.api.main
 
 ## 5. 分阶段搭建路线图（P0→P5）
 
-每阶段独立可验收。**P0/P1 完全离线；P2 用本地 embedding（免 docker）；P3 起需 LLM API。** 已全部完成至 P4（P5 前端可选）。
+每阶段独立可验收。**P0/P1 完全离线；P2 用本地 embedding（免 docker）；P3 起需 LLM API。** 已全部完成至 P5（含 WebSocket 同桌 + 多智能体 agents/ + 三层记忆，组件重构进行中）。
 
 ### Phase 0 — 引擎核心（硬性判定地基）✅ 已完成
 **目标**：骰子/检定/伤害/状态/装备数据全部代码化，离线可跑。8 模块自检通过 + 全栈联调跑通。
@@ -110,12 +111,13 @@ PYTHONPATH=src $PY -m aidm.api.main
 
 ### Phase 4 — API 层 + 交互层 ✅ 已完成
 **目标**：前后端分离 + CLI 跑团。
-**步骤**：`api/main.py`(FastAPI 端点：/health /campaign /character /chat /chat/resume /summary) + `cli.py`(交互式 CLI，HITL responder)。HITL 经 `/chat/resume` 恢复。
+**步骤**：`api/main.py`(FastAPI，43 个端点，含 REST + WebSocket) + `api/ws.py`(python-socketio AsyncServer，多人同桌 Room 生命周期) + `cli.py`(交互式 CLI，HITL responder)。HITL 经 `/chat/resume` 恢复。
 **验收**：HTTP 客户端能跑一轮对话+查状态；CLI 能开跑。
 
-### Phase 5 — 前端
+### Phase 5 — 前端 ✅ 已完成
 **目标**：可视跑团界面。
-**步骤**：`ui/`(Next.js App Router) → 对话区 + 骰子动画/日志 + 角色卡 + 战斗追踪器（shadcn/ui）。
+**步骤**：`ui/static/`(原生 HTML 单页应用，零构建快速迭代) + `ui/app/`(Next.js 14 App Router + Tailwind CSS + @3d-dice/dice-box 3D 骰子 + socket.io-client 实时同步) → 三栏 VTT 布局：对话区 + 骰子动画/日志 + 角色卡 + 战斗追踪器 + 场景面板。无 shadcn/ui，组件自研。
+**状态**：✅ 已完成（Next.js 14 + Tailwind + 3D 骰子，组件重构进行中）。
 **验收**：浏览器开跑，骰子/状态实时显示。
 
 ## 6. 配置（`config.py` 读 `.env`）

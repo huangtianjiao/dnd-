@@ -333,58 +333,6 @@ function connectWS() {
   });
   socket.on('error', (d) => addText('meta', '⚠ ' + d.message));
 }
-  switch (d.type) {
-    case 'join':
-      addText('meta', `${d.name} 加入了`);
-      updatePlayers(d.players);
-      break;
-    case 'leave':
-      addText('meta', `${d.name} 离开了`);
-      updatePlayers(d.players);
-      break;
-    case 'result': {
-      if (d.player !== myName) addText('other', `【${d.player}】 ${d.narration}`);
-      else addHtml('dm', d.narration);
-      const dd = d.dice || {};
-      if (dd.d20) {
-        const dmg = dd.damage ? ` 伤${dd.damage}` : '';
-        const hitStr = dd.hit ? '命中' : '未中';
-        const critStr = dd.crit ? ' 重击' : '';
-        addText('dice', `[${d.player}] d20=${dd.d20} ${hitStr}${critStr}${dmg}`);
-      }
-      showChoices(d.action_options);
-      refreshChar();
-      break;
-    }
-    case 'processing':
-      addText('meta', `⏳ ${d.player} 正在判定...`);
-      break;
-    case 'player_acting':
-      if (d.player !== myName) addText('meta', `⟳ ${d.player} 正在: ${d.action}`);
-      break;
-    case 'scene_update':
-      updateScene(d.scene);
-      break;
-    case 'combat_update':
-      updateCombat(d);
-      break;
-    case 'character_update': {
-      const hpMax = d.hp_max || 1;
-      const hp = d.hp || 0;
-      const pct = hpMax ? (hp / hpMax) * 100 : 0;
-      $('hpText').textContent = `HP ${hp}/${hpMax}`;
-      $('hpFill').style.width = pct + '%';
-      $('hpFill').style.background = hpColor(pct);
-      break;
-    }
-    case 'turn':
-      updateTurn(d.current);
-      break;
-    case 'error':
-      addText('meta', '⚠ ' + d.message);
-      break;
-  }
-}
 
 /* ========== 游戏流程 ========== */
 

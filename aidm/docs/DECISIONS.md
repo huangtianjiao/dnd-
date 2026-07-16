@@ -18,6 +18,53 @@
 
 ---
 
+## 2026-07-15 · 三层记忆系统技术选型与实现
+
+### D-023 · 不引入外部记忆框架，直接在现有 Qdrant 上实现 ✅
+
+- **背景**：调研了 Mem0(61k★)、Letta/MemGPT(24k★)、Generative Agents(18k★)、Zep/Graphiti(29k★) 等框架。核心需求是三层记忆（工作/中期/长期）+ 重要性评分 + 时间衰减 + rerank 检索。
+- **决策**：**不引入任何新框架**，直接在现有 Qdrant + bge-small + SQLite + `llm.chat()` 上实现 Generative Agents 的记忆流架构。
+- **理由**：
+  1. Mem0 自带 LLM/embedding 管线，跟 deepseek+bge 冲突；无重要性评分和时间衰减。
+  2. Letta 需要额外跑 Letta server；不原生支持 Qdrant；无重要性评分和时间衰减。
+  3. Generative Agents 算法可直接移植到现有 Qdrant，零新依赖。
+  4. 现有技术栈已就位：Qdrant client、bge 嵌入、SQLite Log 表、`llm.chat()` 全部可直接复用。
+- **后果**：~320 行新代码实现完整三层记忆系统；无新依赖；长期记忆存 Qdrant `dnd_memories` collection（与规则 RAG 的 `dnd_rules` 分离）。
+- **关联**：`src/aidm/brain/memory.py` · `docs/MEMORY_SYSTEM_RESEARCH.md`
+
+### D-024 · 长期记忆检索评分公式（参考 Generative Agents） ✅
+
+- **背景**：长期记忆需要从大量历史观察中检索出当前回合最相关的几条，注入 prompt。
+- **决策**：采用 Generative Agents 的三分量加权公式：`final_score = 0.5*recency + 3.0*relevance + 2.0*importance`
+  - `recency = 0.99^hours_since_creation`（每小时衰减1%）
+  - `relevance = Qdrant cosine similarity`
+  - `importance = stored_score(1-10) / 10`
+- **理由**：Generative Agents (Park et al., 2023) 是记忆流架构的权威论文，其 `gw=[0.5, 3, 2]` 权重在 Smallville 仿真中验证有效。
+- **后果**：relevance 权重最高(3.0) → 语义相关性是主要排序因素；recency 权重最低(0.5) → 旧但相关的记忆仍可被检索到。
+- **关联**：`src/aidm/brain/memory.py:retrieve_memories()` · `RECENCY_WEIGHT/RELEVANCE_WEIGHT/IMPORTANCE_WEIGHT`
+
+### D-025 · 滚动摘要压缩频率：每10回合一次 ✅
+
+- **背景**：`Campaign.rolling_summary` 之前每回合追加 `[轮] {input[:30]} → {narration[:40]}`，格式粗糙且从不读取。
+- **决策**：保留每回合追加（供工作记忆回溯），但**每10回合**额外用 LLM 压缩最近10回合成3-5句摘要，追加到 rolling_summary。narrate() 注入时截取前500字。
+- **理由**：每回合压缩成本太高（每回合多一次 LLM 调用）；每10回合一次平衡了成本和新鲜度。
+- **后果**：`COMPRESS_EVERY_N_TURNS = 10`，可调。
+- **关联**：`src/aidm/brain/memory.py:process_turn_memories()`
+
+### D-026 · 工作记忆直接查 Log 表，不用 LangGraph messages 状态 ✅
+
+- **背景**：有两种方案实现工作记忆：(A) 在 GameState 加 `messages` 字段用 LangGraph checkpointer 自动累积；(B) 直接查 SQLite Log 表。
+- **决策**：选方案 B — 直接查 Log 表 `get_recent_logs(campaign_id, n=6)`。
+- **理由**：
+  1. Log 表已经在写（`apply_node` 每回合 append_log），加个读函数即可。
+  2. 不需要改 GameState schema、不需要改图结构。
+  3. 历史存 SQLite，进程重启也不丢。
+  4. 一次 DB 查询成本可忽略（已按 campaign_id 索引）。
+- **后果**：方案 A 的 LangGraph messages 自动累积能力未利用，但当前单图架构下方案 B 更简单可靠。
+- **关联**：`src/aidm/stats/store.py:get_recent_logs()` · `src/aidm/brain/graph.py:narrate()`
+
+---
+
 ## 2026-07-14 · 首批核对发现（文档↔代码漂移）
 
 > 本批为建立记录体系时，对 `aidm/docs/` 与 `src/aidm/` 全量核对得出的发现。架构文档的订正（第 1 步外科式订正）尚未进行，订正完成后往 `CHANGELOG.md` 补条。
@@ -121,7 +168,7 @@
 
 ---
 
-## D-013 骰子动画库调研 + 集成 ✅已落地
+## D-027 骰子动画库调研 + 集成 ✅已落地
 
 - **背景**：玩家需要"自己点击掷骰"的参与感，要有视觉动画。硬性判定要求骰子值由后端(secrets RNG)算出，前端只做动画展示——不能前端自己随机。
 - **调研**（基于训练知识，WebSearch 不可用）：
@@ -279,6 +326,57 @@
 
 - **后果**：项目所有模块均已完整实现并通过功能验证，代码构建与 D&D 5E 规则书完全一致。无需补全任何缺失模块。
 - **关联**：`scripts/test_all_modules.py` · `CHANGELOG.md:2026-07-15` · `RULE_SPEC.md` · `ARCHITECTURE.md §0`
+
+---
+
+## D-021 前端 bug 修复 + 后端单元测试 + Next.js 融合 ✅已落地
+
+- **时间**：2026-07-15
+- **背景**：用户要求"完成前端 UI 设计"，并指出需要规则对齐和完整测试。审查发现三套前端并存（`ui/static/` 原生 HTML、`ui/app/` Next.js scaffold、`DND5e_UI_交互原型.html` 纯前端模拟），均未完成。`app.js` 有致命 bug 导致加载期崩溃。后端 39 个路由端点，前端只接了不到 1/4。测试极薄——整个 `tests/` 目录只有一个文件。
+- **执行内容**：
+  1. **app.js 致命 bug 修复**：删除 `ui/static/app.js:336-387` 孤儿 `switch(d.type)` 死代码块。该代码是早期"单一 `socket.on('message')` + switch 分发"重构为"多个 `socket.on('event')`"时漏删的旧代码。由于 `switch (d.type)` 在脚本顶层执行时会求值 `d.type`，而 `d` 不存在，会抛 `ReferenceError: d is not defined`，导致：脚本在第 336 行加载期崩溃；第 562-564 行的回车发送绑定位于崩溃点之后，永远不会执行——所以回车发不出去，只能靠点"🎲掷骰"按钮；336 行之前用 `function` 声明的函数（`showNewGame/send/connectWS/refreshChar/...`）因提升（hoisting）仍可被 HTML 的 `onclick` 调用，所以表面上点按钮还能跑，但这是隐性崩溃。修复后 app.js 从 564 行缩减到 512 行，页面加载无 Console 错误，回车可发送消息。
+  2. **后端单元测试套件（7 个文件，138 个测试全通过）**：
+     - `tests/test_dice_engine.py`（23 通过）— 验证 R-CHK-024 属性调整值 floor((score-10)/2)、R-CHK-015 熟练加值表(1-4级+2,...,17-20级+6)、R-CHK-025 骰子表达式解析(NdM+K)、R-CMB-029 重击骰翻倍(常数不加倍)、R-CHK-004/005 优势取高/劣势取低/同时抵消
+     - `tests/test_check_system.py`（20 通过）— 验证 R-CHK-009 范例DC表(5/10/15/20/25/30)、R-DM-002 豁免DC=8+属性+熟练、R-CHK-010 属性检定(d20+修正+熟练≥DC)、R-CHK-011 豁免(放弃→直接失败)、R-CMB-017 攻击命中(d20+bonus≥AC)、R-CMB-022 天然20必出+重击、R-CMB-023 天然1必失手
+     - `tests/test_damage_system.py`（29 通过）— 验证 R-QCK-002 伤害管线顺序(免疫→0→数值修正→抗性减半→易伤翻倍→下限0)、R-DMG-006 免疫→0、R-DMG-003 抗性减半(向下取整)/易伤翻倍、R-DMG-009 临时HP优先扣除、R-DMG-010 临时HP不叠加(取较大者)、R-DMG-020 治疗不超过上限、R-DMG-014 过量伤害致死、R-DMG-017 死亡豁免(≥10成功/天然1两次失败/天然20恢复1HP/3稳定/3死亡)
+     - `tests/test_conditions.py`（27 通过）— 验证 R-GLS-043 状态不叠加原则(力竭例外)、R-GLS-047 力竭等级累加(0..6,6级即死)、R-GLS-050 失能性状态(麻痹/震慑/昏迷/石化)、攻防优劣势(R-GLS-044目盲/R-GLS-051隐形/R-GLS-055倒地5尺内优势外劣势/R-GLS-052麻痹5尺内自动重击/R-GLS-058昏迷5尺内自动重击)
+     - `tests/test_combat_flow.py`（24 通过）— 验证 R-CMB-002 先攻检定(d20+敏捷调整值,降序排列)、R-GLS-009 突袭劣势(先攻检定劣势)、R-CMB-004 回合动作经济(1动作+0-1附赠+0-1反应)、R-CMB-005 免费物件交互(每回合1次)、R-CMB-030/031 移动消耗(回合移动上限=速度,困难地形每尺双倍消耗)、R-CMB-037 生物体型与占据空间(tiny 2.5尺/medium 5尺/gargantuan 20尺)、R-GLS-013 专注维持检定DC=max(10,floor(dmg/2))至高30
+     - `tests/test_api_endpoints.py`（8 通过）— 验证 GET /health 返回{"status":"ok"}、POST /campaign+POST /character 创建战役和角色、GET /character/{id} 返回完整角色卡(含属性调整值STR16→+3和熟练加值5级→+3)、GET /campaigns 返回战役列表、GET /combat/{campaign_id} 无战斗时返回active=False、GET /monster/{name} 查询怪物数据、GET /magic-items 列出魔法物品、GET /feats 列出专长
+     - `tests/test_e2e_flow.py`（7 通过）— 纯引擎端到端验证(完整战斗回合:先政→攻击→伤害→HP扣减→回合推进; 攻击到伤害管线:普通命中/天然20重击/临时HP优先扣; 死亡豁免完整周期:3次成功→稳定/天然1→两次失败/天然20→恢复1HP; 休息与恢复机制) + API端到端验证(建战役+角色→DM开场→探索行动→战斗开始→施法→休息→升级)
+  3. **Next.js 前端融合**：
+     - 安装 `socket.io-client@4.8.3` 依赖
+     - 将 `ui/static/app.js` 的 Socket.IO 多人逻辑、三栏布局、XSS 安全渲染迁入 `ui/app/page.tsx`（671 行）
+     - 同时保留 `@3d-dice/dice-box` 3D 骰子动画（BabylonJS 物理，客户端动态加载）
+     - 统一为单一 Next.js 前端，包含：主菜单（开始新游戏/继续游戏/加入房间）、三栏布局（左栏角色卡:HP条+AC/速度/熟练三宫格+六维属性网格+状态条件标签+死亡豁免追踪器; 中栏主舞台:场景盒+叙事区+行动选项+输入框; 右栏战斗面板:先攻序列+参战者HP）、Socket.IO 实时通信（join/leave/result/processing/player_acting/scene_update/combat_update/turn_advanced/round_end/monster_turn/combat_end/character_update/error）、3D 骰子动画、Toast 通知系统
+     - `npx next build` 构建成功（Route / 18.4 kB, First Load JS 106 kB）
+- **后果**：
+  - app.js 致命 bug 已修复，页面加载无 Console 错误，回车可发送消息
+  - 后端 7 个测试文件 138 个测试全通过，覆盖骰子引擎/检定系统/伤害结算/状态条件/战斗流程/API端点/端到端集成
+  - Next.js 前端融合完成，构建成功
+  - **待办**：后端 CORS 配置（开发模式必须）；Next.js 环境变量（ui/.env.local）；前端组件拆分（components/hooks/lib 目录）；手动骰子 roller（d4~d100 + 优势/劣势 + 修饰值）；休息按钮（短休/长休）；法术位格子 + 法术书弹窗；死亡豁免掷骰按钮；条件增删 UI（下拉添加/点击移除）；战术网格（10×6 网格地图）；动作面板（攻击/施法/闪避等按钮组）；快捷检定按钮（调查/感知/潜行等）；三模式切换（探索/战斗/社交）；Party bar（多角色切换）；规则参考 tab；Hit Dice 掷骰；物品栏/装备面板
+- **关联**：`ui/static/app.js:336-387` · `ui/app/page.tsx` · `tests/test_*.py` · `ui/package.json` · CHANGELOG.md:2026-07-15
+
+---
+
+## D-022 架构文档全面梳理（ARCHITECTURE.md v3→v4）✅已落地
+
+- **时间**：2026-07-15
+- **背景**：用户要求"梳理下项目架构，并在文档注明：如果有变动，及时在文档中进行标注"。经对照实际代码发现 ARCHITECTURE.md v3 存在多处遗漏：
+  - brain/ 下有 13 个子模块（graph/state/llm/world/adventure_builder/campaign_manager/char_create/exploration/levelup/loot/loot_distribution/plane_travel/rest/room/session0/social/stronghold），但原文档仅提"graph(编排)/llm(客户端)/state(GameState)"三件套。
+  - data/ 下有 8 个数据表模块（backgrounds/classes/equipment/feats/magic_items/planes/races/spells/strongholds），但原文档目录结构中未列出。
+  - engine/ 下有 11 个模块（dice/check/damage/conditions/combat/actions/concentration/core_loop/opportunity_attack/spellcasting），但原文档仅列核心几个。
+  - api/main.py 有 39 个路由端点 + api/ws.py WebSocket 同桌层，但原文档 §5.5 仅列 6 个核心端点、未提 WebSocket。
+  - tests/ 下有 7 个测试文件 138 个测试，但原文档完全未提及测试体系。
+  - 前端已有双架构（ui/static/ 静态 HTML + ui/app/ Next.js 14），但原文档 §5.5 仍写"Next.js + shadcn/ui 前端（P5，可选增强）"。
+- **现状/决策**：
+  - 将 ARCHITECTURE.md 从 v3 升级到 v4，全面补全实际代码的架构描述。
+  - 采用 `> **vN 变动标注**` 引用块格式，在每个发生变动的章节标注变动点和版本号，满足用户"如果有变动，及时在文档中进行标注"的要求。
+  - 具体订正内容见 CHANGELOG.md:2026-07-15 架构文档全面梳理条目。
+- **后果**：
+  - 架构文档与实际代码对齐，后续开发者可凭文档快速定位模块。
+  - 变动标注机制建立后，未来架构变动时只需在对应章节添加 `> **vN 变动标注**` 块并更新版本号即可。
+  - 文档维护负担略增（每个变动需标注），但可追溯性大幅提升。
+- **关联**：`aidm/docs/ARCHITECTURE.md` · `aidm/docs/CHANGELOG.md:2026-07-15` · DECISIONS D-001~D-021
 
 ---
 

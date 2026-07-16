@@ -154,6 +154,29 @@ def get_race(name: str) -> dict:
     return RACES[name]
 
 
+def has_trait(race_name: str, trait_en: str) -> bool:
+    """检查种族是否拥有指定特性（按英文特性名做子串匹配）。
+
+    数据来源中的特性字符串形如「矮人刚毅Dwarven Toughness：……」，
+    含中文名+英文名，故以英文片段做子串（不区分大小写）匹配。
+
+    出处: topics/玩家手册2024/角色起源/种族/<种族>.htm
+    """
+    if race_name not in RACES:
+        return False
+    needle = trait_en.lower()
+    return any(needle in str(trait).lower() for trait in RACES[race_name]["traits"])
+
+
+def dwarven_toughness(race_name: str) -> bool:
+    """矮人刚毅 Dwarven Toughness：生命值上限+1，此后每次升级时再加1。
+
+    规则: R-DMG-007（1级HP/升级HP）
+    出处: topics/玩家手册2024/角色起源/种族/矮人.htm
+    """
+    return has_trait(race_name, "Dwarven Toughness")
+
+
 def race_names() -> list[str]:
     """返回全部种族名（按定义顺序）。"""
     return list(RACES)
@@ -178,6 +201,13 @@ def _self_test() -> None:
     for name, data in RACES.items():
         assert 25 <= data["speed"] <= 40, f"{name} 速度异常"
         assert data["creature_type"] == "类人"
+    # 种族特性检测  出处: 矮人.htm(矮人刚毅)
+    assert dwarven_toughness("矮人") is True
+    assert has_trait("矮人", "Stonecunning") is True
+    assert dwarven_toughness("人类") is False
+    assert has_trait("人类", "Resourceful") is True
+    assert has_trait("精灵", "Dwarven Resilience") is False
+    assert dwarven_toughness("不存在的种族") is False
     print("[races] 自检通过 ✓")
 
 

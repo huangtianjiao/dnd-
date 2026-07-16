@@ -12,7 +12,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from . import dice, check
+from . import dice, check, combat
 from ..data.spells import Spell, get_spell, is_cantrip, get_casting_ability
 
 
@@ -133,6 +133,17 @@ def restore_slots_on_long_rest(caster: CasterState) -> None:
         caster.spell_slots[lvl] = mx
 
 
+def reset_turn_spell_count(caster: CasterState) -> None:
+    """回合开始时重置本回合已施展的"消耗法术位的法术"计数。
+
+    规则: R-SPL-007 每回合一法术位法术
+    出处: topics/玩家手册2024/法术/施法时间.htm
+          「每个回合中，你通过施展法术的方式至多只能消耗一个法术位。」
+    说明: 应在该施法者回合开始时调用；仪式施法与戏法不计入此计数。
+    """
+    caster.spells_cast_with_slot_this_turn = 0
+
+
 # ──────────────────────────────────────────────────────────────────────────
 # 成分校验
 # ──────────────────────────────────────────────────────────────────────────
@@ -141,7 +152,8 @@ def can_cast_by_components(spell: Spell, caster: CasterState,
                            *, muted: bool = False, silenced: bool = False,
                            free_hands: int = 2,
                            has_material_pouch: bool = False,
-                           has_focus: bool = False) -> bool:
+                           has_focus: bool = False,
+                           has_specific_material: bool = False) -> bool:
     """校验施法者是否满足法术全部成分需求。
 
     规则: R-SPL-010 法术成分类型 / R-SPL-011 言语成分限制 /
@@ -153,6 +165,8 @@ def can_cast_by_components(spell: Spell, caster: CasterState,
         free_hands: 空手数量 → S/M 各需一只空手
         has_material_pouch: 拥有材料包
         has_focus: 拥有法器（且具有使用法器的特性）
+        has_specific_material: 实际持有法术所指定的具体材料
+            （对有指定价格或被消耗的材料是必需的——材料包/法器不可替代）
     """
     comps = spell.components
 
@@ -166,11 +180,11 @@ def can_cast_by_components(spell: Spell, caster: CasterState,
 
     # R-SPL-013 材料成分限制与替代
     if "M" in comps:
-        # 有指定价格或被消耗的材料须实备
+        # 有指定价格或被消耗的材料须实备，材料包/法器不可替代
         needs_specific = spell.material_cost_gp > 0 or spell.material_consumed
         if needs_specific:
-            # 必须实际持有该具体材料（此处简化为检查材料包）
-            if not has_material_pouch:
+            # 必须实际持有该具体材料（有价/消耗材料不可由材料包或法器替代）
+            if not has_specific_material:
                 return False
         else:
             # 可用材料包或法器替代
@@ -209,6 +223,7 @@ def resolve_upcast(spell: Spell, slot_level: int, caster_level: int) -> dict:
         "heal_dice": spell.heal_dice,
         "num_attacks": 1,
         "num_darts": 0,
+        "num_targets": 1,
     }
 
     uc = spell.upcast or {}
@@ -229,6 +244,12 @@ def resolve_upcast(spell: Spell, slot_level: int, caster_level: int) -> dict:
     # 灼热射线：每升一环多一道射线
     if uc.get("base_rays") is not None:
         result["num_attacks"] = uc["base_rays"] + levels_above * uc.get("rays_per_level", 1)
+
+    # 升环多目标（隐形术等）：每升一环多 N 个目标
+    # 规则: R-SPL-004 升环施法（targets_per_level 字段）
+    if uc.get("targets_per_level"):
+        base_targets = uc.get("base_targets", 1)
+        result["num_targets"] = base_targets + levels_above * uc["targets_per_level"]
 
     # 火球术/闪电束：每升一环多 1d6
     if uc.get("per_level_above_base") == "+1d6":
@@ -267,6 +288,9 @@ def cast_spell(
     *,
     concentration_mgr: Optional[Any] = None,
     component_kwargs: Optional[dict] = None,
+    ritual: bool = False,
+    combatant: Optional[Any] = None,
+    has_reaction_available: bool = True,
 ) -> dict:
     """施展一道法术，返回完整结果字典。
 
@@ -280,12 +304,19 @@ def cast_spell(
         targets: 目标列表 [{"ac":15,"save_bonus":3,"save_prof":True,...}, ...]
         concentration_mgr: ConcentrationManager 实例（用于集中管理）
         component_kwargs: 成分校验参数（muted/free_hands 等）
+        ritual: 是否作为仪式施展（R-SPL-005）。当 ritual=True 且
+            spell.ritual=True 时不消耗法术位，但施法时间+10分钟。
+        combatant: 战斗参战者（combat.Combatant），用于反应施法时
+            通过 combat.use_reaction 真正扣减反应（R-SPL-006）。
+        has_reaction_available: 反应是否可用（无 combatant 时校验用，
+            默认 True）。反应法术在反应不可用时被拒绝。
 
     返回 dict:
         success: bool — 是否成功施展并产生效应
         spell: str — 法术名
         slot_level: int — 消耗的法术位环阶（0=戏法）
         slot_consumed: bool — 是否消耗了法术位
+        ritual: bool — 是否以仪式方式施展
         effect_type: str — 效应类型
         save_dc: int — 法术豁免DC（如有）
         attack_bonus: int — 法术攻击加值（如有）
@@ -302,26 +333,53 @@ def cast_spell(
     # —— 戏法处理 ——
     if is_cantrip(spell):
         slot_level = 0
-    else:
-        # 非戏法必须指定法术位环阶
-        if slot_level is None:
-            errors.append("非戏法必须指定 slot_level")
-            return _fail(spell, slot_level, errors)
-        if slot_level < spell.level:
-            errors.append(f"法术位环阶 {slot_level} 低于法术环阶 {spell.level}")
-            return _fail(spell, slot_level, errors)
+
+    # —— 仪式施法 (R-SPL-005) ——
+    # 可仪式施展的法术：施法时间+10分钟、不消耗法术位（亦不计入每回合计数）
+    ritual_cast = False
+    if ritual:
+        if not spell.ritual:
+            errors.append("该法术不具备仪式标签，不可仪式施法")
+            return _fail(spell, slot_level, errors, ritual=False)
+        ritual_cast = True
+
+    if not ritual_cast:
+        # 非仪式法术：非戏法必须指定法术位环阶
+        if not is_cantrip(spell):
+            if slot_level is None:
+                errors.append("非戏法必须指定 slot_level")
+                return _fail(spell, slot_level, errors)
+            if slot_level < spell.level:
+                errors.append(f"法术位环阶 {slot_level} 低于法术环阶 {spell.level}")
+                return _fail(spell, slot_level, errors)
 
     # —— 成分校验 (R-SPL-010~013) ——
     if not can_cast_by_components(spell, caster, **comp_kw):
         errors.append("成分不满足（V/S/M）")
-        return _fail(spell, slot_level, errors)
+        return _fail(spell, slot_level, errors, ritual=ritual_cast)
 
-    # —— 法术位消耗 (R-SPL-002) ——
+    # —— 反应施法 (R-SPL-006) ——
+    # 施法时间为反应的法术须消耗一个反应
+    if spell.casting_time_type == "REACTION":
+        if combatant is not None:
+            # 真正扣减反应（combat.use_reaction）
+            if not combat.use_reaction(combatant):
+                errors.append("反应已消耗，不可施展反应法术")
+                return _fail(spell, slot_level, errors, ritual=ritual_cast)
+        elif not has_reaction_available:
+            errors.append("反应不可用，不可施展反应法术")
+            return _fail(spell, slot_level, errors, ritual=ritual_cast)
+
+    # —— 法术位消耗 (R-SPL-002) + 每回合一法术位法术 (R-SPL-007) ——
     slot_consumed = False
-    if not is_cantrip(spell):
+    if not ritual_cast and not is_cantrip(spell):
+        # R-SPL-007 强制检查：本回合已施展过消耗法术位的法术则拒绝
+        if caster.spells_cast_with_slot_this_turn > 0:
+            errors.append("本回合已施展过消耗法术位的法术（每回合一法术位法术）")
+            return _fail(spell, slot_level, errors, ritual=ritual_cast)
         if not has_spell_slot(caster, slot_level):
             errors.append(f"无可用 {slot_level} 环法术位")
-            return _fail(spell, slot_level, errors)
+            return _fail(spell, slot_level, errors, ritual=ritual_cast)
         consume_spell_slot(caster, slot_level)
         slot_consumed = True
         # R-SPL-007 每回合一法术位法术计数
@@ -465,6 +523,7 @@ def cast_spell(
         "level": spell.level,
         "slot_level": slot_level,
         "slot_consumed": slot_consumed,
+        "ritual": ritual_cast,
         "effect_type": spell.effect_type,
         "save_dc": save_dc,
         "attack_bonus": attack_bonus,
@@ -475,7 +534,8 @@ def cast_spell(
     }
 
 
-def _fail(spell: Spell, slot_level: Optional[int], errors: list[str]) -> dict:
+def _fail(spell: Spell, slot_level: Optional[int], errors: list[str],
+          *, ritual: bool = False) -> dict:
     """构造失败结果。"""
     return {
         "success": False,
@@ -483,6 +543,7 @@ def _fail(spell: Spell, slot_level: Optional[int], errors: list[str]) -> dict:
         "level": spell.level,
         "slot_level": slot_level or 0,
         "slot_consumed": False,
+        "ritual": ritual,
         "effect_type": spell.effect_type,
         "save_dc": 0,
         "attack_bonus": 0,
@@ -490,6 +551,189 @@ def _fail(spell: Spell, slot_level: Optional[int], errors: list[str]) -> dict:
         "results": [],
         "concentration_set": False,
         "errors": errors,
+    }
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 法器职业限制
+# ──────────────────────────────────────────────────────────────────────────
+
+# 法器类型 → 可使用该法器的职业集合
+# 规则: R-SPL-013 法器职业限制（奥术/德鲁伊/圣徽）
+# 出处: topics/玩家手册2024/装备/冒险装备.htm
+#   - 奥术法器 Arcane Focus: 术士、魔契师、法师
+#   - 德鲁伊法器 Druidic Focus: 德鲁伊、游侠
+#   - 圣徽 Holy Symbol: 牧师、圣武士
+_FOCUS_CLASS_ACCESS: dict[str, frozenset[str]] = {
+    "奥术法器": frozenset({"术士", "魔契师", "法师"}),
+    "德鲁伊法器": frozenset({"德鲁伊", "游侠"}),
+    "圣徽": frozenset({"牧师", "圣武士"}),
+}
+
+
+def can_use_focus(char_class: str, focus_type: str) -> bool:
+    """校验职业能否使用该类法器。
+
+    规则: R-SPL-013 法器职业限制（奥术/德鲁伊/圣徽）
+    出处: topics/玩家手册2024/装备/冒险装备.htm
+          - 奥术法器: 术士、魔契师、法师
+          - 德鲁伊法器: 德鲁伊、游侠
+          - 圣徽: 牧师、圣武士
+
+    参数:
+        char_class: 职业名（法师/牧师/德鲁伊/术士/魔契师/圣武士/游侠/吟游诗人）
+        focus_type: 法器类型（"奥术法器"/"德鲁伊法器"/"圣徽"）
+    返回: 该职业是否可使用该类法器作为材料成分替代。
+    """
+    classes = _FOCUS_CLASS_ACCESS.get(focus_type)
+    if classes is None:
+        return False
+    return char_class in classes
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 长时间施展（施法时间≥1分钟）
+# ──────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class LongCastProgress:
+    """长时间施法进度（施法时间≥1分钟）。
+
+    规则: R-SPL-006 长时间施展
+    出处: topics/玩家手册2024/法术/施法时间.htm
+          「施法时间为1分钟或更久时，必须在施法期间每个自己的回合
+            执行魔法动作并保持专注；失去专注则法术失败但不耗法术位。」
+    """
+    caster_id: str
+    spell_name: str
+    slot_level: int                       # 完成时消耗的法术位环阶
+    total_turns: int                      # 所需总回合数（按施法时间换算）
+    turns_done: int = 0                   # 已完成的回合数
+    concentration_lost: bool = False      # 是否因失去专注而失败
+
+    @property
+    def completed(self) -> bool:
+        return self.turns_done >= self.total_turns
+
+    @property
+    def failed(self) -> bool:
+        return self.concentration_lost
+
+
+def cast_long_spell(
+    caster: CasterState,
+    spell_name: str,
+    slot_level: Optional[int] = None,
+    *,
+    casting_turns: int = 10,
+    concentration_mgr: Optional[Any] = None,
+    component_kwargs: Optional[dict] = None,
+) -> dict:
+    """开始一道长时间施法（施法时间≥1分钟）。
+
+    规则: R-SPL-006 长时间施展
+    出处: topics/玩家手册2024/法术/施法时间.htm
+          施法时间为1分钟或更久时，必须在施法期间每个自己的回合执行
+          魔法动作并保持专注；失去专注则法术失败，但不消耗法术位。
+
+    参数:
+        caster: 施法者状态
+        spell_name: 法术中文名
+        slot_level: 完成时消耗的法术位环阶（默认取法术本身环阶）
+        casting_turns: 所需回合数（1分钟≈10轮，由调用方按施法时间换算）
+        concentration_mgr: 集中管理器（长施法需保持专注）
+        component_kwargs: 成分校验参数
+
+    返回 dict:
+        success: bool — 是否成功开始长施法
+        spell: str — 法术名
+        progress: LongCastProgress — 进度状态（每回合由 advance_long_spell 推进）
+        errors: list
+    说明: 本函数仅开始施法并设置专注；法术位在完成时（advance_long_spell）
+          才消耗。每回合的魔法动作消耗应由调用方在动作经济中扣减。
+    """
+    spell = get_spell(spell_name)
+    comp_kw = component_kwargs or {}
+    errors: list[str] = []
+
+    # 成分校验 (R-SPL-010~013)
+    if not can_cast_by_components(spell, caster, **comp_kw):
+        errors.append("成分不满足（V/S/M）")
+        return {"success": False, "spell": spell.name, "progress": None, "errors": errors}
+
+    eff_slot = slot_level if slot_level is not None else spell.level
+
+    progress = LongCastProgress(
+        caster_id=caster.caster_id,
+        spell_name=spell.name,
+        slot_level=eff_slot,
+        total_turns=casting_turns,
+    )
+
+    # 长施法需保持专注 (R-SPL-006)
+    if concentration_mgr is not None:
+        concentration_mgr.set_concentration(caster.caster_id, f"{spell.name}_{caster.caster_id}")
+    else:
+        caster.concentrating_on = f"{spell.name}_{caster.caster_id}"
+
+    return {"success": True, "spell": spell.name, "progress": progress, "errors": []}
+
+
+def advance_long_spell(
+    caster: CasterState,
+    progress: LongCastProgress,
+    *,
+    concentration_broken: bool = False,
+    concentration_mgr: Optional[Any] = None,
+    targets: Optional[list[dict]] = None,
+    component_kwargs: Optional[dict] = None,
+) -> dict:
+    """推进长时间施法一个回合。
+
+    规则: R-SPL-006 长时间施展
+          每回合需执行魔法动作（由调用方在动作经济中扣减）+ 保持专注。
+          专注失败 → 法术失败，不消耗法术位。
+          完成全部回合 → 消耗法术位并结算法术效应（转入 cast_spell）。
+
+    参数:
+        caster: 施法者状态
+        progress: 长施法进度（cast_long_spell 返回）
+        concentration_broken: 本回合是否失去专注
+        concentration_mgr: 集中管理器
+        targets: 完成时结算法术的目标列表
+        component_kwargs: 完成时结算法术的成分校验参数
+
+    返回 dict:
+        completed: bool — 是否已完成全部回合
+        failed: bool — 是否因专注失败而中断
+        slot_consumed: bool — 是否在本回合消耗了法术位（完成时）
+        result: dict — 完成时 cast_spell 的结果（未完成为 None）
+    """
+    # 专注失败 → 法术失败，不耗法术位 (R-SPL-006)
+    if concentration_broken:
+        progress.concentration_lost = True
+        if concentration_mgr is not None:
+            concentration_mgr.break_concentration(caster.caster_id)
+        else:
+            caster.concentrating_on = None
+        return {"completed": False, "failed": True, "slot_consumed": False, "result": None}
+
+    progress.turns_done += 1
+    if progress.turns_done < progress.total_turns:
+        return {"completed": False, "failed": False, "slot_consumed": False, "result": None}
+
+    # 完成：消耗法术位并结算法术效应
+    r = cast_spell(
+        caster, progress.spell_name, progress.slot_level,
+        targets=targets,
+        concentration_mgr=concentration_mgr,
+        component_kwargs=component_kwargs,
+    )
+    return {
+        "completed": True,
+        "failed": False,
+        "slot_consumed": r.get("slot_consumed", False),
+        "result": r,
     }
 
 
@@ -534,6 +778,7 @@ def _self_test() -> None:
         assert r["results"][0]["damage"]["type"] == "fire"
 
     # —— 魔法飞弹（1环，自动命中，3×1d4+1 force）——
+    reset_turn_spell_count(wiz)              # 每回合仅一法术位法术：新回合
     r = cast_spell(wiz, "魔法飞弹", slot_level=1,
                    targets=[{"ac": 20}],  # 高AC但自动命中
                    component_kwargs={"free_hands": 2})
@@ -551,6 +796,7 @@ def _self_test() -> None:
     # 先给法师3环法术位
     wiz.spell_slots[3] = 1
     wiz.max_spell_slots[3] = 1
+    reset_turn_spell_count(wiz)              # 新回合
     r = cast_spell(wiz, "火球术", slot_level=3,
                    targets=[{"ac": 15, "save_bonus": 2, "save_prof": True, "prof_bonus": 2}],
                    component_kwargs={"free_hands": 2, "has_material_pouch": True})
@@ -588,6 +834,7 @@ def _self_test() -> None:
     assert hw_res["heal"]["added_mod"] == 3
 
     # —— 护盾术（1环，反应，+5 AC）——
+    reset_turn_spell_count(wiz)              # 新回合
     r = cast_spell(wiz, "护盾术", slot_level=1,
                    targets=[{}],
                    component_kwargs={"free_hands": 2})
@@ -596,6 +843,7 @@ def _self_test() -> None:
     assert r["results"][0]["ac_bonus"] == 5
 
     # —— 隐形术（2环，专注）—— 需要集中管理
+    reset_turn_spell_count(wiz)              # 新回合
     mgr = ConcentrationManager()
     r = cast_spell(wiz, "隐形术", slot_level=2,
                    targets=[{}],
@@ -634,11 +882,13 @@ def _self_test() -> None:
         max_spell_slots={1: 4, 2: 3, 3: 3, 4: 1},
     )
     # 3环位
+    reset_turn_spell_count(wiz4)             # 新回合
     r3 = cast_spell(wiz4, "火球术", slot_level=3,
                     targets=[{"save_bonus": 0, "save_prof": False, "prof_bonus": 0, "ac": 10}],
                     component_kwargs={"free_hands": 2, "has_material_pouch": True})
     assert r3["effective_level"] == 3
     # 4环位升环
+    reset_turn_spell_count(wiz4)             # 新回合
     r4 = cast_spell(wiz4, "火球术", slot_level=4,
                     targets=[{"save_bonus": 0, "save_prof": False, "prof_bonus": 0, "ac": 10}],
                     component_kwargs={"free_hands": 2, "has_material_pouch": True})

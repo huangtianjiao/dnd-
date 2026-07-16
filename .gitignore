@@ -5,6 +5,7 @@
 
 # === Local agent/tool state ===
 .workbuddy/
+.zcode/
 
 # === Dependencies ===
 node_modules/

@@ -1,7 +1,7 @@
 """配置 — 从 .env 读取 LLM/向量库/嵌入设置。
 
 .env 位于 D:\\game\\dnd\\.env（含 key/doc1/doc2）。LLM 用 senseaudio 网关的
-deepseek-v4-flash；嵌入本地 bge-m3。
+deepseek-v4-flash；嵌入本地 bge-small-zh-v1.5（512维）。
 """
 
 from __future__ import annotations
@@ -39,6 +39,15 @@ class Settings(BaseSettings):
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "dnd_rules"            # 数据语料(data.js 怪物/物品/法术)
     qdrant_rule_collection: str = "dnd_rule_text"   # 规则文本语料(rules_text 判定规则)
+
+    # —— LLM 上下文窗口（token 数）——
+    # 用于动态决定何时压缩 rolling_summary。
+    # deepseek-v4-flash 支持 128k；如换更大窗口模型可调高。
+    llm_context_window: int = 128000
+
+    # rolling_summary 占上下文窗口的比例阈值。
+    # 超过此比例时触发 LLM 压缩。0.25 = 占25%时压缩。
+    summary_compress_ratio: float = 0.25
 
     # —— 规则数据 ——
     rules_datajs_path: str = r"D:\game\dnd\5echm_web\data.js"

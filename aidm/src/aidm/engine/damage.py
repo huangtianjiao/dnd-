@@ -14,6 +14,37 @@ from . import dice
 
 
 # ──────────────────────────────────────────────────────────────────────────
+# 伤害类型（统一中文，与规则书原文一致）
+# ──────────────────────────────────────────────────────────────────────────
+
+# 规则: 术语汇编/伤害与治疗.txt + DM速查/伤害类型.txt — 共 13 种伤害类型
+# 出处: topics/玩家手册2024/进行游戏/伤害类型.htm
+DAMAGE_TYPES = frozenset({
+    "强酸", "钝击", "寒冷", "火焰", "力场", "闪电",
+    "暗蚀", "穿刺", "毒素", "心灵", "光耀", "挥砍", "雷鸣",
+})
+
+# 英文→中文映射（兼容旧代码/外部输入用英文的情况）
+_EN_TO_ZH = {
+    "acid": "强酸", "bludgeoning": "钝击", "cold": "寒冷", "fire": "火焰",
+    "force": "力场", "lightning": "闪电", "necrotic": "暗蚀",
+    "piercing": "穿刺", "poison": "毒素", "psychic": "心灵",
+    "radiant": "光耀", "slashing": "挥砍", "thunder": "雷鸣",
+}
+
+
+def normalize_damage_type(dt: str) -> str:
+    """将伤害类型标准化为中文。英文输入自动转中文，已中文则原样返回。
+
+    规则: 术语汇编/伤害与治疗.txt（13 种伤害类型）
+    """
+    if not dt:
+        return ""
+    dt = dt.strip().lower()
+    return _EN_TO_ZH.get(dt, dt)
+
+
+# ──────────────────────────────────────────────────────────────────────────
 # 伤害管线
 # ──────────────────────────────────────────────────────────────────────────
 
@@ -56,7 +87,13 @@ def apply_damage_pipeline(
     出处: topics/玩家手册2024/进行游戏/抗性和易伤.htm ; topics/速查/DM速查/抗性与易伤.htm
     官方算例: 28火焰, -5灵光, 全伤害抗性, 火焰易伤 → (28-5)=23 → floor(23/2)=11 → 11×2=22
     说明: resistances/vulnerabilities/immunities 中 "*" 代表"全伤害"（通配）。
+          伤害类型自动标准化为中文（见 normalize_damage_type）。
     """
+    damage_type = normalize_damage_type(damage_type)
+    resistances = {normalize_damage_type(r) for r in resistances}
+    vulnerabilities = {normalize_damage_type(v) for v in vulnerabilities}
+    immunities = {normalize_damage_type(i) for i in immunities}
+
     # R-DMG-006 / R-QCK-002 step1: 免疫 → 0
     if damage_type in immunities or "*" in immunities:
         return DamageResult(raw=raw, final=0, damage_type=damage_type, immune=True)
@@ -255,23 +292,28 @@ def reset_death_counts_on_recovery(tracker: DeathTracker) -> None:
 # ──────────────────────────────────────────────────────────────────────────
 
 def _self_test() -> None:
+    # 伤害类型标准化
+    assert normalize_damage_type("fire") == "火焰"
+    assert normalize_damage_type("piercing") == "穿刺"
+    assert normalize_damage_type("火焰") == "火焰"
+    assert len(DAMAGE_TYPES) == 13
     # R-QCK-002 官方算例: 28火焰 -5灵光 全抗 火易伤 → 22
     r = apply_damage_pipeline(28, "fire", [-5], resistances={"*"}, vulnerabilities={"fire"})
-    assert r.final == 22, r
+    assert r.final == 22, r  # 英文输入也能正确匹配抗性/易伤
     # 免疫 → 0
-    assert apply_damage_pipeline(28, "fire", immunities={"fire"}).final == 0
+    assert apply_damage_pipeline(28, "火焰", immunities={"火焰"}).final == 0
     # 抗性减半向下取整
-    assert apply_damage_pipeline(10, "fire", resistances={"fire"}).final == 5
-    assert apply_damage_pipeline(11, "fire", resistances={"fire"}).final == 5  # floor(5.5)=5
+    assert apply_damage_pipeline(10, "火焰", resistances={"火焰"}).final == 5
+    assert apply_damage_pipeline(11, "火焰", resistances={"火焰"}).final == 5  # floor(5.5)=5
     # 易伤翻倍
-    assert apply_damage_pipeline(10, "fire", vulnerabilities={"fire"}).final == 20
+    assert apply_damage_pipeline(10, "火焰", vulnerabilities={"火焰"}).final == 20
     # 下限0
-    assert apply_damage_pipeline(3, "fire", [-10]).final == 0
+    assert apply_damage_pipeline(3, "火焰", [-10]).final == 0
     # roll_damage 范围（匕首1d4+力3）
-    rd = roll_damage(DamageRequest("1d4", "piercing", ability_mod=3, add_mod=True))
+    rd = roll_damage(DamageRequest("1d4", "穿刺", ability_mod=3, add_mod=True))
     assert 4 <= rd.final <= 7 and len(rd.dice_rolls) == 1
     # 重击骰翻倍（R-CMB-029）
-    rc = roll_damage(DamageRequest("2d6", "slashing", crit=True))
+    rc = roll_damage(DamageRequest("2d6", "挥砍", crit=True))
     assert len(rc.dice_rolls) == 4
     # 临时HP优先扣（R-DMG-009）
     assert apply_damage_to_hp(10, 5, 20, 7) == (8, 0)   # 失5临时再失2HP → 8,0

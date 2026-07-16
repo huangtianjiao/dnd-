@@ -1,0 +1,26 @@
+# AIDM Python 依赖（锁定版本，对应 conda env langchain_312 / Python 3.12）
+# 安装：pip install -r requirements.txt
+
+# ─── LLM 与编排 ──────────────────────────────────────────────
+langchain==1.3.13
+langgraph==1.2.9
+langchain-openai==1.3.5
+openai==1.107.2
+
+# ─── 向量库与嵌入 ─────────────────────────────────────────────
+qdrant-client==1.18.0
+sentence-transformers==5.1.0
+
+# ─── 数据持久化 ──────────────────────────────────────────────
+sqlmodel==0.0.39
+pydantic==2.11.8
+pydantic-settings>=2.5.0
+
+# ─── API 与实时通信 ───────────────────────────────────────────
+fastapi==0.118.3
+uvicorn[standard]>=0.30.0
+python-socketio>=5.11.0
+
+# ─── 规则数据提取脚本 ─────────────────────────────────────────
+beautifulsoup4>=4.12.0
+lxml>=5.0.0

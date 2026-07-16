@@ -262,6 +262,22 @@ def append_log(campaign_id: int, *, player_input: str = "", dm_output: str = "",
         return log
 
 
+def get_recent_logs(campaign_id: int, n: int = 6,
+                    db_path: str = DEFAULT_DB) -> list[M.Log]:
+    """获取最近 n 条跑团日志（工作记忆数据源）。
+
+    按时间正序返回（最旧的在前），用于注入 narrate prompt。
+    规则: 三层记忆系统 — 工作记忆层（最近 N 回合对话原文）
+    """
+    with session(db_path) as s:
+        stmt = (select(M.Log)
+                .where(M.Log.campaign_id == campaign_id)
+                .order_by(M.Log.id.desc())
+                .limit(n))
+        logs = list(s.exec(stmt))
+        return list(reversed(logs))  # 时间正序
+
+
 # ──────────────────────────────────────────────────────────────────────────
 # 自检
 # ──────────────────────────────────────────────────────────────────────────

@@ -13,6 +13,7 @@ from __future__ import annotations
 import os
 import socketio
 from fastapi import FastAPI, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -22,6 +23,19 @@ from ..stats import store, models
 from ..brain import graph
 
 app = FastAPI(title="AI DM", version="0.3.0")
+
+# CORS — 允许 Next.js dev server (:3000) 跨域访问后端 (:9000)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        # 生产模式同源不需要 CORS，但保留以防反向代理场景
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Socket.IO 实时同桌（升级版，基于 python-socketio）
 from .ws import sio, manager, CampaignRoom
@@ -482,6 +496,27 @@ def summary(campaign_id: int):
     return {"summary": store.get_summary(campaign_id)}
 
 
+class SessionEndIn(BaseModel):
+    campaign_id: int
+
+
+@app.post("/session/end")
+def session_end(req: SessionEndIn):
+    """Session 结束时生成前情提要（浓缩摘要）。
+
+    流程:
+      1. generate_recap — 汇总 rolling_summary + 高重要性记忆 → LLM 生成前情提要
+      2. 前情提存储到 Campaign.rolling_summary 的 [前情提要]...[/前情提要] 块
+      3. 下次 narrate() 时自动注入
+
+    返回:
+      {"recap": "前情提文本本"}
+    """
+    from ..brain.memory import generate_recap
+    recap = generate_recap(req.campaign_id)
+    return {"recap": recap}
+
+
 # ── 专长系统（PHB 第五章）──────────────────────────────────────────────────
 
 class FeatIn(BaseModel):
@@ -845,7 +880,9 @@ class LootDistributeIn(BaseModel):
     dm_assignments: Optional[dict[str, str]] = None # {item_id: player}
 
 
-@app.post("/loot/distribute")
+# 注: 此为 loot_distribution.py 体系(mode=NEED_FIRST/...)，与上方 L285 的 loot.py 体系(method=need_priority/...)不同。
+# 原路径 /loot/distribute 与 L285 重复导致被遮蔽，改为 /v2 避免冲突(见 docs/ISSUES.md)。
+@app.post("/loot/distribute/v2")
 def distribute_loot(req: LootDistributeIn):
     """执行完整的战利品分配流程。
 
@@ -1132,4 +1169,4 @@ combined_app = socketio.ASGIApp(sio, app)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(combined_app, host="0.0.0.0", port=8080)
+    uvicorn.run(combined_app, host="0.0.0.0", port=9000)

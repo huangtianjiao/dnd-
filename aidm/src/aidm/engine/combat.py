@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
-from . import dice, check
+from . import dice, check, conditions, concentration
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -53,10 +53,16 @@ class Combatant:
     # ── 专注（R-SPL-019 / R-GLS-013）──
     concentrating_on: Optional[str] = None
 
+    # ── 状态条件（R-GLS-043~058）──
+    conditions: conditions.ConditionState = field(default_factory=conditions.ConditionState)
+
     # ── 动作增益状态（持续至下回合开始或条件失效）──
     disengage_active: bool = False     # R-CMB-007 撤离：本回合移动不引发借机攻击
     dodge_active: bool = False         # R-CMB-008 回避：对你攻击具有劣势
     hidden: bool = False               # R-CMB-009 躲藏成功 → 隐形状态
+    ready_trigger: Optional[str] = None  # R-CMB-014 准备动作触发条件
+    ready_action_name: Optional[str] = None  # 准备的动作名
+    help_advantage_target: Optional[str] = None  # 协助：下次对该目标攻击有优势
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -82,10 +88,12 @@ def roll_initiative(combatants: list[Combatant]) -> list[Combatant]:
     """为参战者掷先攻：d20 + 敏捷调整值，突袭者劣势，降序排列。
 
     规则: R-CMB-002 先攻检定 + R-GLS-009 突袭劣势
+          术语汇编/状态.txt: 隐形→先攻优势；失能→先攻劣势
     出处: topics/玩家手册2024/进行游戏/战斗流程.htm
     说明:
       - 相同怪物组（group_id 相同且非玩家）只掷一次，全组共用先攻。
       - 平局处理见 resolve_initiative_ties。
+      - 隐形状态投先攻有优势；失能状态投先攻有劣势（与突袭劣势叠加取更差）。
     """
     rolled_groups: set[str] = set()
     group_initiative: dict[str, int] = {}   # group_id -> 该组的先政值
@@ -95,12 +103,17 @@ def roll_initiative(combatants: list[Combatant]) -> list[Combatant]:
                 and c.group_id in rolled_groups):
             c.initiative = group_initiative[c.group_id]
             continue
-        r = dice.roll_d20(advantage=False, disadvantage=c.surprised)  # R-GLS-009
+        # 隐形 → 优势；失能 + 突袭 → 劣势（多源劣势仍只掷两骰取低）
+        adv = c.conditions.has("隐形")
+        dis = c.surprised or c.conditions.is_incapacitated()
+        r = dice.roll_d20(advantage=adv, disadvantage=dis)  # R-GLS-009 + 状态
         c.initiative = r.used + c.dex_mod
         if c.group_id is not None and not c.is_player:
             rolled_groups.add(c.group_id)
             group_initiative[c.group_id] = c.initiative
-    order = sorted(combatants, key=lambda c: c.initiative, reverse=True)   # 降序
+    # 平局时：玩家优先于敌人，同级按敏捷调整值高者优先（DM可覆写）
+    order = sorted(combatants,
+                   key=lambda c: (-c.initiative, 0 if c.is_player else 1, -c.dex_mod))
     return order
 
 
@@ -109,11 +122,11 @@ def resolve_initiative_ties(tied_combatants: list[Combatant]) -> list[Combatant]
 
     规则: R-CMB-003 先政平局处理
     出处: topics/玩家手册2024/进行游戏/战斗流程.htm
-    说明: 本函数保持传入顺序不变（由调用方/DM预先排好），仅作为语义锚点。
-          若需自动稳定排序，可附加 cid 作为次序键。
+    说明: 默认排序规则——玩家优先于敌人，同级按敏捷调整值高者优先。
+          DM 可在调用前自行排好序，此函数保持传入顺序不变。
     """
-    # 保持稳定：调用方负责 DM 决策顺序；这里仅返回原序列
-    return list(tied_combatants)
+    return sorted(tied_combatants,
+                  key=lambda c: (0 if c.is_player else 1, -c.dex_mod))
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -157,7 +170,8 @@ def _reset_turn_economy(c: Combatant) -> None:
     c.bonus_action_used = False
     c.reaction_used = False
     c.free_interaction_used = 0
-    c.speed_remaining = c.speed                       # R-CMB-030
+    # R-CMB-030 回合移动上限=速度，但需先扣除状态影响（力竭-等级×5尺 / 速度归0状态）
+    c.speed_remaining = conditions.speed_after_conditions(c.speed, c.conditions)
     # 持续到下回合开始的增益在此清除
     c.disengage_active = False                        # R-CMB-007 仅本回合
     c.dodge_active = False                            # R-CMB-008 至下回合开始
@@ -188,17 +202,24 @@ def advance_turn(combat: Combat) -> Optional[Combatant]:
 
 def can_take_action(c: Combatant) -> bool:
     """是否还能执行动作。规则: R-CMB-011 一次一个动作；R-GLS-050 失能则不能"""
-    return not c.action_used
+    return not c.action_used and not c.conditions.is_incapacitated()
 
 
 def can_take_bonus_action(c: Combatant) -> bool:
-    """每回合至多1附赠动作（须有特性启用）。规则: R-CMB-012 / R-GLS-083"""
-    return not c.bonus_action_used
+    """每回合至多1附赠动作（须有特性启用）；失能者也不能执行附赠动作。
+
+    规则: R-CMB-012 / R-GLS-083 / R-GLS-050（"任何让你无法执行动作的效应,
+          同样使你无法执行附赠动作" — 附赠动作.txt）
+    """
+    return not c.bonus_action_used and not c.conditions.is_incapacitated()
 
 
 def can_take_reaction(c: Combatant) -> bool:
-    """每回合1反应，用后至下回合开始不可再用。规则: R-CMB-013 / R-GLS-083"""
-    return not c.reaction_used
+    """每回合1反应，用后至下回合开始不可再用；失能者不能反应。
+
+    规则: R-CMB-013 / R-GLS-083 / R-GLS-050（失能不能执行反应）
+    """
+    return not c.reaction_used and not c.conditions.is_incapacitated()
 
 
 def use_action(c: Combatant) -> bool:
@@ -280,6 +301,102 @@ def move(c: Combatant, distance_ft: int, difficult: bool = False) -> int:
         return max(0, actual)
     c.speed_remaining -= cost
     return distance_ft
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 特殊移动模式（攀爬/游泳/匍匐/跳跃）
+# ──────────────────────────────────────────────────────────────────────────
+
+def move_crawl(c: Combatant, distance_ft: int, difficult: bool = False) -> int:
+    """匍匐移动：每尺额外消耗1尺（困难地形额外2尺）。
+
+    规则: 术语汇编/移动与速度.txt「匍匐」每尺额外1尺消耗
+    出处: topics/玩家手册2024/术语汇编/移动与速度.htm
+    """
+    # 匍匐额外+1/尺，叠加困难地形
+    per_ft = 2 + (1 if difficult else 0)
+    cost = distance_ft * per_ft
+    if cost > c.speed_remaining:
+        actual = dice.round_down(c.speed_remaining / per_ft)
+        c.speed_remaining -= actual * per_ft
+        return max(0, actual)
+    c.speed_remaining -= cost
+    return distance_ft
+
+
+def move_climb(c: Combatant, distance_ft: int, has_climb_speed: bool = False,
+               difficult: bool = False) -> int:
+    """攀爬移动：无攀爬速度则每尺额外1尺；有攀爬速度则无额外消耗。
+
+    规则: 术语汇编/移动与速度.txt「攀爬」每尺额外1尺（有攀爬速度则免）
+    出处: topics/玩家手册2024/术语汇编/移动与速度.htm
+    """
+    if has_climb_speed:
+        return move(c, distance_ft, difficult)
+    return move_crawl(c, distance_ft, difficult)  # 无攀爬速度=额外1尺
+
+
+def move_swim(c: Combatant, distance_ft: int, has_swim_speed: bool = False,
+              difficult: bool = False) -> int:
+    """游泳移动：无游泳速度则每尺额外1尺；有游泳速度则无额外消耗。
+
+    规则: 术语汇编/移动与速度.txt「游泳」每尺额外1尺（有游泳速度则免）
+    出处: topics/玩家手册2024/术语汇编/移动与速度.htm
+    """
+    if has_swim_speed:
+        return move(c, distance_ft, difficult)
+    return move_crawl(c, distance_ft, difficult)
+
+
+def long_jump(c: Combatant, strength_score: int, run_up_10ft: bool = True,
+             difficult: bool = False) -> int:
+    """跳远：跑动10尺起跳=力量值尺；未跑动减半。消耗移动力。
+
+    规则: 术语汇编/移动与速度.txt「跳远」距离=力量值尺（跑动10尺起跳）
+    出处: topics/玩家手册2024/术语汇编/移动与速度.htm
+    """
+    distance = strength_score if run_up_10ft else dice.round_down(strength_score / 2)
+    return move(c, distance, difficult)
+
+
+def high_jump(c: Combatant, strength_score: int, run_up_10ft: bool = True,
+             difficult: bool = False) -> int:
+    """跳高：跑动10尺起跳=3+力量调整值尺；未跑动减半。消耗移动力。
+
+    规则: 术语汇编/移动与速度.txt「跳高」距离=3+力量调整值尺
+    出处: topics/玩家手册2024/术语汇编/移动与速度.htm
+    """
+    str_mod = dice.ability_modifier(strength_score)
+    distance = (3 + str_mod) if run_up_10ft else dice.round_down((3 + str_mod) / 2)
+    distance = max(0, distance)
+    return move(c, distance, difficult)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 远程攻击射程检查
+# ──────────────────────────────────────────────────────────────────────────
+
+def check_range(normal_range: int, max_range: int, distance_ft: int) -> dict:
+    """检查远程攻击距离是否在射程内。
+
+    规则: 远程攻击.txt — 常规射程内正常；超常规射程（常规~最大）劣势；超最大射程不可攻击。
+    出处: topics/玩家手册2024/进行游戏/远程攻击.htm
+    返回: {"in_range": bool, "disadvantage": bool, "auto_miss": bool}
+    """
+    if distance_ft <= normal_range:
+        return {"in_range": True, "disadvantage": False, "auto_miss": False}
+    if distance_ft <= max_range:
+        return {"in_range": True, "disadvantage": True, "auto_miss": False}
+    return {"in_range": False, "disadvantage": False, "auto_miss": True}
+
+
+def close_combat_disadvantage(has_enemy_within_5ft: bool, weapon_type: str = "ranged") -> bool:
+    """近距离远程攻击：5尺内有可见且未失能敌人时，远程攻击检定劣势。
+
+    规则: 远程攻击.txt — 5尺内有可见且未失能的敌人时远程攻击劣势
+    出处: topics/玩家手册2024/进行游戏/远程攻击.htm
+    """
+    return has_enemy_within_5ft and weapon_type == "ranged"
 
 
 def enter_square(c: Combatant, difficult: bool = False) -> int:
@@ -383,16 +500,145 @@ def drop_prone(c: Combatant) -> bool:
     return True
 
 
+def stand_from_prone(c: Combatant) -> bool:
+    """从倒地状态起立：消耗速度一半（向下取整），并移除倒地状态。
+    速度为0时不能起立。
+
+    规则: 术语汇编/状态.txt「倒地」起立消耗移动力=速度的一半（向下取整）
+    出处: topics/玩家手册2024/术语汇编/状态.htm
+    """
+    if c.speed <= 0 or c.speed_remaining <= 0:
+        return False
+    cost = dice.round_down(c.speed / 2)
+    if cost > c.speed_remaining:
+        return False
+    c.speed_remaining -= cost
+    c.conditions.remove("倒地")
+    return True
+
+
 # ──────────────────────────────────────────────────────────────────────────
-# 专注维持
+# 掩护（Cover）
+# ──────────────────────────────────────────────────────────────────────────
+
+# 规则: 发动攻击.txt「掩护」+ DM速查/掩护.txt
+# 出处: topics/玩家手册2024/进行游戏/发动攻击.htm ; topics/速查/DM速查/掩护.htm
+COVER_NONE = 0
+COVER_HALF = 2       # 半身掩护：AC与敏捷豁免+2
+COVER_THREE_QUARTERS = 5  # 四分之三掩护：AC与敏捷豁免+5
+COVER_TOTAL = 999    # 全身掩护：不能被直接选作目标
+
+
+def cover_ac_bonus(cover: int) -> int:
+    """掩护对 AC 的加值。规则: 发动攻击.txt / DM速查/掩护.txt"""
+    if cover == COVER_HALF:
+        return 2
+    if cover == COVER_THREE_QUARTERS:
+        return 5
+    return 0
+
+
+def cover_dex_save_bonus(cover: int) -> int:
+    """掩护对敏捷豁免的加值（与 AC 加值相同）。规则: 掩护.txt"""
+    return cover_ac_bonus(cover)
+
+
+def best_cover(covers: list[int]) -> int:
+    """多重掩护取最高，不叠加。规则: 发动攻击.txt"""
+    return max(covers) if covers else COVER_NONE
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 突围 / 推撞（Grapple / Shove）— 2024 规则为徒手打击选项
+# ──────────────────────────────────────────────────────────────────────────
+
+def grapple_dc(attacker_str_mod: int, prof: int) -> int:
+    """擒抱 DC = 8 + 力量调整值 + 熟练加值。
+
+    规则: 术语汇编/武器与徒手打击.txt「擒抱」
+    出处: topics/玩家手册2024/术语汇编/武器与徒手打击.htm
+    """
+    return 8 + attacker_str_mod + prof
+
+
+def attempt_grapple(attacker_str_mod: int, prof: int,
+                   target_save_bonus: int, target_save_ability: str = "str") -> dict:
+    """尝试擒抱：目标做力量或敏捷豁免（自选），失败陷入受擒。
+
+    规则: 术语汇编/武器与徒手打击.txt
+    出处: topics/玩家手册2024/术语汇编/武器与徒手打击.htm
+    """
+    dc = grapple_dc(attacker_str_mod, prof)
+    from . import check as _check
+    sv = _check.saving_throw(mod=target_save_bonus, prof=0, proficient=False, dc=dc)
+    return {"dc": dc, "save_success": sv.success, "grappled": not sv.success,
+            "save_total": sv.total, "save_ability": target_save_ability}
+
+
+def attempt_shove(attacker_str_mod: int, prof: int,
+                  target_save_bonus: int, target_save_ability: str = "str") -> dict:
+    """尝试推撞：目标做力量或敏捷豁免（自选），失败被推5尺或倒地（攻击者选）。
+
+    规则: 术语汇编/武器与徒手打击.txt「推撞」
+    出处: topics/玩家手册2024/术语汇编/武器与徒手打击.htm
+    """
+    dc = grapple_dc(attacker_str_mod, prof)  # 推撞 DC 与擒抱相同
+    from . import check as _check
+    sv = _check.saving_throw(mod=target_save_bonus, prof=0, proficient=False, dc=dc)
+    return {"dc": dc, "save_success": sv.success, "shoved": not sv.success,
+            "save_total": sv.total, "save_ability": target_save_ability}
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 击晕生物（Knockout）
+# ──────────────────────────────────────────────────────────────────────────
+
+def knockout_damage(target_hp: int, target_max_hp: int, dmg: int) -> dict:
+    """近战将生物HP降至0时可改为降至1HP，陷入昏迷并开始短休。
+
+    规则: 术语汇编/武器与徒手打击.txt「击晕」
+    出处: topics/玩家手册2024/术语汇编/武器与徒手打击.htm
+    """
+    if target_hp - dmg <= 0:
+        return {"knocked_out": True, "new_hp": 1, "condition": "昏迷"}
+    return {"knocked_out": False, "new_hp": target_hp - dmg}
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 结束战斗
+# ──────────────────────────────────────────────────────────────────────────
+
+def check_combat_end(combat: Combat) -> str:
+    """检查战斗是否结束：一方全灭/投降/逃跑。
+
+    规则: 战斗流程.txt「结束战斗」
+    出处: topics/玩家手册2024/进行游戏/战斗流程.htm
+    返回: "ongoing" / "players_win" / "enemies_win" / "ended"
+    """
+    players_alive = [c for c in combat.participants if c.side == "player"
+                     and not c.conditions.is_dead_from_exhaustion()]
+    enemies_alive = [c for c in combat.participants if c.side == "enemy"
+                     and not c.conditions.is_dead_from_exhaustion()]
+    if not enemies_alive:
+        combat.active = False
+        return "players_win"
+    if not players_alive:
+        combat.active = False
+        return "enemies_win"
+    return "ongoing"
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 专注维持（委托 concentration 模块，单一真相源）
 # ──────────────────────────────────────────────────────────────────────────
 
 def concentration_save_dc(damage_taken: int) -> int:
     """专注伤害豁免 DC = max(10, floor(damage/2))，至高 30。
 
     规则: R-GLS-013 专注维持检定（=R-SPL-020）  出处: 术语汇编/常见规则词汇.htm
+    说明: 委托 concentration 模块，避免重复实现。
     """
-    return min(30, max(10, dice.round_down(damage_taken / 2)))
+    return concentration.concentration_save_dc(damage_taken)
 
 
 def concentration_save(con_mod: int, con_prof: bool, prof: int, damage_taken: int) -> bool:
@@ -402,7 +648,7 @@ def concentration_save(con_mod: int, con_prof: bool, prof: int, damage_taken: in
     出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
     返回: 是否维持专注（True=维持，False=失去）。
     """
-    dc = concentration_save_dc(damage_taken)
+    dc = concentration.concentration_save_dc(damage_taken)
     res = check.saving_throw(mod=con_mod, prof=prof, proficient=con_prof, dc=dc)
     return res.success
 
@@ -496,6 +742,24 @@ def _self_test() -> None:
     assert concentration_save_dc(20) == 10            # floor(10)=10
     assert concentration_save_dc(25) == 12            # floor(12.5)=12
     assert concentration_save_dc(80) == 30            # 上限30
+
+    # 失能阻止动作经济（R-GLS-050）+ 力竭速度惩罚（R-GLS-047）
+    inc = Combatant(cid="i", name="Inc", speed=30)
+    assert can_take_action(inc) and can_take_bonus_action(inc) and can_take_reaction(inc)
+    inc.conditions.add("震慑")                        # 震慑 → 隐含失能
+    assert not can_take_action(inc)                    # 失能 → 不能动作
+    assert not can_take_bonus_action(inc)              # 失能 → 不能附赠
+    assert not can_take_reaction(inc)                  # 失能 → 不能反应
+    # 力竭速度惩罚：2级力竭 → 30-10=20
+    exh = Combatant(cid="x", name="Exh", speed=30)
+    exh.conditions.add("力竭"); exh.conditions.add("力竭")
+    _reset_turn_economy(exh)
+    assert exh.speed_remaining == 20                   # 30 - 2×5
+    # 束缚速度归0
+    bound = Combatant(cid="b", name="Bound", speed=30)
+    bound.conditions.add("束缚")
+    _reset_turn_economy(bound)
+    assert bound.speed_remaining == 0
     # 专注豁免（monkeypatch saving_throw）
     orig2 = check.saving_throw
     check.saving_throw = lambda **kw: type("R", (), {"success": kw["dc"] <= 10})()

@@ -14,6 +14,19 @@
 | **IMAGE_ASSETS.md** | 图片资产盘点 + 生成方案 | 🟡 中频 | 随 batch 进度更新 |
 | **CHANGELOG.md** | 变动日志（做了什么） | 🔴 常更 | 每次改动后追加，倒序 |
 | **DECISIONS.md** | 发现与决策记录（ADR 式） | 🔴 常更 | 选型/验收/漂移核对后追加 |
+| **REQUIREMENTS_ANALYSIS.md** | 需求分析（前端原型/规则书/调研报告提取） | 🟡 中频 | 现状基线+待实现功能详解，落地后就近标状态 |
+| **GAP_ANALYSIS.md** | 差距分析（文档↔代码漂移核对） | 🟡 中频 | 记录预期与实际差异，订正依据 |
+| **IMPLEMENTATION_VS_REPORT.md** | 实现对照（报告承诺 vs 实际代码） | 🟡 中频 | 核对"声称做了"是否真做了 |
+| **MEMORY_SYSTEM_RESEARCH.md** | 记忆系统调研（三层记忆架构/竞品分析） | 🟢 稳定 | 记忆系统设计依据，调研层 |
+| **MEMORY_SYSTEM_STATUS.md** | 记忆系统落地状态（三层记忆实现进度） | 🔴 常更 | 跟随 memory.py 落地更新 |
+| **FRONTEND_DESIGN.md** | 前端设计（双前端架构/组件/交互） | 🟡 中频 | UI 规格与组件清单 |
+| **REFACTOR_PLAN.md** | 重构计划（单 graph→多智能体/工具层/记忆系统） | 🟡 中频 | 渐进迁移路线图，迁移后标状态 |
+| **PIPELINE.md** | 判定链流程（硬性判定链节点流/状态机图） | 🟡 中频 | classify→retrieve→verify→resolve→narrate→apply 全景 |
+| **API_REFERENCE.md** | API 参考（REST + WebSocket 端点全清单） | 🔴 常更 | 43 端点 + WS 事件，随端点增减更新 |
+| **ENGINE_REFERENCE.md** | 引擎函数（dice/check/damage/conditions/combat 函数签名） | 🟢 稳定 | 确定性引擎 API 速查 |
+| **DATA_MODELS.md** | 数据模型（SQLModel 表结构/Qdrant 集合 payload） | 🟡 中频 | 字段定义与 JSON 桥接 |
+| **MODULE_INDEX.md** | 模块索引（brain/19 + data/9 + engine/11 + agents/6 + knowledge/9） | 🟡 中频 | 全模块清单与一句话职责 |
+| **ISSUES.md** | 已知问题（待办/已知缺陷/技术债） | 🔴 常更 | 未解决问题的活页 |
 
 ### 维护频率图例
 
@@ -50,20 +63,27 @@
 
 ---
 
-## 当前进度速览（2026-07-14）
+## 当前进度速览（2026-07-15）
 
 > 详见 `ARCHITECTURE.md §0` 与 `BUILD.md §5`。此处仅导航。
 
 | Phase | 状态 | 模块 |
 |-------|------|------|
-| P0 引擎核心 | ✅ | `engine/{dice,check,damage,conditions,combat}` + `data/equipment` |
+| P0 引擎核心 | ✅ | `engine/` 11 模块（dice/check/damage/conditions/combat/actions/concentration/spellcasting/…）+ `data/equipment` |
 | P1 状态层 | ✅ | `stats/{models,store}` |
 | P2 知识层 RAG | ✅ | `knowledge/` 9 模块 + 三 Qdrant 集合已建库 |
-| P3 编排层 | ✅ | `brain/{graph,llm,state}`（LangGraph 判定链端到端+HITL） |
-| P4 API+交互 | ✅ | `api/main.py`(FastAPI) + `cli.py` |
-| P5 前端 | 🔵 可选 | — |
+| P3 编排层 | ✅ | `brain/graph.py`（LangGraph 判定链端到端+HITL，覆盖 attack/cast/rest/social/levelup/travel） |
+| P4 API+交互 | ✅ | `api/main.py`(FastAPI 43 端点) + `api/ws.py`(Socket.IO 同桌) + `cli.py` |
+| P5 前端 | ✅ | `ui/static/`(原生 HTML 单页) + `ui/app/`(Next.js 14 + Tailwind + 3D 骰子)，组件重构进行中 |
 
-> 上表为代码实测进度。`ARCHITECTURE.md §0`(v3) 与 `BUILD.md §5` 已订正同步，依据见 `DECISIONS.md` D-001~D-013。
+| 专项能力 | 状态 | 说明 |
+|----------|------|------|
+| 三层记忆系统 | ✅ | `brain/memory.py`（工作/中期/长期记忆，跨 Session 持久化） |
+| 多智能体架构 | ✅（渐进迁移中） | `agents/`（Director/Narrator/Combat/WorldManager/RuleJudge + EnemyAI 6 Agent 已建，与单 graph 并行迁移） |
+| 测试体系 | ✅ | `tests/` 7 文件 138 测试全通过 |
+| 叙事/世界层 | ✅ | `brain/world.py` 场景生成 + 推进 |
+
+> 上表为代码实测进度。`ARCHITECTURE.md §0`(v4) 与 `BUILD.md §5` 已订正同步，依据见 `DECISIONS.md` D-001~D-026。
 
 ---
 

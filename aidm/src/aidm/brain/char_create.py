@@ -24,7 +24,7 @@ import random
 from typing import Any
 
 from aidm.data.classes import CLASSES, get_class
-from aidm.data.races import RACES, get_race
+from aidm.data.races import RACES, get_race, dwarven_toughness
 from aidm.data.backgrounds import BACKGROUNDS, get_background
 
 
@@ -54,6 +54,13 @@ ALIGNMENTS = [
     "守序邪恶", "中立邪恶", "混乱邪恶",
 ]
 
+# 标准语言  出处: 第二步：确定起源.htm / 进行游戏/六项属性.htm（语言与文字）
+# 角色至少懂通用语 + 2 门自选标准语言。
+STANDARD_LANGUAGES = [
+    "通用语", "矮人语", "精灵语", "巨人语", "侏儒语",
+    "哥布林语", "半身人语", "兽人语",
+]
+
 
 # ──────────────────────────────────────────────────────────────────────────
 # 衍生数值计算
@@ -80,19 +87,30 @@ def proficiency_bonus(level: int) -> int:
     return 2 + (level - 1) // 4
 
 
-def hit_points_level1(hit_die: int, con_mod: int) -> int:
-    """1级HP = 生命骰最大值 + 体质调整值。
+def hit_points_level1(hit_die: int, con_mod: int, race: str | None = None) -> int:
+    """1级HP = 生命骰最大值 + 体质调整值 + 种族刚毅加成（矮人+1）。
 
     规则: R-DMG-007  出处: 进行游戏/生命值.htm
+          矮人刚毅 Dwarven Toughness：生命值上限+1，此后每次升级时再加1。
+          出处: 角色起源/种族/矮人.htm
     """
-    return hit_die + con_mod
+    hp = hit_die + con_mod
+    if race is not None and dwarven_toughness(race):
+        hp += 1  # 矮人刚毅：1级时生命值上限+1
+    return hp
 
 
-def unarmored_ac(dex_mod: int) -> int:
-    """无甲AC = 10 + 敏捷调整值。
+def unarmored_ac(
+    dex_mod: int, con_mod: int = 0, class_name: str | None = None
+) -> int:
+    """无甲AC = 10 + 敏捷调整值；野蛮人无甲防御 = 10 + 敏捷 + 体质。
 
     规则: R-CMB-021  出处: 进行游戏/护甲等级.htm
+          野蛮人无甲防御 Unarmored Defense：AC = 10 + 敏捷调整值 + 体质调整值。
+          出处: 角色职业/野蛮人/野蛮人.htm
     """
+    if class_name == "野蛮人":
+        return 10 + dex_mod + con_mod
     return 10 + dex_mod
 
 
@@ -191,6 +209,8 @@ class CharacterSheet:
         self.background: str = ""
         self.speed: int = 30
         self.size: str = ""
+        self.feats: list[str] = []          # 起源专长（背景给予）→ 对应 Character.feats_json
+        self.languages: list[str] = ["通用语"]  # 至少通用语+2门标准语言
         # Step 3 属性
         self.scores: dict[str, int] = {}      # STR..CHA -> 分数
         # Step 4 阵营
@@ -209,12 +229,14 @@ class CharacterSheet:
         return proficiency_bonus(self.level)
 
     def max_hp(self) -> int:
-        """1级最大HP = 生命骰面值 + 体质调整值。"""
-        return hit_points_level1(self.hit_die, self.mods()["CON"])
+        """1级最大HP = 生命骰面值 + 体质调整值（矮人另+1刚毅）。"""
+        return hit_points_level1(self.hit_die, self.mods()["CON"], self.race)
 
     def ac_unarmored(self) -> int:
-        """无甲AC。"""
-        return unarmored_ac(self.mods()["DEX"])
+        """无甲AC（野蛮人无甲防御 = 10 + 敏捷 + 体质）。"""
+        return unarmored_ac(
+            self.mods()["DEX"], self.mods()["CON"], self.class_name
+        )
 
     def init_bonus(self) -> int:
         """先攻加值。"""
@@ -257,6 +279,8 @@ class CharacterSheet:
             "spellcasting": self.spellcasting,
             "speed": self.speed,
             "size": self.size,
+            "feats": list(self.feats),
+            "languages": list(self.languages),
             "scores": dict(self.scores),
             "mods": self.mods(),
             "prof_bonus": self.prof_bonus(),
@@ -312,6 +336,9 @@ def step2_choose_origin(
     # 记录背景提供的属性（供Step3分配参考）
     sheet._bg_abilities = bdata["ability_scores"]  # type: ignore[attr-defined]
     sheet._bg_feat = bdata["feat"]                 # type: ignore[attr-defined]
+    # 起源专长：背景给予的专长直接写入角色卡（对应 Character.feats_json）
+    # 出处: 创建角色/第二步：确定起源.htm
+    sheet.feats = [sheet._bg_feat] if sheet._bg_feat else []
     return sheet
 
 
@@ -320,6 +347,7 @@ def step3_assign_ability_scores(
     method: str = "standard_array",
     scores: list[int] | None = None,
     assignment: dict[str, int] | None = None,
+    bg_bonus: dict[str, int] | None = None,
 ) -> CharacterSheet:
     """Step 3：确定属性值。
 
@@ -330,8 +358,11 @@ def step3_assign_ability_scores(
     scores: 仅 point_buy 时使用，6项属性值（8-15）。
     assignment: 可选，将6个数值显式分配到 STR/DEX/CON/INT/WIS/CHA。
                 若不提供，则按标准数列建议表分配。
+    bg_bonus: 可选，背景属性加成显式分配，如 {"STR": 2, "DEX": 1}。
+              默认 None → 取背景三项属性的第一项+2、第二项+1（即 2/1 分配）；
+              若需三项各+1，传入 {"A":1,"B":1,"C":1}。每项加成后不超过20。
 
-    出处: 创建角色/第三步：确定属性值.htm
+    出处: 创建角色/第三步：确定属性值.htm（背景属性加成：+2/+1 或 +1/+1/+1）
     """
     if method == "standard_array":
         values = list(STANDARD_ARRAY)
@@ -361,7 +392,33 @@ def step3_assign_ability_scores(
         # 默认按标准数列建议表分配（按职业）
         sheet.scores = _default_assignment(sheet.class_name, values)
 
+    # 应用背景属性加成（背景给予三项属性，一项+2另一项+1，或三项各+1；不超过20）
+    # 出处: 创建角色/第三步：确定属性值.htm
+    _apply_background_ability_bonus(sheet, bg_bonus)
+
     return sheet
+
+
+def _apply_background_ability_bonus(
+    sheet: CharacterSheet, bg_bonus: dict[str, int] | None
+) -> None:
+    """将背景的属性加成叠加到已分配的属性值上，每项不超过20。
+
+    出处: 创建角色/第三步：确定属性值.htm（背景属性加成）
+          sheet._bg_abilities 由 step2 记录（背景给予的三项属性）。
+    """
+    bg_abilities: list[str] = getattr(sheet, "_bg_abilities", None) or []
+    if not bg_abilities:
+        return
+
+    if bg_bonus is None:
+        # 默认 2/1 分配：第一项+2，第二项+1
+        bg_bonus = {bg_abilities[0]: 2, bg_abilities[1]: 1}
+
+    for ability, delta in bg_bonus.items():
+        if ability not in sheet.scores or delta == 0:
+            continue
+        sheet.scores[ability] = min(sheet.scores[ability] + delta, 20)
 
 
 # 按职业给出的标准数列建议（出处: 第三步：确定属性值.htm 按职业给出的标准数列表）
@@ -433,14 +490,27 @@ def create_character(
     name: str = "",
     size: str | None = None,
     assignment: dict[str, int] | None = None,
+    bg_bonus: dict[str, int] | None = None,
+    languages: list[str] | None = None,
 ) -> CharacterSheet:
-    """便捷函数：一次性完成五步车卡。"""
+    """便捷函数：一次性完成五步车卡。
+
+    bg_bonus: 背景属性加成显式分配（如 {"STR":2,"DEX":1}）；None→默认2/1。
+    languages: 角色已知语言列表；None→通用语+2门标准语言。
+              出处: 创建角色/第二步：确定起源.htm（至少通用语+2门标准语言）
+    """
     sheet = CharacterSheet()
     step1_choose_class(sheet, class_name)
     step2_choose_origin(sheet, race, background, size=size)
     step3_assign_ability_scores(
-        sheet, method=scores_method, assignment=assignment
+        sheet, method=scores_method, assignment=assignment, bg_bonus=bg_bonus
     )
+    # 语言：至少通用语 + 2 门自选标准语言
+    # 出处: 创建角色/第二步：确定起源.htm
+    if languages:
+        sheet.languages = list(languages)
+    else:
+        sheet.languages = ["通用语", "矮人语", "精灵语"]
     step4_choose_alignment(sheet, alignment)
     step5_enrich_details(sheet, name=name)
     return sheet
@@ -467,7 +537,11 @@ def _self_test() -> None:
     assert proficiency_bonus(20) == 6
     # HP / AC / 先攻
     assert hit_points_level1(10, 2) == 12       # 战士 D10 + CON+2
+    assert hit_points_level1(12, 2, "矮人") == 15  # 矮人刚毅：12+2+1
+    assert hit_points_level1(10, 2, "人类") == 12  # 人类无刚毅
     assert unarmored_ac(3) == 13                # 10 + DEX+3
+    assert unarmored_ac(3, 2, "野蛮人") == 15   # 野蛮人无甲防御：10+DEX+CON
+    assert unarmored_ac(3, 2, "战士") == 13     # 非野蛮人：10+DEX
     assert initiative(2) == 2
     # 被动察觉
     assert passive_perception(3, True, 2) == 15  # 10 + 3 + 2

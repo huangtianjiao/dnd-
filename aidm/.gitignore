@@ -1,0 +1,81 @@
+# ─── Python ─────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+.tox/
+build/
+
+# 虚拟环境
+venv/
+.venv/
+env/
+ENV/
+
+# ─── Node / Next.js ─────────────────────────
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ─── 环境变量与密钥 ─────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# ─── 运行时数据与存档（不入库）──────────────
+aidm/data/saves/*.db
+aidm/data/saves/*.db-journal
+aidm/data/saves/*.db-wal
+aidm/data/saves/*.db-shm
+aidm/data/rules.db/
+aidm/data/qdrant_storage/
+aidm/data/embeddings_cache/
+aidm/data/images/generated/
+
+# bge 嵌入模型缓存
+*.bin
+models/
+cache/
+huggingface/
+
+# ─── 规则书数据源（外部只读克隆）────────────
+5echm_web/
+
+# ─── IDE ────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# ─── 操作系统 ───────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ─── 临时与日志 ──────────────────────────────
+*.log
+tmp/
+.temp/
+.cache/

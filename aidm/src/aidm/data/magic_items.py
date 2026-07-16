@@ -499,6 +499,120 @@ def random_magic_items(count: int = 1,
 
 
 # ──────────────────────────────────────────────────────────────────────────
+# 同调 / 鉴定 / 着装限制
+# ──────────────────────────────────────────────────────────────────────────
+
+# 规则: 装备/魔法物品.txt「同调」— 同时同调不超过 3 件；需短休建立；
+#       不可同调多个同一物品；结束条件（条件不满足/100尺外24小时/死亡/他人同调）；
+#       附诅咒者不可自愿解除。
+MAX_ATTUNED = 3
+
+
+def attune_item(attuned_list: list[str], item_name: str,
+                cursed_items: Optional[set[str]] = None) -> dict:
+    """尝试与魔法物品建立同调。
+
+    规则: 装备/魔法物品.txt「同调」— 需短休并保持物理接触；
+          同时同调不超过 3 件；不可同调多个同一物品。
+    出处: topics/玩家手册2024/装备/魔法物品.htm
+
+    参数:
+      attuned_list: 当前已同调物品名列表
+      item_name: 要同调的物品名
+      cursed_items: 已知诅咒物品名集合（用于后续不可自愿解除判定）
+
+    返回: {"success": bool, "reason": str, "attuned_list": list}
+    """
+    item = MAGIC_ITEMS.get(item_name)
+    if item is None:
+        return {"success": False, "reason": "未知物品", "attuned_list": attuned_list}
+    if not item.attunement:
+        return {"success": False, "reason": "该物品无需同调", "attuned_list": attuned_list}
+    if item_name in attuned_list:
+        return {"success": False, "reason": "已同调该物品，不可重复", "attuned_list": attuned_list}
+    if len(attuned_list) >= MAX_ATTUNED:
+        return {"success": False, "reason": f"同调上限{MAX_ATTUNED}件已达", "attuned_list": attuned_list}
+    attuned_list = list(attuned_list) + [item_name]
+    if cursed_items is not None and item.cursed:
+        cursed_items.add(item_name)
+    return {"success": True, "reason": "同调成功（需短休保持接触）", "attuned_list": attuned_list}
+
+
+def unattune_item(attuned_list: list[str], item_name: str,
+                 cursed_items: Optional[set[str]] = None) -> dict:
+    """尝试解除魔法物品同调。
+
+    规则: 装备/魔法物品.txt — 附诅咒物品不可自愿解除同调。
+    出处: topics/玩家手册2024/装备/魔法物品.htm
+    """
+    if item_name not in attuned_list:
+        return {"success": False, "reason": "未同调该物品", "attuned_list": attuned_list}
+    if cursed_items and item_name in cursed_items:
+        return {"success": False, "reason": "诅咒物品不可自愿解除同调", "attuned_list": attuned_list}
+    attuned_list = [n for n in attuned_list if n != item_name]
+    return {"success": True, "reason": "解除同调成功", "attuned_list": attuned_list}
+
+
+def check_attunement_end(attuned_list: list[str], item_name: str,
+                        reason: str) -> dict:
+    """检查同调结束条件。
+
+    规则: 装备/魔法物品.txt — 条件不满足/100尺外超过24小时/死亡/他人同调该物品 → 结束。
+    reason: "condition_lost" / "distance_24h" / "death" / "stolen"
+    """
+    if item_name not in attuned_list:
+        return {"ended": False, "reason": "未同调", "attuned_list": attuned_list}
+    # 诅咒物品也因这些条件结束（非自愿解除）
+    attuned_list = [n for n in attuned_list if n != item_name]
+    return {"ended": True, "reason": reason, "attuned_list": attuned_list}
+
+
+def identify_magic_item(item_name: str, use_identify_spell: bool = False) -> dict:
+    """鉴定魔法物品。
+
+    规则: 装备/魔法物品.txt「鉴定」— 短休专注可鉴定（不含诅咒）；
+          鉴定术法术也可鉴定（不含诅咒）。
+    出处: topics/玩家手册2024/装备/魔法物品.htm
+    """
+    item = MAGIC_ITEMS.get(item_name)
+    if item is None:
+        return {"identified": False, "reason": "未知物品"}
+    method = "鉴定术" if use_identify_spell else "短休专注"
+    return {
+        "identified": True,
+        "method": method,
+        "name": item.name,
+        "rarity": item.rarity.value,
+        "item_type": item.item_type.value,
+        "attunement_required": item.attunement,
+        "attunement_req": item.attunement_req,
+        "description": item.description,
+        "curse_revealed": False,  # 鉴定不揭示诅咒
+        "cursed": item.cursed,     # 但数据层仍可查询（DM层面）
+    }
+
+
+def check_worn_item_limits(attuned_list: list[str],
+                           new_item_type: ItemType) -> dict:
+    """检查着装同类限制。
+
+    规则: 装备/魔法物品.txt — 不可同时着装多件同类魔法物品；
+          成对物品须成对着装。
+    出处: topics/玩家手册2024/装备/魔法物品.htm
+    """
+    # 统计已同调物品中同类型的数量
+    same_type_count = 0
+    for name in attuned_list:
+        item = MAGIC_ITEMS.get(name)
+        if item and item.item_type == new_item_type:
+            same_type_count += 1
+    # 同类型最多着装1件（除非是成对物品，此处简化）
+    can_wear = same_type_count == 0
+    return {"can_wear": can_wear, "same_type_count": same_type_count,
+            "reason": "" if can_wear else f"已着装{same_type_count}件同类物品"}
+
+
+# ──────────────────────────────────────────────────────────────────────────
 # 自检
 # ──────────────────────────────────────────────────────────────────────────
 

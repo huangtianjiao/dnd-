@@ -50,6 +50,9 @@ class ConditionState:
         if cond in self.conditions:
             return False                # 已有，不叠加
         self.conditions.add(cond)
+        # 昏迷自动施加倒地（规则: 状态.txt「昏迷」→ 失能+倒地+掉落物品）
+        if cond == "昏迷" and "倒地" not in self.conditions:
+            self.conditions.add("倒地")
         return True
 
     def remove(self, cond: str) -> bool:
@@ -168,6 +171,70 @@ def concentration_broken_on_state_change(new_state: ConditionState) -> bool:
 def long_rest_reduce_exhaustion(state: ConditionState) -> None:
     """长休力竭−1级（降至0结束）。规则: R-GLS-047/R-QCK-004  出处: 状态.htm"""
     state.exhaustion = max(0, state.exhaustion - 1)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 状态衍生的规则效果（豁免自动失败 / 抗性 / 检定劣势）
+# ──────────────────────────────────────────────────────────────────────────
+
+# 力/敏豁免自动失败的状态
+# 规则: 术语汇编/状态.txt — 麻痹/震慑/石化/束缚/昏迷 → 自动失败力量和敏捷豁免
+_AUTO_FAIL_SAVE_STATES = frozenset({"麻痹", "震慑", "石化", "束缚", "昏迷"})
+
+
+def auto_fail_save_abilities(state: ConditionState) -> frozenset[str]:
+    """返回该状态下自动失败的豁免属性集合。
+
+    规则: 术语汇编/状态.txt（麻痹/震慑/石化/束缚/昏迷 自动失败力/敏豁免）
+    出处: topics/玩家手册2024/术语汇编/状态.htm
+    """
+    if any(state.has(c) for c in _AUTO_FAIL_SAVE_STATES):
+        return frozenset({"str", "dex"})
+    return frozenset()
+
+
+def should_waive_save(state: ConditionState, save_ability: str) -> bool:
+    """该豁免是否应自动判失败（因状态导致）。
+
+    规则: 术语汇编/状态.txt
+    用法: check.saving_throw(..., waive=conditions.should_waive_save(state, ability))
+    """
+    return save_ability.lower() in auto_fail_save_abilities(state)
+
+
+def condition_resistances(state: ConditionState) -> set[str]:
+    """状态衍生的伤害抗性集合。
+
+    规则: 术语汇编/状态.txt「石化」→ 对所有伤害具有抗性
+    出处: topics/玩家手册2024/术语汇编/状态.htm
+    """
+    resists: set[str] = set()
+    if state.has("石化"):
+        resists.add("*")    # 石化：对所有伤害抗性
+    return resists
+
+
+def condition_immunities(state: ConditionState) -> set[str]:
+    """状态衍生的伤害免疫集合。
+
+    规则: 术语汇编/状态.txt「石化」→ 中毒免疫
+    出处: topics/玩家手册2024/术语汇编/状态.htm
+    """
+    immuns: set[str] = set()
+    if state.has("石化"):
+        immuns.add("毒素")  # 石化：中毒免疫
+    return immuns
+
+
+def ability_check_disadvantage(state: ConditionState) -> bool:
+    """该状态下属性检定是否具有劣势。
+
+    规则: 术语汇编/状态.txt
+          - 中毒：攻击检定+属性检定均劣势
+          - 力竭：不直接给检定劣势（而是 d20 减值，见 d20_penalty）
+    出处: topics/玩家手册2024/术语汇编/状态.htm
+    """
+    return state.has("中毒")
 
 
 # ──────────────────────────────────────────────────────────────────────────
