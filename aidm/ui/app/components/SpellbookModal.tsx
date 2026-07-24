@@ -50,23 +50,20 @@ export function SpellbookModal({ spells, spellSlots, onCast }: SpellbookModalPro
 
             {/* 法术位显示 */}
             <div className="mb-3 space-y-1">
-              {Object.entries(spellSlots).map(([level, remaining]) => {
-                const max = parseInt(level);
-                return (
-                  <div key={level} className="flex items-center gap-1">
-                    <span className="text-[10px] text-neutral-500 w-8">{level}环</span>
-                    {Array.from({ length: max }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`w-3 h-3 rounded-sm ${
-                          i < remaining ? "bg-blue-500" : "bg-neutral-700"
-                        }`}
-                      />
-                    ))}
-                    <span className="text-[10px] text-neutral-400 ml-1">{remaining}/{max}</span>
-                  </div>
-                );
-              })}
+              {Object.entries(spellSlots).map(([level, remaining]) => (
+                <div key={level} className="flex items-center gap-1">
+                  <span className="text-[10px] text-neutral-500 w-8">{level}环</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                      remaining > 0
+                        ? "bg-purple-950 border-purple-700 text-purple-300"
+                        : "bg-neutral-800 border-neutral-700 text-neutral-600"
+                    }`}
+                  >
+                    剩余{remaining}
+                  </span>
+                </div>
+              ))}
             </div>
 
             {/* 法术列表 */}

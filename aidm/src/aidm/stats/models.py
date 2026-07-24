@@ -51,6 +51,8 @@ class Character(SQLModel, table=True):
     race: str = ""
     char_class: str = ""
     subclass: str = ""
+    background: str = ""          # 背景（PHB 第一章），影响属性加成/起源专长/技能熟练
+    alignment: str = "绝对中立"   # 阵营九宫格（PHB 第一章）
     level: int = 1
     # 变长字段（JSON）
     abilities_json: str = Field(default=json.dumps(DEFAULT_ABILITIES))
@@ -70,6 +72,9 @@ class Character(SQLModel, table=True):
     ac: int = 10
     speed: int = 30
     exhaustion: int = 0
+    # 生命骰追踪（R-GLS-014 短休消耗 / R-GLS-015 长休恢复）
+    hit_dice_current: int = 0   # 可用生命骰数量
+    hit_dice_max: int = 0       # 生命骰上限（=等级）
     # 死亡豁免计数（R-DMG-017）
     death_successes: int = 0
     death_failures: int = 0
@@ -97,6 +102,13 @@ class Character(SQLModel, table=True):
 
     def set_spell_slots(self, slots: dict) -> None:
         self.spell_slots_json = json.dumps(slots)
+
+    @property
+    def known_spells(self) -> list:
+        return json.loads(self.known_spells_json)
+
+    def set_known_spells(self, spells: list) -> None:
+        self.known_spells_json = json.dumps(spells)
 
     # —— 同调物品桥接 ——
     # 规则: 玩家手册 同调Attunement — 一个生物最多同时与3件魔法物品同调

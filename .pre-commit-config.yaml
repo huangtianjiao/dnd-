@@ -1,0 +1,37 @@
+# AIDM pre-commit 护栏
+# 安装：pip install pre-commit && pre-commit install
+# 手动运行：pre-commit run --all-files
+
+repos:
+  # ─── 基础卫生 ────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        files: \.(yaml|yml)$
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: check-merge-conflict
+
+  # ─── Python lint + format ────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+        files: ^aidm/(src|tests)/
+      - id: ruff-format
+        files: ^aidm/(src|tests)/
+
+  # ─── 敏感文件拦截 ────────────────────────────────
+  # 阻止 .env、用户存档、Qdrant 索引被意外提交
+  - repo: local
+    hooks:
+      - id: block-sensitive-files
+        name: 拦截敏感文件（.env / saves / rules.db）
+        entry: bash -c 'if git diff --cached --name-only | grep -qE "^(\\.env$|\\.env\\.|aidm/data/saves/|aidm/data/rules\\.db/)"; then echo "❌ 禁止提交敏感文件：.env、saves/、rules.db/（详见 aidm/AGENTS.md 高风险区域）"; exit 1; fi'
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]

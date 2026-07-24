@@ -13,7 +13,7 @@ from __future__ import annotations
 import asyncio
 import os
 import socketio
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -27,14 +27,12 @@ from .memory_bg import _async_memory_process
 
 app = FastAPI(title="AI DM", version="0.3.0")
 
-# CORS — 允许 Next.js dev server (:3000) 跨域访问后端 (:9000)
+# CORS — 允许的源从环境变量 ALLOWED_ORIGINS 读取（逗号分隔），默认 Next.js dev server (:3000)
+# 生产模式同源不需要 CORS，但保留以防反向代理场景
+_origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        # 生产模式同源不需要 CORS，但保留以防反向代理场景
-    ],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -69,6 +67,9 @@ class CharIn(BaseModel):
     name: str
     race: str = "人类"
     char_class: str = "战士"
+    subclass: str = ""            # 子职（PHB 第一章），subclass_level <= level 时可选
+    background: str = ""          # 背景（PHB 第一章），影响属性加成/起源专长/技能熟练
+    alignment: str = "绝对中立"   # 阵营九宫格（PHB 第一章）
     level: int = 1
     abilities: dict = {"str": 10, "dex": 10, "con": 10, "int": 10, "wis": 10, "cha": 10}
     hp_max: int = 10
@@ -76,6 +77,8 @@ class CharIn(BaseModel):
     speed: int = 30
     equipped_weapon: str = ""   # 可选：指定起始武器，留空则按职业默认
     campaign_id: int | None = None
+    # 属性生成方式：standard_array(标准阵列)/point_buy(购点法)/roll(掷骰)/free(不校验)
+    ability_method: str = "free"
 
 
 class ChatIn(BaseModel):
@@ -98,6 +101,30 @@ class OpenIn(BaseModel):
     character_id: int
 
 
+def _validate_abilities(abilities: dict, method: str) -> None:
+    """按 D&D 5e 属性生成方式校验，非法抛 422。
+
+    复用 brain/char_create 的规则（标准阵列/购点法/掷骰），
+    这些原本未接入 HTTP，POST /character 之前对属性完全不校验。
+    """
+    if not method or method == "free":
+        return
+    from ..brain.char_create import validate_point_buy, STANDARD_ARRAY
+    vals = list(abilities.values())
+    if method == "standard_array":
+        if sorted(vals) != sorted(STANDARD_ARRAY):
+            raise HTTPException(422, detail={"error": "invalid_abilities",
+                "message": "标准阵列须为 [15,14,13,12,10,8] 的排列"})
+    elif method == "point_buy":
+        if not validate_point_buy(vals):
+            raise HTTPException(422, detail={"error": "invalid_abilities",
+                "message": "购点法：6项各8-15，总花费≤27"})
+    elif method == "roll":
+        if len(vals) != 6 or any(not (3 <= int(v) <= 18) for v in vals):
+            raise HTTPException(422, detail={"error": "invalid_abilities",
+                "message": "掷骰属性：6项各3-18"})
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -112,7 +139,10 @@ def create_campaign(c: CampaignIn):
 @app.post("/character")
 def create_character(c: CharIn):
     ch = models.Character(name=c.name, race=c.race, char_class=c.char_class,
-                          level=c.level, campaign_id=c.campaign_id)
+                          subclass=c.subclass, background=c.background,
+                          alignment=c.alignment, level=c.level,
+                          campaign_id=c.campaign_id)
+    _validate_abilities(c.abilities, c.ability_method)
     ch.set_abilities(c.abilities)
     ch.hp_max = c.hp_max; ch.hp_current = c.hp_max; ch.ac = c.ac; ch.speed = c.speed
     # 施法职业按等级初始化法术位（R-SPL-002），否则 spell_slots 默认空致施法总被拒
@@ -136,14 +166,19 @@ def get_character(cid: int):
     from ..engine import dice
     ch = store.get_character(cid)
     if ch is None:
-        return {"error": "not found"}
+        raise HTTPException(status_code=404, detail={"error": "not found", "message": f"角色 {cid} 不存在"})
     ab = ch.abilities
     return {"id": ch.id, "name": ch.name, "race": ch.race, "char_class": ch.char_class,
-            "subclass": ch.subclass, "level": ch.level, "proficiency": ch.prof(),
+            "subclass": ch.subclass, "background": ch.background,
+            "alignment": ch.alignment, "level": ch.level, "proficiency": ch.prof(),
             "abilities": {k: {"score": v, "mod": dice.ability_modifier(v)} for k, v in ab.items()},
             "hp": ch.hp_current, "hp_max": ch.hp_max, "temp_hp": ch.temp_hp, "ac": ch.ac,
             "speed": ch.speed, "conditions": ch.conditions_list, "exhaustion": ch.exhaustion,
-            "spell_slots": ch.spell_slots, "dead": ch.dead, "stable": ch.stable,
+            "spell_slots": ch.spell_slots, "known_spells": ch.known_spells,
+            "hit_dice_current": getattr(ch, "hit_dice_current", ch.level),
+            "hit_dice_max": ch.level,
+            "death_successes": ch.death_successes, "death_failures": ch.death_failures,
+            "dead": ch.dead, "stable": ch.stable,
             "attuned_items": ch.attuned_items, "equipped_weapon": ch.equipped_weapon}
 
 
@@ -161,7 +196,7 @@ def get_inventory(cid: int):
     """
     ch = store.get_character(cid)
     if ch is None:
-        return {"error": f"角色 {cid} 不存在"}
+        raise HTTPException(status_code=404, detail={"error": "not found", "message": f"角色 {cid} 不存在"})
 
     inv_names = ch.inventory
     attuned = ch.attuned_items
@@ -272,12 +307,32 @@ def equip_weapon(cid: int, req: EquipWeaponIn):
     from ..data import equipment as equip_db
     ch = store.get_character(cid)
     if ch is None:
-        return {"error": f"角色 {cid} 不存在"}
+        raise HTTPException(status_code=404, detail={"error": "not found", "message": f"角色 {cid} 不存在"})
     if req.weapon_name and req.weapon_name not in equip_db.WEAPONS:
-        return {"error": f"未知武器 {req.weapon_name!r}，可选示例: {list(equip_db.WEAPONS)[:10]}"}
+        raise HTTPException(status_code=400, detail={"error": "invalid_request", "message": f"未知武器 {req.weapon_name!r}，可选示例: {list(equip_db.WEAPONS)[:10]}"})
     ch.equipped_weapon = req.weapon_name
     ch = store.save_character(ch)
     return {"character_id": ch.id, "equipped_weapon": ch.equipped_weapon}
+
+
+@app.get("/weapons")
+def list_weapons():
+    """返回所有可用武器列表。
+
+    规则依据: R-ITM-012 武器表  出处: topics/玩家手册2024/装备/武器.htm
+    """
+    from ..data import equipment as equip_db
+    weapons = []
+    for name, entry in equip_db.WEAPONS.items():
+        weapons.append({
+            "name": name,
+            "category": entry["cat"],
+            "damage": entry["dmg"],
+            "properties": entry.get("props", []),
+            "weight": entry.get("wt"),
+            "price": entry.get("price", ""),
+        })
+    return {"weapons": weapons, "count": len(weapons)}
 
 
 class LootGenerateIn(BaseModel):
@@ -371,15 +426,143 @@ def distribute_loot_v1(req: LootDistributeInV1):
 
 @app.get("/combat/{campaign_id}")
 def get_combat(campaign_id: int):
-    """战斗状态（前端战斗追踪器用）。"""
+    """战斗状态（前端战斗追踪器用）。
+
+    current_turn 与 socket combat_update（ws._broadcast_state）口径一致，
+    前端 CombatData 统一读 current_turn；current_index 保留供调试。
+    """
     from ..engine import combat as cmb
     try:
         c = store.load_combat(campaign_id)
     except Exception:
         return {"active": False}
-    return {"active": c.active, "round": c.round, "current_index": c.current_index,
-            "initiative_order": [{"name": c.name, "initiative": c.initiative, "side": c.side}
-                                 for c in c.initiative_order]}
+    cur = cmb.current_combatant(c)
+    return {"active": c.active, "round": c.round,
+            "current_index": c.current_index,
+            "current_turn": cur.name if cur else None,
+            "initiative_order": [{"name": x.name, "initiative": x.initiative,
+                                  "side": x.side} for x in c.initiative_order]}
+
+
+@app.get("/races")
+def list_races():
+    """可扮演种族列表（前端角色创建下拉用，避免前端硬编码漂移）。"""
+    from ..data.races import RACES
+    return {"races": [
+        {"name": n, "speed": r["speed"], "darkvision": r["darkvision"],
+         "subraces": r["subraces"], "size": r["size"]}
+        for n, r in RACES.items()
+    ]}
+
+
+@app.get("/classes")
+def list_classes():
+    """可选职业列表（前端角色创建下拉用）。
+
+    返回生命骰/护甲受训/施法属性/子职业，供前端 suggestHP/suggestAC 与
+    施法标记派生；字段名与 data/classes.py 对齐。
+    """
+    from ..data.classes import CLASSES
+    return {"classes": [
+        {"name": n, "hit_die": c["hit_die"],
+         "armor_training": c["armor_training"],
+         "spellcasting": c["spellcasting"],
+         "subclasses": c["subclasses"],
+         "subclass_level": c["subclass_level"]}
+        for n, c in CLASSES.items()
+    ]}
+
+
+@app.get("/roll-abilities")
+def roll_abilities():
+    """掷骰生成六项属性（4d6弃最低×6），供前端掷骰模式。
+
+    规则: 第三步：确定属性值.htm 随机生成
+    """
+    from ..brain.char_create import roll_ability_scores
+    return {"values": roll_ability_scores()}
+
+
+@app.get("/backgrounds")
+def list_backgrounds():
+    """可选背景列表（前端角色创建下拉用）。
+
+    返回属性加成/起源专长/技能熟练/工具熟练/起始装备，
+    字段名与 data/backgrounds.py 对齐。
+    """
+    from ..data.backgrounds import BACKGROUNDS
+    return {"backgrounds": [
+        {"name": n, "ability_scores": b["ability_scores"],
+         "feat": b["feat"], "skill_prof": b["skill_prof"],
+         "tool_prof": b["tool_prof"], "equipment": b["equipment"]}
+        for n, b in BACKGROUNDS.items()
+    ]}
+
+
+@app.get("/spells")
+def list_spells(level: int | None = None):
+    """法术列表（前端法术书用）。
+
+    Query params:
+        level: 按环阶过滤
+
+    Returns:
+        {"spells": [{name, level, school, casting_time, range,
+                     duration, components, description}], "count": N}
+    """
+    from ..data.spells import SPELLS
+    out = []
+    for s in SPELLS.values():
+        if level is not None and s.level != level:
+            continue
+        out.append({
+            "name": s.name, "level": s.level, "school": s.school,
+            "casting_time": s.casting_time, "range": s.range,
+            "duration": s.duration,
+            "components": sorted(s.components),
+            "description": getattr(s, "description", ""),
+        })
+    return {"spells": out, "count": len(out)}
+
+
+class RestIn(BaseModel):
+    type: str = "short"   # short | long
+
+
+@app.post("/character/{cid}/rest")
+def rest_character(cid: int, req: RestIn):
+    """执行短休/长休，应用结果到角色卡。
+
+    规则: R-GLS-014 短休 / R-GLS-015 长休
+    说明:
+      - 短休：消耗生命骰恢复HP，恢复职业特性使用次数
+      - 长休：恢复全部HP、生命骰、法术位，力竭-1，清空临时HP
+    """
+    from ..brain import rest as rest_mod
+    ch = store.get_character(cid)
+    if ch is None:
+        raise HTTPException(status_code=404, detail={"error": "not found", "message": f"角色 {cid} 不存在"})
+    if req.type == "short":
+        result = rest_mod.short_rest(ch)
+    elif req.type == "long":
+        result = rest_mod.long_rest(ch)
+    else:
+        raise HTTPException(status_code=422, detail={"error": "invalid_type", "message": f"未知休息类型: {req.type}"})
+    # 应用结果到角色卡
+    if result.get("hp_restored"):
+        ch.hp_current = min(ch.hp_max, ch.hp_current + result["hp_restored"])
+    if result.get("exhaustion_reduced") is not None:
+        ch.exhaustion = max(0, ch.exhaustion - result["exhaustion_reduced"])
+    if result.get("temp_hp_cleared"):
+        ch.temp_hp = 0
+    if result.get("spell_slots_restored"):
+        from ..data import spells as _sp
+        ch.set_spell_slots(_sp.max_spell_slots(ch.level))
+    ch = store.save_character(ch)
+    return {"success": result.get("success", True), "type": req.type,
+            "hp_restored": result.get("hp_restored", 0),
+            "exhaustion_reduced": result.get("exhaustion_reduced", 0),
+            "spell_slots_restored": result.get("spell_slots_restored", False)}
 
 
 @app.get("/monster/{name}")
@@ -389,11 +572,11 @@ def get_monster(name: str):
     try:
         res = indexer.search(name, limit=1)
     except Exception:
-        return {"error": "collection not available"}
+        raise HTTPException(status_code=503, detail={"error": "collection not available", "message": "规则库索引不可用"})
     if res:
         return {"name": res[0].get("title", ""), "body": res[0].get("body", "")[:800],
                 "tag": res[0].get("tag", ""), "path": res[0].get("path", "")}
-    return {"error": "not found"}
+    raise HTTPException(status_code=404, detail={"error": "not found", "message": f"未找到怪物: {name}"})
 
 
 # ── WebSocket 实时同桌 ──────────────────────────────────────────────────────
@@ -417,6 +600,15 @@ def join_campaign(req: JoinIn):
                           level=req.level, campaign_id=req.campaign_id)
     ch.set_abilities(req.abilities)
     ch.hp_max = req.hp_max; ch.hp_current = req.hp_max; ch.ac = req.ac
+    # 施法职业按等级初始化法术位（与 /character 一致；
+    # 否则经 /join 进入的施法者 spell_slots 为空 → 施法总被拒）
+    try:
+        from ..data import classes as _cls, spells as _sp
+        _cdef = _cls.get_class(req.char_class)
+        if _cdef and _cdef.get("spellcasting"):
+            ch.set_spell_slots(_sp.max_spell_slots(req.level))
+    except Exception:
+        pass
     from ..data.equipment import default_weapon_for_class
     ch.equipped_weapon = req.equipped_weapon or default_weapon_for_class(req.char_class)
     ch = store.save_character(ch)
@@ -473,7 +665,7 @@ def get_campaign_state(campaign_id: int):
     from ..brain import world
     camp = store.get_campaign(campaign_id)
     if not camp:
-        return {"error": "not found"}
+        raise HTTPException(status_code=404, detail={"error": "not_found", "message": f"战役 {campaign_id} 不存在"})
     chars = store.list_characters(campaign_id)
     scene = world.get_scene(campaign_id)
     try:
@@ -602,7 +794,7 @@ def list_feats_api(category: Optional[str] = None):
     from ..data import feats as F
     valid_cats = set(F.feat_categories())
     if category is not None and category not in valid_cats:
-        return {"error": f"未知分类 {category!r}，可选: {sorted(valid_cats)}"}
+        raise HTTPException(status_code=400, detail={"error": "invalid_request", "message": f"未知分类 {category!r}，可选: {sorted(valid_cats)}"})
     return {"feats": F.list_feats(category), "count": len(F.list_feats(category))}
 
 
@@ -619,13 +811,13 @@ def add_feat(cid: int, req: FeatIn):
     from ..data import feats as F
     ch = store.get_character(cid)
     if ch is None:
-        return {"error": f"角色 {cid} 不存在"}
+        raise HTTPException(status_code=404, detail={"error": "not found", "message": f"角色 {cid} 不存在"})
     feat = F.get_feat(req.feat_name)
     if feat is None:
-        return {"error": f"未知专长 {req.feat_name!r}"}
+        raise HTTPException(status_code=400, detail={"error": "invalid_request", "message": f"未知专长 {req.feat_name!r}"})
     current = ch.feats
     if req.feat_name in current and not feat["repeatable"]:
-        return {"error": f"专长 {req.feat_name!r} 不可重复选择"}
+        raise HTTPException(status_code=400, detail={"error": "invalid_request", "message": f"专长 {req.feat_name!r} 不可重复选择"})
     if req.feat_name not in current:
         current.append(req.feat_name)
     ch.set_feats(current)
@@ -654,7 +846,7 @@ def available_feats_api(cid: int):
     from ..brain import levelup as lu
     ch = store.get_character(cid)
     if ch is None:
-        return {"error": f"角色 {cid} 不存在"}
+        raise HTTPException(status_code=404, detail={"error": "not found", "message": f"角色 {cid} 不存在"})
     char_dict = {
         "level": ch.level,
         "feats": ch.feats,
@@ -690,16 +882,17 @@ def select_feat_api(cid: int, req: SelectFeatIn):
     from ..brain import levelup as lu
     ch = store.get_character(cid)
     if ch is None:
-        return {"error": f"角色 {cid} 不存在"}
+        raise HTTPException(status_code=404, detail={"error": "not found", "message": f"角色 {cid} 不存在"})
 
     char_dict = {
         "level": ch.level,
         "feats": list(ch.feats),
+        "asi_taken": getattr(ch, "asi_taken", False),
     }
     try:
         result = lu.select_feat(char_dict, req.feat_name)
     except ValueError as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=400, detail={"error": "invalid_request", "message": str(e)})
 
     # 同步回 Character 并持久化
     ch.set_feats(result["feats"])
@@ -785,6 +978,35 @@ class RoomJoinIn(BaseModel):
     is_host: bool = False       # 房主首次加入时为 True
 
 
+# 房间错误码 → HTTP 状态码/中文描述（前端按 detail={"error", "message"} 契约对接）
+_ROOM_ERR_STATUS = {
+    "room_not_found": 404,
+    "player_not_found": 404,
+    "wrong_password": 400,
+    "name_taken": 400,
+    "room_full": 409,
+    "cannot_kick_host": 400,
+    "not_host": 403,
+}
+_ROOM_ERR_MSG = {
+    "room_not_found": "房间号不存在",
+    "player_not_found": "玩家不存在",
+    "wrong_password": "密码错误",
+    "name_taken": "名字已被占用",
+    "room_full": "房间已满",
+    "cannot_kick_host": "不能踢出房主",
+    "not_host": "只有房主可以执行此操作",
+}
+
+
+def _room_http_error(code: str) -> HTTPException:
+    """将房间错误码转为统一形态的 HTTPException。"""
+    return HTTPException(
+        status_code=_ROOM_ERR_STATUS.get(code, 400),
+        detail={"error": code, "message": _ROOM_ERR_MSG.get(code, code)},
+    )
+
+
 @app.post("/room/join")
 def join_room(req: RoomJoinIn):
     """玩家加入房间：创建角色卡并加入房间。
@@ -797,7 +1019,7 @@ def join_room(req: RoomJoinIn):
     """
     room = room_manager.get_room(req.room_id)
     if room is None:
-        return {"error": "room_not_found"}
+        raise _room_http_error("room_not_found")
 
     # 先创建角色卡（关联到房间对应的战役）
     ch = models.Character(name=req.name, race=req.race,
@@ -822,7 +1044,7 @@ def join_room(req: RoomJoinIn):
         if not result["ok"]:
             # 加入失败，删除刚创建的角色卡
             store.delete_character(ch.id)
-            return {"error": result["error"]}
+            raise _room_http_error(result["error"])
 
     return {
         "room_id": req.room_id,
@@ -839,7 +1061,7 @@ def get_room_status(room_id: str):
     """获取房间状态（不含密码）。"""
     room = room_manager.get_room(room_id)
     if room is None:
-        return {"error": "room_not_found"}
+        raise _room_http_error("room_not_found")
     return room.to_dict()
 
 
@@ -852,24 +1074,28 @@ def list_rooms():
 class KickIn(BaseModel):
     """房主踢出玩家。"""
     target_name: str
+    requester_name: str
 
 
 @app.post("/room/{room_id}/kick")
 def kick_player(room_id: str, req: KickIn):
     """房主踢出指定玩家。
 
-    说明: 此处用 requester_ws=None 表示非WebSocket上下文调用，
-          实际踢人权限校验应在WebSocket消息处理中完成。
+    服务端校验: requester_name 必须是当前房主（前端 UI 隐藏可被绕过，见评审 A1）。
     """
     room = room_manager.get_room(room_id)
     if room is None:
-        return {"error": "room_not_found"}
+        raise _room_http_error("room_not_found")
+    # 房主校验
+    host = room.get_host()
+    if host is None or host["name"] != req.requester_name:
+        raise _room_http_error("not_host")
     # 找到目标玩家
     target = room.find_player_by_name(req.target_name)
     if target is None:
-        return {"error": "player_not_found"}
+        raise _room_http_error("player_not_found")
     if target["is_host"]:
-        return {"error": "cannot_kick_host"}
+        raise _room_http_error("cannot_kick_host")
     # 从房间移除
     room.players = [p for p in room.players
                     if p["name"] != req.target_name]
@@ -879,17 +1105,25 @@ def kick_player(room_id: str, req: KickIn):
 class TransferIn(BaseModel):
     """房主转让权限。"""
     target_name: str
+    requester_name: str
 
 
 @app.post("/room/{room_id}/transfer")
 def transfer_host(room_id: str, req: TransferIn):
-    """房主将房主权限转让给另一玩家。"""
+    """房主将房主权限转让给另一玩家。
+
+    服务端校验: requester_name 必须是当前房主（前端 UI 隐藏可被绕过，见评审 A1）。
+    """
     room = room_manager.get_room(room_id)
     if room is None:
-        return {"error": "room_not_found"}
+        raise _room_http_error("room_not_found")
+    # 房主校验
+    host = room.get_host()
+    if host is None or host["name"] != req.requester_name:
+        raise _room_http_error("not_host")
     target = room.find_player_by_name(req.target_name)
     if target is None:
-        return {"error": "player_not_found"}
+        raise _room_http_error("player_not_found")
     # 转让
     for p in room.players:
         p["is_host"] = (p["name"] == req.target_name)
@@ -904,7 +1138,7 @@ from ..brain import loot_distribution as loot
 class LootPoolIn(BaseModel):
     """生成战利品池。"""
     campaign_id: int
-    monster_crs: list[int]           # 击败怪物的CR列表
+    monster_crs: list[float]         # 击败怪物的CR列表（支持 0.5 等小数 CR）
     combat_round: int = 0
 
 
@@ -983,7 +1217,7 @@ def distribute_loot(req: LootDistributeIn):
     try:
         mode = loot.DistributionMode(req.mode)
     except ValueError:
-        return {"error": f"未知分配模式 {req.mode!r}"}
+        raise HTTPException(status_code=400, detail={"error": "invalid_request", "message": f"未知分配模式 {req.mode!r}"})
 
     # 执行分配
     record = loot.distribute_loot(
@@ -1237,4 +1471,4 @@ combined_app = socketio.ASGIApp(sio, app)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(combined_app, host="0.0.0.0", port=9000)
+    uvicorn.run(combined_app, host="0.0.0.0", port=8080)

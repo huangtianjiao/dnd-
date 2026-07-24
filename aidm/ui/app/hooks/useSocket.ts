@@ -6,6 +6,87 @@ import type { LogEntry, SceneData, CombatData, CharacterSheet } from "../lib/typ
 
 const API = process.env.NEXT_PUBLIC_API || "";
 
+/**
+ * 按 dice.kind 分派格式化行动骰子日志。
+ * 后端 graph.run 返回 20+ 种 kind（攻击/法术/检定/休息/升级/移动…），字段各异；
+ * 统一在此分派，避免前端无脑按 d20/hit 渲染导致属性检定显示"未中"、
+ * 治疗法术显示"d20=undefined"等问题。返回 null 表示不写 dice 日志行。
+ */
+function formatDice(player: string, d: any): string | null {
+  if (!d || typeof d !== "object") return null;
+  const pfx = `[${player}]`;
+  const kind: string = d.kind || "";
+  switch (kind) {
+    case "attack":
+    case "opportunity_attack": {
+      let s = `${pfx} 攻击 d20=${d.d20} ${d.hit ? "命中" : "未中"}${d.crit ? " 重击" : ""}`;
+      if (d.damage) s += ` 伤${d.damage}${d.damage_type ? `(${d.damage_type})` : ""}`;
+      if (d.weapon) s += ` ${d.weapon}`;
+      return s;
+    }
+    case "cast": {
+      // 豁免类法术
+      if (d.save_success !== undefined) {
+        let s = `${pfx} ${d.spell_name || "法术"} 豁免${d.save_success ? "成功" : "失败"}`;
+        if (d.damage) s += ` 伤${d.damage}${d.damage_type ? `(${d.damage_type})` : ""}`;
+        return s;
+      }
+      // 治疗类法术
+      if (d.damage_type === "治疗" || d.heal != null) {
+        return `${pfx} ${d.spell_name || "治疗法术"} 治疗${d.damage ?? d.heal ?? 0}`;
+      }
+      // 攻击检定型法术（有 d20）
+      if (d.d20 !== undefined) {
+        let s = `${pfx} ${d.spell_name || "法术"} d20=${d.d20} ${d.hit ? "命中" : "未中"}${d.crit ? " 重击" : ""}`;
+        if (d.damage) s += ` 伤${d.damage}${d.damage_type ? `(${d.damage_type})` : ""}`;
+        return s;
+      }
+      // 自动命中无骰
+      let s = `${pfx} ${d.spell_name || "法术"} 命中`;
+      if (d.damage) s += ` 伤${d.damage}${d.damage_type ? `(${d.damage_type})` : ""}`;
+      return s;
+    }
+    case "ability_check":
+    case "explore":
+    case "hide":
+    case "search":
+    case "grapple":
+    case "shove":
+    case "study":
+    case "social": {
+      const label = d.ability || d.skill || kind;
+      let s = `${pfx} ${label} d20=${d.d20}=${d.check_total} ${d.success ? "成功" : "失败"}`;
+      if (d.dc) s += `(DC${d.dc})`;
+      return s;
+    }
+    case "rest":
+      return d.hp_restored ? `${pfx} 休息 恢复${d.hp_restored}HP` : `${pfx} 休息`;
+    case "levelup":
+      return `${pfx} 升级→${d.new_level}级 +${d.hp_gained || 0}HP`;
+    case "travel": {
+      let s = `${pfx} 旅行 ${d.nav_result || ""}`;
+      if (d.encounter_result) s += ` 遭遇:${d.encounter_result}`;
+      return s.trim();
+    }
+    case "start_combat":
+      return `${pfx} 先攻 ${(d.initiative_order || []).map((x: any) => `${x.name}=${x.init}`).join(", ")}`;
+    case "end_combat":
+      return `${pfx} 战斗结束`;
+    case "dash":
+    case "dodge":
+    case "disengage":
+    case "help":
+    case "ready":
+    case "use_item":
+      return `${pfx} ${kind} ${d.effect || d.item || ""}`.trim();
+    default:
+      // 未知 kind 但含 d20：退化显示，避免信息丢失
+      if (d.d20 !== undefined)
+        return `${pfx} d20=${d.d20}${d.hit !== undefined ? (d.hit ? " 命中" : " 未中") : ""}${d.damage ? ` 伤${d.damage}` : ""}`;
+      return null;
+  }
+}
+
 interface UseSocketOptions {
   onLog: (entry: LogEntry) => void;
   onScene: (scene: SceneData) => void;
@@ -13,6 +94,10 @@ interface UseSocketOptions {
   onChoices: (choices: string[]) => void;
   onCharacterUpdate: () => void;
   onToast: (msg: string, type?: string) => void;
+  /** 服务端主动断开（如房间关闭）时回调 */
+  onServerDisconnect?: () => void;
+  /** 战斗结束事件（combat_end）回调，用于清空本地战斗态 */
+  onCombatEnd?: () => void;
 }
 
 export function useSocket(opts: UseSocketOptions) {
@@ -21,7 +106,7 @@ export function useSocket(opts: UseSocketOptions) {
   optsRef.current = opts;
 
   const connectWS = useCallback(
-    (cid: number, chId: number, name: string) => {
+    (cid: number, chId: number, name: string, role?: string) => {
       if (socketRef.current) socketRef.current.disconnect();
 
       const o = optsRef.current;
@@ -29,12 +114,23 @@ export function useSocket(opts: UseSocketOptions) {
         transports: ["websocket"],
         reconnection: true,
         reconnectionDelay: 1000,
-        reconnectionAttempts: Infinity,
-        query: { campaign_id: cid, character_id: chId, name },
+        reconnectionDelayMax: 10000,
+        reconnectionAttempts: 30,
+        query: { campaign_id: cid, character_id: chId, name, ...(role ? { role } : {}) },
       });
 
       socket.on("connect", () => o.onLog({ c: "meta", t: "(已连接)" }));
-      socket.on("disconnect", () => o.onLog({ c: "meta", t: "(连接断开，尝试重连...)" }));
+      socket.on("disconnect", (reason: string) => {
+        if (reason === "io server disconnect") {
+          o.onToast("房间已关闭，请重新加入", "warn");
+          o.onServerDisconnect?.();
+        } else if (reason === "io client disconnect") {
+          // 客户端主动断开（如切换房间/退出），不会自动重连
+          o.onLog({ c: "meta", t: "(已断开连接)" });
+        } else {
+          o.onLog({ c: "meta", t: "(连接断开，重连中...)" });
+        }
+      });
       socket.on("connect_error", (err: Error) => o.onToast(`连接错误: ${err.message}`, "error"));
 
       socket.on("join", (d: any) => o.onLog({ c: "meta", t: `${d.name} 加入了` }));
@@ -47,11 +143,8 @@ export function useSocket(opts: UseSocketOptions) {
           t: isMe ? d.narration : `【${d.player}】 ${d.narration}`,
         });
         if (d.dice) {
-          const dd = d.dice;
-          o.onLog({
-            c: "dice",
-            t: `[${d.player}] d20=${dd.d20} ${dd.hit ? "命中" : "未中"}${dd.crit ? " 重击" : ""}${dd.damage ? ` 伤${dd.damage}` : ""}`,
-          });
+          const t = formatDice(d.player, d.dice);
+          if (t) o.onLog({ c: "dice", t });
         }
         if (d.action_options) o.onChoices(d.action_options);
         o.onCharacterUpdate();
@@ -66,8 +159,11 @@ export function useSocket(opts: UseSocketOptions) {
       socket.on("turn_advanced", (d: any) => o.onLog({ c: "meta", t: `轮到 ${d.next || "?"}` }));
       socket.on("round_end", (d: any) => o.onLog({ c: "meta", t: `第 ${d.round} 轮结束` }));
       socket.on("monster_turn", (d: any) => o.onLog({ c: "meta", t: `👾 ${d.monster} 的回合` }));
+      socket.on("player_ready", (d: any) => o.onLog({ c: "meta", t: `✓ ${d.player} 已准备` }));
+      socket.on("monster_action", (d: any) => o.onLog({ c: "npc", t: `👾 ${d.monster}: ${JSON.stringify(d.result || {})}` }));
       socket.on("combat_end", (d: any) => {
         o.onLog({ c: "system", t: `⚔️ 战斗结束: ${d.outcome || ""}` });
+        o.onCombatEnd?.();
       });
       socket.on("character_update", () => o.onCharacterUpdate());
       socket.on("error", (d: any) => o.onToast(d.message || "未知错误", "error"));
@@ -83,6 +179,31 @@ export function useSocket(opts: UseSocketOptions) {
     return true;
   }, []);
 
+  /** 结束自己的回合，推进先攻序列（后端 ws.on_end_turn）。 */
+  const endTurn = useCallback(() => {
+    socketRef.current?.emit("end_turn", {});
+  }, []);
+
+  /** 标记自己准备就绪（后端 ws.on_ready → player_ready 广播）。 */
+  const ready = useCallback(() => {
+    socketRef.current?.emit("ready", {});
+  }, []);
+
+  /** DM: 通知怪物回合开始（后端 ws.on_monster_turn）。 */
+  const dmMonsterTurn = useCallback((monsterName: string) => {
+    socketRef.current?.emit("monster_turn", { monster_name: monsterName });
+  }, []);
+
+  /** DM: 推送怪物行动结果（后端 ws.on_monster_action）。 */
+  const dmMonsterAction = useCallback((monsterName: string, actionResult: any) => {
+    socketRef.current?.emit("monster_action", { monster_name: monsterName, action_result: actionResult });
+  }, []);
+
+  /** DM: 结束战斗（后端 ws.on_combat_end）。 */
+  const dmCombatEnd = useCallback((outcome: string = "victory") => {
+    socketRef.current?.emit("combat_end", { outcome });
+  }, []);
+
   const disconnect = useCallback(() => {
     if (socketRef.current) {
       socketRef.current.disconnect();
@@ -90,5 +211,5 @@ export function useSocket(opts: UseSocketOptions) {
     }
   }, []);
 
-  return { connectWS, send, disconnect, socketRef };
+  return { connectWS, send, endTurn, ready, dmMonsterTurn, dmMonsterAction, dmCombatEnd, disconnect, socketRef };
 }

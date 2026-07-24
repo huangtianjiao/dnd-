@@ -162,8 +162,15 @@ def _derive_for_character(character: Any, attr: str, default: Any) -> Any:
             return get_class(cls_name)["hit_die"]
         except Exception:
             return default
-    # hit_dice / max_hit_dice → 等级（假定全部生命骰可用，上限=等级）
-    if attr in ("hit_dice", "max_hit_dice"):
+    # hit_dice → 可用生命骰数量（Character.hit_dice_current，默认回退到等级）
+    if attr == "hit_dice":
+        hd = getattr(character, "hit_dice_current", None)
+        if hd is not None and hd > 0:
+            return hd
+        # 回退：未初始化时按等级处理
+        return getattr(character, "level", default)
+    # max_hit_dice → 生命骰上限（=等级）
+    if attr == "max_hit_dice":
         return getattr(character, "level", default)
     # max_spell_slots → Character 无上限追踪；以当前 spell_slots 非空判定施法者
     if attr == "max_spell_slots":

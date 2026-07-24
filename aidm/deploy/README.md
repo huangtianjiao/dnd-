@@ -43,12 +43,13 @@ PYTHONPATH=src python -m aidm.knowledge.indexer
   ```
   > 若提示权限不足，先 `chmod +x deploy/start.sh`，或用 `bash deploy/start.sh`。
 
-### 前端（Next.js dev，端口 4000）
+### 前端（Next.js dev，端口 3000）
 ```bash
 cd D:/game/dnd/aidm/ui
 npm run dev
 ```
-浏览器访问 http://localhost:4000 （指向后端 :8080，见 `ui/.env.local`）。
+浏览器访问 http://localhost:3000 （`ui/package.json` 为 `next dev -p 3000`）。
+前端通过 `NEXT_PUBLIC_API`（见 `ui/.env.local`，默认 `http://localhost:8080`）关联后端：后端 8080、前端 3000。
 
 ### 静态 HTML 前端（无需 Node）
 由后端 `/static` 自动托管，直接访问 http://localhost:8080
@@ -69,8 +70,9 @@ npm run build
 
 后端生产模式（去掉 `--reload`）：
 ```bash
-PYTHONPATH=src python -m uvicorn aidm.api.main:app --host 0.0.0.0 --port 8080
+PYTHONPATH=src python -m uvicorn aidm.api.main:combined_app --host 0.0.0.0 --port 8080
 ```
+> 注意入口必须是 `combined_app`（Socket.IO ASGI 包装），用 `app` 启动会导致 WebSocket 同桌不可用。
 
 存档即文件：`aidm/data/saves/save.db`（SQLite），备份直接拷贝该文件即可。
 

@@ -485,7 +485,6 @@ def _apply_rest_to_character(ch, result: dict) -> None:
         - 法术位恢复至上限（长休，施法职业，R-SPL-003）→ ch.set_spell_slots(max)
 
     暂不可落盘（Character 模型无对应字段，需后续扩展）：
-        - 生命骰消耗/恢复（无 hit_dice 字段）
         - 职业特性使用次数恢复（无特性用量追踪）
     """
     if not result.get("success"):
@@ -495,6 +494,12 @@ def _apply_rest_to_character(ch, result: dict) -> None:
     hp_restored = int(result.get("hp_restored", 0))
     if hp_restored:
         ch.hp_current = min(ch.hp_max, ch.hp_current + hp_restored)
+    # 生命骰消耗（短休）
+    if rtype == "short":
+        spent = int(result.get("hit_dice_spent", 0))
+        remaining = int(result.get("hit_dice_remaining", 0))
+        if hasattr(ch, "hit_dice_current"):
+            ch.hit_dice_current = max(0, remaining)
     if rtype == "long":
         # 力竭 -1（至少 0）
         exh = int(result.get("exhaustion_reduced", 0))
@@ -511,6 +516,9 @@ def _apply_rest_to_character(ch, result: dict) -> None:
                 ch.set_spell_slots(_sp.max_spell_slots(ch.level))
             except Exception as e:
                 _log.debug("长休恢复法术位失败 cid=%s: %s", getattr(ch, "id", "?"), e)
+        # 长休恢复全部生命骰（R-GLS-015）
+        if hasattr(ch, "hit_dice_current"):
+            ch.hit_dice_current = ch.level
 
 
 # NPC 态度同义词归一化表（LLM 可能返回中文/非标准串）

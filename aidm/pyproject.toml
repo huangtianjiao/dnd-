@@ -1,0 +1,30 @@
+# ─────────────────────────────────────────────────────────────
+# AIDM 项目配置（ruff lint + pytest）
+# 位于 aidm/ 目录，同时被 ruff 和 pytest 读取
+# ─────────────────────────────────────────────────────────────
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# 启用规则集：pyflakes(F)+pycodestyle(E,W)+isort(I)+pyupgrade(UP)
+select = ["E", "W", "F", "I", "UP"]
+# 忽略：E501 行长由 line-length 控制，暂不强制折行
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["aidm"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# ─── pytest ───────────────────────────────────────────────────
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

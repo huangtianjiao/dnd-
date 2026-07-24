@@ -9,6 +9,6 @@ set PYTHONPATH=src
 if "%PY%"=="" set PY=python
 
 echo 启动 AIDM 后端 http://0.0.0.0:8080 (reload 模式)...
-%PY% -m uvicorn aidm.api.main:app --host 0.0.0.0 --port 8080 --reload
+%PY% -m uvicorn aidm.api.main:combined_app --host 0.0.0.0 --port 8080 --reload
 
 endlocal

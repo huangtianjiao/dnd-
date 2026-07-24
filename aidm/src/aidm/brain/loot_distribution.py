@@ -128,14 +128,14 @@ _ITEM_TABLE_BY_CR = {
 }
 
 
-def _cr_bucket(cr: int) -> str:
+def _cr_bucket(cr: float) -> str:
     """CR → low/mid 桶。"""
     if cr <= 4:
         return "low"
     return "mid"
 
 
-def generate_loot_pool(campaign_id: int, monster_crs: list[int],
+def generate_loot_pool(campaign_id: int, monster_crs: list[float],
                        combat_round: int = 0) -> LootPool:
     """根据击败怪物的 CR 列表生成战利品池。
 
@@ -144,6 +144,7 @@ def generate_loot_pool(campaign_id: int, monster_crs: list[int],
       - 金币: 每个 CR 查表掷一次区间随机值。
       - 物品: 每个 CR 按概率表掷一次是否掉落及掉什么。
       - 高 CR (>10) 按 CR 10 处理（保守上限）。
+      - 小数 CR（如 0.5）向下取整后查表（0.5 按 CR 0）。
     """
     import secrets as _sec
     pool_id = f"pool_{campaign_id}_{combat_round}_{_sec.token_hex(3)}"
@@ -152,7 +153,7 @@ def generate_loot_pool(campaign_id: int, monster_crs: list[int],
 
     for cr in monster_crs:
         # 金币
-        clamped = max(0, min(cr, 10))
+        clamped = int(max(0, min(cr, 10)))
         lo, hi = _GOLD_BY_CR[clamped]
         # 区间内均匀随机
         gold_roll = lo + (_sec.randbelow(hi - lo + 1) if hi > lo else 0)

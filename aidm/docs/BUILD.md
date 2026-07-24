@@ -75,7 +75,7 @@ PYTHONPATH=src $PY -m aidm.knowledge.eval_retrieval  # 纯向量 vs hybrid recal
 PYTHONPATH=src $PY -m aidm.brain.graph
 # P4 CLI 跑团 / API 服务（需 LLM API）
 PYTHONPATH=src $PY -m aidm.cli
-PYTHONPATH=src $PY -m aidm.api.main
+PYTHONPATH=src $PY -m uvicorn aidm.api.main:combined_app --host 0.0.0.0 --port 8080
 ```
 
 ## 5. 分阶段搭建路线图（P0→P5）

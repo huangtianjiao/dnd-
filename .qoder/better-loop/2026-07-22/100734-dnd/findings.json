@@ -1,0 +1,179 @@
+{
+  "summary": {
+    "projectName": "dnd",
+    "locale": "zh-CN",
+    "modelId": "agent-work-loop-v4",
+    "reportContractVersion": 24,
+    "overview": "AIDM 是一个 D&D 5E 电子跑团系统，以确定性规则引擎执行骰子判定、LLM 负责叙事。项目有完善的 README、测试套件（8 文件约 138+ 用例）和精确依赖锁定，但缺少 agent 专用入口、CI 验收门禁、lint/typecheck 配置和生命周期护栏。本次审查为零会话证据（session-limited），所有任务行为不可观测，结论基于项目静态证据。",
+    "aiAgentPractice": {
+      "inspectedSurfaces": [
+        "Rules",
+        "Skills",
+        "Custom Agents"
+      ],
+      "coverageRows": [
+        {
+          "surface": "Rules",
+          "scopes": [
+            "Project"
+          ],
+          "count": 0,
+          "paths": []
+        },
+        {
+          "surface": "Skills",
+          "scopes": [
+            "Project"
+          ],
+          "count": 0,
+          "paths": []
+        },
+        {
+          "surface": "Custom Agents",
+          "scopes": [
+            "Project"
+          ],
+          "count": 0,
+          "paths": []
+        }
+      ]
+    },
+    "suggestions": [],
+    "assignmentSummaries": [],
+    "dimensions": [
+      {
+        "id": "task-understanding",
+        "label": "任务理解",
+        "score": 55,
+        "summary": "README 和 9 份文档提供项目上下文，但无 agent 专用入口和风险路由。",
+        "findingRefs": [
+          "no-agent-entrypoint"
+        ]
+      },
+      {
+        "id": "controlled-execution",
+        "label": "可控执行",
+        "score": 48,
+        "summary": "启动脚本和依赖锁定存在，但无运行时版本锁定、doctor 命令和权限边界。",
+        "findingRefs": [
+          "no-runtime-version-pin",
+          "no-agent-guardrails"
+        ]
+      },
+      {
+        "id": "change-validation",
+        "label": "改动验证",
+        "score": 52,
+        "summary": "8 个测试文件可手动运行，但无 lint/typecheck/CI 配置，验证未连接到变更闭环。",
+        "findingRefs": [
+          "no-lint-typecheck-config"
+        ]
+      },
+      {
+        "id": "reliable-delivery",
+        "label": "可靠交付",
+        "score": 42,
+        "summary": "aidm 无 CI 验收门禁，分支保护仅为文字约定，无回滚或恢复机制。",
+        "findingRefs": [
+          "no-ci-for-aidm"
+        ]
+      },
+      {
+        "id": "learning-capture",
+        "label": "经验沉淀",
+        "score": 35,
+        "summary": "无学习机制，零会话证据使生命周期检测不可评估。",
+        "findingRefs": [
+          "no-learning-mechanism"
+        ]
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "no-agent-entrypoint",
+      "title": "缺少 agent 专用入口文件，任务路由与风险区域无标注",
+      "severity": "Medium",
+      "reason": "仓库无 AGENTS.md、CLAUDE.md 或 .qoder 规则文件；README 面向人类开发者（246 行），未提供 agent 加载路由规则和高风险区域标注。Agent 无法从专用入口快速定位任务上下文、确认验收边界或识别破坏性操作区域（如 saves/ 用户存档、rules.db/ 可重建数据、.env 含 API Key），需遍历仓库推断结构。",
+      "expectedOutput": [
+        "新增 aidm/AGENTS.md，包含 agent 任务路由表和高风险区域标注"
+      ],
+      "expectedArtifact": "AGENTS.md",
+      "aiFixPrompt": "/better-loop fix this issue\n\n在 aidm/ 根目录新增 AGENTS.md（80-150 行），复用 README 目录树和文档导航表，增加 agent 任务路由（改 engine 跑 engine 自检；改 api 跑 pytest tests/test_api_endpoints.py）和高风险区域标注（saves/、rules.db/、.env）。\n\n## Validation\n\n- 确认 AGENTS.md 存在且包含任务路由表与高风险区域标注\n- 运行一次 engine 自检验证路由命令有效",
+      "dimensionRefs": [
+        "task-understanding"
+      ]
+    },
+    {
+      "id": "no-runtime-version-pin",
+      "title": "无运行时版本锁定文件",
+      "severity": "Low",
+      "reason": "项目无 .python-version、.nvmrc 或 .tool-versions 文件；Python 3.12 和 Node 20+ 仅在 README 文字中提及。Agent 可能使用错误版本导致依赖安装失败，如 sentence-transformers 5.1.0 要求 Python 3.10+、Next.js 14 要求 Node 18+。无版本锁定时环境复现依赖人工经验。",
+      "expectedOutput": [
+        "新增 aidm/.python-version 和 aidm/ui/.nvmrc"
+      ],
+      "expectedArtifact": "Version pin files",
+      "aiFixPrompt": "/better-loop fix this issue\n\n新增运行时版本锁定文件：aidm/.python-version（内容 3.12）和 aidm/ui/.nvmrc（内容 20），使 Agent 可自动选择正确运行时。\n\n## Validation\n\n- 确认两个版本锁定文件存在且内容正确\n- 在干净环境中验证版本可被自动识别",
+      "dimensionRefs": [
+        "controlled-execution"
+      ]
+    },
+    {
+      "id": "no-lint-typecheck-config",
+      "title": "无 lint/typecheck/pytest 配置，代码质量反馈缺失",
+      "severity": "Medium",
+      "reason": "Python 侧无 ruff/mypy/flake8/pyproject.toml；前端 package.json 无 lint/test/typecheck 脚本（尽管 devDependencies 含 TypeScript 5.5.3）；无 pytest 配置文件，测试需手动设置 PYTHONPATH=src。Agent 修改代码后无快速质量反馈，风格和类型错误只能靠测试间接发现，且可能遗忘 PYTHONPATH 导致 import 错误。",
+      "expectedOutput": [
+        "新增 aidm/pyproject.toml 配置 ruff 和 pytest pythonpath=src",
+        "前端 package.json 添加 lint 和 typecheck 脚本"
+      ],
+      "expectedArtifact": "pyproject.toml",
+      "aiFixPrompt": "/better-loop fix this issue\n\n新增 aidm/pyproject.toml 配置 ruff 规则集和 pytest（pythonpath=src），使 pytest tests/ 无需手动设 PYTHONPATH；在 aidm/ui/package.json scripts 中添加 lint 和 typecheck 脚本。\n\n## Validation\n\n- 运行 ruff check src/ 确认 lint 可用\n- 运行 pytest tests/ 确认无需手动 PYTHONPATH\n- 运行 npm run typecheck 确认前端类型检查可用",
+      "dimensionRefs": [
+        "change-validation"
+      ]
+    },
+    {
+      "id": "no-ci-for-aidm",
+      "title": "aidm 项目无 CI 验收门禁",
+      "severity": "High",
+      "reason": "唯一 CI 工作流（5echm_web/.github/workflows/static.yml）仅部署静态内容到 GitHub Pages，不运行任何 lint/test/typecheck；aidm 后端完全无 CI。测试仅在本地手动运行，PR 无自动验证，测试回归无法在合并前被发现。分支保护仅存在于 README 文字约定，无 required status checks 或 CODEOWNERS。",
+      "expectedOutput": [
+        "新增 .github/workflows/aidm-ci.yml，PR 时运行 pytest"
+      ],
+      "expectedArtifact": "CI workflow",
+      "aiFixPrompt": "/better-loop fix this issue\n\n新增 .github/workflows/aidm-ci.yml，在 PR 和 push 到 dev 时运行 pip install -r requirements.txt 和 PYTHONPATH=src python -m pytest tests/，使变更在合并前获得自动验证。\n\n## Validation\n\n- 确认工作流文件存在且触发条件包含 pull_request\n- 确认工作流运行 pytest 并在失败时阻止合并",
+      "dimensionRefs": [
+        "reliable-delivery"
+      ]
+    },
+    {
+      "id": "no-agent-guardrails",
+      "title": "无 agent 生命周期护栏与权限边界",
+      "severity": "Medium",
+      "reason": "仓库无 hooks.json、.qoder hooks、Husky、pre-commit、sandbox 或工具 allowlist。Agent 产生的变更无运行时约束，可执行破坏性操作如删除 saves/ 用户存档、修改 .env 暴露 API Key、直接推送 main。.gitignore 被动排除了敏感文件但无主动拦截机制。",
+      "expectedOutput": [
+        "新增 pre-commit 或 .qoder hooks 配置，对 saves/、.env、rules.db/ 设置防护"
+      ],
+      "expectedArtifact": "Hook config",
+      "aiFixPrompt": "/better-loop fix this issue\n\n新增 .pre-commit-config.yaml 或 .qoder hooks 配置，对 aidm/data/saves/、.env*、aidm/data/rules.db/ 设置 PreToolUse 拦截或 pre-commit 防护，阻止 agent 误改敏感路径。\n\n## Validation\n\n- 确认 hook 配置存在且匹配敏感路径\n- 模拟一次对 .env 的修改确认被拦截",
+      "dimensionRefs": [
+        "controlled-execution"
+      ]
+    },
+    {
+      "id": "no-learning-mechanism",
+      "title": "无学习捕获机制且会话证据不可用",
+      "severity": "Low",
+      "reason": "项目无 AGENTS.md、无 Skills、无 Memory、无重复模式检测；分析器扫描到 0 个项目 Skill、0 个 episode 记录、0 个重复候选。零合格会话使生命周期检测、循环工程和纵向验证均不可评估。审查窗口无法区分重复工作或确认维护漂移，也不构成充分的 clean no-candidate 结果。",
+      "expectedOutput": [
+        "在 AGENTS.md 或项目 Skill 中记录至少一个重复任务模式及其验证方式"
+      ],
+      "expectedArtifact": "Learning mechanism",
+      "aiFixPrompt": "/better-loop fix this issue\n\n在新增的 AGENTS.md 中记录已知的重复任务模式（如规则引擎自检流程、规则库索引重建流程），或配置项目级 Skill 捕获工作流需求，为后续学习捕获建立最小机制。\n\n## Validation\n\n- 确认 AGENTS.md 或 Skill 中记录了至少一个重复任务模式\n- 确认该模式包含触发条件、操作步骤和验证方式",
+      "dimensionRefs": [
+        "learning-capture"
+      ]
+    }
+  ]
+}

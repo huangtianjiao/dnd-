@@ -218,13 +218,14 @@ def test_api_endpoints_e2e():
         assert "演员" in data3["feats"]
         print(f"  选择后专长列表: {data3['feats']}")
 
-        # 再次选择同一非复选专长应返回 error
+        # 再次选择同一非复选专长应返回 400 + 统一错误形态
         resp4 = client.post(f"/character/{cid}/select-feat", json={
             "feat_name": "演员"
         })
-        assert resp4.status_code == 200
-        assert "error" in resp4.json(), "重复选择非复选专长应返回 error"
-        print(f"  重复选择返回: {resp4.json()['error']}")
+        assert resp4.status_code == 400
+        detail = resp4.json().get("detail", {})
+        assert "error" in detail, "重复选择非复选专长应返回 error"
+        print(f"  重复选择返回: {detail}")
 
         # 恢复 store 默认值
         store.DEFAULT_DB = original_default

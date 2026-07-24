@@ -1,0 +1,42 @@
+# AIDM 后端 CI — PR 和 push 到 dev 时运行 pytest + ruff
+name: AIDM CI
+
+on:
+  pull_request:
+    paths:
+      - "aidm/**"
+      - ".github/workflows/aidm-ci.yml"
+  push:
+    branches: ["dev"]
+    paths:
+      - "aidm/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: aidm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: aidm/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install dev tools
+        run: pip install ruff pytest
+
+      - name: Lint (ruff)
+        run: ruff check src/ tests/
+
+      - name: Test (pytest)
+        run: pytest tests/ --tb=short

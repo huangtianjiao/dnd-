@@ -14,7 +14,13 @@ export function CharacterPanel({ character }: { character: CharacterSheet | null
     <>
       <div className="text-center">
         <div className="text-lg font-bold text-amber-400">{character.name}</div>
-        <div className="text-xs text-neutral-500">{character.race} {character.char_class} Lv{character.level}</div>
+        <div className="text-xs text-neutral-500">{character.race} {character.char_class}{character.subclass ? `(${character.subclass})` : ""} Lv{character.level}</div>
+        {character.background && (
+          <div className="text-[10px] text-neutral-500">背景: {character.background}</div>
+        )}
+        {character.alignment && (
+          <div className="text-[10px] text-neutral-500">阵营: {character.alignment}</div>
+        )}
       </div>
 
       {/* HP 条 */}
@@ -57,6 +63,41 @@ export function CharacterPanel({ character }: { character: CharacterSheet | null
           </div>
         ))}
       </div>
+
+      {/* 装备武器 */}
+      {character.equipped_weapon && (
+        <div className="text-[11px] text-neutral-400">
+          🗡️ 武器: <span className="text-amber-400">{character.equipped_weapon}</span>
+        </div>
+      )}
+
+      {/* 生命骰 */}
+      {character.hit_dice_current !== undefined && character.hit_dice_max !== undefined && (
+        <div className="text-[11px] text-neutral-400">
+          🎲 生命骰: <span className="text-amber-400">{character.hit_dice_current}/{character.hit_dice_max}</span>
+        </div>
+      )}
+
+      {/* 法术位（施法职业） */}
+      {character.spell_slots && Object.keys(character.spell_slots).length > 0 && (
+        <div className="text-[11px]">
+          <div className="text-neutral-500 mb-1">法术位</div>
+          <div className="flex flex-wrap gap-1">
+            {Object.entries(character.spell_slots).map(([lvl, rem]) => (
+              <span
+                key={lvl}
+                className={`px-1.5 py-0.5 rounded border ${
+                  rem > 0
+                    ? "bg-purple-950 border-purple-700 text-purple-300"
+                    : "bg-neutral-800 border-neutral-700 text-neutral-600"
+                }`}
+              >
+                {lvl}环:{rem}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 状态条件 */}
       {character.conditions && character.conditions.length > 0 && (

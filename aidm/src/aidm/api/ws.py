@@ -7,7 +7,7 @@
 核心能力:
   1. Socket.IO 房间 — 每个 campaign 自动创建房间 `campaign_{id}`
   2. 会话恢复 — 玩家断线后重连可恢复游戏状态（sio.save_session）
-  3. 房间生命周期 — CampaignRoom 参照 Colyseus Room：空房 30 秒后自动销毁
+  3. 房间生命周期 — CampaignRoom 参照 Colyseus Room：空房默认 120 秒后自动销毁，可用环境变量 ROOM_DISPOSE_DELAY 配置
   4. 权限分层 — DM (is_dm=True) 与普通玩家走同一连接但权限不同
   5. 增量同步 — 只广播变化的状态片段，而非全量状态
   6. 离线消息队列 — 玩家离线期间的消息暂存 Redis，重连后补发
@@ -48,6 +48,19 @@ sio = socketio.AsyncServer(
 )
 
 
+def _parse_dispose_delay(default: float = 120.0) -> float:
+    """安全解析 ROOM_DISPOSE_DELAY 环境变量。
+
+    非法值（非数字）或 <=0 时回退默认值，避免模块导入时直接崩溃。
+    """
+    raw = os.getenv("ROOM_DISPOSE_DELAY", "")
+    try:
+        val = float(raw) if raw.strip() else default
+    except ValueError:
+        return default
+    return val if val > 0 else default
+
+
 # ──────────────────────────────────────────────────────────────────────────
 # Colyseus 风格 Room 生命周期管理（方案E）
 # ──────────────────────────────────────────────────────────────────────────
@@ -81,12 +94,12 @@ class CampaignRoom:
 
     生命周期:
       get_or_create → add_player → ... → remove_player
-      当 players 为空时，调度 30 秒延迟销毁任务
+      当 players 为空时，调度延迟销毁任务（默认 120 秒，可用 ROOM_DISPOSE_DELAY 配置）
     """
 
     rooms: dict[int, "CampaignRoom"] = {}          # campaign_id → room
     _dispose_tasks: dict[int, asyncio.Task] = {}
-    DISPOSE_DELAY: float = 30.0                     # 空房 30 秒后销毁
+    DISPOSE_DELAY: float = _parse_dispose_delay()  # 空房销毁延迟（秒），默认 120，环境变量 ROOM_DISPOSE_DELAY 可覆盖
 
     def __init__(self, campaign_id: int):
         self.campaign_id = campaign_id
@@ -157,7 +170,7 @@ class CampaignRoom:
 
     # —— 销毁调度 ——
     def _schedule_dispose(self) -> None:
-        """30秒后如果房间仍为空，则销毁并清理。"""
+        """DISPOSE_DELAY 秒后如果房间仍为空，则销毁并清理。"""
         # 取消已有任务
         old = self._dispose_tasks.pop(self.campaign_id, None)
         if old and not old.done():
@@ -217,8 +230,13 @@ async def connect(sid, environ, auth=None):
     连接参数通过 query string 传递:
       campaign_id=123&character_id=456&name=阿拉贡&role=player|dm
     """
+    import urllib.parse
     qs = environ.get("QUERY_STRING", "")
-    params = dict(pair.split("=", 1) for pair in qs.split("&") if "=" in pair)
+    # unquote：socket.io-client 会把中文 name 做 URL 编码，
+    # 否则 join/leave/result 等事件里显示为 %E9... 乱码
+    params = {k: urllib.parse.unquote(v)
+              for pair in qs.split("&") if "=" in pair
+              for k, v in (pair.split("=", 1),)}
 
     try:
         campaign_id = int(params.get("campaign_id", "0"))

@@ -94,12 +94,24 @@ class CheckResult:
 
 
 def _d20_check_core(mod, prof, proficient, target, advantage, disadvantage, circ=0) -> CheckResult:
-    """R-CHK-001 D20 检定三步流程的内部实现（不含天然 20/1 特殊）。"""
+    """R-CHK-001 D20 检定三步流程的内部实现。
+
+    2024 PHB 规则: 天然 20 在任何 d20 检定中都是自动成功，
+    天然 1 都是自动失败（出处: 玩家手册2024/进行游戏/d20检定.htm）。
+    """
     r = dice.roll_d20(advantage, disadvantage)        # R-CHK-004/005 优劣势
     prof_add = prof if proficient else 0              # R-CHK-016 熟练只加一次
     mod_total = mod + prof_add + circ                 # 属性调整值 + 熟练加值 + 临时加值
     total = r.used + mod_total                        # R-CHK-001 step2: 加调整值
-    success = total >= target                         # R-CHK-001 step3: 比目标数值（≥则成功）
+
+    # 2024 PHB: 天然 20 自动成功，天然 1 自动失败
+    if r.used == 20:
+        success = True
+    elif r.used == 1:
+        success = False
+    else:
+        success = total >= target                     # R-CHK-001 step3: 比目标数值（≥则成功）
+
     return CheckResult(
         success=success, total=total, d20=r.used,
         rolls=list(r.rolls), mode=r.mode,

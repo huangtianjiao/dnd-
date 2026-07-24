@@ -101,7 +101,7 @@ git push origin feature/user-login
 | 项目 | 命令 | 端口 |
 |------|------|------|
 | 后端 | `PYTHONPATH=src python -m aidm.api.main` | 8080 |
-| 前端 | `cd ui && npm run dev` | 4000 |
+| 前端 | `cd ui && npm run dev` | 3000 |
 | 测试 | `PYTHONPATH=src python tests/test_*.py`（逐个） | — |
 | 规则库索引（首次） | `PYTHONPATH=src python -m aidm.knowledge.indexer` | — |
 
