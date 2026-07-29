@@ -1,0 +1,116 @@
+随机鬼婆奴仆 RANDOM  HAG  MINIONS
+用于决定鬼婆随从中的奴仆和帮手，投掷一次下表中的选项或者从可能选项中选择。 仆人表格包括了那些鬼婆用来保护自己和家园的忠诚的、值得信任的帮手。这些生物不是天性邪恶就是被鬼婆扭曲以便更好服务于她。无论是哪种情况，鬼婆都相信她的仆人会毫无疑问地执行她的命令。 暴徒表格给出了鬼婆可能会雇佣的打手范例，雇佣者只因为利益为鬼婆服务，这些生物会跑腿，对付凶残的敌人，或者监视鬼婆认为不值得她注意的巡视区域。鬼婆更喜欢雇佣聪明、残忍的生物，而不是蠢货。
+仆人 SERVANTS
+
+ | d8
+d8
+ | 奴仆Servant(s)
+奴仆 Servant(s)
+
+ | 1
+1
+ | 1d4只燃焰之颅flameskulls
+1d4只 燃焰之颅 flameskulls
+
+ | 2
+2
+ | 1d2个血肉魔像flesh  golems
+1d2个 血肉魔像 flesh  golems
+
+ | 3
+3
+ | 1d2具恐怖铠甲helmed  horrors
+1d2具 恐怖铠甲 helmed  horrors
+
+ | 4
+4
+ | 1张闷人毯rug  of  smothering
+1张 闷人毯 rug  of  smothering
+
+ | 5
+5
+ | 1d6只稻草人scarecrows
+1d6只 稻草人 scarecrows
+
+ | 6
+6
+ | 2d4只阴影獒犬shadow  mastiffs*
+2d4只 阴影獒犬 shadow  mastiffs*
+
+ | 7
+7
+ | 2d4个昆虫集群或者鼠集群swarms  of insects  or  swarms  of  rats
+2d4个 昆虫集群或者鼠集群 swarms  of insects  or  swarms  of  rats
+
+ | 8
+8
+ | 1d6只夜嘶猎犬yeth  hounds*
+1d6只 夜嘶猎犬 yeth  hounds*
+* 数据见本书第三章
+暴徒 BRUTES
+
+ | d12
+d12
+ | 奴仆Servant(s)
+奴仆 Servant(s)
+
+ | 1
+1
+ | 2d6+2只熊地精bugbears
+2d6+2只 熊地精 bugbears
+
+ | 2
+2
+ | 1d6+2只变形怪doppelgangers
+1d6+2只 变形怪 doppelgangers
+
+ | 3
+3
+ | 1d6+2只伊特怪ettercaps
+1d6+2只 伊特怪 ettercaps
+
+ | 4
+4
+ | 2d6+2个石像鬼gargoyles
+2d6+2个 石像鬼 gargoyles
+
+ | 5
+5
+ | 2d4+2只化豺jackalweres
+2d4+2只 化豺 jackalweres
+
+ | 6
+6
+ | 2d6+4位天狗kenku
+2d6+4位 天狗 kenku
+
+ | 7
+7
+ | 2d6+2只凌弱怪meenlocks*
+2d6+2只 凌弱怪 meenlocks*
+
+ | 8
+8
+ | 1d4位恶鬼oni
+1d4位 恶鬼 oni
+
+ | 9
+9
+ | 2d6+2只快可灵quicklings*
+2d6+2只 快可灵 quicklings*
+
+ | 10
+10
+ | 2d4+2个红帽子redcaps*
+2d4+2个 红帽子 redcaps*
+
+ | 11
+11
+ | 1d6+4只鼠人wererats
+1d6+4只 鼠人 wererats
+
+ | 12
+12
+ | 1d4+2只狼人werewolves
+1d4+2只 狼人 werewolves
+* 数据见本书第三章

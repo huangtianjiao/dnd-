@@ -1,0 +1,29 @@
+## 戏法(零环)
+神导术Guidance 光亮术Light 修复术Mending 抵抗术Resistance 圣火术Sacred Flame 维生术Spare the Dying 奇术Thaumaturgy 亡者丧钟Toll the Dead 光耀祷词Word of Radiance
+
+## 一环
+灾祸术Bane 祝福术Bless 命令术Command 造水术/枯水术Create or Destroy Water 疗伤术Cure Wounds 侦测善恶Detect Evil and Good 侦测魔法Detect Magic 侦测毒性和疾病Detect Poison and Disease 光导箭Guiding Bolt 治愈真言Healing Word 致伤术Inflict Wounds 防护善恶Protection from Evil and Good 净化饮食Purify Food and Drink 庇护术Sanctuary 虔诚护盾Shield of Faith 典礼术Ceremony XGE
+
+## 二环
+援助术Aid 卜筮术Augury 目盲术/耳聋术Blindness/Deafness 安定心神Calm Emotions 不灭明焰Continual Flame 强化属性Enhance Ability 寻找陷阱Find Traps 遗体防腐Gentle Repose 定身类人Hold Person 次等复原术Lesser Restoration 物件定位术Locate Object 治疗祷言Prayer of Healing 防护毒素Protection from Poison 沉默术Silence 灵体武器Spiritual Weapon 守护之链Warding Bond 诚实之域Zone of Truth 借鉴才学Borrowed Knowledge SCC
+
+## 三环
+活化死尸Animate Dead 活力灵光Aura of Vitality 希望信标Beacon of Hope 降咒Bestow Curse 鹰眼术Clairvoyance 造粮术Create Food and Water 昼明术Daylight 解除魔法Dispel Magic 假死术Feign Death 守卫刻纹Glyph of Warding 防护法阵Magic Circle 群体治愈真言Mass Healing Word 融身入石Meld Into Stone 防护能量Protection from Energy 移除诅咒Remove Curse 回生术Revivify 短讯术Sending 死者交谈Speak with Dead 灵体卫士Spirit Guardians 巧言术Tongues 水上行走Water Walk 生命转换Life Transference XGE 魂灵环绕Spirit Shroud TCE 快速交友Fast Friends AI 鼓动贪欲Incite Greed AI 励志演讲Motivational Speech AI
+
+## 四环
+生命灵光Aura of Life 净化灵光Aura of Purity 放逐术Banishment 操控水体Control Water 防死结界Death Ward 预言术Divination 行动自如Freedom of Movement 信仰守卫Guardian of Faith 生物定位术Locate Creature 塑石术Stone Shape
+
+## 五环
+原力法阵Circle of Power 通神术Commune 疫病术Contagion 驱逐善恶Dispel Evil and Good 焰击术Flame Strike 指使术Geas 高等复原术Greater Restoration 圣居Hallow 疫病虫群Insect Plague 通晓传奇Legend Lore 群体疗伤术Mass Cure Wounds 异界誓缚Planar Binding 死者复活Raise Dead 探知术Scrying 天界召唤术Summon Celestial 拂晓Dawn XGE 神圣武器Holy Weapon XGE
+
+## 六环
+剑刃护壁Blade Barrier 唤起亡灵Create Undead 寻路术Find the Path 禁制术Forbiddance 重伤术Harm 医疗术Heal 英雄宴Heroes' Feast 异界誓盟Planar Ally 阳炎射线Sunbeam 真知术True Seeing 回返真言Word of Recall
+
+## 七环
+咒唤圣光Conjure Celestial 圣言术Divine Word 以太化Etherealness 火焰风暴Fire Storm 位面转移Plane Shift 律令巩固Power Word Fortify 再生术Regenerate 复生术Resurrection 徽记术Symbol 神庙术Temple of the Gods XGE
+
+## 八环
+反魔法场Antimagic Field 操控天气Control Weather 地震术Earthquake 圣洁灵光Holy Aura 阳炎爆Sunburst
+
+## 九环
+星界投影Astral Projection 异界之门Gate 群体医疗术Mass Heal 律令医疗Power Word Heal 完全复生术True Resurrection

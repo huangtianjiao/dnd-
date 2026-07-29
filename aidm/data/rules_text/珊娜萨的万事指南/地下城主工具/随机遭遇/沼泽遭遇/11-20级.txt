@@ -1,0 +1,6 @@
+d100 遭遇 01-10       1d4 只 巨 鳄 giant crocodile 11-15       1d3 的 憎恶蛇人 yuan- ti abomination 16-20       1d6+1 的 绿鬼婆 green hag 21-25 一棵巨大的，枝桠伸展的树，上面有 2d6 具穿着盔甲的骑士在颈部悬挂的尸体 26-30       2d4 的 尸妖 wight 31-35       1d8+1 的 恶 咒蛇人 yuan- ti malison 36-40 在地表蔓延的雾气，使 1d3 里范围内的区域在 1d4 小时内变为重度遮蔽 41-45       1d4 的 还魂 尸 revenant 46-50       1d6 的 蔓生怪 shambling
+mound 51-55       1d10 的 水元素 water
+elemental 56-60       1d4 只 青年黑龙 young black
+dragon 61-65 一个诡异的蝙蝠头神像，几乎完全被藤蔓 覆盖 66-70       1d8+2 的 巨魔 troll 71-75       1d3 只 多头蛇 hydra 76-80 从几里外传来的鼓声 81-96       1 只 成年黑龙 adult black
+dragon 97-00       1 只 远古黑龙 ancient black
+dragon

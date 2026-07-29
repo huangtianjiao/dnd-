@@ -1,0 +1,6 @@
+d100 遭遇 01-10       3d6 只 食人鱼 quipper 11-14       2d4 只 蒸汽魔 蝠 steam mephit 15-18       1d4 的 鲨华 鱼人 sahuagin 19-22       2d6 的 人鱼 merfolk 23-25       2d4 具溺毙的水手尸体，缠在海草里 26-29       2d4 条 蟒蛇 constrictor
+snake 30-33       1d 4 只 礁鲨 reef
+shark 34-37       1 个 食人鱼群 swarm of quippers 38-40 复满巨大蚌类的水底 41-45       1d10 的 人鱼 merfolk 和 1d3 只 巨海马 giant sea horse 46-50       1 只 巨章鱼 giant octopus 51-55 1 个 迈罗人鱼 merrow 56-60       1 只 蛇颈龙 plesiosaurus 61-65       2d10 个沉在水底的锈蚀的黄铜餐具 66-70       1 条 巨蟒 giant
+constrictor snake 71-75 1 个 海鬼婆 sea
+hag 76-80 一群迅速游过的银色鱼类 81-85       1d4 只 寻猎鲨 hunter shark 86-90       1 个 鲨华 鱼人 女祭司 sahuagin priestess 和 2d4 的 鲨华 鱼人 sahuagin 91-96       1d4 只 虎鲸 killer whale 97-98       1 只 巨鲨 giant shark 99 1 个 水元素 water
+elemental 00         1 个 鲨华 鱼人 男爵 sahuagin baron

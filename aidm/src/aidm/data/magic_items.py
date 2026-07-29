@@ -245,6 +245,20 @@ _MAGIC_ITEMS_LIST: list[MagicItem] = [
 
     # ═══════════ 药水 ═══════════
     MagicItem(
+        name="治疗药水", name_en="Potion of Healing",
+        rarity=Rarity.COMMON, item_type=ItemType.POTION,
+        description="当你饮下这瓶药水时，你恢复2d4+2点生命值。无论饮用还是喷洒，这瓶药水的红色液体都会微微发光。",
+        properties={"consumable": True, "heal_dice": "2d4+2"},
+        source=_SRC + "药水/普通.htm",
+    ),
+    MagicItem(
+        name="高级治疗药水", name_en="Potion of Greater Healing",
+        rarity=Rarity.UNCOMMON, item_type=ItemType.POTION,
+        description="当你饮下这瓶药水时，你恢复4d4+4点生命值。",
+        properties={"consumable": True, "heal_dice": "4d4+4"},
+        source=_SRC + "药水/非普通.htm",
+    ),
+    MagicItem(
         name="攀爬药水", name_en="Potion of Climbing",
         rarity=Rarity.COMMON, item_type=ItemType.POTION,
         description="当你饮下这瓶药水时，你获得等同于你速度的攀爬速度，持续1小时。这段时间内，你在为攀爬进行的力量（运动）检定中具有优势。这瓶药水会分离成类似岩层的褐、银、灰三层颜色。",

@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
-import type { LogEntry, SceneData, CombatData, CharacterSheet } from "../lib/types";
+import type { LogEntry, SceneData, CombatData, PartyMember } from "../lib/types";
 
 const API = process.env.NEXT_PUBLIC_API || "";
 
@@ -98,6 +98,12 @@ interface UseSocketOptions {
   onServerDisconnect?: () => void;
   /** 战斗结束事件（combat_end）回调，用于清空本地战斗态 */
   onCombatEnd?: () => void;
+  /** 派对成员变更（join/leave 事件）回调 */
+  onPartyUpdate?: (members: PartyMember[]) => void;
+  /** v2：结构化 result 分发（优先于 onLog 文本路径，见 docs/FRONTEND_REDESIGN.md §4） */
+  onResult?: (d: any) => void;
+  /** v2：结构化 monster_action 分发（优先于 onLog 文本路径） */
+  onMonsterActionEvent?: (monster: string, result: any) => void;
 }
 
 export function useSocket(opts: UseSocketOptions) {
@@ -133,20 +139,50 @@ export function useSocket(opts: UseSocketOptions) {
       });
       socket.on("connect_error", (err: Error) => o.onToast(`连接错误: ${err.message}`, "error"));
 
-      socket.on("join", (d: any) => o.onLog({ c: "meta", t: `${d.name} 加入了` }));
-      socket.on("leave", (d: any) => o.onLog({ c: "meta", t: `${d.name} 离开了` }));
+      socket.on("join", (d: any) => {
+        o.onLog({ c: "meta", t: `${d.name} 加入了` });
+        if (d.players && o.onPartyUpdate) {
+          o.onPartyUpdate(
+            (d.players as any[]).map((p) => ({
+              name: p.name,
+              characterId: p.character_id,
+              isDm: p.is_dm,
+              connected: p.connected,
+            }))
+          );
+        }
+      });
+      socket.on("leave", (d: any) => {
+        o.onLog({ c: "meta", t: `${d.name} 离开了` });
+        if (d.players && o.onPartyUpdate) {
+          o.onPartyUpdate(
+            (d.players as any[]).map((p) => ({
+              name: p.name,
+              characterId: p.character_id,
+              isDm: p.is_dm,
+              connected: p.connected,
+            }))
+          );
+        }
+      });
 
       socket.on("result", (d: any) => {
-        const isMe = d.player === name;
-        o.onLog({
-          c: isMe ? "dm" : "other",
-          t: isMe ? d.narration : `【${d.player}】 ${d.narration}`,
-        });
-        if (d.dice) {
-          const t = formatDice(d.player, d.dice);
-          if (t) o.onLog({ c: "dice", t });
+        if (o.onResult) {
+          // v2 结构化路径：narration/dice/choices/time/encounter 全部由 onResult 消费
+          o.onResult(d);
+        } else {
+          const isMe = d.player === name;
+          o.onLog({
+            c: "dm",
+            speaker: "DM (AI)",
+            t: isMe ? d.narration : `【${d.player}】 ${d.narration}`,
+          });
+          if (d.dice) {
+            const t = formatDice(d.player, d.dice);
+            if (t) o.onLog({ c: "dice", t });
+          }
+          if (d.action_options) o.onChoices(d.action_options);
         }
-        if (d.action_options) o.onChoices(d.action_options);
         o.onCharacterUpdate();
       });
 
@@ -160,7 +196,10 @@ export function useSocket(opts: UseSocketOptions) {
       socket.on("round_end", (d: any) => o.onLog({ c: "meta", t: `第 ${d.round} 轮结束` }));
       socket.on("monster_turn", (d: any) => o.onLog({ c: "meta", t: `👾 ${d.monster} 的回合` }));
       socket.on("player_ready", (d: any) => o.onLog({ c: "meta", t: `✓ ${d.player} 已准备` }));
-      socket.on("monster_action", (d: any) => o.onLog({ c: "npc", t: `👾 ${d.monster}: ${JSON.stringify(d.result || {})}` }));
+      socket.on("monster_action", (d: any) => {
+        if (o.onMonsterActionEvent) o.onMonsterActionEvent(d.monster, d.result);
+        else o.onLog({ c: "npc", t: `👾 ${d.monster}: ${JSON.stringify(d.result || {})}` });
+      });
       socket.on("combat_end", (d: any) => {
         o.onLog({ c: "system", t: `⚔️ 战斗结束: ${d.outcome || ""}` });
         o.onCombatEnd?.();

@@ -25,85 +25,85 @@ export function SpellbookModal({ spells, spellSlots, onCast }: SpellbookModalPro
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="w-full px-2 py-1.5 bg-neutral-800 border border-neutral-700 rounded text-xs hover:border-amber-400"
+      <div
+        className="panel-section"
+        style={{ marginBottom: 8 }}
       >
-        📖 法术书 ({spells.length})
-      </button>
+        <div className="section-title">
+          <span>法术列表</span>
+          <span
+            style={{ fontSize: 10, color: "var(--text-blue)", cursor: "pointer", textDecoration: "underline" }}
+            onClick={() => setOpen(true)}
+          >
+            法术书 ({spells.length})
+          </span>
+        </div>
+        {/* 法术位概览 */}
+        {Object.keys(spellSlots).length > 0 && (
+          <div className="spell-slots" style={{ flexWrap: "wrap" }}>
+            {Object.entries(spellSlots).sort(([a], [b]) => parseInt(a) - parseInt(b)).map(([level, remaining]) => (
+              <span
+                key={level}
+                style={{
+                  fontSize: 10,
+                  padding: "2px 6px",
+                  borderRadius: 4,
+                  background: remaining > 0 ? "var(--bg-blue)" : "var(--bg-tertiary)",
+                  color: remaining > 0 ? "var(--text-blue)" : "var(--text-tertiary)",
+                  border: `0.5px solid ${remaining > 0 ? "#85b7eb" : "var(--border)"}`,
+                }}
+              >
+                {level}环:{remaining}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
 
       {open && (
-        <div
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="bg-neutral-900 border border-neutral-700 rounded-lg p-4 max-w-md max-h-[70vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center mb-3">
-              <div className="text-sm font-bold text-amber-400">法术书</div>
-              <button onClick={() => setOpen(false)} className="text-neutral-500 hover:text-neutral-300">
-                ✕
-              </button>
+        <div className="modal-overlay visible" onClick={() => setOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="mh-title">法术书</span>
+              <button className="modal-close" onClick={() => setOpen(false)}>✕</button>
             </div>
-
-            {/* 法术位显示 */}
-            <div className="mb-3 space-y-1">
-              {Object.entries(spellSlots).map(([level, remaining]) => (
-                <div key={level} className="flex items-center gap-1">
-                  <span className="text-[10px] text-neutral-500 w-8">{level}环</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded border ${
-                      remaining > 0
-                        ? "bg-purple-950 border-purple-700 text-purple-300"
-                        : "bg-neutral-800 border-neutral-700 text-neutral-600"
-                    }`}
-                  >
-                    剩余{remaining}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* 法术列表 */}
-            <div className="space-y-2">
+            <div className="modal-body">
               {spells.map((s) => (
-                <div key={s.name} className="border border-neutral-700 rounded p-2">
-                  <div
-                    className="flex justify-between items-center cursor-pointer"
-                    onClick={() => setExpanded(expanded === s.name ? null : s.name)}
-                  >
-                    <div>
-                      <span className="text-sm font-bold text-blue-300">{s.name}</span>
-                      <span className="text-[10px] text-neutral-500 ml-2">
-                        {s.level === 0 ? "戏法" : `${s.level}环`} · {s.school}
-                      </span>
-                    </div>
-                    <span className="text-neutral-500 text-xs">{expanded === s.name ? "▼" : "▶"}</span>
+                <div
+                  key={s.name}
+                  className={`spell-card ${expanded === s.name ? "expanded" : ""}`}
+                  onClick={() => setExpanded(expanded === s.name ? null : s.name)}
+                >
+                  <div className="sc-header">
+                    <span className="sc-name">{s.name}</span>
+                    <span className="sc-level">{s.level === 0 ? "戏法" : `${s.level}环`}</span>
                   </div>
-
-                  {expanded === s.name && (
-                    <div className="mt-2 text-xs text-neutral-400 space-y-1">
-                      <div>时间: {s.time} | 射程: {s.range} | 持续: {s.duration}</div>
-                      <div>成分: {s.components}</div>
-                      <div className="text-neutral-300">{s.desc}</div>
-                    </div>
-                  )}
-
+                  <div className="sc-meta">
+                    <span>{s.time}</span>
+                    <span>{s.range}</span>
+                    <span>{s.components}</span>
+                    <span>{s.duration}</span>
+                  </div>
+                  <div className="sc-desc">{s.desc}</div>
                   {s.level > 0 && (
                     <button
-                      onClick={() => {
+                      className="sc-cast"
+                      onClick={(e) => {
+                        e.stopPropagation();
                         onCast(s.name);
                         setOpen(false);
                       }}
-                      className="mt-2 w-full px-2 py-1 bg-blue-700 border border-blue-500 rounded text-xs hover:bg-blue-600"
                     >
                       施放 {s.name}
                     </button>
                   )}
                 </div>
               ))}
+              {spells.length === 0 && (
+                <div style={{ fontSize: 12, color: "var(--text-tertiary)", textAlign: "center", padding: 16 }}>
+                  无可用法术
+                </div>
+              )}
             </div>
           </div>
         </div>

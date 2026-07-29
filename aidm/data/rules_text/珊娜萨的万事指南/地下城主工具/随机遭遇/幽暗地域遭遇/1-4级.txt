@@ -1,0 +1,30 @@
+d100 遭遇 01         1 个 夺心魔奥术师 mind
+flayer arcanist 02         1d3+1 条 巨毒蛇 giant
+poisonous snake 03         1d3 只 巨蜥 giant
+lizard 04         2d4 只 巨火甲虫 giant
+fire beetle 05         1d8+1 只 呋噜 flumph 06         1 个 尖叫菌 shrieker 07         1d12 只 巨鼠 giant rat 08         2d4 只 狗头人 kobold 09         1d8+1 只 蚊蝠 stirge 10         2d4 的人类（ 部族武者 tribal
+warrior ），寻找着能逃离地底压迫者的通往地表的路 11-12       1d10 只 穴蜥人 troglodyte 13-14       1d2 只 灰泥怪 gray ooze 15-16       3d6 只 蚊蝠 stirge 17-18       1d3 只 熔岩魔蝠 magma mephit 19-20       1d10 只 地精 goblin 21-22 墙上的兽人语涂鸦，辱骂着一个叫克鲁斯克 Krusk 的人的母亲 23-24       1 个 昆虫集群 swarm of insects 25         1 个 地底侏儒 deep gnome 26-28       1d8+1 的 卓尔 drow 29-30       1d4 的 紫腐菌 violet fungi 31-32       1d12 的 寇涛 kuo-toa 33         1 只 锈蚀怪 rust
+monster 34-35 一条仍有碎石的路，看起来是在垮塌后最近清理过 36-37       1d8+1 只 巨蝙蝠 giant bat 38-39       3d6 的 狗头人 kobold 40-41       2d4 的 幽邃盲族 grimlock 42-43       1d4+3 的 蝙蝠群 swarm of
+bats 44         1 个寻找金矿的矮人探矿员（ 斥候 scout ） 45         1 只 食腐虫 carrion
+crawler 或 1 只 凝胶方块 gelatinous
+cube 46         1d8 只 暗幕魔兽 darkmantle 或 2d4 只 石锥怪 piercer 47         1 只 地狱犬 hell hound 48         1d3 的 恶灵 specter 49         1d4 只 熊地精 bugbear 50         1d10+5 只 带翼狗头人 winged
+kobold 51         1d4 条 火蛇 fire snake 52         2d8+1 只 穴蜥人 troglodyte 53         1d6 只 巨蜘蛛 giant
+spider 54         3d6 的 寇涛 kuo-tua 55         1 只 地精头目 goblin
+boss 和 2d4 只 地精 goblin 56         4d4 的 幽邃盲族 grimlock 57         1 只 赭冻怪 ochre jelly 58         2d10 只 巨蜈蚣 giant
+centipede 59         1 只 诺斯怪 nothic 或 1 只 巨蟾蜍 giant toad 60         1d4 的 蕈人成体 myconid
+adult 和 5d4 的 蕈人幼体 myconid
+sprout 61         1 只 骷髅牛头人 minotaur
+skeleton 或 1 个 牛头人 minotaur 62         3d6 的 卓尔 drow 63         1 只 拟身怪 mimic 或 1 只 变形怪 doppelganger 64         1d6+3 只 大地精 hobgoblin 65         1 只 噬脑怪 intellect
+devourer 或 1 只 观察者眼魔 spectator 66         1d8+1 只 兽人 orc 67-68 附近的岩壁后传来的微弱的敲击声 69         1 只 呓语之口 gibbering
+mouther 或 1 只 水诡 water weird 70         1 个 气孢菌 gas spore 71         1 条 巨蟒 giant
+constrictor snake 72         1 只 幽影 shadow 73         1d3 只 触须怪 grell 74         1 个 尸妖 wight 75         1d8+1 的 幽邃熊怪孢子奴仆 quaggoth
+spore servent 76         1d2 只 石像鬼 gargoyle 77         1d4 只 食人魔 ogre 或 1d3 的 双头巨人 ettin 78         1d4 的矮人探索者（ 老兵 veteran ） 79-80 一处溅上血迹的废弃矿工营地， 1d3 套地城套组散落在各处 81         1 只 甲伏怪 chuul 或 1 只 火蜥蜴 salamander 82         1d4 只 相位蜘蛛 phase
+spider 或 1d3 只 恐爪怪 hook
+horror 83         5d4 的 灰矮人 duergar 84         1 个 幽魂 ghost 或 1 个 燃焰之颅 flameskull 或 1 个 邪灵 wraith 85         1 位 德鲁伊 druid 和 1 只穴熊（ 白熊 polar bear ） 86         1 只 大地精长官 hobgoblin
+captain ， 1d4 只 半食人魔 half-ogre 和 2d10 只 大地精 hobgoblin 87         1 个 土元素 earth
+elemental 或 1 只 黑布丁 black
+pudding 88         1 个 寇涛监督 kuo-tua
+monitor 和 1d8+1 的 寇涛鞭策者 kuo-tua
+whip 89         1 个 幽邃熊怪 · 索诺祭司 quaggoth thonot 和 1d3 的 幽邃熊怪 guaggoth 90         1 只 眼魔丧尸 beholder
+zombie 或 1 只 骸骨纳迦 bone naga 91         1 只 兽人 · 格乌什之眼 orc Eye of Gruumsh ， 1d4 只 魔兽人 orog 和 2d8 只 兽人 orc 92         1d4 的 妖鬼 ghast 和 1d10 只 食尸鬼 ghoul 93-95 一个散发着臭气的小水坑，泥浆从头顶的岩壁滴落在里面 96         1 只 食腐兽 otyugh 或 1 只 树绳妖 roper 97         1 个 初生吸血鬼 vampire
+spawn 98         1 只 奇美拉 chimera 99         1 个 夺心魔 mind flayer 00         1 个 阴魂纳迦 spirit naga

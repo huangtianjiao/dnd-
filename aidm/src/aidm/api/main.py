@@ -130,6 +130,29 @@ def health():
     return {"status": "ok"}
 
 
+def _init_loadout(ch, equipped_weapon: str = "") -> None:
+    """角色创建时统一初始化拥有物：法术位/已学法术/起始武器入包。
+
+    拥有性门控（R-SPL-036 职业法术列表 / R-ITM-012 武器表）：
+      - 施法职业按等级初始化法术位（R-SPL-002）与 known_spells；
+      - 起始武器写入 equipped_weapon 并加入 inventory（后续
+        /equip-weapon 与攻击结算只认 inventory 内的武器）。
+    三处创建入口（/character、/join、/room/join）共用，避免漏初始化。
+    """
+    from ..data import classes as _cls, spells as _sp
+    from ..data.equipment import default_weapon_for_class
+    try:
+        _cdef = _cls.get_class(ch.char_class)
+        if _cdef and _cdef.get("spellcasting"):
+            ch.set_spell_slots(_sp.max_spell_slots(ch.level))
+            ch.set_known_spells(_sp.default_known_spells(ch.char_class, ch.level))
+    except Exception:
+        pass
+    ch.equipped_weapon = equipped_weapon or default_weapon_for_class(ch.char_class)
+    if ch.equipped_weapon:
+        ch.add_to_inventory(ch.equipped_weapon)
+
+
 @app.post("/campaign")
 def create_campaign(c: CampaignIn):
     camp = store.create_campaign(c.name)
@@ -145,17 +168,8 @@ def create_character(c: CharIn):
     _validate_abilities(c.abilities, c.ability_method)
     ch.set_abilities(c.abilities)
     ch.hp_max = c.hp_max; ch.hp_current = c.hp_max; ch.ac = c.ac; ch.speed = c.speed
-    # 施法职业按等级初始化法术位（R-SPL-002），否则 spell_slots 默认空致施法总被拒
-    try:
-        from ..data import classes as _cls, spells as _sp
-        _cdef = _cls.get_class(c.char_class)
-        if _cdef and _cdef.get("spellcasting"):
-            ch.set_spell_slots(_sp.max_spell_slots(c.level))
-    except Exception:
-        pass
-    # 起始武器：用户指定优先，否则按职业默认（docs/GRAPH_DYNAMIC_REFACTOR.md 阶段A2）
-    from ..data.equipment import default_weapon_for_class
-    ch.equipped_weapon = c.equipped_weapon or default_weapon_for_class(c.char_class)
+    # 统一初始化拥有物：法术位 + 已学法术 + 起始武器入包（拥有性门控）
+    _init_loadout(ch, c.equipped_weapon)
     ch = store.save_character(ch)
     return {"id": ch.id, "name": ch.name, "hp": ch.hp_current, "ac": ch.ac}
 
@@ -168,13 +182,19 @@ def get_character(cid: int):
     if ch is None:
         raise HTTPException(status_code=404, detail={"error": "not found", "message": f"角色 {cid} 不存在"})
     ab = ch.abilities
+    # 历史施法角色 known_spells 为空 → 动态回退职业默认表（不落盘，
+    # 与 graph._resolve_cast 校验口径一致，否则前端法术书空显）
+    _known = ch.known_spells
+    if not _known:
+        from ..data import spells as _sp
+        _known = _sp.default_known_spells(ch.char_class, ch.level)
     return {"id": ch.id, "name": ch.name, "race": ch.race, "char_class": ch.char_class,
             "subclass": ch.subclass, "background": ch.background,
             "alignment": ch.alignment, "level": ch.level, "proficiency": ch.prof(),
             "abilities": {k: {"score": v, "mod": dice.ability_modifier(v)} for k, v in ab.items()},
             "hp": ch.hp_current, "hp_max": ch.hp_max, "temp_hp": ch.temp_hp, "ac": ch.ac,
             "speed": ch.speed, "conditions": ch.conditions_list, "exhaustion": ch.exhaustion,
-            "spell_slots": ch.spell_slots, "known_spells": ch.known_spells,
+            "spell_slots": ch.spell_slots, "known_spells": _known,
             "hit_dice_current": getattr(ch, "hit_dice_current", ch.level),
             "hit_dice_max": ch.level,
             "death_successes": ch.death_successes, "death_failures": ch.death_failures,
@@ -201,20 +221,38 @@ def get_inventory(cid: int):
     inv_names = ch.inventory
     attuned = ch.attuned_items
 
-    # 为物品栏中每件物品附加详细数据
+    # 拆分物品栏：魔法物品附详情；武器附伤害/属性（拥有性门控后前端只列拥有武器）
+    from ..data import equipment as equip_db
     magic_items_detail = []
+    weapons_detail = []
     for name in inv_names:
         item = mi_db.get_magic_item(name)
         if item is not None:
             d = item.to_dict()
             d["attuned"] = name in attuned
             magic_items_detail.append(d)
+        elif name in equip_db.WEAPONS:
+            entry = equip_db.WEAPONS[name]
+            weapons_detail.append({
+                "name": name, "category": entry["cat"], "damage": entry["dmg"],
+                "properties": entry.get("props", []),
+                "equipped": name == ch.equipped_weapon,
+            })
+    # 懒回填展示：历史角色起始武器未入包时，仍展示当前装备武器
+    if ch.equipped_weapon and ch.equipped_weapon in equip_db.WEAPONS \
+            and all(w["name"] != ch.equipped_weapon for w in weapons_detail):
+        entry = equip_db.WEAPONS[ch.equipped_weapon]
+        weapons_detail.append({
+            "name": ch.equipped_weapon, "category": entry["cat"], "damage": entry["dmg"],
+            "properties": entry.get("props", []), "equipped": True,
+        })
 
     return {
         "character_id": cid,
         "inventory": inv_names,
         "attuned_items": attuned,
         "magic_items": magic_items_detail,
+        "weapons": weapons_detail,
         "gold": 0,
     }
 
@@ -302,6 +340,8 @@ class EquipWeaponIn(BaseModel):
 def equip_weapon(cid: int, req: EquipWeaponIn):
     """装备/更换当前手持武器（攻击结算优先读 equipped_weapon）。
 
+    拥有性门控：只能装备 inventory 内（或当前已装备）的武器；
+    旧角色 inventory 可能未含起始武器 → 懒回填 equipped_weapon 入包。
     详见 docs/GRAPH_DYNAMIC_REFACTOR.md 阶段A2。weapon_name 应为 equipment.WEAPONS 中的武器名。
     """
     from ..data import equipment as equip_db
@@ -310,6 +350,13 @@ def equip_weapon(cid: int, req: EquipWeaponIn):
         raise HTTPException(status_code=404, detail={"error": "not found", "message": f"角色 {cid} 不存在"})
     if req.weapon_name and req.weapon_name not in equip_db.WEAPONS:
         raise HTTPException(status_code=400, detail={"error": "invalid_request", "message": f"未知武器 {req.weapon_name!r}，可选示例: {list(equip_db.WEAPONS)[:10]}"})
+    # 懒回填：历史角色创建时未把起始武器写入 inventory
+    if ch.equipped_weapon and ch.equipped_weapon not in ch.inventory:
+        ch.add_to_inventory(ch.equipped_weapon)
+    if req.weapon_name and req.weapon_name not in ch.inventory:
+        raise HTTPException(status_code=400, detail={
+            "error": "not_owned",
+            "message": f"未拥有武器 {req.weapon_name!r}，无法装备（需先通过战利品/购买获得）"})
     ch.equipped_weapon = req.weapon_name
     ch = store.save_character(ch)
     return {"character_id": ch.id, "equipped_weapon": ch.equipped_weapon}
@@ -437,11 +484,15 @@ def get_combat(campaign_id: int):
     except Exception:
         return {"active": False}
     cur = cmb.current_combatant(c)
+    # D4 实测修复：initiative_order 必须带 hp/hp_max/dead，否则刷新/重进后
+    # 前端参战者 HP 卡全部显示 0/? 并误判死亡（此前仅 name/initiative/side）。
     return {"active": c.active, "round": c.round,
             "current_index": c.current_index,
-            "current_turn": cur.name if cur else None,
+            "current_turn": cur.name if cur else None,  # D4 fix below
             "initiative_order": [{"name": x.name, "initiative": x.initiative,
-                                  "side": x.side} for x in c.initiative_order]}
+                                  "side": x.side, "hp": x.hp, "hp_max": x.hp_max,
+                                  "dead": x.dead, "surprised": getattr(x, "surprised", False)}
+                                 for x in c.initiative_order]}
 
 
 @app.get("/races")
@@ -503,6 +554,9 @@ def list_backgrounds():
 def list_spells(level: int | None = None):
     """法术列表（前端法术书用）。
 
+    精校表 SPELLS 优先，其余用全量表 SPELLS_FULL 补齐（与 get_spell/
+    default_known_spells 口径一致，否则已学法术在法术书中漏显）。
+
     Query params:
         level: 按环阶过滤
 
@@ -511,6 +565,7 @@ def list_spells(level: int | None = None):
                      duration, components, description}], "count": N}
     """
     from ..data.spells import SPELLS
+    from ..data.spells_full import SPELLS_FULL
     out = []
     for s in SPELLS.values():
         if level is not None and s.level != level:
@@ -521,6 +576,18 @@ def list_spells(level: int | None = None):
             "duration": s.duration,
             "components": sorted(s.components),
             "description": getattr(s, "description", ""),
+        })
+    for raw in SPELLS_FULL.values():
+        if raw["name"] in SPELLS:
+            continue
+        if level is not None and raw["level"] != level:
+            continue
+        out.append({
+            "name": raw["name"], "level": raw["level"], "school": raw.get("school", ""),
+            "casting_time": raw.get("casting_time", ""), "range": raw.get("range", ""),
+            "duration": raw.get("duration", ""),
+            "components": sorted(raw.get("components", [])),
+            "description": raw.get("description", ""),
         })
     return {"spells": out, "count": len(out)}
 
@@ -600,17 +667,8 @@ def join_campaign(req: JoinIn):
                           level=req.level, campaign_id=req.campaign_id)
     ch.set_abilities(req.abilities)
     ch.hp_max = req.hp_max; ch.hp_current = req.hp_max; ch.ac = req.ac
-    # 施法职业按等级初始化法术位（与 /character 一致；
-    # 否则经 /join 进入的施法者 spell_slots 为空 → 施法总被拒）
-    try:
-        from ..data import classes as _cls, spells as _sp
-        _cdef = _cls.get_class(req.char_class)
-        if _cdef and _cdef.get("spellcasting"):
-            ch.set_spell_slots(_sp.max_spell_slots(req.level))
-    except Exception:
-        pass
-    from ..data.equipment import default_weapon_for_class
-    ch.equipped_weapon = req.equipped_weapon or default_weapon_for_class(req.char_class)
+    # 统一初始化拥有物（与 /character 一致）：法术位 + 已学法术 + 起始武器入包
+    _init_loadout(ch, req.equipped_weapon)
     ch = store.save_character(ch)
     return {"character_id": ch.id, "campaign_id": req.campaign_id,
             "name": ch.name,
@@ -672,7 +730,9 @@ def get_campaign_state(campaign_id: int):
         c = store.load_combat(campaign_id)
         combat = {"active": c.active, "round": c.round,
                   "initiative_order": [{"name": x.name, "initiative": x.initiative,
-                                        "side": x.side} for x in c.initiative_order]}
+                                        "side": x.side, "hp": x.hp, "hp_max": x.hp_max,
+                                        "dead": x.dead, "surprised": getattr(x, "surprised", False)}
+                                       for x in c.initiative_order]}
     except Exception:
         combat = None
     return {
@@ -1028,8 +1088,8 @@ def join_room(req: RoomJoinIn):
     ch.set_abilities(req.abilities)
     ch.hp_max = req.hp_max; ch.hp_current = req.hp_max
     ch.ac = req.ac; ch.speed = req.speed
-    from ..data.equipment import default_weapon_for_class
-    ch.equipped_weapon = req.equipped_weapon or default_weapon_for_class(req.char_class)
+    # 统一初始化拥有物（与 /character 一致）：法术位 + 已学法术 + 起始武器入包
+    _init_loadout(ch, req.equipped_weapon)
     ch = store.save_character(ch)
 
     # 加入房间（用假 ws 占位；真实连接由 WebSocket 端点建立）

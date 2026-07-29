@@ -1,0 +1,6 @@
+d100 遭遇 01-05       2 只 剑齿虎 saber-toothed
+tiger 06-07       1d4 只 半食人魔 half-ogre 08-10       1d3+1 只 棕熊 brown bear 11-15       1d3 只 白熊 polar bear 16-20       2d4 的 狂战士 berserker 21-25 一位半兽人 德鲁伊 druid ，正在照顾一只受伤的 白熊 polar bear 。如果角色们提供了帮助，她会给他们一小瓶抗毒剂作为答谢。 26-30       2d8 的 斥候 scout 31-35       2d4 的 冰魔蝠 ice mephit 36-40 一艘冻结在冰面上的大帆船，船上有 2d6+1 只 丧尸 zombie 。搜查这艘船能找到 2d20 天分量的口粮。 41-45       1 只 刺尾狮 manticore 46-50       2d6+3 只 兽人 orc 51-53       1d6+3 只 食人魔 ogre 54-55       2d4 只 狮鹫 griffon 56-57       1d4 的 老兵 veteran 58-60       1 个 强盗首领 bandit captain ，率领着 1 位 德鲁伊 druid ， 1d3 的 狂战士 berserker ，和 2d10+5 的 强盗 bandit 61-65       1d4 小时的严寒（见城主指南第 5 章） 66-68       1 只 青年百足魔兽 young
+remorhaz 69-72       1 只 兽人 · 格乌什之眼 orc Eye of Gruumsh ， 1d6 只 食人魔 ogre 和 2d8+6 只 兽人 orc 73-75       1 只 还魂尸 revenant 76-80 一阵在冻土上回荡的嚎叫，持续 1d3 分钟 81-82       1d3 只 猛犸 mammoth 83-84       1 只 青年白龙 young white
+dragon 85-86       2d4 只 冬狼 winter wolf 87-88       1d6+2 只 雪人 yeti 89-90       1d2 的 霜巨人 frost giant 91-92       1d3 个 熊人 werebear 93-94       1d4 只 巨魔 troll 95-96       1 只 巨恶雪人 abominable
+yeti 97-98       1 只 百足魔兽 remorhaz 99         1 只 鹏鸟 roc 00         2d4 只 青年百足魔兽 young
+remorhaz

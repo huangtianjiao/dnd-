@@ -160,6 +160,55 @@ def _build_classify_context(state: GameState) -> str:
     return "\n".join(parts)
 
 
+# 需要明确单体目标的动作类型（匹配 target_cid 用）
+_TARGETED_ACTIONS = ("attack", "opportunity_attack", "cast", "grapple", "shove", "help")
+
+
+def _resolve_target_cid(intent: dict, state: GameState) -> None:
+    """BUG#5/B2：从战斗状态把 target_name 确定性匹配到参战者 cid。
+
+    LLM 的 target_name 是自由文本，战斗中按
+    cid精确 → name精确 → name互含 → 唯一存活敌人 的顺序匹配，
+    命中写入 intent["target_cid"]，供 resolve 预判结果、apply 确定性扣血，
+    不再依赖 narrate LLM 复述 state_changes 选目标。
+    匹配失败（多敌人且 name 不含）时留空，走 apply 原有兑底。
+    """
+    combat = state.get("combat") or {}
+    if not combat.get("active"):
+        return
+    if (intent.get("action_type") or "") not in _TARGETED_ACTIONS:
+        return
+    tname = (intent.get("target_name") or "").strip()
+    enemies = [c for c in combat.get("combatants", [])
+               if c.get("side") != "player" and not c.get("dead")
+               and int(c.get("hp") or 0) > 0]
+    if not enemies:
+        return
+    hit = None
+    if tname:
+        for c in enemies:
+            if c.get("cid") == tname:
+                hit = c
+                break
+        if hit is None:
+            for c in enemies:
+                if c.get("name") == tname:
+                    hit = c
+                    break
+        if hit is None:
+            for c in enemies:
+                cname = c.get("name") or ""
+                if cname and (tname in cname or cname in tname):
+                    hit = c
+                    break
+    if hit is None and len(enemies) == 1:
+        hit = enemies[0]  # 唯一存活敌人：无需 LLM 猜
+    if hit:
+        intent["target_cid"] = hit.get("cid")
+        if not tname:
+            intent["target_name"] = hit.get("name", "")
+
+
 def classify_intent(state: GameState) -> dict:
     """Director Agent: LLM 意图分类 → 结构化 intent。
 
@@ -183,6 +232,10 @@ def classify_intent(state: GameState) -> dict:
                            "请只输出一个JSON对象，不要markdown代码块或多余文字。" % attempts)
         intent = _extract_json(llm.chat(_DIRECTOR_PROMPT, feedback, temperature=0.1))
     intent.setdefault("action_type", "other")
+    try:
+        _resolve_target_cid(intent, state)   # BUG#5/B2：确定性目标匹配
+    except Exception:
+        pass  # 目标匹配失败不阻断分类（走 apply 兑底）
     return {"intent": intent, "error": "" if intent else "意图解析失败"}
 
 

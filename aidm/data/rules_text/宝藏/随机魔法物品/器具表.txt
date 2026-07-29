@@ -1,0 +1,623 @@
+器具表 Implements Tables
+器具-普通
+
+ | d100
+d100
+ | 物品
+物品
+ | d100
+d100
+ | 物品
+物品
+
+ | 01-02
+01-02
+ | 营养珠Bead of Nourishment
+营养珠Bead of Nourishment
+ | 39-40
+39-40
+ | 迷醉香水Perfume of Bewitching
+迷醉香水Perfume of Bewitching
+
+ | 03-04
+03-04
+ | 净水珠Bead of Refreshment
+净水珠Bead of Refreshment
+ | 41-42
+41-42
+ | 怪物烟斗Pipe of Smoke Monsters
+怪物烟斗Pipe of Smoke Monsters
+
+ | 05-06
+05-06
+ | 伪迹之靴Boots of False Tracks
+伪迹之靴Boots of False Tracks
+ | 43-44
+43-44
+ | 垂钓之杆Pole of Angling
+垂钓之杆Pole of Angling
+
+ | 07-08
+07-08
+ | 渊海蜡烛Candle of the Deep
+渊海蜡烛Candle of the Deep
+ | 45-46
+45-46
+ | 压缩之杆Pole of Collapsing
+压缩之杆Pole of Collapsing
+
+ | 09-10
+09-10
+ | 骗子骰Charlatan's Die
+骗子骰Charlatan's Die
+ | 47-52
+47-52
+ | 攀爬药水Potion of Climbing
+攀爬药水Potion of Climbing
+
+ | 11-13
+11-13
+ | 万众时尚斗篷Cloak of Many Fashions
+万众时尚斗篷Cloak of Many Fashions
+ | 53-58
+53-58
+ | 通晓药水Potion of Comprehension
+通晓药水Potion of Comprehension
+
+ | 14-15
+14-15
+ | 发条护符Clockwork Amulet
+发条护符Clockwork Amulet
+ | 59-74
+59-74
+ | 治疗药水Potion of Healing
+治疗药水Potion of Healing
+
+ | 16-17
+16-17
+ | 聆听耳号Ear Horn of Hearing
+聆听耳号Ear Horn of Hearing
+ | 75-76
+75-76
+ | 假肢Prosthetic Limb
+假肢Prosthetic Limb
+
+ | 18-19
+18-19
+ | 义眼Ersatz Eye
+义眼Ersatz Eye
+ | 77-78
+77-78
+ | 修补绳Rope of Mending
+修补绳Rope of Mending
+
+ | 20-21
+20-21
+ | 霍华德便利香料包Heward's Handy Spice Pouch
+霍华德便利香料包Heward's Handy Spice Pouch
+ | 79-80
+79-80
+ | 鸟鸣法杖Staff of Birdcalls
+鸟鸣法杖Staff of Birdcalls
+
+ | 22-23
+22-23
+ | 静报号角Horn of Silent Alarm
+静报号角Horn of Silent Alarm
+ | 81-82
+81-82
+ | 木族利爪Sylvan Talon
+木族利爪Sylvan Talon
+
+ | 24-25
+24-25
+ | 幻象乐器Instrument of Illusions
+幻象乐器Instrument of Illusions
+ | 83-84
+83-84
+ | 说话玩偶Talking Doll
+说话玩偶Talking Doll
+
+ | 26-27
+26-27
+ | 撰写乐器Instrument of Scribing
+撰写乐器Instrument of Scribing
+ | 85-86
+85-86
+ | 清醒杯Tankard of Sobriety
+清醒杯Tankard of Sobriety
+
+ | 28-29
+28-29
+ | 骗术锁Lock of Trickery
+骗术锁Lock of Trickery
+ | 87-90
+87-90
+ | 老兵手杖Veteran's Cane
+老兵手杖Veteran's Cane
+
+ | 30-32
+30-32
+ | 触月剑Moon-Touched Sword
+触月剑Moon-Touched Sword
+ | 91-93
+91-93
+ | 冲击弹Walloping Ammunition
+冲击弹Walloping Ammunition
+
+ | 33-34
+33-34
+ | 谜之钥Mystery Key
+谜之钥Mystery Key
+ | 94-96
+94-96
+ | 指挥魔杖Wand of Conducting
+指挥魔杖Wand of Conducting
+
+ | 35-36
+35-36
+ | 方向法球Orb of Direction
+方向法球Orb of Direction
+ | 97-00
+97-00
+ | 烟火魔杖Wand of Pyrotechnics
+烟火魔杖Wand of Pyrotechnics
+
+ | 37-38
+37-38
+ | 时间法球Orb of Time
+时间法球Orb of Time
+ | 
+ | 
+器具-非普通
+
+ | d100
+d100
+ | 物品
+物品
+ | d100
+d100
+ | 物品
+物品
+
+ | 01-02
+01-02
+ | 炼金壶Alchemy Jug
+炼金壶Alchemy Jug
+ | 49-50
+49-50
+ | 夜视镜Goggles of Night
+夜视镜Goggles of Night
+
+ | 03-06
+03-06
+ | +1弹药Ammunition,+1
++1弹药Ammunition,+1
+ | 51
+51
+ | 鬼婆之眼Hag Eye
+鬼婆之眼Hag Eye
+
+ | 07-10
+07-10
+ | 次元袋Bag of Holding
+次元袋Bag of Holding
+ | 52-54
+52-54
+ | 通晓语言头盔Helm of Comprehending Languages
+通晓语言头盔Helm of Comprehending Languages
+
+ | 11-12
+11-12
+ | 精灵之靴Boots of Elvenkind
+精灵之靴Boots of Elvenkind
+ | 55
+55
+ | 不动权杖Immovable Rod
+不动权杖Immovable Rod
+
+ | 13-14
+13-14
+ | 跳跑之靴Boots of Striding and Springing
+跳跑之靴Boots of Striding and Springing
+ | 56-57
+56-57
+ | 吟游诗人乐器（道丝鲁特琴、佛克路坎班多里琴或麦克-弗瑞米西特琴 ）Instrument of the 
+      Bards(Doss lute,Fochlucan bandore,or Mac-Fuirmidh cittern)
+吟游诗人乐器（道丝鲁特琴、佛克路坎班多里琴或麦克-弗瑞米西特琴 ）Instrument of the 
+      Bards(Doss lute,Fochlucan bandore,or Mac-Fuirmidh cittern)
+
+ | 15-16
+15-16
+ | 雪地之靴Boots of the Winterlands
+雪地之靴Boots of the Winterlands
+ | 58-59
+58-59
+ | 显像提灯Lantern of Revealing
+显像提灯Lantern of Revealing
+
+ | 17-18
+17-18
+ | 飞天扫帚Broom of Flying
+飞天扫帚Broom of Flying
+ | 60-61
+60-61
+ | 自然斗篷Nature's Mantle
+自然斗篷Nature's Mantle
+
+ | 19-20
+19-20
+ | 水下呼吸帽Cap of Water Breathing
+水下呼吸帽Cap of Water Breathing
+ | 62-63
+62-63
+ | 滑溜之油Oil of Slipperiness
+滑溜之油Oil of Slipperiness
+
+ | 21-22
+21-22
+ | 精灵斗篷Cloak of Elvenkind
+精灵斗篷Cloak of Elvenkind
+ | 64-65
+64-65
+ | 颤栗乐笙Pipes of Haunting
+颤栗乐笙Pipes of Haunting
+
+ | 23-24
+23-24
+ | 防护斗篷Cloak of Protection
+防护斗篷Cloak of Protection
+ | 66-67
+66-67
+ | 唤鼠乐笙Pipes of the Sewers
+唤鼠乐笙Pipes of the Sewers
+
+ | 25-26
+25-26
+ | 蝠鲼斗篷Cloak of the Manta Ray
+蝠鲼斗篷Cloak of the Manta Ray
+ | 68-71
+68-71
+ | 成长药水Potion of Growth
+成长药水Potion of Growth
+
+ | 27
+27
+ | 无尽水瓶Decanter of Endless Water
+无尽水瓶Decanter of Endless Water
+ | 72-80
+72-80
+ | 治疗药水（高等）Potion of Healing(greater)
+治疗药水（高等）Potion of Healing(greater)
+
+ | 28-30
+28-30
+ | 漂浮之球Driftglobe
+漂浮之球Driftglobe
+ | 81-84
+81-84
+ | 水下呼吸药水Potion of Water Breathing
+水下呼吸药水Potion of Water Breathing
+
+ | 31-32
+31-32
+ | 无踪粉Dust of Disappearance
+无踪粉Dust of Disappearance
+ | 85-86
+85-86
+ | 夸尔羽符（锚、扇或树）Quaal's Feather Token(anchor,fan,or 
+  tree)
+夸尔羽符（锚、扇或树）Quaal's Feather Token(anchor,fan,or 
+  tree)
+
+ | 33 34
+33 34
+ | 干燥粉Dust of Dryness
+干燥粉Dust of Dryness
+ | 87-88
+87-88
+ | 跳跃戒指Ring of Jumping
+跳跃戒指Ring of Jumping
+
+ | 35-36
+35-36
+ | 喷嚏粉Dust of Sneezing and Choking
+喷嚏粉Dust of Sneezing and Choking
+ | 89-90
+89-90
+ | 善泳戒指Ring of Swimming
+善泳戒指Ring of Swimming
+
+ | 37-38
+37-38
+ | 魔咒武器（戏法或一环法术）Enspelled Weapon（cantrip or level 1 
+    spell)
+魔咒武器（戏法或一环法术）Enspelled Weapon（cantrip or level 1 
+    spell)
+ | 91-92
+91-92
+ | 温暖戒指Ring of Warmth
+温暖戒指Ring of Warmth
+
+ | 39-40
+39-40
+ | 微视镜片Eyes of Minute Seeing
+微视镜片Eyes of Minute Seeing
+ | 93-94
+93-94
+ | 杂货法袍Robe of Useful Items
+杂货法袍Robe of Useful Items
+
+ | 41-42
+41-42
+ | 鹰眼镜片Eyes of the Eagle
+鹰眼镜片Eyes of the Eagle
+ | 95-96
+95-96
+ | 攀爬绳Rope of Climbing
+攀爬绳Rope of Climbing
+
+ | 43-44
+43-44
+ | 辟矢夺箭手套Gloves of Missile Snaring
+辟矢夺箭手套Gloves of Missile Snaring
+ | 97-98
+97-98
+ | 吉运之石Stone of Good Luck
+吉运之石Stone of Good Luck
+
+ | 45-46
+45-46
+ | 攀泳手套Gloves of Swimming and Climbing
+攀泳手套Gloves of Swimming and Climbing
+ | 99-00
+99-00
+ | 探秘魔杖Wand of Secrets
+探秘魔杖Wand of Secrets
+
+ | 47-48
+47-48
+ | 窃贼手套Gloves of Thievery
+窃贼手套Gloves of Thievery
+ | 
+ | 
+器具-珍稀
+
+ | d100
+d100
+ | 物品
+物品
+ | d100
+d100
+ | 物品
+物品
+
+ | 01-04
+01-04
+ | +2弹药Ammunition,+2
++2弹药Ammunition,+2
+ | 49-52
+49-52
+ | 吟游诗人乐器（卡奈斯曼陀林或克里里拉琴）Instrument of the Bards(Canaith 
+      mandolin or Cli lyre)
+吟游诗人乐器（卡奈斯曼陀林或克里里拉琴）Instrument of the Bards(Canaith 
+      mandolin or Cli lyre)
+
+ | 05-08
+05-08
+ | 魔豆之袋Bag of Beans
+魔豆之袋Bag of Beans
+ | 53-56
+53-56
+ | 艾恩石（警觉）Ioun Stone(awareness)
+艾恩石（警觉）Ioun Stone(awareness)
+
+ | 09-12
+09-12
+ | 矮人腰带Belt of Dwarvenkind
+矮人腰带Belt of Dwarvenkind
+ | 57-60
+57-60
+ | 次元洞Portable Hole
+次元洞Portable Hole
+
+ | 13-16
+13-16
+ | 浮空之靴Boots of Levitation
+浮空之靴Boots of Levitation
+ | 61-64
+61-64
+ | 衰减药水Potion of Diminution
+衰减药水Potion of Diminution
+
+ | 17-20
+17-20
+ | 速度之靴Boots of Speed
+速度之靴Boots of Speed
+ | 65-68
+65-68
+ | 气化形体药水Potion of Gaseous Form
+气化形体药水Potion of Gaseous Form
+
+ | 21-24
+21-24
+ | 开门钟琴Chime of Opening
+开门钟琴Chime of Opening
+ | 69-76
+69-76
+ | 治疗药水（强效）Potion of Healing(superior)
+治疗药水（强效）Potion of Healing(superior)
+
+ | 25-28
+25-28
+ | 次元镣铐Dimensional Shackles
+次元镣铐Dimensional Shackles
+ | 77-80
+77-80
+ | 夸尔羽符（鸟、天鹅船或鞭）Quaal's Feather Token(bird,swan boat,or 
+      whip)
+夸尔羽符（鸟、天鹅船或鞭）Quaal's Feather Token(bird,swan boat,or 
+      whip)
+
+ | 29-32
+29-32
+ | 魔咒武器（二环或三环法术）Enspelled weapon(level 2 or 3 spell)
+魔咒武器（二环或三环法术）Enspelled weapon(level 2 or 3 spell)
+ | 81-84
+81-84
+ | 反射闪避戒指Ring of Evasion
+反射闪避戒指Ring of Evasion
+
+ | 33-36
+33-36
+ | 折叠船Folding Boat
+折叠船Folding Boat
+ | 85-88
+85-88
+ | 自由行动戒指Ring of Free Action
+自由行动戒指Ring of Free Action
+
+ | 37-40
+37-40
+ | 幻惑镶钉皮甲Glamoured Studded Leather
+幻惑镶钉皮甲Glamoured Studded Leather
+ | 89-92
+89-92
+ | 纠缠绳Rope of Entanglement
+纠缠绳Rope of Entanglement
+
+ | 41-44
+41-44
+ | 霍华德的便利袋Heward's Handy Haversack
+霍华德的便利袋Heward's Handy Haversack
+ | 93-96
+93-96
+ | 治愈法杖Staff of Healing
+治愈法杖Staff of Healing
+
+ | 45-48
+45-48
+ | 加速马蹄铁Horseshoes of Speed
+加速马蹄铁Horseshoes of Speed
+ | 97-00
+97-00
+ | 搜敌魔杖Wand of Enemy Detection
+搜敌魔杖Wand of Enemy Detection
+器具-极珍稀
+
+ | d100
+d100
+ | 物品
+物品
+ | d100
+d100
+ | 物品
+物品
+
+ | 01-07
+01-07
+ | +3弹药Ammunition,+3
++3弹药Ammunition,+3
+ | 50-56
+50-56
+ | 轰天震雷鲁特琴Lute of Thunderous Thumping
+轰天震雷鲁特琴Lute of Thunderous Thumping
+
+ | 08-14
+08-14
+ | 吞噬袋Bag of Devouring
+吞噬袋Bag of Devouring
+ | 57-63
+57-63
+ | 灵巧手册Manual of Quickness of Action
+灵巧手册Manual of Quickness of Action
+
+ | 15-21
+15-21
+ | 飞毯Carpet of Flying
+飞毯Carpet of Flying
+ | 64-70
+64-70
+ | 诺泽尔的惊奇颜料Nolzur's Marvelous Pigments
+诺泽尔的惊奇颜料Nolzur's Marvelous Pigments
+
+ | 22-28
+22-28
+ | 魔咒武器（四环或五环法术）Enspelled Weapon(level 4 or 5 spell)
+魔咒武器（四环或五环法术）Enspelled Weapon(level 4 or 5 spell)
+ | 71-77
+71-77
+ | 飞行药水Potion of Flying
+飞行药水Potion of Flying
+
+ | 29-35
+29-35
+ | 西风马蹄铁Horseshoes of a Zephyr
+西风马蹄铁Horseshoes of a Zephyr
+ | 78-86
+78-86
+ | 治疗药水（极效）Potion of Healing(supreme)
+治疗药水（极效）Potion of Healing(supreme)
+
+ | 36-42
+36-42
+ | 吟游诗人乐器（安斯翠瑟竖琴）Instrument of the Bards(Anstruth 
+harp)
+吟游诗人乐器（安斯翠瑟竖琴）Instrument of the Bards(Anstruth 
+harp)
+ | 97-93
+97-93
+ | 加速药水Potion of Speed
+加速药水Potion of Speed
+
+ | 43-49
+43-49
+ | 艾恩石（机敏）Ioun Stone(agility)
+艾恩石（机敏）Ioun Stone(agility)
+ | 94-00
+94-00
+ | 统御卷册Tome of Leadership and 
+Influence
+统御卷册Tome of Leadership and 
+Influence
+器具-传说
+
+ | d100
+d100
+ | 物品
+物品
+ | d100
+d100
+ | 物品
+物品
+
+ | 01-17
+01-17
+ | 魔咒武器（六、七或八环法术）Enspelled Weapon(level 6,7,or 8 
+spell)
+魔咒武器（六、七或八环法术）Enspelled Weapon(level 6,7,or 8 
+spell)
+ | 55-70
+55-70
+ | 湮灭法球Sphere of Annihilation
+湮灭法球Sphere of Annihilation
+
+ | 18-34
+18-34
+ | 吟游诗人乐器（奥莱姆竖琴）Instrument of the Bards(Ollamh harp)
+吟游诗人乐器（奥莱姆竖琴）Instrument of the Bards(Ollamh harp)
+ | 71-83
+71-83
+ | 法球护符Talisman of the sphere
+法球护符Talisman of the sphere
+
+ | 35-54
+35-54
+ | 至尊胶Sovereign Glue
+至尊胶Sovereign Glue
+ | 84-00
+84-00
+ | 万溶剂Universal 
+Solvent
+万溶剂Universal 
+Solvent

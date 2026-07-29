@@ -1,0 +1,13 @@
+d100 遭遇 01         1d6 只 猫 cat 02-03       1 个 平民 commoner 和 1d6 只 山羊 goat 04-05       2d10 只 鼠 rat 06         1 只停在路标上的 渡鸦 raven 07         1 个骑着 驮 用马 draft horse 的 平民 commoner 08         2d4 只 獒 犬 mastiff 09         1d2 的 平民 commoner ，牵着 1d4 匹 骡子 mule 或 1d4 匹 矮种马 pony 10 1 只 伪龙 pseudodragon 11         1 个 间谍 spy 12-13       1d8+1 位 侍 僧 acolyte 14         1d6+ 6 条 飞蛇 flying
+snake 15         3d6 的 狗头人 kobold 16         2d4 只 巨蜈蚣 giant
+centipede 17         1d8+1 只 骷髅 skeleton 18-19       1d6+2 的 鼠群 swarm of
+rats 20         1d12 只 丧尸 zombie 21-25 一个不堪重负的小贩，背着许多瓶子，锅，以及其他生活用品 26         1 只 巨黄蜂 giant wasp 27-28       1 匹 战马 war horse 29         2d8 的 邪教徒 cultist 30-31       3d4 只 巨鼠 giant rat 32         2d8 只 蚊 蝠 stirge 33         1d3+2 条 巨毒蛇 giant
+poisonous snake 34         1d4+2 的 蝙蝠群 swarm
+of bats 35         2d4 只 带翼狗头人 winged
+kobold 36-40 一辆装满苹果的、坏了一个轮子的马车，阻碍了城中的交通 41         1 只 鳄鱼 crocodile 42-43       1 个 昆虫集群 swarm of insects 44-45       3d6 的 强盗 bandit 46-47       1d3+2 个骑着 乘用马 riding
+horse 的 贵族 noble ，身旁跟随着 1d10 的 警卫 guard 48         2d4 的 天狗 kenku 49         1d6+2 只 烟魔 蝠 smoke mephit 50         1d8+1 的 渡鸦群 swarm
+of ravens 51-52       1 个 鼠人 wererat 53-54       1d3 只 半食人 魔 half-ogre 55-56       1 只 拟身怪 mimic 57-58       1d4 的 食尸鬼 ghoul 59-60       1d4 的 恶灵 specter 61-62       1d10 的 幽影 shadow 63-65 有人从二楼窗户向街上倒空了夜壶 66-67 1 个 妖鬼 ghast 68-69       1 位 祭司 priest 70-71       1 个 鬼火 will-o ’ -wisp 72-73       1d3 只 巨蜘蛛 giant spider 74-75       1d4 的 纯 血蛇人 yuan- ti pureblood 76-77       2d4 的 暴徒 thug 78-80 一个在街角宣讲世界尽头的人 81 1 个 坎比翁 cambion 82         1 个 初生吸血鬼 vampire spawn 83         1 条 羽蛇 couatl 84         1 个 幽魂 ghost 85         1 个 魅 魔 succubus 或 1 个 梦魔 incubus 86         1 个 强盗首领 bandit
+captain 和 3d6 的 强盗 bandit 87         1d4+1 的 邪教狂信者 cult
+fanatic 88         1 名 骑士 knight 或 1 个 老兵 veteran 89         1 个 水 诡 water weird 90         1 个 尸妖 wight 91         1 位 魔法师 mage 92         1 个 构装盾卫 shield guardian 93         1 个 角斗士 gladiator 94         1 个 还魂 尸 revenant 95         2d4 只 石像鬼 gargoyle 96         1d4 的 变形怪 doppleganger 97         1 个 恶鬼 oni 98         1 个 隐形追猎者 invisible
+stalker 99         1d8+1 只 相位蜘蛛 phase
+spider 00         1 个 刺客 assassin

@@ -48,17 +48,99 @@ export interface SceneData {
   campaign_name?: string;
 }
 
+export interface Combatant {
+  name: string;
+  initiative: number;
+  side: string;
+  cid?: string;
+  is_player?: boolean;
+  hp?: number;
+  hp_max?: number;
+  surprised?: boolean;
+  dead?: boolean;
+}
+
 export interface CombatData {
   active: boolean;
   round: number;
   current_turn?: string;
-  initiative_order?: { name: string; initiative: number; side: string }[];
+  initiative_order?: Combatant[];
+}
+
+// ── 叙事流消息（v2 重设计，见 docs/FRONTEND_REDESIGN.md §1.3） ──
+
+export type GameMode = "explore" | "social" | "combat";
+
+export interface DiceCardData {
+  title: string;
+  formula: string;
+  face: string | number;
+  verdict: string;
+  vcls: "hit" | "miss" | "crit";
+  fcls?: "crit" | "fail" | "";
+}
+
+export interface HarmCardData {
+  text: string;
+  amount: number;
+  kind: "dmg" | "heal";
+  kill?: boolean;
+}
+
+export interface StreamMessage {
+  id: number;
+  type: "dm" | "player" | "dice" | "harm" | "event" | "meta";
+  speaker?: string;
+  text?: string;
+  dice?: DiceCardData;
+  harm?: HarmCardData;
+  eventCls?: "" | "combat" | "time";
+}
+
+/** 游戏内时钟（后端 result.dice.time 推送，B4 时间推进） */
+export interface GameClock {
+  day: number;
+  label: string; // 凌晨/早晨/上午/午后/下午/黄昏/夜晚/深夜
+}
+
+export type AdvantageMode = "normal" | "adv" | "dis";
+
+export interface DiceRollResult {
+  sides: number;
+  count: number;
+  rolls: number[];
+  total: number;
+  modifier: number;
+  finalTotal: number;
+  advantage: AdvantageMode;
 }
 
 export interface LogEntry {
-  c: string; // dm | you | dice | meta | npc | damage | system | other
+  c: "dm" | "you" | "dice" | "meta" | "npc" | "damage" | "system" | "other";
   t: string;
-  roll?: { d20: number; hit: boolean; crit: boolean; damage?: number };
+  speaker?: string;
+  roll?: DiceRollResult;
+  // 旧格式兼容：后端 result 事件可能携带结构化骰子数据
+  diceData?: { d20: number; hit: boolean; crit: boolean; damage?: number };
+}
+
+// ── 行动日志（右栏，纯前端） ──
+
+export interface ActionLogEntry {
+  text: string;
+  time: string; // "HH:MM"
+  cls?: "highlight" | "damage" | "";
+}
+
+// ── 派对成员（从 socket join/leave 事件推导） ──
+
+export interface PartyMember {
+  name: string;
+  characterId: number;
+  isDm: boolean;
+  connected: boolean;
+  hp?: number;
+  hpMax?: number;
 }
 
 // ── 房间（多人） ──

@@ -8,39 +8,29 @@ interface DeathSaveTrackerProps {
 
 export function DeathSaveTracker({ successes, failures, onRoll }: DeathSaveTrackerProps) {
   return (
-    <div className="bg-red-950 border border-red-800 rounded p-2 space-y-2">
-      <div className="text-xs font-bold text-red-400">💀 死亡豁免</div>
-
-      {/* 成功 */}
-      <div className="flex items-center gap-1">
-        <span className="text-[10px] text-green-500 w-6">成功</span>
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className={`w-3 h-3 rounded-full ${
-              i < successes ? "bg-green-500" : "bg-neutral-700"
-            }`}
-          />
-        ))}
+    <div className="death-save-box">
+      <div className="ds-title">死亡豁免检定</div>
+      <div className="death-save-row">
+        <span className="ds-label">成功</span>
+        <div className="death-save-dots">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className={`ds-dot ${i < successes ? "success" : ""}`}>
+              {i < successes ? "✓" : ""}
+            </div>
+          ))}
+        </div>
       </div>
-
-      {/* 失败 */}
-      <div className="flex items-center gap-1">
-        <span className="text-[10px] text-red-500 w-6">失败</span>
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className={`w-3 h-3 rounded-full ${
-              i < failures ? "bg-red-500" : "bg-neutral-700"
-            }`}
-          />
-        ))}
+      <div className="death-save-row">
+        <span className="ds-label">失败</span>
+        <div className="death-save-dots">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className={`ds-dot ${i < failures ? "failure" : ""}`}>
+              {i < failures ? "✕" : ""}
+            </div>
+          ))}
+        </div>
       </div>
-
-      <button
-        onClick={onRoll}
-        className="w-full px-2 py-1 bg-red-800 border border-red-600 rounded text-xs hover:bg-red-700"
-      >
+      <button className="ds-roll-btn" onClick={onRoll}>
         掷死亡豁免 d20
       </button>
     </div>

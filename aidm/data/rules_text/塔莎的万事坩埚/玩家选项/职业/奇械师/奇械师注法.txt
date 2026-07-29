@@ -1,0 +1,237 @@
+| 力量
+力量
+ | 敏捷
+敏捷
+ | 体质
+体质
+ | 智力
+智力
+ | 感知
+感知
+ | 魅力
+魅力
+
+ | 4（-3）
+4（-3）
+ | 15（+2）
+15（+2）
+ | 12（+1）
+12（+1）
+ | 10（+0）
+10（+0）
+ | 10（+0）
+10（+0）
+ | 7（-2）
+7（-2）
+
+ | 魔法物品
+ | 同调
+同调
+
+ | 炼金壶Alchemy Jug
+ | 否
+否
+
+ | 次元袋Bag of Holding
+ | 否
+否
+
+ | 水下呼吸帽Cap of Water Breathing
+ | 否
+否
+
+ | 夜视镜Goggles of Night
+ | 否
+否
+
+ | 攀爬绳Rope of Climbing
+ | 否
+否
+
+ | 短讯石Sending Stones
+ | 否
+否
+
+ | 侦测魔法魔杖Wand of Magic Detection
+ | 否
+否
+
+ | 探秘魔杖Wand of Secrets
+ | 否
+否
+
+ | 魔法物品
+ | 同调
+同调
+
+ | 精灵靴Boots of Elvenkind
+ | 否
+否
+
+ | 精灵斗篷Cloak of Elvenkind
+ | 是
+是
+
+ | 蝠鲼斗篷Cloak of the Manta Ray
+ | 否
+否
+
+ | 魅惑镜片Eyes of Charming
+ | 是
+是
+
+ | 窃贼手套Gloves of Thievery
+ | 否
+否
+
+ | 显像提灯Lantern of Revealing
+ | 否
+否
+
+ | 颤栗乐笙Pipes of Haunting
+ | 否
+否
+
+ | 水行戒指Ring of Water Walking
+ | 否
+否
+
+ | 魔法物品
+ | 同调
+同调
+
+ | 跳跑靴Boats of Striding and Springing
+ | 是
+是
+
+ | 雪地之靴Boats of the Winterlands
+ | 是
+是
+
+ | 射手护腕Bracer of Archery
+ | 是
+是
+
+ | 护盾胸针Broach of Shielding
+ | 是
+是
+
+ | 防护斗篷Cloak of Protection
+ | 是
+是
+
+ | 鹰眼镜片Eyes of the Eagle
+ | 是
+是
+
+ | 食人魔力量手套Gauntlets of Ogre  Power
+ | 是
+是
+
+ | 辟矢夺箭手套Gloves of Missile Snaring
+ | 是
+是
+
+ | 运动健将手套Gloves of Swimming and Climbing
+ | 是
+是
+
+ | 易容帽Hat of Disguise
+ | 是
+是
+
+ | 智力头带Headband of Intellect
+ | 是
+是
+
+ | 心灵感应头盔Helm of Telepathy
+ | 是
+是
+
+ | 读心勋章Medallion of Thoughts
+ | 是
+是
+
+ | 适应项链Necklace of Adaptation
+ | 是
+是
+
+ | 愈合护符Periapt of Wound Closure
+ | 是
+是
+
+ | 唤鼠乐笙Pipes of the Sewers
+ | 是
+是
+
+ | 艾罗娜的箭袋Quiver of Ehlonna
+ | 否
+否
+
+ | 跳跃戒指Ring of Jumping
+ | 是
+是
+
+ | 心灵护盾戒指Ring of Mind Shielding
+ | 是
+是
+
+ | 蛛行鞋Slippers of Spider Climbing
+ | 是
+是
+
+ | 飞翼之靴Winged Boots
+ | 是
+是
+
+ | 魔法物品
+ | 同调
+同调
+
+ | 健康护符Amulet of Health
+ | 是
+是
+
+ | 山丘巨人之力腰带Belt of Hill Giant Strength
+ | 是
+是
+
+ | 浮空靴Boots of Levitation
+ | 是
+是
+
+ | 速度之靴Boots of Speed
+ | 是
+是
+
+ | 防御护腕Bracers of Defense
+ | 是
+是
+
+ | 蝙蝠斗篷Cloak of the Bat
+ | 是
+是
+
+ | 次元镣铐Dimensional Shackles
+ | 否
+否
+
+ | 真视宝石Gem of Seeing
+ | 是
+是
+
+ | 音爆号角Horn of Blasting
+ | 否
+否
+
+ | 自由行动戒指Ring of Free Action
+ | 是
+是
+
+ | 防御戒指Ring of Protection
+ | 是
+是
+
+ | 公羊戒指Ring of the Ram
+ | 是
+是

@@ -1,0 +1,13 @@
+生机术士Biomancer 中型类人生物（任意种族）中立善良 护甲等级17（板条甲） 生命值110（17d8+34） 速度30尺 力量10（+0） 
+敏捷15（+2） 体质14（+2） 智力20（+5） 感知14（+2） 魅力15（+2） 豁免：智力+9，感知+6 技能：奥秘+9，自然+9 感官：被动察觉12 语言：通用语和任意一种语言 挑战等级：10（5900XP） 援助威仪Bolstering 
+Presence。 生机术士散发30尺魔法性的补给生命能量，范围内生机师的盟友在自己的回合开始时回复5（1d10）生命值。 魔法抗性 
+Magic Resistance。 生机术士抵抗法术和其他魔法效应而作的豁免检定具有优势。 施法Spellcasting。 生机术士作为一名16级析米克施法者，它的施法关键属性是智力（法术豁免DC17，法术攻击命中+9）。生机术士准备了下列法师法术： 戏法（任意）：酸液飞溅Acid 
+Splash，光亮术Light，修复术Mending，毒气喷溅Poison Spray，电爪Shocking Grasp 1环（4法术位）：侦测魔法Detect 
+Magic，油腻术Grease，护盾术Shield 2环（3法术位）：变身术Alter 
+Self，黑暗视觉Darkvision，变巨术/缩小术Enlarge/Reduce，人类定身术Hold Person 3环（3法术位）：法术反制Counterspell，解除魔法Dispel 
+Magic，加速术Haste，防护能量伤害Protection From Energy 4环（3法术位）：困惑术Confusion，次级元素咒唤术Conjure 
+Minor Elementals，变形术Polymorph 5环（2法术位）：寒冰锥Cone 
+of Cold，造物术Creation，怪物定身术Hold Monster 6环（1法术位）：地动术Move 
+Earth，冰墙术Wall of Ice 7环（1法术位）：虹光喷射Prismatic 
+Spray 8环（1法术位）：操控天气Control 
+Weather 动作 弯刀Scimitar。 近战武器攻击：+6命中，触及5尺，单一目标。命中：5（1d6+2）挥砍伤害。

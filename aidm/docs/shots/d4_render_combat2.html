@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+:root {
+  --bg-tertiary: #f1efe8;
+  --text-primary: #2c2c2a;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --v2-bg0: #0c0e13;
+  --v2-bg1: #12151d;
+  --v2-bg2: #181c27;
+  --v2-bg3: #1f2431;
+  --v2-line: #2a3040;
+  --v2-line-soft: #222839;
+  --v2-ink: #e9e3d3;
+  --v2-ink-dim: #9d9683;
+  --v2-ink-faint: #6b6558;
+  --v2-gold: #c9a45c;
+  --v2-gold-hi: #e6c887;
+  --v2-gold-dim: #7d6a42;
+  --v2-red: #c4574e;
+  --v2-red-deep: #8f352f;
+  --v2-green: #6fa878;
+  --v2-blue: #5f83b4;
+  --v2-purple: #8f6fb8;
+  --v2-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  --v2-r-lg: 14px;
+  --v2-r-md: 10px;
+  --v2-r-sm: 7px;
+  --v2-font-story: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --v2-font-ui: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font-sans); font-size: 13px; background: var(--bg-tertiary); color: var(--text-primary); line-height: 1.5; }
+html, body { height: 100%; }
+.v2-app {
+  display: grid;
+  height: 100vh;
+  overflow: hidden;
+  grid-template-rows: 52px 44px 1fr;
+  grid-template-columns: 1fr 340px;
+  grid-template-areas:
+    "topbar topbar"
+    "party  panel"
+    "stage  panel";
+  background: var(--v2-bg0);
+  color: var(--v2-ink);
+  font-family: var(--v2-font-ui);
+  font-size: 14px;
+}
+.v2-app button { font-family: inherit; cursor: pointer; }
+.v2-topbar { grid-area: topbar; display: flex; align-items: center; gap: 14px; padding: 0 14px; background: rgba(18, 21, 29, 0.92); border-bottom: 1px solid var(--v2-line); z-index: 30; }
+.v2-icon-btn { width: 34px; height: 34px; border: 1px solid var(--v2-line); border-radius: var(--v2-r-sm); background: var(--v2-bg2); color: var(--v2-ink-dim); font-size: 16px; display: inline-flex; align-items: center; justify-content: center; }
+.v2-campaign { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.v2-campaign .tag { font-size: 10px; letter-spacing: 2px; color: var(--v2-gold-dim); border: 1px solid var(--v2-gold-dim); border-radius: 3px; padding: 1px 5px; flex: none; }
+.v2-campaign h1 { font-family: var(--v2-font-story); font-size: 16px; font-weight: 600; color: var(--v2-gold-hi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v2-mode-badge { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 1px; border: 1px solid var(--v2-line); background: var(--v2-bg2); color: var(--v2-ink-dim); }
+.v2-mode-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.v2-mode-badge[data-mode="combat"] { color: var(--v2-red); border-color: rgba(196, 87, 78, 0.5); background: rgba(196, 87, 78, 0.08); }
+.v2-game-clock { flex: none; font-size: 12px; color: var(--v2-ink-dim); display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--v2-line-soft); border-radius: 999px; }
+.v2-top-spacer { flex: 1; }
+.v2-partybar { grid-area: party; display: flex; align-items: center; gap: 10px; padding: 0 14px; background: var(--v2-bg1); border-bottom: 1px solid var(--v2-line-soft); overflow-x: auto; z-index: 20; }
+.v2-party-empty { font-size: 11px; color: var(--v2-ink-faint); letter-spacing: 2px; }
+.v2-party-hint { margin-left: auto; flex: none; font-size: 12px; color: var(--v2-gold-hi); display: inline-flex; align-items: center; gap: 6px; }
+.v2-party-hint .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--v2-gold); }
+.v2-stage { grid-area: stage; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: radial-gradient(1200px 500px at 50% -10%, rgba(201, 164, 92, 0.05), transparent 60%), var(--v2-bg0); }
+.v2-combatbar { display: flex; flex-direction: column; border-bottom: 1px solid var(--v2-line); background: linear-gradient(180deg, rgba(143, 53, 47, 0.12), rgba(18, 21, 29, 0.6)); padding: 10px 16px 12px; gap: 10px; flex: none; }
+.v2-init-row { display: flex; align-items: center; gap: 8px; }
+.v2-init-row .cap { font-size: 11px; color: var(--v2-ink-faint); letter-spacing: 2px; flex: none; }
+.v2-init-strip { display: flex; gap: 6px; overflow-x: auto; padding: 2px; }
+.v2-init-chip { flex: none; display: flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--v2-line); background: var(--v2-bg2); font-size: 12px; color: var(--v2-ink-dim); position: relative; }
+.v2-init-chip .iv { font-family: var(--v2-font-story); font-weight: 700; font-size: 13px; color: var(--v2-ink); background: var(--v2-bg3); border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; }
+.v2-init-chip.ally { border-color: rgba(111, 168, 120, 0.45); }
+.v2-init-chip.enemy { border-color: rgba(196, 87, 78, 0.45); }
+.v2-init-chip.current { background: rgba(201, 164, 92, 0.14); border-color: var(--v2-gold); color: var(--v2-gold-hi); box-shadow: 0 0 12px rgba(201, 164, 92, 0.3); transform: translateY(-2px); }
+.v2-init-chip.current .iv { background: var(--v2-gold); color: #10131a; }
+.v2-init-chip .surprised { font-size: 9px; color: var(--v2-red); border: 1px solid var(--v2-red); border-radius: 3px; padding: 0 3px; }
+.v2-round-info { margin-left: auto; font-size: 11px; color: var(--v2-ink-faint); flex: none; }
+.v2-combatant-cards { display: flex; gap: 8px; overflow-x: auto; }
+.v2-ccard { flex: none; width: 168px; background: var(--v2-bg2); border: 1px solid var(--v2-line); border-radius: var(--v2-r-md); padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.v2-ccard.enemy { border-left: 3px solid var(--v2-red); }
+.v2-ccard.ally { border-left: 3px solid var(--v2-green); }
+.v2-ccard.current { border-color: var(--v2-gold); box-shadow: 0 0 10px rgba(201, 164, 92, 0.25); }
+.v2-ccard .nm { font-size: 12px; font-weight: 600; display: flex; justify-content: space-between; }
+.v2-ccard .nm .hp-t { font-family: var(--v2-font-story); color: var(--v2-ink-dim); }
+.v2-ccard .hpbar { height: 8px; border-radius: 4px; background: #262c3c; overflow: hidden; }
+.v2-ccard .hpbar i { display: block; height: 100%; background: linear-gradient(90deg, #8a4b43, #c4705f); }
+.v2-ccard.bloodied .hpbar i { background: linear-gradient(90deg, #b3231b, #e0564a); }
+.v2-ccard.bloodied .nm::after { content: "浴血"; font-size: 9px; color: var(--v2-red); border: 1px solid var(--v2-red); border-radius: 3px; padding: 0 4px; margin-left: 5px; }
+.v2-ccard .sub { font-size: 10px; color: var(--v2-ink-faint); display: flex; gap: 8px; }
+.v2-stream { flex: 1; overflow-y: auto; padding: 22px 0 12px; }
+.v2-stream-col { max-width: 760px; margin: 0 auto; padding: 0 26px; display: flex; flex-direction: column; gap: 16px; }
+.v2-msg-dm { display: flex; gap: 12px; }
+.v2-msg-dm .spine { flex: none; width: 3px; border-radius: 2px; background: linear-gradient(180deg, var(--v2-gold-dim), transparent); }
+.v2-msg-dm .body { min-width: 0; }
+.v2-msg-dm .who { font-size: 10px; letter-spacing: 3px; color: var(--v2-gold-dim); margin-bottom: 5px; }
+.v2-msg-dm .text { font-family: var(--v2-font-story); font-size: 15.5px; line-height: 1.85; color: var(--v2-ink); white-space: pre-wrap; }
+.v2-msg-player { display: flex; justify-content: flex-end; }
+.v2-msg-player .bubble { max-width: 78%; background: linear-gradient(135deg, #2a2416, #221f14); border: 1px solid var(--v2-gold-dim); border-radius: var(--v2-r-lg) var(--v2-r-lg) 4px var(--v2-r-lg); padding: 9px 14px; }
+.v2-msg-player .who { font-size: 10px; color: var(--v2-gold); text-align: right; margin-bottom: 4px; letter-spacing: 1px; }
+.v2-msg-player .text { font-size: 14px; line-height: 1.7; color: var(--v2-ink); }
+.v2-msg-dice { display: flex; justify-content: center; }
+.v2-dice-card { width: 100%; max-width: 640px; background: linear-gradient(135deg, var(--v2-bg2), var(--v2-bg1)); border: 1px solid var(--v2-line); border-radius: var(--v2-r-md); padding: 10px 16px; display: flex; align-items: center; gap: 14px; }
+.v2-dice-card .face { flex: none; width: 46px; height: 46px; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: linear-gradient(160deg, #3a2f1c, #241e12); display: flex; align-items: center; justify-content: center; font-family: var(--v2-font-story); font-size: 20px; font-weight: 700; color: var(--v2-gold-hi); }
+.v2-dice-card .meta { min-width: 0; flex: 1; }
+.v2-dice-card .title { font-size: 13px; font-weight: 600; }
+.v2-dice-card .formula { font-size: 11.5px; color: var(--v2-ink-dim); font-family: var(--v2-font-story); margin-top: 2px; }
+.v2-dice-card .verdict { flex: none; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.v2-dice-card .verdict.hit { color: var(--v2-green); border: 1px solid var(--v2-green); }
+.v2-msg-harm { display: flex; justify-content: center; }
+.v2-harm-card { display: inline-flex; align-items: center; gap: 10px; padding: 7px 16px; border-radius: 999px; font-family: var(--v2-font-story); border: 1px solid; }
+.v2-harm-card.dmg { color: #f0a79e; border-color: rgba(196, 87, 78, 0.5); background: rgba(196, 87, 78, 0.1); }
+.v2-harm-card .num { font-size: 18px; font-weight: 700; }
+.v2-harm-card .kill { font-size: 10px; font-family: var(--v2-font-ui); font-weight: 700; background: var(--v2-red); color: #fff; border-radius: 3px; padding: 1px 6px; }
+.v2-quickbar { flex: none; padding: 8px 16px 4px; display: flex; gap: 8px; overflow-x: auto; }
+.v2-quickbar .cap { flex: none; align-self: center; font-size: 10px; letter-spacing: 2px; color: var(--v2-ink-faint); }
+.v2-chip { flex: none; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--v2-line); background: var(--v2-bg2); color: var(--v2-ink-dim); font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px; }
+.v2-chip .ico { font-size: 13px; }
+.v2-chip.danger { border-color: rgba(196, 87, 78, 0.45); color: #d89a92; }
+.v2-inputbar { flex: none; padding: 8px 16px 14px; }
+.v2-input-wrap { max-width: 760px; margin: 0 auto; display: flex; align-items: flex-end; gap: 8px; background: var(--v2-bg2); border: 1px solid var(--v2-line); border-radius: var(--v2-r-lg); padding: 8px 8px 8px 16px; }
+.v2-input-wrap textarea { flex: 1; background: none; border: none; outline: none; color: var(--v2-ink); font-family: var(--v2-font-story); font-size: 15px; resize: none; line-height: 1.6; max-height: 120px; }
+.v2-input-wrap textarea::placeholder { color: var(--v2-ink-faint); }
+.v2-send-btn { flex: none; height: 38px; padding: 0 18px; border: none; border-radius: var(--v2-r-md); background: linear-gradient(135deg, var(--v2-gold), #a5854a); color: #14100a; font-weight: 700; font-size: 13px; }
+.v2-dice-btn { flex: none; width: 38px; height: 38px; border-radius: var(--v2-r-md); border: 1px solid var(--v2-line); background: var(--v2-bg3); color: var(--v2-gold-hi); font-size: 17px; }
+.v2-panel { grid-area: panel; background: var(--v2-bg1); border-left: 1px solid var(--v2-line); display: flex; flex-direction: column; min-height: 0; z-index: 25; overflow: hidden; }
+.v2-panel-tabs { flex: none; display: flex; border-bottom: 1px solid var(--v2-line); }
+.v2-panel-tabs button { flex: 1; padding: 11px 0 9px; background: none; border: none; color: var(--v2-ink-faint); font-size: 12.5px; letter-spacing: 1px; border-bottom: 2px solid transparent; }
+.v2-panel-tabs button.on { color: var(--v2-gold-hi); border-bottom-color: var(--v2-gold); }
+.v2-panel-pages { flex: 1; overflow-y: auto; min-height: 0; }
+.v2-ppage { display: none; padding: 14px; flex-direction: column; gap: 12px; }
+.v2-ppage.on { display: flex; }
+.v2-panel-footer { flex: none; border-top: 1px solid var(--v2-line-soft); padding: 8px 14px; }
+.v2-panel-meta { display: flex; gap: 14px; font-size: 10px; color: var(--v2-ink-faint); flex-wrap: wrap; }
+.v2-pc-head { display: flex; gap: 12px; align-items: center; }
+.v2-pc-head .avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #c9a45c, #8a6a34); display: flex; align-items: center; justify-content: center; font-family: var(--v2-font-story); font-size: 22px; font-weight: 700; color: #14100a; border: 2px solid var(--v2-gold-dim); }
+.v2-pc-head .who h2 { font-family: var(--v2-font-story); font-size: 17px; color: var(--v2-gold-hi); }
+.v2-pc-head .who .sub { font-size: 11px; color: var(--v2-ink-dim); margin-top: 3px; }
+.v2-stat-block { background: var(--v2-bg2); border: 1px solid var(--v2-line-soft); border-radius: var(--v2-r-md); padding: 10px 12px; }
+.v2-stat-block h3 { font-size: 10px; letter-spacing: 3px; color: var(--v2-ink-faint); margin-bottom: 8px; font-weight: 600; }
+.v2-hp-main { display: flex; align-items: center; gap: 10px; }
+.v2-hp-main .big { font-family: var(--v2-font-story); font-size: 24px; font-weight: 700; }
+.v2-hp-main .max { color: var(--v2-ink-faint); font-size: 13px; }
+.v2-hp-track { flex: 1; height: 10px; background: #262c3c; border-radius: 5px; overflow: hidden; position: relative; }
+.v2-hp-track i { display: block; height: 100%; background: linear-gradient(90deg, #7d4a44, #b86a5e); }
+.v2-def-row { display: flex; gap: 8px; }
+.v2-def-cell { flex: 1; text-align: center; background: var(--v2-bg2); border: 1px solid var(--v2-line-soft); border-radius: var(--v2-r-md); padding: 8px 4px; }
+.v2-def-cell .v { font-family: var(--v2-font-story); font-size: 18px; font-weight: 700; color: var(--v2-gold-hi); }
+.v2-def-cell .k { font-size: 10px; color: var(--v2-ink-faint); margin-top: 2px; letter-spacing: 1px; }
+.v2-ab-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.v2-ab-cell { background: var(--v2-bg2); border: 1px solid var(--v2-line-soft); border-radius: var(--v2-r-sm); padding: 6px 0 5px; text-align: center; }
+.v2-ab-cell .mod { font-family: var(--v2-font-story); font-size: 16px; font-weight: 700; color: var(--v2-ink); }
+.v2-ab-cell .score { font-size: 10px; color: var(--v2-ink-faint); }
+.v2-ab-cell .nm { font-size: 10px; color: var(--v2-ink-dim); letter-spacing: 1px; }
+.v2-slot-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--v2-ink-dim); }
+.v2-slot-row .nm { width: 44px; flex: none; }
+.v2-pips { display: flex; gap: 4px; }
+.v2-pips i { width: 11px; height: 11px; border-radius: 50%; border: 1px solid var(--v2-purple); background: transparent; }
+.v2-pips i.full { background: var(--v2-purple); }
+.v2-pips.hd i { border-color: var(--v2-green); }
+.v2-pips.hd i.full { background: var(--v2-green); }
+.v2-cond-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.v2-cond-none { font-size: 12px; color: var(--v2-ink-faint); }
+.v2-attune-meter { font-size: 11px; color: var(--v2-ink-dim); display: flex; gap: 6px; align-items: center; }
+.v2-attune-meter .slots { display: flex; gap: 4px; }
+.v2-attune-meter .slots i { width: 10px; height: 10px; border-radius: 2px; border: 1px solid var(--v2-purple); }
+</style>
+</head>
+<body>
+<main class="v2-app" data-mode="combat">
+  <header class="v2-topbar">
+    <button class="v2-icon-btn" title="菜单">&#9776;</button>
+    <div class="v2-campaign"><span class="tag">战役</span><h1>验证者的冒险</h1></div>
+    <span class="v2-mode-badge" data-mode="combat">战斗</span>
+    <span class="v2-game-clock">&#9790; 第1天 &#183; 夜晚</span>
+    <div class="v2-top-spacer"></div>
+    <button class="v2-icon-btn" title="折叠角色面板">&#128220;</button>
+  </header>
+  <div class="v2-partybar">
+    <span class="v2-party-empty">单人冒险</span>
+    <span class="v2-party-hint"><i class="dot"></i>轮到 哥布林</span>
+  </div>
+  <section class="v2-stage">
+    <section class="v2-combatbar">
+      <div class="v2-init-row">
+        <span class="cap">先攻</span>
+        <div class="v2-init-strip">
+          <div class="v2-init-chip enemy current"><span class="iv">18</span>哥布林</div>
+          <div class="v2-init-chip ally"><span class="iv">17</span>验证者<span class="surprised">突袭</span></div>
+          <div class="v2-init-chip enemy"><span class="iv">12</span>哥布林</div>
+        </div>
+        <span class="v2-round-info">第 1 轮</span>
+      </div>
+      <div class="v2-combatant-cards">
+        <div class="v2-ccard enemy current">
+          <div class="nm"><span>哥布林</span><span class="hp-t">7/7</span></div>
+          <div class="hpbar"><i style="width: 100%;"></i></div>
+          <div class="sub"><span>敌方</span><span>先攻 18</span></div>
+        </div>
+        <div class="v2-ccard ally bloodied">
+          <div class="nm"><span>验证者（我）</span><span class="hp-t">13/32</span></div>
+          <div class="hpbar"><i style="width: 41%;"></i></div>
+          <div class="sub"><span>队友</span><span>先攻 17</span></div>
+        </div>
+        <div class="v2-ccard enemy">
+          <div class="nm"><span>哥布林</span><span class="hp-t">7/7</span></div>
+          <div class="hpbar"><i style="width: 100%;"></i></div>
+          <div class="sub"><span>敌方</span><span>先攻 12</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="v2-stream">
+      <div class="v2-stream-col">
+        <div class="v2-msg v2-msg-dm">
+          <div class="spine"></div>
+          <div class="body">
+            <div class="who">地下城主</div>
+            <div class="text">隧道深处传来碎石滚落的声响，两只哥布林从暗处窜出，锈剑在微光中泛着冷意。它们显然早有准备——你心头一沉，知道自己被伏击了。</div>
+          </div>
+        </div>
+        <div class="v2-msg v2-msg-dice">
+          <div class="v2-dice-card">
+            <div class="face">&#9201;</div>
+            <div class="meta"><div class="title">先攻</div><div class="formula">哥布林18 &#183; 验证者17 &#183; 哥布林12</div></div>
+            <span class="verdict hit">开战</span>
+          </div>
+        </div>
+        <div class="v2-msg v2-msg-player">
+          <div class="bubble">
+            <div class="who">验证者</div>
+            <div class="text">我攻击最近的敌人</div>
+          </div>
+        </div>
+        <div class="v2-msg v2-msg-dice">
+          <div class="v2-dice-card">
+            <div class="face">10</div>
+            <div class="meta"><div class="title">匕首 攻击</div><div class="formula">d20 = 10 &#183; 伤害 7（穿刺）</div></div>
+            <span class="verdict hit">命中</span>
+          </div>
+        </div>
+        <div class="v2-msg v2-msg-harm">
+          <div class="v2-harm-card dmg"><span>哥布林 受到穿刺伤害</span><span class="num">-7</span><span class="kill">击杀</span></div>
+        </div>
+      </div>
+    </section>
+    <div class="v2-quickbar">
+      <span class="cap">行动</span>
+      <button class="v2-chip danger"><span class="ico">&#9876;</span>攻击</button>
+      <button class="v2-chip danger"><span class="ico">&#10024;</span>施法</button>
+      <button class="v2-chip"><span class="ico">&#128737;</span>闪避</button>
+      <button class="v2-chip"><span class="ico">&#127939;</span>撤离</button>
+      <button class="v2-chip"><span class="ico">&#9203;</span>结束回合</button>
+    </div>
+    <div class="v2-inputbar">
+      <div class="v2-input-wrap">
+        <textarea rows="1" placeholder="描述你的行动……"></textarea>
+        <button class="v2-dice-btn">&#127922;</button>
+        <button class="v2-send-btn">行动</button>
+      </div>
+    </div>
+  </section>
+  <aside class="v2-panel">
+    <nav class="v2-panel-tabs">
+      <button class="on">角色卡</button>
+      <button>法术书</button>
+      <button>物品栏</button>
+      <button>规则速查</button>
+    </nav>
+    <div class="v2-panel-pages">
+      <section class="v2-ppage on">
+        <div class="v2-pc-head">
+          <div class="avatar">验</div>
+          <div class="who">
+            <h2>验证者</h2>
+            <div class="sub">人类 &#183; 法师 5 级 &#183; 绝对中立 &#183; 熟练 +3</div>
+          </div>
+        </div>
+        <div class="v2-stat-block">
+          <h3>生命值</h3>
+          <div class="v2-hp-main">
+            <span class="big">13</span><span class="max">/ 32</span>
+            <div class="v2-hp-track"><i style="width: 41%;"></i></div>
+          </div>
+        </div>
+        <div class="v2-def-row">
+          <div class="v2-def-cell"><div class="v">10</div><div class="k">AC</div></div>
+          <div class="v2-def-cell"><div class="v">30</div><div class="k">速度 尺</div></div>
+          <div class="v2-def-cell"><div class="v">+0</div><div class="k">先攻</div></div>
+          <div class="v2-def-cell"><div class="v">11</div><div class="k">被动察觉</div></div>
+        </div>
+        <div class="v2-stat-block">
+          <h3>属性</h3>
+          <div class="v2-ab-grid">
+            <div class="v2-ab-cell"><div class="mod">+3</div><div class="score">16</div><div class="nm">力量</div></div>
+            <div class="v2-ab-cell"><div class="mod">+0</div><div class="score">10</div><div class="nm">敏捷</div></div>
+            <div class="v2-ab-cell"><div class="mod">+2</div><div class="score">15</div><div class="nm">体质</div></div>
+            <div class="v2-ab-cell"><div class="mod">+0</div><div class="score">10</div><div class="nm">智力</div></div>
+            <div class="v2-ab-cell"><div class="mod">+0</div><div class="score">10</div><div class="nm">感知</div></div>
+            <div class="v2-ab-cell"><div class="mod">+0</div><div class="score">10</div><div class="nm">魅力</div></div>
+          </div>
+        </div>
+        <div class="v2-stat-block">
+          <h3>法术位</h3>
+          <div class="v2-slot-row"><span class="nm">1 环</span><span class="v2-pips"><i class="full"></i><i class="full"></i><i class="full"></i><i></i></span><span>剩余 3</span></div>
+          <div class="v2-slot-row"><span class="nm">2 环</span><span class="v2-pips"><i class="full"></i><i class="full"></i><i class="full"></i></span><span>剩余 3</span></div>
+          <div class="v2-slot-row"><span class="nm">3 环</span><span class="v2-pips"><i class="full"></i><i class="full"></i></span><span>剩余 2</span></div>
+        </div>
+        <div class="v2-stat-block">
+          <h3>生命骰 &#183; 死亡豁免</h3>
+          <div class="v2-slot-row">生命骰 <span class="v2-pips hd"><i class="full"></i><i class="full"></i><i class="full"></i><i class="full"></i><i class="full"></i></span> 5/5</div>
+        </div>
+        <div class="v2-stat-block">
+          <h3>状态 &#183; 同调</h3>
+          <div class="v2-cond-list"><span class="v2-cond-none">无状态异常</span></div>
+          <div class="v2-attune-meter" style="margin-top: 8px;">同调<span class="slots"><i></i><i></i><i></i></span>0/3</div>
+        </div>
+      </section>
+    </div>
+    <div class="v2-panel-footer">
+      <div class="v2-panel-meta"><div>玩家：验证者</div><div>战役 #913</div></div>
+    </div>
+  </aside>
+</main>
+</body>
+</html>

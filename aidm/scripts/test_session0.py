@@ -87,6 +87,16 @@ def test_rule_versions():
     print("[PASS] test_rule_versions")
 
 
+def test_2014_version_unsupported():
+    """2014 PHB 未实装：校验必须拒绝并给出“未实装”说明（防假开关）。"""
+    cfg = Session0Config(rule_version="2014 PHB")
+    errs = validate_session0(cfg)
+    assert errs, "2014 PHB 不应通过校验"
+    assert any("未实装" in e for e in errs), f"错误应说明未实装，得到: {errs}"
+    assert not is_valid_config(cfg)
+    print("[PASS] test_2014_version_unsupported")
+
+
 def test_advancement_modes():
     """升级方式枚举校验。"""
     for am in ADVANCEMENT_MODES:
@@ -188,6 +198,7 @@ if __name__ == "__main__":
     test_seriousness_bounds()
     test_seriousness_type()
     test_rule_versions()
+    test_2014_version_unsupported()
     test_advancement_modes()
     test_resurrection_access()
     test_party_size()

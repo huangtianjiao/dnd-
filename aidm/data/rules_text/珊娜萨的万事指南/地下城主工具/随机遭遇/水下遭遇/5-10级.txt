@@ -1,0 +1,8 @@
+d100 遭遇 01-02       3d6 只 蒸汽魔蝠 steam mephit 03-04       1d10 的 鲨华鱼人 sahuagin 05-06       1 只 巨章鱼 giant octopus 07-08       3d6 条 蟒蛇 constrictor
+snake 09-10       2d10 的 人鱼 merfolk 和 1d4 只 巨海马 giant sea horse 11-15       1d4 的 海鬼婆 sea hag 16-20       2d4 的 食人鱼群 swarm of
+quippers 21-25 一艘沉到水底的大帆船，有 50% 的几率藏有宝藏（投掷城主指南第 7 章的随机宝藏表，库藏宝藏：挑战等级 5 ～ 10 ） 26-30       1d4 只 蛇颈龙 plesiosaurus 31-35       3d6 只 礁鲨 reef shark 36-40 一个被遗弃的球形潜水装置 41-50       1d4 条 巨蟒 giant
+constrictor snake 51-55       2d4 只 寻猎鲨 hunter shark 56-60       1d3 的 鲨华女祭司 sahuagin
+priestess 和 2d10 的 鲨华鱼人 sahuagin 61-65 一座用珊瑚建成的空城堡 66-70       1d4 只 虎鲸 killer whale 71-75       1d10 的 迈罗人鱼 merrow 76-80 一座蹲坐的人形生物的雕像，背上长着蝙蝠翅膀，脸上长着触须 81-85       1d4 的 水元素 water
+elemental 86-90       1 个 鲨华男爵 sahuagin
+baron 和 2d8 的 鲨华鱼人 sahuagin 91-96       1d4 只 巨鲨 giant shark 97-99       1 个 水巨灵 marid 00         1 个 风暴巨人 storm
+giant

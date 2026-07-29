@@ -42,6 +42,40 @@
 | 动态场景插图 API 未接 | 🟡 部分 | `image_gen.generate_scene_image` 待接真实图像服务；`render_battlefield_ascii` 已实现 |
 | Enemy AI 待接入战斗循环 | 🟡 部分 | `agents/enemy_ai.py` 已建，但怪物行动现仍由 DM 手动操作（`ws.py:on_monster_action`） |
 
+## 规则门控审计（2026-07-29 全量审计，已修复项见 tests/test_ownership_gate.py + test_rule_gates.py）
+
+### 本轮已修复（硬性门控已接入判定链）
+
+| 规则 | 修复内容 |
+|---|---|
+| R-SPL-036 法术须学会 | `_resolve_cast` 校验 known_spells（职业法术表+环阶可及）；创建时初始化；历史角色动态回退 |
+| R-ITM-012 武器须拥有 | `_resolve_attack` 降级未拥有武器；`/equip-weapon` 拒绝 not_owned；起始武器入包 |
+| R-ITM-013 武器熟练 | `class_weapon_proficient` 解析职业熟练串（含武僧/游荡者词条变体）；不熟练不加熟练加值 |
+| R-GLS-015 长休冷却 | 16h 冷却存 world_flags[last_long_rest_min_{cid}]，_resolve_rest 拒绝、apply 落盘 |
+| DMG 药水消耗品 | 治疗药水/高级治疗药水入魔法物品库；喝药须拥有，用后从 inventory 移除 |
+| 同调拥有性 | `attune_magic_item` 校验物品在 inventory |
+| R-GLS-047 力竭 6 级即死 | apply_node 强制 dead=True |
+| state_changes 注入防护 | 玩家 hp delta 钳制 ±2×hp_max；temp_hp 钳制 ≤hp_max |
+
+### 已审计确认为非问题（现有架构隐式覆盖）
+
+| 审计项 | 结论 |
+|---|---|
+| 动作经济/每回合一法术位 | 每次 graph.run = 一个玩家回合（行动后 apply 3e 自动 advance_turn），单回合多动作无法通过聊天流触发 |
+| 战斗中长休 | resolve 已拒绝 combat.active 时 rest/travel/explore/levelup |
+
+### 遗留缺口（需 DB 迁移/大特性，按优先级排期）
+
+| 优先级 | 缺口 | 阻塞原因 |
+|---|---|---|
+| 🔴 高 | 金币系统（Character 无 gold 字段，loot 金币不落盘，交易不可用） | 需 DB 字段 + 交易流程设计 |
+| 🔴 高 | 技能熟练未持久化（skill_prof_json 缺失，现由 LLM 每轮猜 proficient） | 需 DB 字段 + 创角流程选技能 |
+| 🟡 中 | 专注跨回合不持久（同一轮内受伤会触发豁免，下一轮丢失状态；新专注不终止旧专注） | 需持久化字段（可用 world_flags 过渡） |
+| 🟡 中 | 稳定后 1d4 小时自动苏醒未实现（现需治疗才能起身） | 需游戏时间调度钩子 |
+| 🟡 中 | XP 自动获取未接入（现仅里程碑升级） | 需遭遇结算钩子 + Character.xp 字段 |
+| 🟡 中 | 施法成分 V/S/M 未在 graph 路径强制（engine.cast_spell 已有，但 LLM 无法可靠提供空手/法器状态） | 需装备槽位系统 |
+| ⚪ 低 | 弹药消耗/双持/距离射程检查/负重/状态自动解除/种族特性/多人物品转移 | 位置/时间系统不完善，LLM 叙事层现阶段代管 |
+
 ## 问题处理流程模板
 
 ```

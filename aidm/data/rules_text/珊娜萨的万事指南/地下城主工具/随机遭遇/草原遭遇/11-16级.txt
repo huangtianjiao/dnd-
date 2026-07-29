@@ -1,0 +1,5 @@
+d100 遭遇 01-05       3d6 的 野猪人 wereboar 06-10       2d10 只 鬣狗人 · 耶诺古毒牙 gnoll fang of Yeenoghu 11-15       1d4 只 鲨蜥 bulette 16-17 一条部分被野草覆盖的老旧的石板路，向两边各延伸 1d8 里 18-27       1d12 条 羽蛇 couatl 28-30 一位住在简陋小屋里的女巫（ 魔法师 mage ）。她会用治疗药水，抗毒剂和其他药水交易食物和新消息。 31-40       2d10 只 象 elephant 41-46       2d4 的 虎人 weretiger 47-56       1d8+1 的 独眼巨人 cyclops 57-61       1d3 只 奇美拉 chimera 62-66       5 只 三角龙 triceratops 67-69 一个直径 50 尺的巨大坑洞，向下延伸近 500 尺，末端连接着一个空荡荡的洞穴 70-79       1d4+3 只 石化牛 gorgon 80-88       1d3 只 青年金龙 young gold
+dragon 89-90 一片草杆全部被压倒的直径约四分之一里的圆形区域；在高处能看到被线连接着的另外 1d4 个类似的区域。 91-96       2d4 只 雷克斯暴龙 tyrannosaurus
+rex 97-99       1 只 成年金龙 adult gold
+dragon 00 1 只 远古金龙 ancient
+gold dragon

@@ -1,53 +1,48 @@
 "use client";
 
-interface PartyMember {
-  name: string;
-  hp: number;
-  hp_max: number;
-  active?: boolean;
-}
+import type { PartyMember } from "../lib/types";
 
 interface PartyBarProps {
   members: PartyMember[];
-  onSelect?: (index: number) => void;
+  activeName?: string;
+  onSelect?: (name: string) => void;
 }
 
-export function PartyBar({ members, onSelect }: PartyBarProps) {
+const AVATAR_COLORS: string[] = [
+  "var(--bg-purple)|var(--text-purple)",
+  "var(--bg-blue)|var(--text-blue)",
+  "var(--bg-green)|var(--text-green)",
+  "var(--bg-amber)|var(--text-amber)",
+  "var(--bg-red)|var(--text-red)",
+];
+
+export function PartyBar({ members, activeName, onSelect }: PartyBarProps) {
   if (members.length === 0) return null;
 
-  const hpState = (pct: number) =>
-    pct > 50 ? "full" : pct > 25 ? "hurt" : pct > 0 ? "critical" : "down";
+  const hpState = (hp?: number, hpMax?: number) => {
+    if (!hp || !hpMax || hpMax === 0) return null;
+    const pct = (hp / hpMax) * 100;
+    if (hp <= 0) return "down";
+    if (pct > 50) return "full";
+    if (pct > 25) return "hurt";
+    return "critical";
+  };
 
   return (
-    <div className="flex gap-1 mb-2">
+    <div className="party-bar">
       {members.map((m, i) => {
-        const pct = m.hp_max > 0 ? (m.hp / m.hp_max) * 100 : 0;
-        const state = hpState(pct);
+        const [bg, color] = (AVATAR_COLORS[i % AVATAR_COLORS.length] || AVATAR_COLORS[0]).split("|");
+        const hpDot = hpState(m.hp, m.hpMax);
         return (
-          <button
+          <div
             key={i}
-            onClick={() => onSelect?.(i)}
-            className={`flex-1 px-1 py-1 rounded text-center border ${
-              m.active
-                ? "border-amber-400 bg-neutral-800"
-                : "border-neutral-700 bg-neutral-900"
-            }`}
+            className={`party-member ${m.name === activeName ? "active" : ""}`}
+            onClick={() => onSelect?.(m.name)}
           >
-            <div className="text-[10px] font-bold truncate">{m.name}</div>
-            <div className="flex justify-center gap-0.5 mt-0.5">
-              <div
-                className={`w-1.5 h-1.5 rounded-full ${
-                  state === "full"
-                    ? "bg-green-500"
-                    : state === "hurt"
-                    ? "bg-yellow-500"
-                    : state === "critical"
-                    ? "bg-red-500"
-                    : "bg-neutral-700"
-                }`}
-              />
-            </div>
-          </button>
+            <div className="pm-avatar" style={{ background: bg, color }}>{m.name.charAt(0)}</div>
+            <div className="pm-name">{m.name}</div>
+            {hpDot && <div className={`pm-hp-dot ${hpDot}`} title={`${m.hp}/${m.hpMax}`} />}
+          </div>
         );
       })}
     </div>

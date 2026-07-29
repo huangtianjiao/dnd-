@@ -1,0 +1,7 @@
+d100 遭遇 01-05       1d10 只 鲨 蜥 兽 bulette 06-10       1d8+1 只 奇美拉 chimera 11-15       1 只 成年银龙 adult silver
+dragon 16-20       1d8+1 只 飞龙 wyvern 21-25 在山顶停着的一艘大船 26-30       2d4 的 格 莱 石人 galeb duhr 31-35       1d4 的 霜巨人 frost giant 36-40 一个长满树木的山谷，其中 隐居着 精灵，他们小心翼翼地讲述着他们的领主 —— 一位住在山谷中心的疯法师 —— 的故事 41-45       1d10 的 气元素 air
+elemental 46-50       1d6+3 的 巨魔 troll 51-55       1 只 成年红龙 adult red
+dragon 56-60       1d4 的 云巨人 cloud giant 61-65 一 个数百尺高的瀑布，其中的水落入清澈的池塘里 66-70       1d3 的 火巨人 fire giant 71-75       2d4 的 石巨人 stone giant 76-80 由 100 个矮人（老兵）组成的军队驻扎在山 隘 处，在有人交出 100gp （徒步旅行）或 200gp （骑乘驮兽）前不会让路 81-85       1d4 的 鹏鸟 roc 86-90       1d4 只 青年红龙 young red
+dragon 91-96       1 只 远古银龙 ancient silver
+dragon 97-00       1 只 远古红龙 ancient red
+dragon

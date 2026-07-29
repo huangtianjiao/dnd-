@@ -28,6 +28,8 @@ build/
 
 # === Runtime data store (regenerable from rules_text via scripts/extract_rules.py) ===
 aidm/data/rules.db/
+aidm/aidm.db
+aidm/*.db
 
 # === Game save state (personal runtime data) ===
 aidm/data/saves/

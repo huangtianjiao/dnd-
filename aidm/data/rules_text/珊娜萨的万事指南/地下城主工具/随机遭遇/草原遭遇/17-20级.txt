@@ -1,0 +1,5 @@
+d100 遭遇 01-10       2d6 只 三角龙 triceratops 11-20       1d10 只 石化牛 gorgon 21-25       2d6 只 鬣狗 hyena ，啃食着一只恐龙的残骸 26-35       3d6 只 鲨蜥 bulette 36-40 一辆火焰缠绕的战车在天空中驶过 41-50       1d3 只 青年金龙 young gold
+dragon 51-60       2d4 的 独眼巨人 cyclops 61-65 一个山谷，里面的草全部枯萎死亡，地面上散落着被石化的树桩和树干 66-75       2d10 只 熊地精 bugbear ， 4d6 只 地精 goblin 和 2d10 只 狼 wolf 76-80 一队态度友好的冒险者，共有 1d6+1 人，种族、职业和等级不一（平均 1d6+2 级）。他们会分享最近从旅行中得来的消息。 81-90       1d12 只 奇美拉 chimera 91-96       1d6+2 只 雷克斯暴龙 tyrannosaurus
+rex 97-99       1 只 成年金龙 adult gold
+dragon 00         1 只 远古金龙 ancient
+gold dragon

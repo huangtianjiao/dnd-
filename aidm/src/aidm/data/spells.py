@@ -133,6 +133,31 @@ def get_casting_ability(class_name: str) -> str:
     return CASTING_ABILITY_BY_CLASS[class_name]
 
 
+def default_known_spells(class_name: str, level: int) -> list[str]:
+    """按职业+等级返回默认已学法术列表（角色创建时初始化 known_spells）。
+
+    规则: R-SPL-036 职业法术列表 — 只能施展本职业法术列表内的法术；
+          R-SPL-001 法术环阶 — 环阶不超过当前等级可用最高法术位环。
+    出处: topics/玩家手册2024/法术/法术列表.htm
+    简化: MVP 按「职业法术表内、环阶可及即视为已学会」处理，
+          暂不区分准备/已知数量上限（PHB2024 准备法术数表后续补）。
+    非施法职业返回空列表。
+    """
+    if class_name not in CASTING_ABILITY_BY_CLASS:
+        return []
+    slots = max_spell_slots(level)
+    max_ring = max(slots.keys(), default=0)
+    names: list[str] = [s.name for s in SPELLS.values()
+                        if class_name in s.class_list and s.level <= max_ring]
+    from .spells_full import SPELLS_FULL  # 延迟导入，与 get_spell 一致
+    for raw in SPELLS_FULL.values():
+        if (raw["name"] not in SPELLS
+                and class_name in raw.get("class_list", [])
+                and raw["level"] <= max_ring):
+            names.append(raw["name"])
+    return sorted(set(names))
+
+
 # ──────────────────────────────────────────────────────────────────────────
 # 法术数据表（至少 10 个常用法术）
 # 数据来源: topics/玩家手册2024/法术详述/{0..3}环.htm
@@ -457,15 +482,66 @@ _SPELLS_LIST: list[Spell] = [
 SPELLS: dict[str, Spell] = {s.name: s for s in _SPELLS_LIST}
 
 
+# ──────────────────────────────────────────────────────────────────────────
+# 全量表兜底：spells_full.SPELLS_FULL（391 个法术，自动解析生成）
+# 精校表 SPELLS 未命中时按名转换，字段由描述文本规则推断，精度略低。
+# ──────────────────────────────────────────────────────────────────────────
+
+_FULL_CACHE: dict[str, Spell] = {}
+
+
+def _spell_from_full(raw: dict) -> Spell:
+    """将 spells_full 的 dict 条目转换为 Spell 对象（带缓存）。"""
+    name = raw["name"]
+    if name in _FULL_CACHE:
+        return _FULL_CACHE[name]
+    upcast = raw.get("upcast")
+    if upcast and "cantrip_scaling" in upcast:
+        upcast = {**upcast, "cantrip_scaling": [tuple(x) for x in upcast["cantrip_scaling"]]}
+    sp = Spell(
+        name=name,
+        en_name=raw.get("en_name", ""),
+        level=raw["level"],
+        school=raw.get("school", ""),
+        casting_time=raw.get("casting_time", ""),
+        casting_time_type=raw.get("casting_time_type", "ACTION"),
+        range=raw.get("range", ""),
+        components=frozenset(raw.get("components", [])),
+        material_desc=raw.get("material_desc", ""),
+        material_cost_gp=raw.get("material_cost_gp", 0.0),
+        material_consumed=raw.get("material_consumed", False),
+        duration=raw.get("duration", "立即"),
+        concentration=raw.get("concentration", False),
+        ritual=raw.get("ritual", False),
+        effect_type=raw.get("effect_type", "automatic"),
+        save_ability=raw.get("save_ability"),
+        damage_dice=raw.get("damage_dice"),
+        damage_type=raw.get("damage_type"),
+        half_on_save=raw.get("half_on_save", False),
+        heal_dice=raw.get("heal_dice"),
+        add_casting_mod_to_heal=raw.get("add_mod_heal", False),
+        upcast=upcast,
+        description=raw.get("description", ""),
+        class_list=tuple(raw.get("class_list", [])),
+    )
+    _FULL_CACHE[name] = sp
+    return sp
+
+
 def get_spell(name: str) -> Spell:
     """按中文名取法术条目。
 
     规则: R-SPL-001 法术环阶范围
-    出处: topics/玩家手册2024/法术详述/{0..3}环.htm
+    出处: topics/玩家手册2024/法术详述/{0..9}环.htm
+    说明: 优先命中人工精校表 SPELLS（29 个）；未命中则兜底全量自动解析表
+          SPELLS_FULL（391 个），其字段由描述文本推断，精度略低。
     """
-    if name not in SPELLS:
-        raise KeyError(f"未知法术 {name!r}，可选: {sorted(SPELLS)}")
-    return SPELLS[name]
+    if name in SPELLS:
+        return SPELLS[name]
+    from .spells_full import SPELLS_FULL  # 延迟导入，避免大数据表拖慢启动
+    if name in SPELLS_FULL:
+        return _spell_from_full(SPELLS_FULL[name])
+    raise KeyError(f"未知法术 {name!r}，精校表可选: {sorted(SPELLS)}")
 
 
 def is_cantrip(spell: Spell) -> bool:

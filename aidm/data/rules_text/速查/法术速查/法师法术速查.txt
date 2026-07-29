@@ -1,0 +1,54 @@
+## 戏法(零环)
+塑能 - 酸液飞溅Acid Splash 防护 - 剑刃防护Blade Ward 死灵 - 颤栗之触Chill Touch 幻术 - 舞光术Dancing Lights 变化 - 四象法门Elementalism 塑能 - 火焰箭Fire Bolt 惑控 - 交友术Friends 塑能 - 光亮术Light 咒法 - 法师之手Mage Hand 变化 - 修复术Mending 变化 - 传讯术Message 惑控 - 心灵之楔Mind Sliver 幻术 - 次级幻象Minor Illusion 死灵 - 毒气喷涌Poison Spray 变化 - 魔法伎俩Prestidigitation 塑能 - 冷冻射线Ray of Frost 塑能 - 电爪Shocking Grasp 塑能 - 鸣雷破Thunderclap 死灵 - 亡者丧钟Toll the Dead 预言 - 克敌先击True Strike 变化 - 控火术Control Flames XGE 咒法 - 创造篝火Create Bonfire XGE 塑能 - 霜噬Frostbite XGE 变化 - 舞风术Gust XGE 咒法 - 虫群孳生Infestation XGE 变化 - 塑土术Mold Earth XGE 变化 - 操水术Shape Water XGE 塑能 - 轰雷剑Booming Blade TCE 塑能 - 翠炎剑Green-Flame Blade TCE 塑能 - 闪电牵引Lightning Lure TCE 咒法 - 剑刃爆发Sword Burst TCE
+
+## 一环
+防护 - 警报术Alarm 塑能 - 燃烧之手Burning Hands 惑控 - 魅惑类人Charm Person 塑能 - 繁彩球Chromatic Orb 幻术 - 七彩喷射Color Spray 预言 - 通晓语言Comprehend Languages 预言 - 侦测魔法Detect Magic 幻术 - 易容术Disguise Self 变化 - 脚底抹油Expeditious Retreat 死灵 - 虚假生命False Life 变化 - 羽落术Feather Fall 咒法 - 寻获魔宠Find Familiar 咒法 - 云雾术Fog Cloud 咒法 - 油腻术Grease 咒法 - 冰刃Ice Knife 预言 - 鉴定术Identify 幻术 - 迷幻手稿Illusory Script 变化 - 跳跃术Jump 变化 - 大步奔行Longstrider 防护 - 法师护甲Mage Armor 塑能 - 魔法飞弹Magic Missile 防护 - 防护善恶Protection from Evil and
+			Good 死灵 - 致病射线Ray of Sickness 防护 - 护盾术Shield 幻术 - 无声幻影Silent Image 惑控 - 睡眠术Sleep 惑控 - 塔莎狂笑术Tasha's Hideous Laughter 咒法 - 谭森浮碟术Tenser's Floating Disk 塑能 - 雷鸣波Thunderwave 咒法 - 隐形仆役Unseen Servant 塑能 - 巫术箭Witch Bolt 防护 - 吸收元素Absorb Elements XGE 变化 - 弹射术Catapult XGE 死灵 - 造成恐惧Cause Fear XGE 塑能 - 地颤Earth Tremor XGE 防护 - 圈套术Snare XGE 塑能 - 塔莎酸蚀酿Tasha's Caustic
+			Brew TCE 幻术 - 扭曲价值Distort Value AI 塑能 - 吉姆的魔法飞弹Jim's Magic
+			Missile AI 惑控 - 银光锐语Silvery Barbs SCC
+
+## 二环
+变化 - 变身术Alter Self 防护 - 秘法锁Arcane Lock 防护 - 复苏秘法Arcane Vigor 预言 - 卜筮术Augury 变化 - 目盲术/耳聋术Blindness/Deafness 幻术 - 朦胧术Blur 咒法 - 匕首之云Cloud of Daggers 塑能 - 不灭明焰Continual Flame 惑控 - 疯狂冠冕Crown of Madness 塑能 - 黑暗术Darkness 变化 - 黑暗视觉Darkvision 预言 - 侦测思想Detect Thoughts 变化 - 龙息术Dragon's Breath 变化 - 强化属性Enhance Ability 变化 - 变巨术/缩小术Enlarge/Reduce 咒法 - 炽焰法球Flaming Sphere 死灵 - 遗体防腐Gentle Repose 塑能 - 造风术Gust of Wind 惑控 - 定身类人Hold Person 幻术 - 隐形术Invisibility 变化 - 敲击术Knock 变化 - 浮空术Levitate 预言 - 物件定位术Locate Object 幻术 - 魔嘴术Magic Mouth 变化 - 魔化武器Magic Weapon 塑能 - 马友夫强酸箭Melf's Acid Arrow 预言 - 心灵尖刺Mind Spike 幻术 - 镜影术Mirror Image 咒法 - 迷踪步Misty Step 幻术 - 涅斯图魔法灵光Nystul's Magic Aura 幻术 - 魅影之力Phantasmal Force 死灵 - 衰弱射线Ray of Enfeeblement 变化 - 魔绳术Rope Trick 塑能 - 灼热射线Scorching Ray 预言 - 识破隐形See Invisibility 塑能 - 粉碎音波Shatter 变化 - 蛛行术Spider Climb 惑控 - 暗示术Suggestion 咒法 - 蛛网术Web 塑能 - 阿迦纳萨喷火术Aganazzar's
+			Scorcher XGE 咒法 - 龙卷尘暴Dust Devil XGE 变化 - 地缚Earthbind XGE 变化 - 麦克斯米利安的地之攫Maximilian's Earthen
+			Grasp XGE 变化 - 烟火术Pyrotechnics XGE 幻术 - 幽影刃Shadow Blade XGE 变化 - 写入空中Skywrite XGE 塑能 - 史尼洛雪球群Snilloc's Snowball
+			Swarm XGE 塑能 - 守护之风Warding Wind XGE 惑控 - 塔莎心灵鞭Tasha's Mind Whip TCE 幻术 - 纳撒尔恶作剧Nathair's Mischief FTD 塑能 - 雾凇霜缚Rime's Binding Ice FTD 咒法 - 卡牌喷射Spray of Cards BMT 惑控 - 巧舌如簧Gift of Gab AI 惑控 - 吉姆的发光硬币Jim's Glowing Coin AI 预言 - 借鉴才学Borrowed Knowledge SCC 变化 - 动力短行Kinetic Jaunt SCC 咒法 - 涡旋翘曲Vortex Warp SCC 死灵 - 靡叶生华Wither and Bloom SCC 咒法 - 空气泡泡Air Bubble AAG 预言 - 侦测扭曲Warp Sense SO
+
+## 三环
+死灵 - 活化死尸Animate Dead 死灵 - 降咒Bestow Curse 变化 - 闪现术Blink 预言 - 鹰眼术Clairvoyance 防护 - 法术反制Counterspell 防护 - 解除魔法Dispel Magic 幻术 - 恐惧术Fear 死灵 - 假死术Feign Death 塑能 - 火球术Fireball 变化 - 飞行术Fly 变化 - 气化形体Gaseous Form 防护 - 守卫刻纹Glyph of Warding 变化 - 加速术Haste 幻术 - 催眠图纹Hypnotic Pattern 塑能 - 李欧蒙小屋Leomund's Tiny Hut 塑能 - 闪电束Lightning Bolt 防护 - 防护法阵Magic Circle 幻术 - 高级幻影Major Image 防护 - 回避侦测Nondetection 幻术 - 魅影驹Phantom Steed 防护 - 防护能量Protection from Energy 防护 - 移除诅咒Remove Curse 预言 - 短讯术Sending 咒法 - 雪雨暴Sleet Storm 变化 - 缓慢术Slow 死灵 - 死者交谈Speak with Dead 咒法 - 臭云术Stinking Cloud 咒法 - 妖精召唤术Summon Fey 死灵 - 亡灵召唤术Summon Undead 预言 - 巧言术Tongues 死灵 - 吸血鬼之触Vampiric Touch 变化 - 水下呼吸Water Breathing 惑控 - 假寐术Catnap XGE 惑控 - 敌群环绕Enemies Abound XGE 变化 - 土石喷发Erupting Earth XGE 变化 - 烈焰箭矢Flame Arrows XGE 死灵 - 生命转换Life Transference XGE 塑能 - 马友夫微流星Melf's Minute
+			Meteors XGE 咒法 - 低阶恶魔召唤术Summon Lesser
+			Demon XGE 咒法 - 雷霆步Thunder Step XGE 咒法 - 潮涌Tidal Wave XGE 变化 - 迷你仆役Tiny Servant XGE 塑能 - 沙墙术Wall of Sand XGE 塑能 - 水墙术Wall of Water XGE 防护 - 智能壁垒Intellect Fortress TCE 死灵 - 魂灵环绕Spirit Shroud TCE 咒法 - 暗影衍体召唤术Summon Shadowspawn TCE 变化 - 阿莎德隆奔行Ashardalon's
+			Stride FTD 惑控 - 敌意术Antagonize BMT 惑控 - 快速交友Fast Friends AI 惑控 - 鼓动贪欲Incite Greed AI
+
+## 四环
+预言 - 秘法眼Arcane Eye 防护 - 放逐术Banishment 死灵 - 枯萎术Blight 惑控 - 魅惑怪物Charm Monster 惑控 - 困惑术Confusion 咒法 - 咒唤微元素群Conjure Minor Elementals 变化 - 操控水体Control Water 咒法 - 任意门Dimension Door 预言 - 预言术Divination 咒法 - 艾伐黑触手Evard's Black Tentacles 变化 - 鬼斧神工Fabricate 塑能 - 火焰护盾Fire Shield 幻术 - 高等隐形术Greater Invisibility 幻术 - 幻景Hallucinatory Terrain 塑能 - 冰风暴Ice Storm 咒法 - 李欧蒙秘藏箱Leomund's Secret Chest 预言 - 生物定位术Locate Creature 咒法 - 魔邓肯忠犬Mordenkainen's Faithful
+			Hound 防护 - 魔邓肯私人密室Mordenkainen's Private
+			Sanctum 防护 - 欧提路克弹力法球Otiluke's Resilient Sphere 幻术 - 魅影杀手Phantasmal Killer 变化 - 变形术Polymorph 变化 - 塑石术Stone Shape 防护 - 石肤术Stoneskin 咒法 - 异怪召唤术Summon Aberration 咒法 - 构装召唤术Summon Construct 咒法 - 元素召唤术Summon Elemental 塑能 - 浓酸球Vitriolic Sphere 塑能 - 火墙术Wall of Fire 变化 - 元素灾厄Elemental Bane XGE 塑能 - 致病辐射Sickening Radiance XGE 塑能 - 风暴法球Storm Sphere XGE 咒法 - 高阶恶魔召唤术Summon Greater
+			Demon XGE 咒法 - 碧水法球Watery Sphere XGE 惑控 - 劳洛希姆心灵长枪Raulothim's Psychic
+			Lance FTD 死灵 - 死神灵魄Spirit of Death BMT 防护 - 界门封锁Gate Seal SO
+
+## 五环
+变化 - 活化物件Animate Objects 塑能 - 毕格比之手Bigby's Hand 防护 - 原力法阵Circle of Power 咒法 - 死云术Cloudkill 塑能 - 寒冰锥Cone of Cold 咒法 - 咒唤元素Conjure Elemental 预言 - 异界探知Contact Other Plane 幻术 - 造物术Creation 惑控 - 支配类人Dominate Person 幻术 - 托梦术Dream 惑控 - 指使术Geas 惑控 - 定身怪物Hold Monster 塑能 - 贾拉兹光辉风暴Jallarzi's Storm of
+			Radiance 预言 - 通晓传奇Legend Lore 幻术 - 假象术Mislead 惑控 - 篡改记忆Modify Memory 变化 - 穿墙术Passwall 咒法 - 异界誓缚Planar Binding 预言 - 拉瑞心灵联结Rary's Telepathic Bond 预言 - 探知术Scrying 幻术 - 伪装术Seeming 咒法 - 钢风斩Steel Wind Strike 咒法 - 龙类召唤术Summon Dragon 惑控 - 突触静止Synaptic Static 变化 - 心灵遥控Telekinesis 咒法 - 传送法阵Teleportation Circle 塑能 - 力场墙Wall of Force 塑能 - 石墙术Wall of Stone 惑控 - 悠兰德王者威仪Yolande's Regal Presence 变化 - 操控风力Control Winds XGE 死灵 - 骷髅之舞Danse Macabre XGE 塑能 - 拂晓Dawn XGE 死灵 - 汲能术Enervation XGE 咒法 - 渺远步Far Step XGE 塑能 - 焚烧术Immolation XGE 咒法 - 地狱呼唤Infernal Calling XGE 死灵 - 负能量洪流Negative Energy
+			Flood XGE 变化 - 授予技能Skill Empowerment XGE 变化 - 转化岩石Transmute Rock XGE 塑能 - 光墙术Wall of Light XGE 咒法 - 龙类灵魄召唤术Summon Draconic
+			Spirit FTD 变化 - 创造法驱魔舵Create Spelljamming Helm AAG
+
+## 六环
+咒法 - 秘法门Arcane Gate 塑能 - 连锁闪电Chain Lightning 死灵 - 死亡法阵Circle of Death 防护 - 触发术Contingency 死灵 - 唤起亡灵Create Undead 变化 - 解离术Disintegrate 咒法 - 卓姆吉瞬间召唤Drawmij's Instant Summons 死灵 - 摄心目光Eyebite 变化 - 石化术Flesh to Stone 防护 - 法术无效结界Globe of Invulnerability 防护 - 铜墙铁壁Guards and Wards 死灵 - 魔魂壶Magic Jar 惑控 - 群体暗示术Mass Suggestion 变化 - 地动术Move Earth 塑能 - 欧提路克冰封法球Otiluke's Freezing Sphere 惑控 - 奥图迷舞Otto's Irresistible Dance 幻术 - 预置幻象Programmed Illusion 咒法 - 邪魔召唤术Summon Fiend 塑能 - 阳炎射线Sunbeam 咒法 - 塔莎泡泡坩埚Tasha's Bubbling Cauldron 预言 - 真知术True Seeing 塑能 - 冰墙术Wall of Ice 变化 - 创造人工生命体Create Homunculus XGE 变化 - 炽焰赋权Investiture of
+			Flame XGE 变化 - 寒冰赋权Investiture of Ice XGE 变化 - 磐石赋权Investiture of
+			Stone XGE 变化 - 清风赋权Investiture of Wind XGE 幻术 - 精神监狱Mental Prison XGE 咒法 - 散射术Scatter XGE 死灵 - 灵魂牢笼Soul Cage XGE 变化 - 谭森变形术Tenser's
+			Transformation XGE 变化 - 塔莎超凡形态Tasha's Otherworldly
+			Guise TCE 防护 - 费资本铂金盾Fizban's Platinum
+			Shield FTD
+
+## 七环
+塑能 - 延迟爆裂火球Delayed Blast Fireball 咒法 - 以太化Etherealness 死灵 - 死亡一指Finger of Death 塑能 - 力场监牢Forcecage 幻术 - 海市蜃楼Mirage Arcane 咒法 - 魔邓肯豪宅术Mordenkainen's Magnificent
+			Mansion 塑能 - 魔邓肯之剑Mordenkainen's Sword 咒法 - 位面转移Plane Shift 塑能 - 虹光喷射Prismatic Spray 幻术 - 投影术Project Image 变化 - 反转重力Reverse Gravity 变化 - 隔离术Sequester 幻术 - 拟像术Simulacrum 防护 - 徽记术Symbol 咒法 - 传送术Teleport 塑能 - 众星冠冕Crown of Stars XGE 惑控 - 律令痛苦Power Word Pain XGE 塑能 - 旋风术Whirlwind XGE 咒法 - 蓝纱一梦Dream of the Blue
+			Veil TCE 变化 - 龙类变形Draconic
+			Transformation FTD
+
+## 八环
+防护 - 反魔法场Antimagic Field 惑控 - 嫌恶术/关怀术AntipathySympathy 惑控 - 摧心术Befuddlement 死灵 - 克隆术Clone 变化 - 操控天气Control Weather 咒法 - 半位面Demiplane 惑控 - 支配怪物Dominate Monster 咒法 - 焚云术Incendiary Cloud 咒法 - 迷宫术Maze 防护 - 心灵屏障Mind Blank 惑控 - 律令震慑Power Word Stun 塑能 - 阳炎爆Sunburst 预言 - 心灵感应Telepathy 死灵 - 亚比达奇凋死术Abi-Dalzim's Horrid
+			Wilting XGE 幻术 - 幻影巨龙Illusory Dragon XGE 塑能 - 疯狂之暗Maddening Darkness XGE 咒法 - 坚固堡垒Mighty Fortress XGE
+
+## 九环
+死灵 - 星界投影Astral Projection 预言 - 预见术Foresight 咒法 - 异界之门Gate 防护 - 禁锢术Imprisonment 塑能 - 流星爆Meteor Swarm 惑控 - 律令死亡Power Word Kill 防护 - 虹光法墙Prismatic Wall 变化 - 形体变化Shapechange 变化 - 时间停止Time Stop 变化 - 完全变形术True Polymorph 幻术 - 怪影杀手Weird 咒法 - 祈愿术Wish 防护 - 无敌术Invulnerability XGE 变化 - 群体变形术Mass Polymorph XGE 惑控 - 心灵尖啸Psychic Scream XGE 咒法 - 灾厄之刃Blade of Disaster TCE

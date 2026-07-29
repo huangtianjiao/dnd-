@@ -1,0 +1,6 @@
+d100 遭遇 01         1 只 巨恶雪人 abominable
+yeti 02-04       1d6 的 还魂尸 revenant 05-10       1d4+1 的 熊人 werebear 11-20       1d3 只 青年白龙 young white
+dragon 21-25 一场暴风雪，在 1d6 小时内将视野范围降低至 5 尺 26-35       1 只 鹏鸟 roc 36-40 由 3d20+60 只驯鹿（ 鹿 deer ）组成的鹿群在雪中跋涉 41-50       1d4 只 猛犸 mammoth 51-60       1d8+1 只 巨魔 troll 61-65 宽一英里的冻结的湖面，可以看到冻在冰中的奇怪生物的尸体 66-75       2d4 只 青年百足魔兽 young
+remorhaz 76-80 一座快要垮塌的冰城堡，里面散落着蓝色皮肤的类人生物的尸体 81-90       1 只 成年白龙 adult white
+dragon 91-96       1d8+1 的 霜巨人 frost giant 97-99       1d4 只 百足魔兽 remorhaz 00         1 只 远古白龙 ancient
+white dragon

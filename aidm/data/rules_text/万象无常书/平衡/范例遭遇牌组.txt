@@ -1,0 +1,182 @@
+范例遭遇牌组 Sample Encounter Decks
+以下范例牌组对4-6级的角色最为合适，它使用了来自《怪物图鉴Monster Manual》和《魔邓肯巨献：多元宇宙的怪物Mordenkainen Presents: Monsters of the Multiverse 》中的怪物。如果你没有《魔邓肯巨献：多元宇宙的怪物Mordenkainen Presents: Monsters of the Multiverse 》，把这些牌从牌组中移除。 带有乘号的条目表示那张牌代表多倍的怪物。同一结伙中的怪物被分配为相同的点数（例如，所有的 强盗bandits 都是K），但并非所有相同点数的牌都在一个结伙中（例如 枭熊owlbear ，它独自狩猎）。这些记号让你在为遭遇抽出多张牌时更容易注意到它们的结伙。 你可以使用这些牌组作为参考来构建你自己的牌组。你可以分别使用它们以对应角色们正在旅行的地形，或将它们结合起来使用（见上文“改进遭遇牌组”），这样角色们在探索一片森林时（使用森林遭遇牌组，并洗入腐化之地卡组）就会发现邪恶的恶魔势力在逐渐腐化这片区域。
+森林遭遇牌组Forest Encounter Deck
+
+ | 卡牌
+ | 生物
+ | 挑战等级
+ | 结伙
+ | 黑桃A
+ | 青年绿龙Young green dragon
+ | 8
+ | -
+ | 梅花A
+ | 德鲁伊Druid（友军）
+ | 
+ | 
+ | 黑桃K
+ | 强盗首领Bandit Captain
+ | 2
+ | 强盗
+ | 梅花K
+ | 强盗Bandit×4
+ | 1/8
+ | 强盗
+ | 红桃K
+ | 强盗Bandit×4
+ | 1/8
+ | 强盗
+ | 黑桃Q
+ | 枭熊Owlbear
+ | 3
+ | -
+ | 梅花Q
+ | 枭熊Owlbear
+ | 3
+ | -
+ | 黑桃J
+ | 伊特怪Ettercap
+ | 2
+ | 蜘蛛
+ | 梅花J
+ | 昆虫集群（蜘蛛）Swarm of insects(spiders)
+ | 2
+ | 蜘蛛
+ | 红桃J
+ | 巨蜘蛛Giant spider×2
+ | 1
+ | 蜘蛛
+ | 方片J
+ | 巨蜘蛛Giant spider×2
+ | 1
+ | 蜘蛛
+ | 梅花9
+ | 巨野猪Giant boar
+ | 2
+ | -
+ | 梅花8
+ | 掘地虫Ankheg（伏兵）
+ | 2
+ | -
+ | 黑桃7
+ | 移位兽Displacer beast（双子）
+ | 3
+ | -
+ | 梅花7
+ | 移位兽Displacer beast（双子）
+ | 3
+ | -
+ | 黑桃6
+ | 座狼×2（伏兵）
+ | 1/2
+ | -
+ | 黑桃5
+ | 天马Pegasus
+ | 2
+ | -
+ | 梅花5
+ | 天马Pegasus
+ | 2
+ | -
+ | 黑桃4
+ | 蔓生怪Shambling mound
+ | 5
+ | -
+ | 黑桃3
+ | 吸血鬼迷雾Vampiric Mist*
+ | 3
+ | -
+ | 黑桃2
+ | 抽二
+ | -
+ | -
+腐化之地遭遇牌组Corrupted Lands Encounter Deck
+
+ | 卡牌
+ | 生物
+ | 挑战等级
+ | 结伙
+ | 方片A
+ | 苏苏瓦魔犬Shoosuva*
+ | 8
+ | -
+ | 红桃A
+ | 金龙雏龙Gold dragon wyrmling（友军）
+ | -
+ | -
+ | 方片K
+ | 赭冻怪Ochre Jelly（伏兵）
+ | 2
+ | -
+ | 红桃Q
+ | 诺斯怪Nothic（双子）
+ | 2
+ | -
+ | 方片Q
+ | 诺斯怪Nothic（双子）
+ | 2
+ | -
+ | 黑桃10
+ | 邪教狂信者Cult Fanatic
+ | 2
+ | 邪教徒
+ | 梅花10
+ | 老兵Veteran
+ | 3
+ | 邪教徒
+ | 红心10
+ | 邪教徒Cultist×4
+ | 1/8
+ | 邪教徒
+ | 方片10
+ | 胃袋魔Maw Demon*
+ | 1
+ | 邪教徒
+ | 黑桃9
+ | 鬣狗人·耶诺古毒牙Gnoll fang of Yeenoghu
+ | 4
+ | 鬣狗人
+ | 红桃9
+ | 鬣狗人头领Gnoll pack lord
+ | 2
+ | 鬣狗人
+ | 方片9
+ | 鬣狗人Gnoll
+ | 1/2
+ | 鬣狗人
+ | 红桃8
+ | 鹫魔Vrock
+ | 6
+ | -
+ | 红桃7
+ | 鸟妖Harpy
+ | 1
+ | -
+ | 方片7
+ | 鸟妖Harpy
+ | 1
+ | -
+ | 红桃6
+ | 刺尾狮Manticore
+ | 3
+ | -
+ | 红桃5
+ | 败契者Deathlock*（双子）
+ | 4
+ | -
+ | 方片5
+ | 食尸鬼Ghoul×2（双子）
+ | 1
+ | -
+ | 红桃4
+ | 呓语之口Gibbering mouther（伏兵）
+ | 2
+ | -
+ | 红桃3
+ | 树人Treant（非战斗遭遇）
+ | -
+ | -
+ | 方片2
+ | 抽二
+ | -
+ | -

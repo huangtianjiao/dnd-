@@ -7,6 +7,13 @@ from __future__ import annotations
 
 from . import indexer
 
+# 模组内容 tag 前缀：命中时对 LLM 标注防剧透（DM 可参考，勿直接向玩家泄露谜底）
+SPOILER_TAG_PREFIX = "模组/"
+SPOILER_NOTICE = (
+    "⚠ 模组内容（仅供 DM 参考：仅供幕后使用，"
+    "向玩家叙述时不得泄露模组谜底、陷阱位置、Boss 弱点等未揭露信息）"
+)
+
 
 def query_rules(query: str, limit: int = 5, tag_filter: str | None = None) -> list[dict]:
     """语义检索规则条目（top-k，可选标签过滤）。"""
@@ -18,6 +25,9 @@ def format_for_llm(results: list[dict], body_limit: int = 600) -> str:
     lines: list[str] = []
     for i, r in enumerate(results, 1):
         lines.append(f"[{i}] 相关度 {r.get('score', 0):.2f} | 标签 {r.get('tag', '')!r} | 出处 {r.get('path', '')}")
+        tag = str(r.get("tag", "")).replace("\\", "/")
+        if tag.startswith(SPOILER_TAG_PREFIX):
+            lines.append(SPOILER_NOTICE)
         lines.append(r.get("body", "")[:body_limit])
         lines.append("")
     return "\n".join(lines)

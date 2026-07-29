@@ -1,0 +1,14 @@
+## 一环
+警报术Alarm 化兽为友Animal Friendship 疗伤术Cure Wounds 侦测魔法Detect Magic 侦测毒性和疾病Detect Poison and Disease 捕获打击Ensnaring Strike 纠缠术Entangle 云雾术Fog Cloud 神莓术Goodberry 荆棘之雨Hail of Thorns 猎人印记Hunter's Mark 跳跃术Jump 大步奔行Longstrider 动物交谈Speak with Animals 吸收元素Absorb Elements XGE 兽之联结Beast Bond XGE 圈套术Snare XGE 西风打击Zephyr Strike XGE
+
+## 二环
+援助术Aid 动物信使Animal Messenger 树肤术Barkskin 野兽感官Beast Sense 警戒箭阵Cordon of Arrows 黑暗视觉Darkvision 强化属性Enhance Ability 寻找陷阱Find Traps 造风术Gust of Wind 次等复原术Lesser Restoration 动植物定位术Locate Animals or Plants 物件定位术Locate Object 魔化武器Magic Weapon 行动无踪Pass without Trace 防护毒素Protection from Poison 沉默术Silence 荆棘丛生Spike Growth 野兽召唤术Summon Beast 治愈之魂Healing Spirit XGE 空气泡泡Air Bubble AAG
+
+## 三环
+咒唤兽群Conjure Animals 箭如雨下Conjure Barrage 昼明术Daylight 解除魔法Dispel Magic 元素武器Elemental Weapon 闪电箭矢Lightning Arrows 融身入石Meld Into Stone 回避侦测Nondetection 植物滋长Plant Growth 防护能量Protection from Energy 回生术Revivify 植物交谈Speak with Plants 妖精召唤术Summon Fey 水下呼吸Water Breathing 水上行走Water Walk 风墙术Wind Wall 烈焰箭矢Flame Arrows XGE 阿莎德隆奔行Ashardalon's Stride FTD
+
+## 四环
+咒唤林地卫士Conjure Woodland Beings 支配野兽Dominate Beast 行动自如Freedom of Movement 擒抱藤Grasping Vine 生物定位术Locate Creature 石肤术Stoneskin 元素召唤术Summon Elemental 自然守卫Guardian of Nature XGE
+
+## 五环
+问道自然Commune with Nature 万箭齐发Conjure Volley 高等复原术Greater Restoration 钢风斩Steel Wind Strike 迅捷箭袋Swift Quiver 树跃术Tree Stride 自然之怒Wrath of Nature XGE

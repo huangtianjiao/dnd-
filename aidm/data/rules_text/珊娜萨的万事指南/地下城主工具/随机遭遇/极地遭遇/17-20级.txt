@@ -1,0 +1,8 @@
+d100 遭遇 01-02       2d10 的 还魂尸 revenant 03-04       2d8 只 巨魔 troll 05-06       2d10 的 熊人 werebear 07-08       1 个 霜巨人 frost giant 09-10       2d4 只 青年百足魔兽 young
+remorhaz 11-20       1d4 的 霜巨人 frost giant 21-25 占据地面上一小片圆形区域的黑色的冰。这块冰附近的气温比其他地方要高一些，检查黑冰的角色会看到冻结在里面的小块机械。 26-35       1 只 远古白龙 ancient white
+dragon 36-40 一具冻在冰面下六尺的冒险者的尸体；尸体有 50% 的几率携带着一件由 DM 选择的稀有魔法物品 41-50       1d3 只 巨恶雪人 abominable
+yeti 51-60       1d4 只 百足魔兽 remorhaz 61-65 一堵高 500 尺，厚 300 尺，长 1d4 里的冰墙 66-75       1d4 只 鹏鸟 roc 76-80 一个面容严厉，长发飞舞的女人的肖像，刻在一座山的岩壁上 81-90       1d10 的 霜巨人 frost giant 和 2d4 只 白熊 polar bear 91-96       1d3 只 成年白龙 adult white
+dragon 97-99       2d4 只 巨恶雪人 abominable
+yeti 00         1 只 远古白龙 ancient
+white dragon 和 1d3 只 青年白龙 young
+white dragon

@@ -1,0 +1,8 @@
+d100 遭遇 01         1 只 巨猫头鹰 giant owl 02-05       1d6+3 只 狗头人 kobold 06-08       1d4+3 的捕猎者（ 平民 commoner ） 09-10       1 只 猫头鹰 owl 11-12       2d 4 只 血鹰 blood
+hawk 13-17       2d6 的 强盗 bandit 18-20       1d3 只 带翼狗头人 winged
+kobold 和 1d6 只 狗头人 kobold 21-25 一具被部分啃食的猛犸的尸体，可以从上面获取 1d4 星期分量的口粮 26-29       2d8 的猎人（ 部族武者 tribal
+warrior ） 30-35       1 只 半食人 魔 half-ogre 36-40 雪中的一排脚印，延伸一段后突兀地消失了 41-45       1d3 只 冰魔 蝠 ice mephit 46-50       1 只 棕熊 brown bear 51-53       1d6+ 1 只 兽人 orc 54-55       1 只 白熊 polar bear 56-57       1d6 的 斥候 scout 58-60       1 只 剑齿虎 saber-toothed
+tiger 61-65 一个表面结冰的池塘，冰上有一处看起来新近凿穿的不规则的洞 66-68       1 名 狂战士 berserker 69-70       1 只 食人 魔 ogre 71-72       1 只 狮 鹫 griffon 73-75       1 名 德鲁伊 druid 76-80       3d4 个正在 逃离兽人的 难民（ 平民 commoner ） 81         1d3 的 老兵 veteran 82         1d4 只 魔兽人 orog 83         2 只 棕熊 brown bear 84         1 个 兽人 · 格乌什之眼 orc Eye of Gruumsh 和 2d 8 只 兽人 orc 85         1d 3 只 冬狼 winter
+wolf 86-87       1d4 只 雪人 yeti 88         1 只 半食人 魔 half-ogre 89         1d3 只 蝎尾 狮 manticore 90         1 个 强盗首领 bandit
+captain 和 2d6 的 强盗 bandit 91         1 个 还魂 尸 revenant 92-93       1 只 巨魔 troll 94-95 1 个 熊人 werebear 96-98       1 只 青年 百足魔兽 young remorhaz 99         1 只 青年白龙 young
+white dragon 00         1 只 霜巨人 frost giant

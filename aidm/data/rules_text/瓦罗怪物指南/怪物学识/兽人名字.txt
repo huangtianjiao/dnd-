@@ -1,0 +1,120 @@
+兽人名字 ORC  NAMES
+兽人名字不总是具有兽人语的含义，而大部分有名的兽人都被他们的部族伙伴们给予了绰号。
+兽人名字 ORC  NAMES
+
+ | d12
+d12
+ | 男性名字Male Name
+男性名字 Male Name
+ | 女性名字Female Name
+女性名字 Female Name
+ | 绰号Epithet
+绰号 Epithet
+
+ | 1
+1
+ | 格鲁图克Grutok
+格鲁图克 Grutok
+ | 坎西弗Kansif
+坎西弗 Kansif
+ | 肮脏的The  Filthy
+肮脏的 The  Filthy
+
+ | 2
+2
+ | 洛塔Lortar
+洛塔 Lortar
+ | 欧雯卡Ownka
+欧雯卡 Ownka
+ | 劈颅者Skull  Cleaver
+劈颅者 Skull  Cleaver
+
+ | 3
+3
+ | 阿布祖克Abzug
+阿布祖克 Abzug
+ | 埃蒙Emen
+埃蒙 Emen
+ | 凿眼者Eye  Gouger
+凿眼者 Eye  Gouger
+
+ | 4
+4
+ | 舒格格Shugog
+舒格格 Shugog
+ | 苏萨Sutha
+苏萨 Sutha
+ | 钢牙Iron  Tusk
+钢牙 Iron  Tusk
+
+ | 5
+5
+ | 乌祖尔Urzul
+乌祖尔 Urzul
+ | 梅耶芙Myev
+梅耶芙 Myev
+ | 剥皮者Skin  Flayer
+剥皮者 Skin  Flayer
+
+ | 6
+6
+ | 鲁克Ruhk
+鲁克 Ruhk
+ | 涅加Neega
+涅加 Neega
+ | 碎骨者Bone  Crusher
+碎骨者 Bone  Crusher
+
+ | 7
+7
+ | 莫巴德Mobad
+莫巴德 Mobad
+ | 巴吉Baggi
+巴吉 Baggi
+ | 血肉撕裂者Flesh  Ripper
+血肉撕裂者 Flesh  Ripper
+
+ | 8
+8
+ | 沙莫格Shamog
+沙莫格 Shamog
+ | 莎萨Shautha
+莎萨 Shautha
+ | 毁灭之锤Doom Hammer
+毁灭之锤 Doom Hammer
+
+ | 9
+9
+ | 姆格布Mugrub
+姆格布 Mugrub
+ | 欧瓦克Ovak
+欧瓦克 Ovak
+ | 精灵屠夫Elf  Butcher
+精灵屠夫 Elf  Butcher
+
+ | 10
+10
+ | 巴约克Bajok
+巴约克 Bajok
+ | 沃拉Vola
+沃拉 Vola
+ | 啃脊者Spine Snapper
+啃脊者 Spine Snapper
+
+ | 11
+11
+ | 罗鲁格Rhorog
+罗鲁格 Rhorog
+ | 恩冈Engong
+恩冈 Engong
+ | 死矛Death Spear
+死矛 Death Spear
+
+ | 12
+12
+ | 迦鲁克Jahrukk
+迦鲁克 Jahrukk
+ | 沃棱Volen
+沃棱 Volen
+ | 残忍的The  Brutal
+残忍的 The  Brutal

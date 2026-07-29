@@ -40,10 +40,16 @@ TONES = [
     "恐怖风格",   # Horror
 ]
 
-# 规则版本
+# 规则版本（仅列已实装版本：数据/引擎全部为 2024 修订版）
 RULE_VERSIONS = [
-    "2014 PHB",     # 原 Player's Handbook
     "2024 修订版",  # 2024 Revised edition
+]
+
+# 已知但未实装的版本：选择时给出明确“未实装”错误，而不是静默用 2024 数据冒充。
+# 说明: 全部数据表（法术/怪物/职业/装备）均出自 topics/玩家手册2024 与
+#       怪物图鉴2025；2014 PHB 数据未建库，选它会得到假 2024 结果，故禁用。
+UNSUPPORTED_RULE_VERSIONS = [
+    "2014 PHB",     # 原 Player's Handbook — 未实装
 ]
 
 # 升级方式
@@ -144,8 +150,13 @@ def validate_session0(config: Session0Config) -> List[str]:
     elif config.seriousness < 1 or config.seriousness > 10:
         errors.append(f"seriousness 必须为 1-10，得到 {config.seriousness}")
 
-    # 3. 规则版本
-    if config.rule_version not in RULE_VERSIONS:
+    # 3. 规则版本（2014 PHB 未实装 → 明确报错而非静默冒充）
+    if config.rule_version in UNSUPPORTED_RULE_VERSIONS:
+        errors.append(
+            f"rule_version '{config.rule_version}' 未实装：当前规则数据全部为 2024 修订版"
+            "（topics/玩家手册2024 + 怪物图鉴2025），2014 PHB 数据未建库。"
+        )
+    elif config.rule_version not in RULE_VERSIONS:
         errors.append(
             f"rule_version '{config.rule_version}' 不合法，必须为 {RULE_VERSIONS} 之一"
         )

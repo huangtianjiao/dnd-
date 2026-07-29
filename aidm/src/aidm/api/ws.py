@@ -219,6 +219,16 @@ def _room_name(campaign_id: int) -> str:
     return f"campaign_{campaign_id}"
 
 
+def _combatant_payload(x) -> dict:
+    """参战者广播载荷（D4 实测修复）：必须带 hp/hp_max/dead/surprised，
+    与 REST /combat/{cid} 口径一致。此前仅 name/initiative/side，导致每次
+    WS combat_update 都把前端 REST 载入的完整数据覆盖成无 HP 版
+    （参战者 HP 卡全部显示 0/? 并误判死亡）。"""
+    return {"name": x.name, "initiative": x.initiative, "side": x.side,
+            "hp": x.hp, "hp_max": x.hp_max, "dead": x.dead,
+            "surprised": getattr(x, "surprised", False)}
+
+
 # ──────────────────────────────────────────────────────────────────────────
 # Socket.IO 事件处理
 # ──────────────────────────────────────────────────────────────────────────
@@ -283,10 +293,7 @@ async def connect(sid, environ, auth=None):
                 "active": True,
                 "round": combat.round,
                 "current_turn": turn,
-                "initiative_order": [
-                    {"name": c.name, "initiative": c.initiative, "side": c.side}
-                    for c in combat.initiative_order
-                ],
+                "initiative_order": [_combatant_payload(c) for c in combat.initiative_order],
             }, to=sid)
     except Exception:
         pass
@@ -350,13 +357,25 @@ async def on_action(sid, data):
 
     # 序列化执行 graph.run
     thread_id = f"campaign_{campaign_id}"
-    async with _graph_lock:
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(
-            None,
-            functools.partial(graph.run, player_input, campaign_id,
-                              character_id, thread_id, False),
-        )
+    try:
+        async with _graph_lock:
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(
+                None,
+                functools.partial(graph.run, player_input, campaign_id,
+                                  character_id, thread_id, False),
+            )
+    except Exception as e:
+        # 管线异常兜底：必须仍发 result，否则前端 busy 永久卡死（D4 实测发现）
+        import traceback
+        traceback.print_exc()
+        await sio.emit("result", {
+            "player": name,
+            "narration": f"（命运之线一时紊乱：{type(e).__name__}。请换种说法再试。）",
+            "dice": {"kind": "error", "error": str(e)[:200]},
+            "action_options": [],
+        }, room=room)
+        return
 
     # 广播结果给房间内所有人
     narration = result.get("narration", "")
@@ -494,7 +513,7 @@ async def _broadcast_state(campaign_id: int) -> None:
 
     增量同步策略:
       - 场景: 仅当场景存在时发送
-      - 战斗: 仅发送 active/round/current_turn/initiative_order
+      - 战斗: 仅发送 active/round/current_turn/initiative_order（含 HP，见 _combatant_payload）
       - 不发送完整角色卡（由各客户端按需拉取）
     """
     room = f"campaign_{campaign_id}"
@@ -513,10 +532,7 @@ async def _broadcast_state(campaign_id: int) -> None:
             "active": c.active,
             "round": c.round,
             "current_turn": turn,
-            "initiative_order": [
-                {"name": x.name, "initiative": x.initiative, "side": x.side}
-                for x in c.initiative_order
-            ],
+            "initiative_order": [_combatant_payload(x) for x in c.initiative_order],
         }, room=room)
     except Exception:
         pass
@@ -545,6 +561,7 @@ class ConnectionManager:
 
     @staticmethod
     def is_player_turn(campaign_id: int, character_id: int) -> bool:
+        """检查该角色在战斗中是否轮到其行动；非战斗/无房间一律返回 True。"""
         room = CampaignRoom.get(campaign_id)
         return room.is_player_turn(character_id) if room else True
 

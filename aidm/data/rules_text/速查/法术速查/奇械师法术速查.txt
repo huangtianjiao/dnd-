@@ -1,0 +1,20 @@
+## 戏法(零环)
+酸液飞溅Acid Splash 舞光术Dancing Lights 火焰箭Fire Bolt 神导术Guidance 光亮术Light 法师之手Mage Hand 修复术Mending 传讯术Message 毒气喷涌Poison Spray 魔法伎俩Prestidigitation 冷冻射线Ray of Frost 抵抗术Resistance 电爪Shocking Grasp 维生术Spare the Dying 荆棘之鞭Thorn Whip 创造篝火Create Bonfire XGE 魔石术Magic Stone XGE 鸣雷破Thunderclap XGE 轰雷剑Booming Blade TCE 翠炎剑Green-Flame Blade TCE 闪电牵引Lightning Lure TCE 剑刃爆发Sword Burst TCE
+
+## 一环
+警报术Alarm 疗伤术Cure Wounds 侦测魔法Detect Magic 易容术Disguise Self 脚底抹油Expeditious Retreat 妖火Faerie Fire 虚假生命False Life 羽落术Feather Fall 油腻术Grease 鉴定术Identify 跳跃术Jump 大步奔行Longstrider 净化饮食Purify Food and Drink 庇护术Sanctuary 吸收元素Absorb Elements XGE 弹射术Catapult XGE 圈套术Snare XGE 塔莎酸蚀酿Tasha's Caustic Brew TCE
+
+## 二环
+援助术Aid 变身术Alter Self 秘法锁Arcane Lock 朦胧术Blur 不灭明焰Continual Flame 黑暗视觉Darkvision 强化属性Enhance Ability 变巨术/缩小术Enlarge / Reduce 灼热金属Heat Metal 隐形术Invisibility 次等复原术Lesser Restoration 浮空术Levitate 魔嘴术Magic Mouth 魔化武器Magic Weapon 防护毒素Protection from Poison 魔绳术Rope Trick 识破隐形See Invisibility 蛛行术Spider Climb 蛛网术Web 烟火术Pyrotechnics XGE 写入空中Skywrite XGE 动力短行Kinetic Jaunt SCC 涡旋翘曲Vortex Warp SCC 空气泡泡Air Bubble AAG
+
+## 三环
+闪现术Blink 造粮术Create Food and Water 解除魔法Dispel Magic 元素武器Elemental Weapon 飞行术Fly 守卫刻文Glyph of Warding 加速术Haste 防护能量Protection from Energy 回生术Revivify 水下呼吸Water Breathing 水上行走Water Walk 假寐术Catnap XGE 迷你仆役Tiny Servant XGE 智能壁垒Intellect Fortress TCE 阿莎德隆奔行Ashardalon's Stride FTD
+
+## 四环
+秘法眼Arcane Eye 鬼斧神工Fabricate 行动自如Freedom of Movement 李欧蒙秘藏箱Leomund's Secret Chest 魔邓肯忠犬Mordenkainen's Faithful
+			Hound 魔邓肯私人密室Mordenkainen's Private
+			Sanctum 欧提路克弹力法球Otiluke's Resilient
+			Sphere 塑石术Stone Shape 石肤术Stoneskin 元素灾厄Elemental Bane XGE 构装召唤术Summon Construct TCE
+
+## 五环
+毕格比之手Bigby's Hand 造物术Creation 高等复原术Greater Restoration 石墙术Wall of Stone 授予技能Skill Empowerment XGE 转化岩石Transmute Rock XGE 创造法驱魔舵Create Spelljamming Helm AAG

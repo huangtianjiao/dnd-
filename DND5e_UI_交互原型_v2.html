@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DND5e AI 跑团 · 交互原型 v2</title>
+<style>
+/* ============================================================
+   DND5e_UI_交互原型_v2 —— AI DM 叙事中心布局
+   设计基线：Friends & Fables / AI Dungeon 的「聊天叙事中心 +
+   角色状态侧栏」骨架，战斗时叠加战术层（先攻条 + 参战者 HP 卡）。
+   本文件为纯前端原型：全部数据为模拟数据，交互仅演示流转。
+   ============================================================ */
+:root {
+  --bg0: #0c0e13;
+  --bg1: #12151d;
+  --bg2: #181c27;
+  --bg3: #1f2431;
+  --line: #2a3040;
+  --line-soft: #222839;
+  --ink: #e9e3d3;
+  --ink-dim: #9d9683;
+  --ink-faint: #6b6558;
+  --gold: #c9a45c;
+  --gold-hi: #e6c887;
+  --gold-dim: #7d6a42;
+  --red: #c4574e;
+  --red-deep: #8f352f;
+  --green: #6fa878;
+  --blue: #5f83b4;
+  --purple: #8f6fb8;
+  --shadow: 0 8px 28px rgba(0,0,0,.45);
+  --r-lg: 14px;
+  --r-md: 10px;
+  --r-sm: 7px;
+  --font-story: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --font-ui: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  background: var(--bg0);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  overflow: hidden;
+}
+button { font-family: inherit; cursor: pointer; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #2c3346; border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ============ 总体框架 ============ */
+#app {
+  display: grid;
+  height: 100vh;
+  grid-template-rows: 52px 44px 1fr;
+  grid-template-columns: 1fr 340px;
+  grid-template-areas:
+    "topbar topbar"
+    "party  topbar"
+    "stage  panel";
+  transition: grid-template-columns .25s ease;
+}
+#app.panel-collapsed { grid-template-columns: 1fr 0px; }
+#app.panel-collapsed #panel { transform: translateX(100%); opacity: 0; pointer-events: none; }
+
+/* ============ 顶栏 ============ */
+#topbar {
+  grid-area: topbar;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 14px;
+  background: rgba(18,21,29,.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+  z-index: 30;
+}
+.icon-btn {
+  width: 34px; height: 34px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--bg2);
+  color: var(--ink-dim);
+  font-size: 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.icon-btn:hover { color: var(--gold-hi); border-color: var(--gold-dim); }
+.campaign { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.campaign .tag {
+  font-size: 10px; letter-spacing: 2px; color: var(--gold-dim);
+  border: 1px solid var(--gold-dim); border-radius: 3px; padding: 1px 5px;
+  flex: none;
+}
+.campaign h1 {
+  font-family: var(--font-story);
+  font-size: 16px; font-weight: 600; color: var(--gold-hi);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mode-badge {
+  flex: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px; font-weight: 600; letter-spacing: 1px;
+  border: 1px solid var(--line);
+  background: var(--bg2);
+  color: var(--ink-dim);
+  transition: all .3s;
+}
+.mode-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.mode-badge[data-mode="explore"] { color: var(--green); border-color: rgba(111,168,120,.4); }
+.mode-badge[data-mode="social"]  { color: var(--blue);  border-color: rgba(95,131,180,.4); }
+.mode-badge[data-mode="combat"]  { color: var(--red);   border-color: rgba(196,87,78,.5); background: rgba(196,87,78,.08); }
+.game-clock {
+  flex: none;
+  font-size: 12px; color: var(--ink-dim);
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border: 1px solid var(--line-soft); border-radius: 999px;
+}
+.top-spacer { flex: 1; }
+.demo-switch { display: flex; gap: 6px; align-items: center; }
+.demo-switch .lbl { font-size: 11px; color: var(--ink-faint); }
+.demo-switch button {
+  font-size: 12px; padding: 5px 10px;
+  background: var(--bg2); color: var(--ink-dim);
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  transition: all .15s;
+}
+.demo-switch button:hover { color: var(--gold-hi); border-color: var(--gold-dim); }
+.demo-switch button.on { color: var(--gold-hi); border-color: var(--gold); background: rgba(201,164,92,.1); }
+
+/* ============ 队伍条（多人） ============ */
+#partybar {
+  grid-area: party;
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 14px;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--line-soft);
+  overflow-x: auto;
+  z-index: 20;
+}
+.pm {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  flex: none;
+  position: relative;
+  transition: all .2s;
+}
+.pm .avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-story); font-size: 14px; font-weight: 700;
+  color: #10131a;
+  border: 2px solid var(--line);
+}
+.pm .info { display: flex; flex-direction: column; gap: 3px; }
+.pm .name { font-size: 11px; color: var(--ink-dim); line-height: 1; display: flex; gap: 5px; align-items: center; }
+.pm .online { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 4px var(--green); }
+.pm .hpmini {
+  width: 84px; height: 5px; border-radius: 3px;
+  background: #262c3c; overflow: hidden; position: relative;
+}
+.pm .hpmini i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, #7d4a44, #b86a5e);
+  border-radius: 3px;
+  transition: width .4s ease;
+}
+.pm .hpmini.low i { background: linear-gradient(90deg, #a33, #d66); animation: pulse 1.2s infinite; }
+@keyframes pulse { 50% { opacity: .55; } }
+.pm .hpnum { font-size: 9px; color: var(--ink-faint); line-height: 1; }
+.pm.self { background: rgba(201,164,92,.06); border-color: var(--gold-dim); }
+.pm.turn {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold), 0 0 14px rgba(201,164,92,.35);
+}
+.pm.turn::after {
+  content: "行动中";
+  position: absolute; top: -8px; right: 6px;
+  font-size: 9px; color: #10131a; background: var(--gold);
+  padding: 1px 6px; border-radius: 999px; font-weight: 700;
+}
+.party-hint {
+  margin-left: auto; flex: none;
+  font-size: 12px; color: var(--gold-hi);
+  display: none; align-items: center; gap: 6px;
+}
+#app[data-mode="combat"] .party-hint { display: inline-flex; }
+.party-hint .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); animation: pulse 1s infinite; }
+
+/* ============ 主舞台 ============ */
+#stage {
+  grid-area: stage;
+  display: flex; flex-direction: column;
+  min-width: 0; min-height: 0;
+  background:
+    radial-gradient(1200px 500px at 50% -10%, rgba(201,164,92,.05), transparent 60%),
+    var(--bg0);
+}
+
+/* ---- 战斗层：先攻条 + 参战者卡 ---- */
+#combatbar {
+  display: none;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(143,53,47,.12), rgba(18,21,29,.6));
+  padding: 10px 16px 12px;
+  gap: 10px;
+  flex-direction: column;
+}
+#app[data-mode="combat"] #combatbar { display: flex; }
+.init-row { display: flex; align-items: center; gap: 8px; }
+.init-row .cap { font-size: 11px; color: var(--ink-faint); letter-spacing: 2px; flex: none; }
+.init-strip { display: flex; gap: 6px; overflow-x: auto; padding: 2px; }
+.init-chip {
+  flex: none;
+  display: flex; align-items: center; gap: 7px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg2);
+  font-size: 12px; color: var(--ink-dim);
+  transition: all .25s;
+  position: relative;
+}
+.init-chip .iv {
+  font-family: var(--font-story); font-weight: 700; font-size: 13px;
+  color: var(--ink);
+  background: var(--bg3);
+  border-radius: 50%; width: 22px; height: 22px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.init-chip.ally { border-color: rgba(111,168,120,.45); }
+.init-chip.enemy { border-color: rgba(196,87,78,.45); }
+.init-chip.current {
+  background: rgba(201,164,92,.14);
+  border-color: var(--gold);
+  color: var(--gold-hi);
+  box-shadow: 0 0 12px rgba(201,164,92,.3);
+  transform: translateY(-2px);
+}
+.init-chip.current .iv { background: var(--gold); color: #10131a; }
+.init-chip.done { opacity: .38; }
+.init-chip .surprised {
+  font-size: 9px; color: var(--red);
+  border: 1px solid var(--red); border-radius: 3px; padding: 0 3px;
+}
+.round-info { margin-left: auto; font-size: 11px; color: var(--ink-faint); flex: none; }
+.combatant-cards { display: flex; gap: 8px; overflow-x: auto; }
+.ccard {
+  flex: none; width: 168px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 8px 10px;
+  display: flex; flex-direction: column; gap: 6px;
+  transition: all .2s;
+}
+.ccard.enemy { border-left: 3px solid var(--red); }
+.ccard.ally { border-left: 3px solid var(--green); }
+.ccard.current { border-color: var(--gold); box-shadow: 0 0 10px rgba(201,164,92,.25); }
+.ccard.dead { opacity: .4; filter: grayscale(1); }
+.ccard .nm { font-size: 12px; font-weight: 600; display: flex; justify-content: space-between; }
+.ccard .nm .hp-t { font-family: var(--font-story); color: var(--ink-dim); }
+.ccard .hpbar {
+  height: 8px; border-radius: 4px; background: #262c3c; overflow: hidden;
+}
+.ccard .hpbar i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, #8a4b43, #c4705f);
+  transition: width .5s ease;
+}
+.ccard.bloodied .hpbar i { background: linear-gradient(90deg, #b3231b, #e0564a); }
+.ccard.bloodied .nm::after {
+  content: "浴血"; font-size: 9px; color: var(--red);
+  border: 1px solid var(--red); border-radius: 3px; padding: 0 4px; margin-left: 5px;
+}
+.ccard .sub { font-size: 10px; color: var(--ink-faint); display: flex; gap: 8px; }
+
+/* ---- 叙事流 ---- */
+#stream {
+  flex: 1; overflow-y: auto;
+  padding: 22px 0 12px;
+  scroll-behavior: smooth;
+}
+.stream-col { max-width: 760px; margin: 0 auto; padding: 0 26px; display: flex; flex-direction: column; gap: 16px; }
+.msg { animation: rise .35s ease; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+
+/* DM 叙述：书页引文式 */
+.msg-dm { display: flex; gap: 12px; }
+.msg-dm .spine {
+  flex: none; width: 3px; border-radius: 2px;
+  background: linear-gradient(180deg, var(--gold-dim), transparent);
+}
+.msg-dm .body { min-width: 0; }
+.msg-dm .who { font-size: 10px; letter-spacing: 3px; color: var(--gold-dim); margin-bottom: 5px; }
+.msg-dm .text {
+  font-family: var(--font-story);
+  font-size: 15.5px; line-height: 1.85;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+.msg-dm .text em { color: var(--gold-hi); font-style: normal; }
+.msg-dm .text b { color: var(--gold-hi); }
+
+/* 玩家发言：右侧气泡 */
+.msg-player { display: flex; justify-content: flex-end; }
+.msg-player .bubble {
+  max-width: 78%;
+  background: linear-gradient(135deg, #2a2416, #221f14);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--r-lg) var(--r-lg) 4px var(--r-lg);
+  padding: 9px 14px;
+}
+.msg-player .who { font-size: 10px; color: var(--gold); text-align: right; margin-bottom: 4px; letter-spacing: 1px; }
+.msg-player .text { font-size: 14px; line-height: 1.7; color: var(--ink); }
+
+/* 系统/事件卡（怪物回合、场景更新、时间推进） */
+.msg-event { display: flex; justify-content: center; }
+.msg-event .card {
+  width: 100%; max-width: 640px;
+  border: 1px dashed var(--line);
+  background: rgba(24,28,39,.6);
+  border-radius: var(--r-md);
+  padding: 10px 16px;
+  font-size: 12.5px; color: var(--ink-dim); line-height: 1.7;
+}
+.msg-event .card .head {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; letter-spacing: 2px; color: var(--ink-faint); margin-bottom: 4px;
+}
+.msg-event.combat .card { border-color: rgba(196,87,78,.4); }
+.msg-event.combat .head { color: var(--red); }
+.msg-event.time .card { border-style: solid; border-color: var(--line-soft); text-align: center; font-family: var(--font-story); }
+
+/* 骰子结果卡 */
+.msg-dice { display: flex; justify-content: center; }
+.dice-card {
+  width: 100%; max-width: 640px;
+  background: linear-gradient(135deg, var(--bg2), var(--bg1));
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 10px 16px;
+  display: flex; align-items: center; gap: 14px;
+}
+.dice-card .face {
+  flex: none;
+  width: 46px; height: 46px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, #3a2f1c, #241e12);
+  border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-story); font-size: 20px; font-weight: 700; color: var(--gold-hi);
+  position: relative;
+}
+.dice-card .face.crit { background: linear-gradient(160deg, #6b5518, #3a2f0c); color: #ffe9a8; box-shadow: 0 0 16px rgba(230,200,135,.4); }
+.dice-card .face.fail { background: linear-gradient(160deg, #4a2320, #2a1513); color: #e08d84; }
+.dice-card .meta { min-width: 0; flex: 1; }
+.dice-card .title { font-size: 13px; font-weight: 600; }
+.dice-card .formula { font-size: 11.5px; color: var(--ink-dim); font-family: var(--font-story); margin-top: 2px; }
+.dice-card .verdict { flex: none; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.dice-card .verdict.hit { color: var(--green); border: 1px solid var(--green); }
+.dice-card .verdict.miss { color: var(--red); border: 1px solid var(--red); }
+.dice-card .verdict.crit { color: #ffe9a8; border: 1px solid var(--gold); background: rgba(201,164,92,.15); }
+
+/* 伤害/治疗浮卡 */
+.msg-harm { display: flex; justify-content: center; }
+.harm-card {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-family: var(--font-story);
+  border: 1px solid;
+}
+.harm-card.dmg { color: #f0a79e; border-color: rgba(196,87,78,.5); background: rgba(196,87,78,.1); }
+.harm-card.heal { color: #a8d6ae; border-color: rgba(111,168,120,.5); background: rgba(111,168,120,.1); }
+.harm-card .num { font-size: 18px; font-weight: 700; }
+.harm-card .kill {
+  font-size: 10px; font-family: var(--font-ui); font-weight: 700;
+  background: var(--red); color: #fff; border-radius: 3px; padding: 1px 6px;
+}
+
+/* 打字指示 */
+.typing { display: inline-flex; gap: 4px; padding: 8px 0; }
+.typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--gold-dim); animation: tp 1s infinite; }
+.typing i:nth-child(2) { animation-delay: .15s; }
+.typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes tp { 30% { transform: translateY(-4px); opacity: 1; } 60% { opacity: .4; } }
+
+/* ---- 快捷行动 chips ---- */
+#quickbar {
+  flex: none;
+  padding: 8px 16px 4px;
+  display: flex; gap: 8px;
+  overflow-x: auto;
+}
+#quickbar .cap { flex: none; align-self: center; font-size: 10px; letter-spacing: 2px; color: var(--ink-faint); }
+.chip {
+  flex: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg2);
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  transition: all .15s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.chip:hover { color: var(--gold-hi); border-color: var(--gold-dim); transform: translateY(-1px); }
+.chip .ico { font-size: 13px; }
+.chip.danger { border-color: rgba(196,87,78,.45); color: #d89a92; }
+.chip.danger:hover { border-color: var(--red); color: #f0c0ba; }
+.chip.rest { border-color: rgba(95,131,180,.4); color: #9db8d6; }
+
+/* ---- 输入区 ---- */
+#inputbar {
+  flex: none;
+  padding: 8px 16px 14px;
+}
+.input-wrap {
+  max-width: 760px; margin: 0 auto;
+  display: flex; align-items: flex-end; gap: 8px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 8px 8px 8px 16px;
+  transition: border-color .2s;
+}
+.input-wrap:focus-within { border-color: var(--gold-dim); box-shadow: 0 0 0 1px var(--gold-dim); }
+#input {
+  flex: 1;
+  background: none; border: none; outline: none;
+  color: var(--ink);
+  font-family: var(--font-story); font-size: 15px;
+  resize: none; line-height: 1.6;
+  max-height: 120px;
+}
+#input::placeholder { color: var(--ink-faint); }
+.send-btn {
+  flex: none;
+  height: 38px; padding: 0 18px;
+  border: none; border-radius: var(--r-md);
+  background: linear-gradient(135deg, var(--gold), #a5854a);
+  color: #14100a; font-weight: 700; font-size: 13px;
+  transition: filter .15s;
+}
+.send-btn:hover { filter: brightness(1.12); }
+.dice-btn {
+  flex: none; width: 38px; height: 38px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--bg3); color: var(--gold-hi);
+  font-size: 17px;
+}
+.dice-btn:hover { border-color: var(--gold); }
+
+/* ============ 右栏 ============ */
+#panel {
+  grid-area: panel;
+  background: var(--bg1);
+  border-left: 1px solid var(--line);
+  display: flex; flex-direction: column;
+  min-height: 0;
+  transition: transform .25s ease, opacity .25s;
+  z-index: 25;
+}
+.panel-tabs {
+  flex: none;
+  display: flex;
+  border-bottom: 1px solid var(--line);
+}
+.panel-tabs button {
+  flex: 1;
+  padding: 11px 0 9px;
+  background: none; border: none;
+  color: var(--ink-faint);
+  font-size: 12.5px; letter-spacing: 1px;
+  border-bottom: 2px solid transparent;
+  transition: all .15s;
+}
+.panel-tabs button:hover { color: var(--ink-dim); }
+.panel-tabs button.on { color: var(--gold-hi); border-bottom-color: var(--gold); }
+.panel-pages { flex: 1; overflow-y: auto; min-height: 0; }
+.ppage { display: none; padding: 14px; flex-direction: column; gap: 12px; }
+.ppage.on { display: flex; }
+
+/* 角色卡 */
+.pc-head { display: flex; gap: 12px; align-items: center; }
+.pc-head .avatar {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg, #c9a45c, #8a6a34);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-story); font-size: 22px; font-weight: 700; color: #14100a;
+  border: 2px solid var(--gold-dim);
+}
+.pc-head .who h2 { font-family: var(--font-story); font-size: 17px; color: var(--gold-hi); }
+.pc-head .who .sub { font-size: 11px; color: var(--ink-dim); margin-top: 3px; }
+.stat-block {
+  background: var(--bg2); border: 1px solid var(--line-soft);
+  border-radius: var(--r-md); padding: 10px 12px;
+}
+.stat-block h3 {
+  font-size: 10px; letter-spacing: 3px; color: var(--ink-faint);
+  margin-bottom: 8px; font-weight: 600;
+}
+.hp-main { display: flex; align-items: center; gap: 10px; }
+.hp-main .big { font-family: var(--font-story); font-size: 24px; font-weight: 700; }
+.hp-main .max { color: var(--ink-faint); font-size: 13px; }
+.hp-track { flex: 1; height: 10px; background: #262c3c; border-radius: 5px; overflow: hidden; position: relative; }
+.hp-track i { display: block; height: 100%; background: linear-gradient(90deg, #7d4a44, #b86a5e); transition: width .4s; }
+.hp-track .temp { position: absolute; inset: 0 auto 0 0; background: rgba(95,131,180,.55); }
+.def-row { display: flex; gap: 8px; }
+.def-cell {
+  flex: 1; text-align: center;
+  background: var(--bg2); border: 1px solid var(--line-soft); border-radius: var(--r-md);
+  padding: 8px 4px;
+}
+.def-cell .v { font-family: var(--font-story); font-size: 18px; font-weight: 700; color: var(--gold-hi); }
+.def-cell .k { font-size: 10px; color: var(--ink-faint); margin-top: 2px; letter-spacing: 1px; }
+.ab-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.ab-cell {
+  background: var(--bg2); border: 1px solid var(--line-soft); border-radius: var(--r-sm);
+  padding: 6px 0 5px; text-align: center;
+}
+.ab-cell .mod { font-family: var(--font-story); font-size: 16px; font-weight: 700; color: var(--ink); }
+.ab-cell .mod.neg { color: #d08d84; }
+.ab-cell .score { font-size: 10px; color: var(--ink-faint); }
+.ab-cell .nm { font-size: 10px; color: var(--ink-dim); letter-spacing: 1px; }
+.skill-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.skill-pill {
+  font-size: 11px; padding: 3px 9px;
+  border-radius: 999px; border: 1px solid var(--line-soft);
+  color: var(--ink-dim); background: var(--bg2);
+}
+.skill-pill.prof { color: var(--gold-hi); border-color: var(--gold-dim); }
+.slot-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-dim); }
+.slot-row .nm { width: 44px; flex: none; }
+.pips { display: flex; gap: 4px; }
+.pips i {
+  width: 11px; height: 11px; border-radius: 50%;
+  border: 1px solid var(--purple);
+  background: transparent;
+}
+.pips i.full { background: var(--purple); box-shadow: 0 0 5px rgba(143,111,184,.6); }
+.pips.hd i { border-color: var(--green); }
+.pips.hd i.full { background: var(--green); box-shadow: none; }
+.ds-row { display: flex; gap: 14px; font-size: 11px; color: var(--ink-dim); align-items: center; }
+.ds-row .group { display: flex; gap: 4px; align-items: center; }
+.ds-row i {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 1px solid var(--ink-faint); display: inline-block;
+}
+.ds-row .ok i.full { background: var(--green); border-color: var(--green); }
+.ds-row .bad i.full { background: var(--red); border-color: var(--red); }
+.cond-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.cond-pill { font-size: 11px; padding: 3px 9px; border-radius: 999px; background: rgba(196,87,78,.12); color: #e0a49d; border: 1px solid rgba(196,87,78,.4); }
+.cond-none { font-size: 12px; color: var(--ink-faint); }
+
+/* 法术书 / 物品栏 */
+.spell-lvl { display: flex; flex-direction: column; gap: 6px; }
+.spell-lvl .lvl-cap { font-size: 11px; color: var(--purple); letter-spacing: 2px; display: flex; justify-content: space-between; }
+.spell-item {
+  background: var(--bg2); border: 1px solid var(--line-soft); border-radius: var(--r-sm);
+  padding: 8px 10px; cursor: pointer; transition: border-color .15s;
+}
+.spell-item:hover { border-color: var(--purple); }
+.spell-item .top { display: flex; justify-content: space-between; align-items: center; }
+.spell-item .nm { font-size: 13px; color: var(--ink); }
+.spell-item .meta { font-size: 10.5px; color: var(--ink-faint); }
+.spell-item .desc {
+  display: none; margin-top: 6px;
+  font-size: 11.5px; color: var(--ink-dim); line-height: 1.7;
+  border-top: 1px dashed var(--line-soft); padding-top: 6px;
+}
+.spell-item.open .desc { display: block; }
+.spell-item .cast-btn {
+  margin-top: 6px; font-size: 11px; padding: 3px 12px;
+  background: rgba(143,111,184,.15); color: var(--purple);
+  border: 1px solid var(--purple); border-radius: 999px;
+}
+.inv-group .cap { font-size: 11px; letter-spacing: 2px; color: var(--ink-faint); margin: 4px 0 6px; }
+.inv-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 10px; border-radius: var(--r-sm);
+  border: 1px solid transparent;
+}
+.inv-item:hover { background: var(--bg2); border-color: var(--line-soft); }
+.inv-item .ico { width: 26px; text-align: center; }
+.inv-item .nm { flex: 1; font-size: 12.5px; }
+.inv-item .qty { font-size: 11px; color: var(--ink-faint); }
+.inv-item .eq { font-size: 9px; color: var(--green); border: 1px solid var(--green); border-radius: 3px; padding: 0 4px; }
+.inv-item .att { color: var(--purple); font-size: 13px; }
+.attune-meter { font-size: 11px; color: var(--ink-dim); display: flex; gap: 6px; align-items: center; }
+.attune-meter .slots { display: flex; gap: 4px; }
+.attune-meter .slots i { width: 10px; height: 10px; border-radius: 2px; border: 1px solid var(--purple); }
+.attune-meter .slots i.full { background: var(--purple); }
+
+/* 规则速查 */
+.rule-search { display: flex; gap: 6px; }
+.rule-search input {
+  flex: 1; background: var(--bg2); border: 1px solid var(--line);
+  border-radius: var(--r-sm); padding: 8px 10px;
+  color: var(--ink); font-size: 13px; outline: none;
+}
+.rule-search input:focus { border-color: var(--gold-dim); }
+.rule-search button {
+  padding: 0 14px; border-radius: var(--r-sm);
+  border: 1px solid var(--gold-dim); background: rgba(201,164,92,.1); color: var(--gold-hi);
+  font-size: 12px;
+}
+.rule-hints { display: flex; flex-wrap: wrap; gap: 5px; }
+.rule-hints button {
+  font-size: 11px; padding: 3px 10px; border-radius: 999px;
+  background: none; border: 1px solid var(--line); color: var(--ink-faint);
+}
+.rule-hints button:hover { color: var(--gold-hi); border-color: var(--gold-dim); }
+.rule-card {
+  background: var(--bg2); border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--gold-dim);
+  border-radius: var(--r-sm); padding: 10px 12px;
+}
+.rule-card .rt { font-size: 13px; font-weight: 600; color: var(--gold-hi); display: flex; justify-content: space-between; }
+.rule-card .src { font-size: 10px; color: var(--ink-faint); font-weight: 400; }
+.rule-card .rb { font-size: 12px; color: var(--ink-dim); line-height: 1.75; margin-top: 6px; font-family: var(--font-story); }
+
+/* ============ 3D 骰子动画层 ============ */
+#dice-layer {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(8,9,13,.72);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s;
+}
+#dice-layer.show { opacity: 1; pointer-events: auto; }
+/* 实现说明：正式版此层挂载 @3d-dice/dice-box 画布（data-impl="dice-box"），
+   原型用 CSS 3D d20 代替演示抛掷→落定的动线。 */
+.d20-stage { perspective: 700px; }
+.d20 {
+  width: 110px; height: 110px;
+  display: flex; align-items: center; justify-content: center;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, #4a3b1e, #241e12);
+  font-family: var(--font-story); font-size: 44px; font-weight: 700; color: var(--gold-hi);
+  animation: tumble .9s cubic-bezier(.3,.7,.4,1);
+  box-shadow: 0 30px 60px rgba(0,0,0,.6);
+}
+@keyframes tumble {
+  0% { transform: rotateX(0) rotateZ(0) scale(1.6); opacity: 0; }
+  20% { opacity: 1; }
+  55% { transform: rotateX(560deg) rotateZ(330deg) scale(1.15); }
+  80% { transform: rotateX(700deg) rotateZ(350deg) scale(.96); }
+  100% { transform: rotateX(720deg) rotateZ(360deg) scale(1); }
+}
+#dice-layer .hint {
+  position: absolute; bottom: 12%;
+  font-size: 11px; letter-spacing: 3px; color: var(--ink-faint);
+}
+
+/* ============ 响应式 ============ */
+@media (max-width: 1100px) {
+  #app, #app.panel-collapsed { grid-template-columns: 1fr; grid-template-areas: "topbar" "party" "stage"; }
+  #panel {
+    position: fixed; top: 52px; right: 0; bottom: 0; width: min(360px, 92vw);
+    box-shadow: var(--shadow);
+  }
+}
+@media (max-width: 720px) {
+  .campaign h1 { font-size: 13px; }
+  .demo-switch .lbl, .game-clock { display: none; }
+  .stream-col { padding: 0 14px; }
+}
+</style>
+</head>
+<body>
+<div id="app" data-mode="explore">
+
+  <!-- ======== 顶栏：战役名 + 模式指示 + 菜单 ======== -->
+  <header id="topbar">
+    <button class="icon-btn" id="btn-menu" title="菜单">☰</button>
+    <div class="campaign">
+      <span class="tag">战役</span>
+      <h1>失落矿坑 · 凡达林之围</h1>
+    </div>
+    <span class="mode-badge" id="mode-badge" data-mode="explore">探索</span>
+    <span class="game-clock" id="game-clock" title="游戏内时间">☀ 第1天 · 午后</span>
+    <div class="top-spacer"></div>
+    <div class="demo-switch" title="原型演示：切换游戏模式">
+      <span class="lbl">演示</span>
+      <button data-demo-mode="explore" class="on">探索</button>
+      <button data-demo-mode="social">社交</button>
+      <button data-demo-mode="combat">战斗</button>
+    </div>
+    <button class="icon-btn" id="btn-panel-toggle" title="折叠/展开角色面板">🜲</button>
+  </header>
+
+  <!-- ======== 队伍条：在线玩家 + HP 微条 + 回合高亮 ======== -->
+  <div id="partybar">
+    <div class="pm self turn" data-member="wila">
+      <div class="avatar" style="background:linear-gradient(135deg,#c9a45c,#8a6a34)">薇</div>
+      <div class="info">
+        <span class="name"><i class="online"></i>薇拉 · 法师3（我）</span>
+        <span class="hpmini"><i style="width:75%"></i></span>
+        <span class="hpnum">18/24</span>
+      </div>
+    </div>
+    <div class="pm" data-member="shitou">
+      <div class="avatar" style="background:linear-gradient(135deg,#9a8f7c,#6b6252)">石</div>
+      <div class="info">
+        <span class="name"><i class="online"></i>石头 · 战士3</span>
+        <span class="hpmini"><i style="width:93%"></i></span>
+        <span class="hpnum">26/28</span>
+      </div>
+    </div>
+    <div class="pm" data-member="liande">
+      <div class="avatar" style="background:linear-gradient(135deg,#7fa3c9,#4a6a8a)">莉</div>
+      <div class="info">
+        <span class="name"><i class="online"></i>莉安德 · 牧师3</span>
+        <span class="hpmini low"><i style="width:38%"></i></span>
+        <span class="hpnum">8/21</span>
+      </div>
+    </div>
+    <div class="pm" data-member="huizhua">
+      <div class="avatar" style="background:linear-gradient(135deg,#8f6fb8,#5d4480)">灰</div>
+      <div class="info">
+        <span class="name" style="color:var(--ink-faint)"><i class="online" style="background:#555;box-shadow:none"></i>灰爪 · 游荡者3（离开）</span>
+        <span class="hpmini"><i style="width:64%"></i></span>
+        <span class="hpnum">14/22</span>
+      </div>
+    </div>
+    <span class="party-hint"><i class="dot"></i><span id="turn-hint-text">轮到 薇拉 行动</span></span>
+  </div>
+
+  <!-- ======== 主舞台 ======== -->
+  <main id="stage">
+
+    <!-- 战斗层：先攻条 + 参战者 HP 卡（战斗模式才显示） -->
+    <section id="combatbar">
+      <div class="init-row">
+        <span class="cap">先攻</span>
+        <div class="init-strip" id="init-strip"></div>
+        <span class="round-info" id="round-info">第 1 轮</span>
+      </div>
+      <div class="combatant-cards" id="combatant-cards"></div>
+    </section>
+
+    <!-- 叙事流 -->
+    <section id="stream">
+      <div class="stream-col" id="stream-col">
+
+        <div class="msg msg-event time">
+          <div class="card">☀ 第 1 天 · 午后 —— 三猪小径，距凡达林约半日路程</div>
+        </div>
+
+        <div class="msg msg-dm">
+          <div class="spine"></div>
+          <div class="body">
+            <div class="who">地下城主</div>
+            <div class="text">午后的阳光被路两侧的低矮树丛切碎，洒在尘土飞扬的小径上。你们转过一道缓坡，忽然看见路中央横着一匹死去的马——鞍囊被翻得乱七八糟，几支黑羽箭插在它的脖颈上。
+
+<em>石头</em>率先勒住脚步。林子里安静得反常，连鸟鸣都没有。</div>
+          </div>
+        </div>
+
+        <div class="msg msg-player">
+          <div class="bubble">
+            <div class="who">薇拉</div>
+            <div class="text">我躲到路边的岩石后面，仔细观察两侧树林的动静。</div>
+          </div>
+        </div>
+
+        <div class="msg msg-dice">
+          <div class="dice-card">
+            <div class="face">17</div>
+            <div class="meta">
+              <div class="title">感知（察觉）检定</div>
+              <div class="formula">d20(15) + 感知加值 2 = 17 vs DC 12</div>
+            </div>
+            <span class="verdict hit">成功</span>
+          </div>
+        </div>
+
+        <div class="msg msg-dm">
+          <div class="spine"></div>
+          <div class="body">
+            <div class="who">地下城主</div>
+            <div class="text">你眯起眼睛——左侧灌木后有金属的反光一闪而过，右侧的树冠里也蹲着一个佝偻的影子。<b>至少两个伏兵</b>，而且他们已经盯上了你们。他们的注意力显然被走在最前的石头吸引，<em>尚未发现你</em>。</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 快捷行动 chips（按模式切换） -->
+    <div id="quickbar">
+      <span class="cap">行动</span>
+      <span id="chips" style="display:contents"></span>
+    </div>
+
+    <!-- 行动输入 -->
+    <footer id="inputbar">
+      <div class="input-wrap">
+        <button class="dice-btn" id="btn-dice" title="掷 d20">⚄</button>
+        <textarea id="input" rows="1" placeholder="描述你的行动……（Enter 发送，Shift+Enter 换行）"></textarea>
+        <button class="send-btn" id="btn-send">行动</button>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ======== 右栏（可折叠）：角色卡 / 法术书 / 物品栏 / 规则速查 ======== -->
+  <aside id="panel">
+    <nav class="panel-tabs">
+      <button data-tab="char" class="on">角色卡</button>
+      <button data-tab="spell">法术书</button>
+      <button data-tab="item">物品栏</button>
+      <button data-tab="rule">规则速查</button>
+    </nav>
+    <div class="panel-pages">
+
+      <!-- 角色卡 -->
+      <section class="ppage on" data-page="char">
+        <div class="pc-head">
+          <div class="avatar">薇</div>
+          <div class="who">
+            <h2>薇拉 · 星歌</h2>
+            <div class="sub">高等精灵 · 法师 3 · 守序善良 · 熟练 +2</div>
+          </div>
+        </div>
+
+        <div class="stat-block">
+          <h3>生命</h3>
+          <div class="hp-main">
+            <span class="big">18</span><span class="max">/ 24</span>
+            <div class="hp-track"><i style="width:75%"></i><span class="temp" style="width:0%"></span></div>
+          </div>
+        </div>
+
+        <div class="def-row">
+          <div class="def-cell"><div class="v">15</div><div class="k">AC 法师护甲</div></div>
+          <div class="def-cell"><div class="v">30</div><div class="k">速度 尺</div></div>
+          <div class="def-cell"><div class="v">+2</div><div class="k">先攻</div></div>
+          <div class="def-cell"><div class="v">12</div><div class="k">被动察觉</div></div>
+        </div>
+
+        <div class="stat-block">
+          <h3>属性</h3>
+          <div class="ab-grid" id="ab-grid"></div>
+        </div>
+
+        <div class="stat-block">
+          <h3>技能熟练</h3>
+          <div class="skill-list" id="skill-list"></div>
+        </div>
+
+        <div class="stat-block">
+          <h3>法术位</h3>
+          <div id="slot-block" style="display:flex;flex-direction:column;gap:7px"></div>
+        </div>
+
+        <div class="stat-block">
+          <h3>生命骰 · 死亡豁免</h3>
+          <div class="slot-row"><span class="nm">生命骰</span><span class="pips hd" id="hd-pips"></span><span style="font-size:11px">d6</span></div>
+          <div class="ds-row" style="margin-top:8px">
+            <span class="group ok">豁免成功 <i></i><i></i><i></i></span>
+            <span class="group bad">豁免失败 <i></i><i></i><i></i></span>
+            <span style="margin-left:auto;color:var(--ink-faint)">力竭 0 级</span>
+          </div>
+        </div>
+
+        <div class="stat-block">
+          <h3>状态 · 同调 · 专长</h3>
+          <div class="cond-list" id="cond-list"><span class="cond-none">无状态异常</span></div>
+          <div class="attune-meter" style="margin-top:8px">同调
+            <span class="slots"><i class="full"></i><i></i><i></i></span> 1/3
+          </div>
+          <div class="skill-list" style="margin-top:8px">
+            <span class="skill-pill prof">专长：警觉</span>
+            <span class="skill-pill">黑暗视觉 60尺</span>
+            <span class="skill-pill">仙族血统</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 法术书 -->
+      <section class="ppage" data-page="spell">
+        <div class="attune-meter" style="justify-content:space-between">
+          <span>施法属性 <b style="color:var(--ink)">智力 +3</b></span>
+          <span>法术 DC <b style="color:var(--ink)">13</b> · 攻击 <b style="color:var(--ink)">+5</b></span>
+        </div>
+        <div id="spellbook" style="display:flex;flex-direction:column;gap:12px"></div>
+      </section>
+
+      <!-- 物品栏 -->
+      <section class="ppage" data-page="item">
+        <div class="inv-group">
+          <div class="cap">装备中</div>
+          <div id="inv-equipped"></div>
+        </div>
+        <div class="inv-group">
+          <div class="cap">背包</div>
+          <div id="inv-pack"></div>
+        </div>
+        <div class="attune-meter">同调位
+          <span class="slots"><i class="full"></i><i></i><i></i></span> 1/3
+        </div>
+      </section>
+
+      <!-- 规则速查 -->
+      <section class="ppage" data-page="rule">
+        <div class="rule-search">
+          <input id="rule-q" placeholder="查询规则，如：突袭 / 擒抱 / 短休……">
+          <button id="rule-btn">检索</button>
+        </div>
+        <div class="rule-hints" id="rule-hints"></div>
+        <div id="rule-results" style="display:flex;flex-direction:column;gap:10px">
+          <div class="rule-card">
+            <div class="rt">提示 <span class="src">RAG</span></div>
+            <div class="rb">输入关键词后，从已入库的《玩家手册2024》《城主指南2024》中检索相关规则段落，并标注出处页码。</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </aside>
+
+  <!-- ======== 3D 骰子动画层（正式版挂载 @3d-dice/dice-box） ======== -->
+  <div id="dice-layer" data-impl="dice-box">
+    <div class="d20-stage"><div class="d20" id="d20-face">20</div></div>
+    <div class="hint">骰 子 裁 决</div>
+  </div>
+
+</div>
+
+<script>
+/* ================================================================
+   模拟数据（字段命名对齐 aidm Character 模型，便于正式版平移）
+   ================================================================ */
+const CHAR = {
+  name: "薇拉·星歌",
+  abilities: { str: 8, dex: 14, con: 13, int: 16, wis: 12, cha: 10 },
+  skills_prof: ["奥秘", "调查", "洞悉", "察觉", "历史", "医药"],
+  spell_slots: { 1: { max: 4, left: 3 }, 2: { max: 2, left: 2 } },
+  hit_dice: { max: 3, left: 3, die: "d6" },
+  spells: [
+    { lvl: 0, name: "火焰箭", meta: "戏法 · 塑能 · 法术攻击", desc: "掷法术攻击，命中造成 1d10 火焰伤害。3级起伤害提升。" },
+    { lvl: 0, name: "法师之手", meta: "戏法 · 咒法 · 效用", desc: "召唤幽灵般的手，可操控 10 磅内物件，持续 1 分钟。" },
+    { lvl: 0, name: "魔法伎俩", meta: "戏法 · 幻术 · 效用", desc: "制造小型魔法效果：火花、气味、微光、小把戏。" },
+    { lvl: 0, name: "光亮术", meta: "戏法 · 塑能 · 照明", desc: "使物件发出 20 尺明亮光照，持续 1 小时。" },
+    { lvl: 1, name: "魔法飞弹", meta: "1环 · 力场 · 自动命中", desc: "3 枚魔法飞弹各自造成 1d4+1 力场伤害，无需检定必定命中。" },
+    { lvl: 1, name: "护盾术", meta: "1环 · 防护 · 反应", desc: "被命中时以反应施展，AC +5 直至你下回合开始。" },
+    { lvl: 1, name: "法师护甲", meta: "1环 · 防护 · 8小时", desc: "AC 变为 13 + 敏捷调整值，持续 8 小时。" },
+    { lvl: 1, name: "睡眠术", meta: "1环 · 附魔 · 群体", desc: "掷 5d8 点生命总量，使范围内生物按当前 HP 从低到高陷入昏迷。" },
+    { lvl: 2, name: "灼热射线", meta: "2环 · 塑能 · 3射线", desc: "3 道射线各掷法术攻击，每道命中造成 2d6 火焰伤害。" },
+    { lvl: 2, name: "迷踪步", meta: "2环 · 咒法 · 附赠动作", desc: "传送至 30 尺内可见的未被占据空间。" },
+  ],
+  equipped: [
+    { ico: "🗡", name: "匕首", eq: true, note: "1d4 穿刺 · 灵巧/投掷" },
+    { ico: "🪄", name: "法杖（奥术法器）", eq: true, note: "施法焦点" },
+    { ico: "📿", name: "共鸣水晶坠", eq: true, att: true, note: "同调 · 戏法+1伤害" },
+  ],
+  pack: [
+    { ico: "🧪", name: "治疗药水", qty: 2, note: "2d4+2" },
+    { ico: "🎒", name: "探索套组", note: "背包/火绒盒/口粮…" },
+    { ico: "📕", name: "法术书", note: "记录全部已知法术" },
+    { ico: "🕯", name: "蜡烛", qty: 5 },
+    { ico: "🪙", name: "金币", qty: 37 },
+  ],
+};
+const AB_NAMES = { str: "力量", dex: "敏捷", con: "体质", int: "智力", wis: "感知", cha: "魅力" };
+const mod = s => Math.floor((s - 10) / 2);
+const fmt = m => (m >= 0 ? "+" : "") + m;
+const PROF = 2;
+
+/* 战斗模拟数据（对齐后端 initiative_order / participants 结构） */
+const COMBAT = {
+  round: 1, cur: 2,
+  order: [
+    { name: "莉安德", init: 19, side: "ally", hp: 8,  max: 21 },
+    { name: "哥布林头目", init: 17, side: "enemy", hp: 11, max: 11 },
+    { name: "薇拉", init: 14, side: "ally", hp: 18, max: 24, self: true },
+    { name: "哥布林甲", init: 11, side: "enemy", hp: 7, max: 7, surprised: true },
+    { name: "哥布林乙", init: 11, side: "enemy", hp: 7, max: 7, surprised: true },
+    { name: "石头", init: 8, side: "ally", hp: 26, max: 28 },
+  ],
+};
+const PARTY_MEMBER = { "薇拉": "wila", "石头": "shitou", "莉安德": "liande" };
+
+/* ============ 基础渲染 ============ */
+const $ = s => document.querySelector(s);
+const app = $("#app");
+const stream = $("#stream");
+const streamCol = $("#stream-col");
+
+(function renderChar() {
+  $("#ab-grid").innerHTML = Object.entries(CHAR.abilities).map(([k, v]) => {
+    const m = mod(v);
+    return `<div class="ab-cell"><div class="mod ${m < 0 ? "neg" : ""}">${fmt(m)}</div><div class="score">${v}</div><div class="nm">${AB_NAMES[k]}</div></div>`;
+  }).join("");
+  $("#skill-list").innerHTML = CHAR.skills_prof.map(s => `<span class="skill-pill prof">${s}</span>`).join("");
+  $("#slot-block").innerHTML = Object.entries(CHAR.spell_slots).map(([lvl, s]) =>
+    `<div class="slot-row"><span class="nm">${lvl} 环</span><span class="pips">${Array.from({ length: s.max }, (_, i) => `<i class="${i < s.left ? "full" : ""}"></i>`).join("")}</span><span style="font-size:11px">${s.left}/${s.max}</span></div>`).join("");
+  $("#hd-pips").innerHTML = Array.from({ length: CHAR.hit_dice.max }, (_, i) => `<i class="${i < CHAR.hit_dice.left ? "full" : ""}"></i>`).join("");
+})();
+
+(function renderSpellbook() {
+  const groups = {};
+  CHAR.spells.forEach(sp => (groups[sp.lvl] = groups[sp.lvl] || []).push(sp));
+  $("#spellbook").innerHTML = Object.keys(groups).sort().map(lvl => {
+    const cap = lvl === "0" ? "戏法（不限次）" : `${lvl} 环法术`;
+    return `<div class="spell-lvl"><div class="lvl-cap"><span>${cap}</span></div>${groups[lvl].map(sp =>
+      `<div class="spell-item"><div class="top"><span class="nm">${sp.name}</span><span class="meta">${sp.meta}</span></div><div class="desc">${sp.desc}<br><button class="cast-btn" data-say="我施展${sp.name}">以此行动：施展${sp.name}</button></div></div>`).join("")}</div>`;
+  }).join("");
+  document.querySelectorAll(".spell-item").forEach(el =>
+    el.addEventListener("click", e => { if (!e.target.classList.contains("cast-btn")) el.classList.toggle("open"); }));
+})();
+
+(function renderInventory() {
+  const row = it => `<div class="inv-item"><span class="ico">${it.ico}</span><span class="nm">${it.name}<div style="font-size:10px;color:var(--ink-faint)">${it.note || ""}</div></span>${it.att ? '<span class="att" title="同调中">◆</span>' : ""}${it.eq ? '<span class="eq">装备中</span>' : ""}${it.qty ? `<span class="qty">×${it.qty}</span>` : ""}</div>`;
+  $("#inv-equipped").innerHTML = CHAR.equipped.map(row).join("");
+  $("#inv-pack").innerHTML = CHAR.pack.map(row).join("");
+})();
+
+/* ============ 战斗层渲染 ============ */
+function renderCombat() {
+  $("#init-strip").innerHTML = COMBAT.order.map((c, i) =>
+    `<div class="init-chip ${c.side} ${i === COMBAT.cur ? "current" : ""} ${i < COMBAT.cur ? "done" : ""} ${c.hp <= 0 ? "done" : ""}"><span class="iv">${c.init}</span>${c.name}${c.surprised ? '<span class="surprised">突袭</span>' : ""}</div>`).join("");
+  $("#combatant-cards").innerHTML = COMBAT.order.map((c, i) => {
+    const pct = Math.max(0, Math.round(c.hp / c.max * 100));
+    return `<div class="ccard ${c.side} ${i === COMBAT.cur ? "current" : ""} ${c.hp <= 0 ? "dead" : ""} ${c.hp > 0 && c.hp * 2 <= c.max ? "bloodied" : ""}">
+      <div class="nm"><span>${c.name}${c.self ? "（我）" : ""}</span><span class="hp-t">${Math.max(0, c.hp)}/${c.max}</span></div>
+      <div class="hpbar"><i style="width:${pct}%"></i></div>
+      <div class="sub"><span>${c.side === "ally" ? "队友" : "敌方"}</span><span>先攻 ${c.init}</span></div>
+    </div>`;
+  }).join("");
+  $("#round-info").textContent = `第 ${COMBAT.round} 轮`;
+  const cur = COMBAT.order[COMBAT.cur];
+  $("#turn-hint-text").textContent = cur.self ? "轮到 薇拉 行动" : `轮到 ${cur.name}`;
+  document.querySelectorAll(".pm").forEach(pm => pm.classList.toggle("turn", PARTY_MEMBER[cur.name] === pm.dataset.member));
+}
+
+/* ============ 叙事流工具 ============ */
+function push(html) {
+  const t = document.createElement("template");
+  t.innerHTML = html.trim();
+  const node = t.content.firstElementChild;
+  streamCol.appendChild(node);
+  requestAnimationFrame(() => { stream.scrollTop = stream.scrollHeight; });
+  return node;
+}
+const dmSay = text => push(`<div class="msg msg-dm"><div class="spine"></div><div class="body"><div class="who">地下城主</div><div class="text">${text}</div></div></div>`);
+const playerSay = text => push(`<div class="msg msg-player"><div class="bubble"><div class="who">薇拉</div><div class="text">${text}</div></div></div>`);
+const eventCard = (text, cls = "") => push(`<div class="msg msg-event ${cls}"><div class="card">${text}</div></div>`);
+const diceCard = o => push(`<div class="msg msg-dice"><div class="dice-card"><div class="face ${o.fcls || ""}">${o.face}</div><div class="meta"><div class="title">${o.title}</div><div class="formula">${o.formula}</div></div><span class="verdict ${o.vcls}">${o.verdict}</span></div></div>`);
+const harmCard = (text, num, kind, kill) => push(`<div class="msg msg-harm"><div class="harm-card ${kind}"><span>${text}</span><span class="num">${kind === "dmg" ? "-" : "+"}${num}</span>${kill ? '<span class="kill">击杀</span>' : ""}</div></div>`);
+const typing = () => push(`<div class="msg msg-dm"><div class="spine"></div><div class="body"><div class="who">地下城主</div><span class="typing"><i></i><i></i><i></i></span></div></div>`);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* 3D 骰子动画层（正式版：dice-box.roll()，原型：CSS d20 模拟） */
+const diceLayer = $("#dice-layer"), d20Face = $("#d20-face");
+function showDice(final) {
+  return new Promise(res => {
+    d20Face.style.animation = "none"; void d20Face.offsetWidth; d20Face.style.animation = "";
+    diceLayer.classList.add("show");
+    const iv = setInterval(() => { d20Face.textContent = 1 + Math.floor(Math.random() * 20); }, 70);
+    setTimeout(() => { clearInterval(iv); d20Face.textContent = final; }, 750);
+    setTimeout(() => { diceLayer.classList.remove("show"); res(final); }, 1250);
+  });
+}
+
+/* ============ 游戏内时钟 ============ */
+let gameMinutes = 13 * 60; // 第1天 13:00 午后
+function clockText() {
+  const day = Math.floor(gameMinutes / 1440) + 1, h = Math.floor((gameMinutes % 1440) / 60);
+  const seg = h < 5 ? "凌晨" : h < 8 ? "早晨" : h < 11 ? "上午" : h < 13 ? "午后" : h < 17 ? "下午" : h < 19 ? "黄昏" : h < 21 ? "夜晚" : "深夜";
+  return `${h >= 6 && h < 18 ? "☀" : "☾"} 第${day}天 · ${seg}`;
+}
+function advanceTime(min, label) {
+  gameMinutes += min;
+  $("#game-clock").textContent = clockText();
+  eventCard(`${clockText()} —— ${label}（推进 ${min >= 60 ? (min / 60) + " 小时" : min + " 分钟"}）`, "time");
+}
+
+/* ============ 模式与快捷行动 ============ */
+const CHIPS = {
+  explore: [
+    ["🔍", "搜索附近", "我仔细搜索这片区域"], ["🤫", "潜行前进", "我放轻脚步潜行前进"],
+    ["👂", "仔细聆听", "我停下脚步仔细聆听四周的动静"], ["🗺", "查看地图", "我摊开地图确认行进方向"],
+    ["🔥", "短休", "我们在此扎营短休一小时", "rest"], ["🛏", "长休", "我们寻找安全处进行长休", "rest"],
+  ],
+  social: [
+    ["💬", "说服", "我试图说服对方"], ["🎭", "欺瞒", "我编造一个说辞糊弄对方"],
+    ["😠", "威吓", "我沉下脸威吓对方"], ["👁", "洞悉", "我仔细观察对方的神色，判断真实意图"],
+    ["🍺", "打探消息", "我请对方喝一杯，顺便打探些消息"],
+  ],
+  combat: [
+    ["⚔", "攻击", "我用匕首攻击最近的敌人", "danger"], ["✨", "魔法飞弹", "我施展魔法飞弹攻击哥布林头目", "danger"],
+    ["🔥", "火焰箭", "我对哥布林甲施展火焰箭", "danger"], ["🛡", "闪避", "我摆出防御姿态（闪避）"],
+    ["💨", "撤离", "我谨慎地撤离敌人的触及范围", "danger"], ["🧪", "治疗药水", "我喝下一瓶治疗药水"],
+  ],
+};
+function renderChips(mode) {
+  $("#chips").innerHTML = CHIPS[mode].map(([ico, label, say, cls]) =>
+    `<button class="chip ${cls || ""}" data-say="${say}"><span class="ico">${ico}</span>${label}</button>`).join("");
+}
+renderChips("explore");
+
+document.querySelectorAll("[data-demo-mode]").forEach(btn => btn.addEventListener("click", () => {
+  document.querySelectorAll("[data-demo-mode]").forEach(b => b.classList.toggle("on", b === btn));
+  setMode(btn.dataset.demoMode);
+}));
+function setMode(mode) {
+  app.dataset.mode = mode;
+  const badge = $("#mode-badge");
+  badge.dataset.mode = mode;
+  badge.textContent = { explore: "探索", social: "社交", combat: "战斗" }[mode];
+  renderChips(mode);
+  if (mode === "combat") {
+    renderCombat();
+    eventCard("<div class='head'>⚔ 遭遇</div>灌木后的伏兵终于按捺不住——三个哥布林嚎叫着冲了出来！", "combat");
+    diceCard({ title: "突袭判定", formula: "敌方隐匿 12 vs 你的被动察觉 12 —— 你察觉了伏击；但哥布林甲/乙未察觉石头的警戒", face: "!", verdict: "部分突袭", vcls: "crit", fcls: "crit" });
+    diceCard({ title: "先攻", formula: "莉安德19 · 头目17 · 薇拉14 · 哥布林11 · 石头8", face: "⏱", verdict: "第 1 轮", vcls: "hit" });
+    dmSay("战斗一触即发。<b>哥布林甲、乙被突袭</b>，第一轮无法行动。箭在弦上——<em>薇拉，轮到你了</em>。");
+  } else if (mode === "social") {
+    dmSay("凡达林的<em>石丘旅店</em>里人声嘈杂。壁炉边，一个红胡子的镇民正绘声绘色地讲着“红标帮”的传闻——他似乎知道些什么，正等着有人搭话。");
+  } else {
+    eventCard(`${clockText()} —— 三猪小径（继续探索）`, "time");
+  }
+}
+
+/* ============ 行动处理（模拟 AI DM 响应管线） ============ */
+const r20 = () => 1 + Math.floor(Math.random() * 20);
+const rd = (n, s) => Array.from({ length: n }, () => 1 + Math.floor(Math.random() * s)).reduce((a, b) => a + b, 0);
+function aliveEnemies() { return COMBAT.order.filter(c => c.side === "enemy" && c.hp > 0); }
+function pickTarget(text) {
+  const es = aliveEnemies();
+  return es.find(e => text.includes(e.name)) || es.find(e => e.name.includes("头目")) || es[0];
+}
+function damageEnemy(c, dmg) {
+  c.hp -= dmg;
+  const kill = c.hp <= 0;
+  if (kill) c.hp = 0;
+  renderCombat();
+  return kill;
+}
+function updatePartyHp(name, delta) {
+  const mid = PARTY_MEMBER[name];
+  if (!mid) return;
+  const pm = document.querySelector(`.pm[data-member="${mid}"]`);
+  const bar = pm.querySelector(".hpmini i"), num = pm.querySelector(".hpnum");
+  const [cur, max] = num.textContent.split("/").map(Number);
+  const next = Math.max(0, Math.min(max, cur + delta));
+  num.textContent = `${next}/${max}`;
+  bar.style.width = (next / max * 100) + "%";
+  pm.querySelector(".hpmini").classList.toggle("low", next * 2 <= max);
+  const c = COMBAT.order.find(x => x.name === name);
+  if (c) { c.hp = next; renderCombat(); }
+}
+
+async function sendAction(text) {
+  if (!text.trim()) return;
+  playerSay(text);
+  const tp = typing();
+  await sleep(650);
+
+  const inCombat = app.dataset.mode === "combat";
+  const finish = async () => { tp.remove(); if (inCombat) await sleep(700), await advanceTurns(); };
+
+  /* —— 攻击 —— */
+  if (/攻击|砍|刺|挥|匕首|射/.test(text) && inCombat) {
+    const tgt = pickTarget(text);
+    const roll = await showDice(r20());
+    const total = roll + 4;
+    const hit = roll !== 1 && (roll === 20 || total >= 13);
+    tp.remove();
+    diceCard({ title: `匕首攻击 ${tgt.name}`, formula: `d20(${roll}) + 4 = ${total} vs AC 13`, face: roll, verdict: roll === 20 ? "重击!" : hit ? "命中" : "未命中", vcls: roll === 20 ? "crit" : hit ? "hit" : "miss", fcls: roll === 20 ? "crit" : roll === 1 ? "fail" : "" });
+    if (hit) {
+      const dmg = rd(roll === 20 ? 2 : 1, 4) + 2;
+      const kill = damageEnemy(tgt, dmg);
+      await sleep(400);
+      harmCard(`${tgt.name} 受到穿刺伤害`, dmg, "dmg", kill);
+      await sleep(500);
+      dmSay(kill
+        ? `你的匕首精准地没入<em>${tgt.name}</em>的咽喉。它抽搐了一下，软软地瘫倒在小径上，再也一动不动。<b>${tgt.name} 被击杀。</b>`
+        : `刀刃划开${tgt.name}的臂膀，它痛得龇牙咧嘴，却仍挥舞着弯刀不退反进。${tgt.hp * 2 <= tgt.max ? `<em>它已浴血</em>，动作明显踉跄。` : ""}`);
+    } else {
+      await sleep(400);
+      dmSay(`你的攻击被${tgt.name}堪堪躲过，刀锋只削断了它耳边的几根脏辫。它发出刺耳的嘲笑。`);
+    }
+    if (inCombat) await advanceTurns();
+    return;
+  }
+
+  /* —— 施法 —— */
+  if (/施展|施法|魔法飞弹|飞弹|火焰箭|灼热射线|睡眠术|护盾术|迷踪步/.test(text)) {
+    if (/魔法飞弹|飞弹/.test(text) && inCombat) {
+      const tgt = pickTarget(text);
+      const dmg = rd(3, 4) + 3;
+      tp.remove();
+      diceCard({ title: `魔法飞弹 → ${tgt.name}`, formula: "3 枚飞弹自动命中：(1d4+1)×3", face: "✦", verdict: "必中", vcls: "hit" });
+      const kill = damageEnemy(tgt, dmg);
+      await sleep(400);
+      harmCard(`${tgt.name} 受到力场伤害`, dmg, "dmg", kill);
+      await sleep(500);
+      dmSay(kill
+        ? `三枚湛蓝的光弹呼啸而出，接连贯穿<em>${tgt.name}</em>的胸膛。它仰头栽倒，眼中满是难以置信。<b>${tgt.name} 被击杀。</b>`
+        : `三枚光弹拖着尾焰撞进${tgt.name}的胸口，炸得它连连后退，皮甲上留下三个焦黑的印记。`);
+      await advanceTurns();
+      return;
+    }
+    if (/火焰箭/.test(text)) {
+      const tgt = inCombat ? pickTarget(text) : null;
+      const roll = await showDice(r20());
+      const total = roll + 5;
+      const hit = tgt && roll !== 1 && (roll === 20 || total >= 13);
+      tp.remove();
+      diceCard({ title: tgt ? `火焰箭 → ${tgt.name}` : "火焰箭", formula: tgt ? `d20(${roll}) + 5 = ${total} vs AC 13` : "戏法 · 法术攻击", face: roll, verdict: tgt ? (hit ? "命中" : "未命中") : "施展", vcls: tgt ? (hit ? "hit" : "miss") : "hit" });
+      if (hit) {
+        const dmg = rd(1, 10);
+        const kill = damageEnemy(tgt, dmg);
+        await sleep(400);
+        harmCard(`${tgt.name} 受到火焰伤害`, dmg, "dmg", kill);
+        await sleep(500);
+        dmSay(kill ? `火线贯穿了<em>${tgt.name}</em>，它连惨叫都来不及发出便化作一团燃烧的躯壳。<b>${tgt.name} 被击杀。</b>` : `火线舔过${tgt.name}的肩膀，焦臭味顿时散开，它疼得原地乱跳。`);
+      } else if (tgt) {
+        await sleep(400);
+        dmSay(`火焰擦着${tgt.name}的鼻尖飞过，在它身后的树干上炸开一团火花。`);
+      } else {
+        dmSay("一团火焰自你指尖腾起，照亮了四周——又随手熄灭。戏法而已，不耗法术位。");
+      }
+      if (inCombat) await advanceTurns();
+      return;
+    }
+    tp.remove();
+    dmSay(`你低声念诵咒文，<em>${text.replace(/^我?施展/, "")}</em>的魔法涟漪在空气中荡开。（原型仅演示：正式版将按法术表校验法术位、豁免 DC 与伤害管线。）`);
+    if (inCombat) await advanceTurns();
+    return;
+  }
+
+  /* —— 检定类 —— */
+  const CHECKS = [
+    [/搜索|调查/, "智力（调查）", mod(CHAR.abilities.int) + PROF],
+    [/聆听|察觉|观察四周/, "感知（察觉）", mod(CHAR.abilities.wis) + PROF],
+    [/潜行/, "敏捷（潜行）", mod(CHAR.abilities.dex) + PROF],
+    [/洞悉|神色|意图/, "感知（洞悉）", mod(CHAR.abilities.wis) + PROF],
+    [/说服|打探/, "魅力（说服）", mod(CHAR.abilities.cha) + PROF],
+    [/欺瞒|糊弄/, "魅力（欺瞒）", mod(CHAR.abilities.cha)],
+    [/威吓/, "魅力（威吓）", mod(CHAR.abilities.cha)],
+  ];
+  const ck = CHECKS.find(([re]) => re.test(text));
+  if (ck) {
+    const roll = await showDice(r20());
+    const total = roll + ck[2];
+    const dc = 12, ok = total >= dc;
+    tp.remove();
+    diceCard({ title: `${ck[1]}检定`, formula: `d20(${roll}) ${fmt(ck[2])} = ${total} vs DC ${dc}`, face: roll, verdict: ok ? "成功" : "失败", vcls: ok ? "hit" : "miss", fcls: roll === 1 ? "fail" : "" });
+    await sleep(450);
+    const good = {
+      "智力（调查）": "你在马蹄印与车辙之间发现了第三组足迹——赤足的、小号的，通往西侧密林。伏击者正是从那里来的。",
+      "感知（察觉）": "风中飘来一丝酸臭——哥布林身上的味道。你竖起耳朵，锁定了两处压低的呼吸声。",
+      "敏捷（潜行）": "你的脚步落在落叶上悄无声息，阴影仿佛主动为你让路。",
+      "感知（洞悉）": "他讲得起劲，眼神却几次瞟向你的钱包——比起分享情报，这家伙更想要几枚金币润润嗓子。",
+      "魅力（说服）": "你被引到壁炉边的雅座。红胡子镇民压低声音：“红标帮的老巢啊……听说就在东北边的古堡废墟。”",
+      "魅力（欺瞒）": "对方将信将疑地点了点头，显然没识破你的说辞。",
+      "魅力（威吓）": "对方的喉结上下滚动了一下，态度明显软了下来。",
+    };
+    dmSay(ok ? (good[ck[1]] || "你的尝试取得了成效。") : "你尽力而为，却没能发现什么有价值的线索。或许换个法子试试？");
+    return;
+  }
+
+  /* —— 休整 —— */
+  if (/短休/.test(text)) {
+    tp.remove();
+    advanceTime(60, "短休");
+    dmSay("你们在小径背风处生起一小堆火。莉安德为众人包扎伤口，你则靠着行囊闭目养神。<em>可花费生命骰恢复 HP</em>（原型演示：恢复 6 点）。");
+    updatePartyHp("薇拉", 6); updatePartyHp("莉安德", 5);
+    return;
+  }
+  if (/长休/.test(text)) {
+    tp.remove();
+    advanceTime(480, "长休");
+    dmSay("夜幕降临时你们找到了一处背风的岩窟。轮流守夜后，晨光刺破林间薄雾——<em>HP 全部恢复，法术位重置，力竭减轻。</em>新的一天开始了。");
+    updatePartyHp("薇拉", 24); updatePartyHp("莉安德", 21);
+    return;
+  }
+  if (/药水/.test(text)) {
+    tp.remove();
+    const heal = rd(2, 4) + 2;
+    harmCard("薇拉 恢复生命", heal, "heal");
+    updatePartyHp("薇拉", heal);
+    await sleep(400);
+    dmSay("温热的药液滑入喉咙，伤口处传来酥麻的暖意。你感觉好多了。");
+    if (inCombat) await advanceTurns();
+    return;
+  }
+  if (/闪避|撤离|疾走/.test(text)) {
+    tp.remove();
+    dmSay(/闪避/.test(text) ? "你收束身形专注于防御——<em>直到你下回合开始，攻击你具有劣势。</em>" : "你瞅准空当迅速脱离战团，敌人慢了半拍，没能拦下你。");
+    if (inCombat) await advanceTurns();
+    return;
+  }
+
+  /* —— 自由叙事兜底 —— */
+  const FALLBACK = [
+    "你的举动引起了同伴的注意。远处的树林在风中沙沙作响，仿佛整个山谷都在屏息观望。",
+    "片刻之后，事情有了些微妙的变化——只是现在还说不清，这变化是好是坏。",
+    "就在此时，道路尽头扬起一小片尘土。有什么东西，正在接近。",
+  ];
+  tp.remove();
+  dmSay(FALLBACK[Math.floor(Math.random() * FALLBACK.length)]);
+}
+
+/* 怪物回合事件流（内嵌叙事区） */
+async function advanceTurns() {
+  let guard = 0;
+  while (guard++ < 10) {
+    COMBAT.cur = (COMBAT.cur + 1) % COMBAT.order.length;
+    if (COMBAT.cur === 0) {
+      COMBAT.round++;
+      COMBAT.order.forEach(c => c.surprised = false);
+      eventCard(`—— 第 ${COMBAT.round} 轮 ——`, "combat");
+    }
+    renderCombat();
+    const c = COMBAT.order[COMBAT.cur];
+    if (c.hp <= 0) continue;
+    if (c.surprised) { await sleep(500); eventCard(`<div class='head'>✦ 突袭</div>${c.name} 被突袭，本回合无法行动。`, "combat"); continue; }
+    if (c.side === "enemy") {
+      await sleep(800);
+      const acts = [
+        { t: "短弓射击", tn: "石头", hit: false, roll: "d20(9)+4 = 13 vs AC 16", missTxt: "箭矢擦着盾沿飞过" },
+        { t: "弯刀劈砍", tn: "莉安德", hit: true, dmg: 4, roll: "d20(16)+4 = 20 vs AC 15" },
+        { t: "标枪投掷", tn: "薇拉", hit: false, roll: "d20(7)+4 = 11 vs AC 15", missTxt: "标枪钉进你脚边的泥土" },
+      ];
+      const a = acts[Math.floor(Math.random() * acts.length)];
+      if (a.hit) { updatePartyHp(a.tn, -a.dmg); }
+      eventCard(`<div class='head'>⚔ ${c.name} 的回合</div>${c.name} 以${a.t}攻向 <b>${a.tn}</b>：${a.roll} —— ${a.hit ? `命中，造成 ${a.dmg} 点伤害！` : `未命中，${a.missTxt}。`}`, "combat");
+      continue;
+    }
+    return; // 轮到队友/玩家，停下等待
+  }
+}
+
+/* ============ 规则速查（模拟 RAG） ============ */
+const RULES = [
+  { k: ["突袭"], t: "突袭", src: "PHB2024 · 进行游戏", b: "战斗开始时，未察觉敌对者位置的参战者进行<b>先攻检定具有劣势</b>。2024 版突袭不再跳过整轮行动，而是直接体现在先攻劣势上。" },
+  { k: ["先攻", "回合"], t: "先攻与回合顺序", src: "PHB2024 · 进行游戏", b: "每位参战者掷 d20+敏捷调整值决定先攻，由高到低行动。每轮约 6 秒。" },
+  { k: ["优势", "劣势"], t: "优势与劣势", src: "PHB2024 · 进行游戏", b: "掷两枚 d20 取高（优势）或取低（劣势）。多个优势/劣势不叠加；两者同时存在时互相抵消。" },
+  { k: ["借机攻击"], t: "借机攻击", src: "PHB2024 · 战斗", b: "敌对生物自愿离开你的触及范围时，你可以用反应对其发动一次近战攻击。" },
+  { k: ["掩蔽"], t: "掩蔽", src: "PHB2024 · 战斗", b: "半掩蔽 AC/敏捷豁免 +2；四分之三掩蔽 +5；全掩蔽无法被直接攻击。" },
+  { k: ["擒抱"], t: "擒抱", src: "PHB2024 · 战斗", b: "以近战攻击检定做力量（运动）对抗目标力量或敏捷；成功后目标陷入<b>被擒</b>状态（速度 0）。" },
+  { k: ["死亡豁免", "濒死"], t: "死亡豁免", src: "PHB2024 · 战斗", b: "HP 归 0 时昏迷，每回合开始掷 d20：≥10 记 1 次成功，<10 记 1 次失败。成功 3 次伤势稳定；失败 3 次死亡。" },
+  { k: ["短休"], t: "短休", src: "PHB2024 · 休整", b: "约 1 小时的休整。可花费任意数量<b>生命骰</b>恢复 HP（每骰+体质调整值）。" },
+  { k: ["长休"], t: "长休", src: "PHB2024 · 休整", b: "约 8 小时的睡眠与轻度活动。恢复全部 HP、全部已耗生命骰的一半、法术位；力竭 -1 级。" },
+  { k: ["专注"], t: "专注", src: "PHB2024 · 施法", b: "部分法术需要专注维持。受到伤害须通过体质豁免（DC 10 或伤害一半取高），否则法术中断。同时只能专注一个法术。" },
+  { k: ["浴血"], t: "浴血（叙述规范）", src: "DMG2024 · 运作游戏", b: "生物 HP 降至一半以下时，DM 应在叙述中体现其伤势：踉跄、流血、攻势放缓——让玩家无需询问即可感知战况。" },
+];
+$("#rule-hints").innerHTML = RULES.slice(0, 8).map(r => `<button data-rq="${r.t}">${r.t}</button>`).join("");
+function ruleSearch(q) {
+  const hits = RULES.filter(r => r.t.includes(q) || r.k.some(k => q.includes(k)) || r.b.includes(q));
+  $("#rule-results").innerHTML = hits.length
+    ? hits.map(r => `<div class="rule-card"><div class="rt">${r.t}<span class="src">${r.src}</span></div><div class="rb">${r.b}</div></div>`).join("")
+    : `<div class="rule-card"><div class="rt">未检索到「${q}」<span class="src">RAG</span></div><div class="rb">换个关键词试试，如：突袭 / 掩蔽 / 专注 / 长休。</div></div>`;
+}
+$("#rule-btn").addEventListener("click", () => ruleSearch($("#rule-q").value.trim()));
+$("#rule-q").addEventListener("keydown", e => { if (e.key === "Enter") ruleSearch(e.target.value.trim()); });
+document.querySelectorAll("[data-rq]").forEach(b => b.addEventListener("click", () => { $("#rule-q").value = b.dataset.rq; ruleSearch(b.dataset.rq); }));
+
+/* ============ 面板与输入事件 ============ */
+document.querySelectorAll(".panel-tabs button").forEach(btn => btn.addEventListener("click", () => {
+  document.querySelectorAll(".panel-tabs button").forEach(b => b.classList.toggle("on", b === btn));
+  document.querySelectorAll(".ppage").forEach(p => p.classList.toggle("on", p.dataset.page === btn.dataset.tab));
+}));
+$("#btn-panel-toggle").addEventListener("click", () => app.classList.toggle("panel-collapsed"));
+$("#btn-menu").addEventListener("click", () => eventCard("<div class='head'>☰ 菜单</div>存档 / 战役设置 / 邀请队友 / 骰子设置 / 关于 ——（原型占位）"));
+
+const input = $("#input");
+function submit() { const v = input.value.trim(); if (v) { input.value = ""; input.style.height = "auto"; sendAction(v); } }
+$("#btn-send").addEventListener("click", submit);
+input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } });
+input.addEventListener("input", () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 120) + "px"; });
+$("#btn-dice").addEventListener("click", async () => {
+  const roll = await showDice(r20());
+  diceCard({ title: "自由掷骰", formula: `d20 = ${roll}`, face: roll, verdict: roll === 20 ? "大成功" : roll === 1 ? "大失败" : "结果", vcls: roll === 20 ? "crit" : roll === 1 ? "miss" : "hit", fcls: roll === 20 ? "crit" : roll === 1 ? "fail" : "" });
+});
+
+/* chips / 法术施展 统一走行动管线 */
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-say]");
+  if (el) sendAction(el.dataset.say);
+});
+
+stream.scrollTop = stream.scrollHeight;
+</script>
+</body>
+</html>

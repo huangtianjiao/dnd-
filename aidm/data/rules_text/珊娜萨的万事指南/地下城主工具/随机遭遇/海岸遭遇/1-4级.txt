@@ -1,0 +1,10 @@
+d100 遭遇 01         1 只 伪龙 pseudodragon 02-05       2d8 只 蟹 crab 06-10       2d6 的渔民（ 平民 commoner ） 11         1d3 条 毒蛇 poisonous
+snake 12-13       1d6 的 警卫 guard ，保护着 1 位搁浅后的 贵族 noble 14-15       2d4 的 斥候 scout 16-18       2d10 的 人鱼 merfolk 19-20       1d6+2 的 鲨华鱼人 sahuagin 21-25       1d4 只 食尸鬼 ghoul 在一艘商船的残骸上吞吃着尸体。搜寻商船能找到 2d6 瓶馊了的牛奶，一段 50 尺长的麻绳，以及一桶腌鲱鱼。 26-27       1d4 只 带翼狗头人 winged
+kobold 和 1d6+1 只 狗头人 kobold 28-29       2d6 的 部族武者 tribal
+warrior 30-31       3d4 只 狗头人 kobold 32-33       2d4+5 只 血鹰 blood hawk 34-35       1d8+1 只 翼龙 pteranodon 36-40 几十只小海龟正努力向海的方向爬行 41-42       1d6+2 只 巨蜥 giant lizard 43-44       1d6+4 只 巨蟹 giant crab 45-46       2d4 只 蚊蝠 stirge 47-48       2d6+3 的 强盗 bandit 49-53       2d4 的 鲨华鱼人 sahuagin 54-55       1d6+2 的 斥候 scout 56-60       1 个 海鬼婆 sea hag 61-65 海浪中的一部分在一瞬间看起来像是一张巨大的类人生物的脸 66-70       1 位 德鲁伊 druid 71-75       1d4 的 鸟妖 harpy 76-80 海滩上独坐的隐士（ 侍僧 acolyte ），正在思考着多元宇宙的意义 81         1d4 的 狂战士 berserker 82         1d6 只 巨鹰 giant
+eagle 83         2d4 只 巨蟾蜍 giant
+toad 84         1d4 只 食人魔 ogre 或 1d4 的 迈罗人鱼 merrow 85         3d6 的 鲨华鱼人 sahuagin 86         1d4 的 老兵 veteran 87         1d2 只 蛇颈龙 plesiosaurus 88         1 个 强盗首领 bandit
+captain 和 2d6 的 强盗 bandit 89         1d3 只 刺尾狮 manticore 90         1 个 女妖 banshee 91-92       1d4+3 只 狮鹫 griffon 93-94       1 个 鲨华女祭司 sahuagin
+priestess ， 1d3 的 迈罗人鱼 merrow 和 2d6 的 鲨华鱼人 sahuagin 95-96       1 个 鲨华男爵 sahuagin
+baron 97-98       1 个 水元素 water elemental 99         1 个 独眼巨人 cyclops 00         1 只 青年青铜龙 young
+bronze dragon

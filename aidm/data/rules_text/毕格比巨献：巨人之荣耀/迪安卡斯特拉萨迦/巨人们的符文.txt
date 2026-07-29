@@ -1,0 +1,49 @@
+| 鲜血符文Blood 
+      Rune(Blod)
+鲜血符文Blood 
+      Rune (Blod)
+ | 云雾符文Cloud Rune(Skye)
+云雾符文Cloud Rune (Skye)
+ | 死亡符文Death Rune(Dod)
+死亡符文Death Rune (Dod)
+ | 飞龙符文Dragon Rune(Wyrm)
+飞龙符文Dragon Rune (Wyrm)
+ | 仇敌符文Enemy Rune(Uven)
+仇敌符文Enemy Rune (Uven)
+
+ | 火焰符文Fire Rune(Ild)
+火焰符文Fire Rune (Ild)
+ | 友谊符文Friend Rune(Venn)
+友谊符文Friend Rune (Venn)
+ | 寒霜符文Frost Rune(Ise)
+寒霜符文Frost Rune (Ise)
+ | 山丘符文Hill Rune(Haug)
+山丘符文Hill Rune (Haug)
+ | 旅途符文Journey Rune(Ferd)
+旅途符文Journey Rune (Ferd)
+
+ | 君王符文King Rune(Kong)
+君王符文King Rune (Kong)
+ | 生命符文Life Rune(Liv)
+生命符文Life Rune (Liv)
+ | 光明符文Light Rune(Stig)
+光明符文Light Rune (Stig)
+ | 山脉符文Mountain Rune(Fuell)
+山脉符文Mountain Rune (Fuell)
+ | 神圣符文Sacred 
+Rune(Hellig)
+神圣符文Sacred 
+Rune (Hellig)
+
+ | 盾牌符文Shield Rune(Skold)
+盾牌符文Shield Rune (Skold)
+ | 岩石符文Stone Rune(Stein)
+岩石符文Stone Rune (Stein)
+ | 风暴符文Storm Rune(Uvar)
+风暴符文Storm Rune (Uvar)
+ | 战争符文War Rune(Krig)
+战争符文War Rune (Krig)
+ | 疾风符文Wind 
+  Rune(Vind)
+疾风符文Wind 
+  Rune (Vind)

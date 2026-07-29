@@ -1,0 +1,611 @@
+你可以通过掷骰并对照 荒宇遭遇表 Wildspace Encounters table 或 星界海遭遇表 Astral Sea Encounters table 来随机生成一个星界遭遇 或者按照自己的心意直接选择 。 如果该遭遇有涉及到 魔法船 ，你可以通过掷骰并对照 舰船 遭遇表 Ship Encounters table 来决定船的类型以及船员，或者你也可以自创一个属于你自己的 舰船 遭遇（ 参见 《星界冒险者指南 Astral Adventurer’s Guide 》 来获得舰船的详述 ）。
+标有星号 (*) 的生物 均 出现在本书中；其余的 则 在 《 怪物图鉴 》 中都有描述。任何带有匕首 () 标记的生物都可以 充当 法驱者 ，因为它是 一位 施法者 。
+如果一名类人生物不具有特定种族，它可以是你所选择的任何种族。
+初始态度 Initial 
+Attitude
+根据遭遇表上的标记来掷态度骰，然后在初始态度表上进行对照以随机决定遭遇生物的初始态度。
+初始 态度 Initial 
+Attitude
+
+ | 态度骰总值
+态度骰总值
+ | 初始态度
+初始态度
+
+ | 4或更低
+4 或更低
+ | 敌对
+敌对
+
+ | 5-8
+5-8
+ | 冷漠
+冷漠
+
+ | 9或更高
+9 或更高
+ | 友好
+友好
+荒宇遭遇 Wildspace 
+Encounters
+
+ | D100
+D100
+ | 荒宇遭遇
+荒宇遭遇
+ | 态度骰
+态度骰
+
+ | 01-03
+01-03
+ | 1d4只怯蕴阿灵航天士chwinga 
+      astronauts*，每只都骑着1只太空孔雀鱼space 
+      guppy*
+1d4 只怯蕴阿灵航天士 chwinga 
+      astronauts * ，每只都骑着 1 只太空孔雀鱼 space 
+      guppy *
+ | 1d6+4
+1d6+4
+
+ | 04
+04
+ | 1只宇宙恐怪cosmic 
+      horror* 
+      (它有30%的概率在睡觉)
+1 只宇宙恐怪 cosmic 
+      horror * 
+      ( 它有 30% 的概率在睡觉 )
+ | 1d6
+1d6
+
+ | 05
+05
+ | 一位驾驶着1只美学舰兽esthetic*的雷加尔人reigar*
+一位驾驶着 1 只美学舰兽 esthetic * 的雷加尔人 reigar *
+ | 1d12
+1d12
+
+ | 06-07
+06-07
+ | 1颗大眼游星eye 
+      monger*
+1 颗大眼游星 eye 
+      monger *
+ | 1d6
+1d6
+
+ | 08-11
+08-11
+ | 1只惊怖魔feyr*
+1 只惊怖魔 feyr *
+ | 1d6
+1d6
+
+ | 12-13
+12-13
+ | 1只巨章鱼giant octopus，其具有60尺的飞行速度并且不需要呼吸空气
+1 只巨章鱼 giant octopus ，其具有 60 尺的飞行速度并且不需要呼吸空气
+ | 1d10
+1d10
+
+ | 14-17
+14-17
+ | 1d6只星舰水蛭jammer 
+      leeches*
+1d6 只星舰水蛭 jammer 
+      leeches *
+ | 1d8
+1d8
+
+ | 18-23
+18-23
+ | 1d4头鲸驮骊kindori*
+1d4 头鲸驮骊 kindori *
+ | 1d6+3
+1d6+3
+
+ | 24-25
+24-25
+ | 1头鲸驮骊kindori*，其背上的小屋里住着1名德鲁伊druid
+1 头鲸驮骊 kindori * ，其背上的小屋里住着 1 名德鲁伊 druid
+ | 2d6+3
+2d6+3
+
+ | 26
+26
+ | 1只克拉肯kraken，其具有60尺的飞行速度并且不需要呼吸空气
+1 只克拉肯 kraken ，其具有 60 尺的飞行速度并且不需要呼吸空气
+ | 1d6
+1d6
+
+ | 27
+27
+ | 1条月亮龙lunar 
+      dragon* 
+      (由DM决定是青年young，成年adult，或远古ancient)
+1 条月亮龙 lunar 
+      dragon * 
+      ( 由 DM 决定是 青年 young ， 成年 adult ， 或远古 ancient )
+ | 1d10
+1d10
+
+ | 28-35
+28-35
+ | 一座建在小行星上的酒馆或旅馆，具有可供船只停泊的码头
+一座建在 小行星 上的酒馆或旅馆，具有可供船只停泊的码头
+ | 
+ | 36-39
+36-39
+ | 1d6颗杀戮彗星murder 
+      comets*
+1d6 颗杀戮彗星 murder 
+      comets *
+ | 1d6
+1d6
+
+ | 40-44
+40-44
+ | 1d4只棕色独眼印鱼brown 
+      scavvers*
+1d4 只棕色独眼印鱼 brown 
+      scavvers *
+ | 1d8
+1d8
+
+ | 45-48
+45-48
+ | 1只夜色独眼印鱼night scavver*和2d6只灰色独眼印鱼gray 
+      scavvers*
+1 只夜色独眼印鱼 night scavver * 和 2d6 只灰色独眼印鱼 gray 
+      scavvers *
+ | 1d8
+1d8
+
+ | 49-50
+49-50
+ | 1只虚空独眼印鱼void 
+      scavver*
+1 只虚空独眼印鱼 void 
+      scavver *
+ | 1d6
+1d6
+
+ | 51-52
+51-52
+ | 一艘可能仍有宝藏或生物的废弃舰船(从《星界冒险者指南》的第2部分选择一艘舰船)
+一艘可能仍有宝藏或生物的废弃 舰船 ( 从 《 星界冒险者指南 》 的 第 2 部分 选择一艘 舰船 )
+ | 
+ | 53-54
+53-54
+ | 1条太阳龙solar 
+      dragon* 
+      (由DM决定是青年young，成年adult，或远古ancient)
+1 条太阳龙 solar 
+      dragon * 
+      ( 由 DM 决定是青年 young ， 成年 adult ， 或远古 ancient )
+ | 2d6
+2d6
+
+ | 55-59
+55-59
+ | 1d6条太空鳗鱼space 
+      eels*
+1d6 条太空鳗鱼 space 
+      eels *
+ | 1d10
+1d10
+
+ | 60
+60
+ | 1个星光幽体starlight apparition*
+1 个 星光幽体 starlight apparition *
+ | 2d6+2
+2d6+2
+
+ | 61-64
+61-64
+ | 3d6只蚊蝠stirges，其不需要呼吸空气
+3d6 只蚊蝠 stirges ，其不需要呼吸空气
+ | 1d6
+1d6
+
+ | 65-70
+65-70
+ | 1d6个鬼火will-o’-wisps
+1d6 个鬼火 will-o ’ -wisps
+ | 1d10
+1d10
+
+ | 71-00
+71-00
+ | 1艘魔法船(使用舰船遭遇表Ship 
+      Encounters table掷骰决定)
+1 艘 魔法船 ( 使用 舰船 遭遇表 Ship 
+      Encounters table 掷骰决定 )
+ | 
+星界海遭遇 Astral Sea Encounters
+
+ | D100
+D100
+ | 星界海遭遇
+星界海遭遇
+ | 态度骰
+态度骰
+
+ | 01-02
+01-02
+ | 1名阿尔图克蔬菜人祭司aartuk priest*和2d4名阿尔图克蔬菜人战士aartuk warriors*
+1 名阿尔图克蔬菜人祭司 aartuk priest * 和 2d4 名 阿尔图克蔬菜人战士 aartuk warriors *
+ | 1d12
+1d12
+
+ | 03-09
+03-09
+ | 1名正在使用星界投影astral 
+      projection法术的大法师archmage
+1 名 正在 使用 星界投影 astral 
+      projection 法术的大法师 archmage
+ | 1d10+3
+1d10+3
+
+ | 10-11
+10-11
+ | 1巴夏特角兽巨人braxat*
+1 巴夏特角兽巨人 braxat *
+ | 1d8
+1d8
+
+ | 12
+12
+ | 1只宇宙恐怪cosmic horror* (它有70%的概率在睡觉)
+1 只宇宙恐怪 cosmic horror * ( 它有 70 % 的概率在睡觉 )
+ | 1d6
+1d6
+
+ | 13-15
+13-15
+ | 1d4名正在执行神圣任务的天神使徒devas
+1d4 名正在执行神圣 任务 的天神使徒 devas
+ | 1d12+3
+1d12+3
+
+ | 16-28
+16-28
+ | 1位吉斯洋基骑士githyanki 
+      knight和1d6名吉斯洋基武者githyanki 
+      warriors
+1 位吉斯洋基骑士 githyanki 
+      knight 和 1d6 名吉斯洋基武者 githyanki 
+      warriors
+ | 1d10
+1d10
+
+ | 29-31
+29-31
+ | 1位骑着一条青年红龙young red 
+      dragon的吉斯洋基骑士githyanki 
+      knight
+1 位骑着一 条 青年红龙 young red 
+      dragon 的 吉斯洋基骑士 githyanki 
+      knight
+ | 1d8
+1d8
+
+ | 32
+32
+ | 1位正在被吉斯洋基人追捕的吉斯泽莱泽锡修士githzerai 
+      zerth
+1 位正在被吉斯洋基人追捕的吉斯泽莱泽锡修士 githzerai 
+      zerth
+ | 1d6+6
+1d6+6
+
+ | 33-38
+33-38
+ | 1d4头鲸驮骊kindori*
+1d4 头鲸驮骊 kindori *
+ | 1d6+3
+1d6+3
+
+ | 39
+39
+ | 1位星海商族mercane*和1名眼魔beholder保镖
+1 位星海商 族 mercane * 和 1 名眼魔 beholder 保镖
+ | 1d8+4
+1d8+4
+
+ | 40
+40
+ | 1只正在寻找前往遥远国度的门户的纳-萨古neh-thalggu*
+1 只正在寻找前往遥远国度 的 门户 的纳 - 萨古 neh-thalggu *
+ | 1d10
+1d10
+
+ | 41-42
+41-42
+ | 1个五元冢pentadrone
+1 个五元冢 pentadrone
+ | 1d6+3
+1d6+3
+
+ | 43-44
+43-44
+ | 1位从附近的星界领域前来的星天神使planetar
+1 位从附近的星界领域前来的星天神使 planetar
+ | 1d12+3
+1d12+3
+
+ | 45-47
+45-47
+ | 2d4只灵蠕妖psurlons*
+2d4 只灵蠕妖 psurlons *
+ | 1d8
+1d8
+
+ | 48-50
+48-50
+ | 具有神秘起源的漂浮巨型水晶方尖碑
+具有神秘起源的漂浮巨型水晶方尖碑
+ | 
+ | 51-52
+51-52
+ | 4d4个四元冢quadrones
+4d4 个四元冢 quadrones
+ | 1d6+3
+1d6+3
+
+ | 53
+53
+ | 1个不再听令的单元冢monodrone
+1 个不再听令的单元冢 monodrone
+ | 2d6+3
+2d6+3
+
+ | 54-56
+54-56
+ | 1d4只类人形态的灰史拉蟾gray 
+      slaadi
+1d4 只类人形态的灰史拉蟾 gray 
+      slaadi
+ | 1d10
+1d10
+
+ | 57-58
+57-58
+ | 1只绿史拉蟾green 
+      slaad
+1 只绿史拉蟾 green 
+      slaad
+ | 1d12
+1d12
+
+ | 59-63
+59-63
+ | 3d6只灰色独眼gray scavvers*
+3d6 只 灰色独眼 gray scavvers *
+ | 1d8
+1d8
+
+ | 64
+64
+ | 1位正在看守漂浮在自己附近的一个已故神的炽天神侍solar
+1 位正在看守 漂浮在 自己 附近的一 个 已故神 的 炽天神侍 solar
+ | 1d12+3
+1d12+3
+
+ | 65-66
+65-66
+ | 1条太阳龙solar dragon* (由DM决定是青年young，成年adult，或远古ancient)
+1 条 太阳龙 solar dragon * ( 由 DM 决定是 青年 young ， 成年 adult ， 或 远古 ancient )
+ | 2d6
+2d6
+
+ | 67
+67
+ | 1个星光幽体starlight apparition*
+1 个 星光幽体 starlight apparition *
+ | 2d6+2
+2d6+2
+
+ | 68-70
+68-70
+ | 1d8只独角兽unicorns在星界海里自由驰骋
+1d8 只独角兽 unicorns 在星界海里自由驰骋
+ | 1d6+6
+1d6+6
+
+ | 71-00
+71-00
+ | 1艘魔法船(使用舰船遭遇表Ship 
+      Encounters table掷骰决定)
+1 艘 魔法船 ( 使用 舰船 遭遇表 Ship 
+      Encounters table 掷骰决定 )
+ | 
+舰船遭遇表 Ship Encounters
+
+ | D100
+D100
+ | 舰船遭遇
+舰船 遭遇
+ | 态度骰
+态度骰
+
+ | 01-07
+01-07
+ | 炮舰“利维坦Leviathan”，由默特尔亨特Myrtle Hunt 
+      (诘弗河马人军阀giff warlord*)领导，船上还有8名诘弗河马人船员giff shipmates*和3名法师mages
+炮舰 “ 利维坦 Leviathan ” ， 由 默特尔亨特 Myrtle Hunt 
+      ( 诘弗河马人军阀 giff warlord *) 领导，船上还有 8 名 诘弗河马人船员 giff shipmates * 和 3 名 法师 mages
+ | 1d10+2
+1d10+2
+
+ | 08-16
+08-16
+ | 蜻蛉舰“虚空缠绕者Voidwinder”，由克里格卡卢Krig Kalu 
+      (哈多兹鼯猴人探索者hadozee 
+      explorer*)领导，船上还有1名卓尔drow和7名哈多兹鼯猴人船员hadozee shipmates*
+蜻蛉舰 “虚空缠绕者 Voidwinder ” ， 由 克里格卡卢 Krig Kalu 
+      ( 哈多兹鼯猴人探索者 hadozee 
+      explorer *) 领导，船上还有 1 名卓尔 drow 和 7 名 哈多兹鼯猴人船员 hadozee shipmates *
+ | 2d6+3
+2d6+3
+
+ | 17-23
+17-23
+ | 飞鱼舰“地平线Horizon”，由塔尔瓦德Thaal Vod 
+      (叛变的夺心魔秘术师mind flayer 
+      arcanist)领导，船上还有9名流浆体战士plasmoid warriors*
+飞鱼舰 “ 地平线 Horizon ” ， 由 塔尔瓦德 Thaal Vod 
+      ( 叛变的 夺心魔秘术师 mind flayer 
+      arcanist ) 领导，船上还有 9 名 流浆体战士 plasmoid warriors *
+ | 1d12
+1d12
+
+ | 24-31
+24-31
+ | 锤头鲨舰“杨德尔阳星Jander 
+      Sunstar”，由维鲁纳瓦尔德拉克Veluna 
+      Valderak (吸血骇盗船长vampirate captain*)领导，船上还有13名吸血骇盗vampirates*和1名祭司priest
+锤头鲨舰 “ 杨德尔阳星 Jander 
+      Sunstar ” ， 由维鲁纳 瓦尔德拉克 Veluna 
+      Valderak ( 吸血骇盗 船长 vampirate captain *) 领导，船上还有 13 名 吸血骇盗 vampirates * 和 1 名 祭司 priest
+ | 1d12
+1d12
+
+ | 32-36
+32-36
+ | 七鳃鳗舰“星界之赏Astral 
+      Prize”，船员由15名灵蠕妖假替者psurlon ringers*组成，其中一位是阿斯卡船长Captain Uscath
+七鳃鳗舰 “ 星界之赏 Astral 
+      Prize ” ， 船员由 15 名 灵蠕妖假替者 psurlon ringers * 组成 ， 其中一位是 阿斯卡船长 Captain Uscath
+ | 1d12
+1d12
+
+ | 37-39
+37-39
+ | 生物舰“长老藤Eldervine”，由奎斯Queth 
+      (阿尔图克蔬菜人长者aartuk elder*)领导，船上还有2名阿尔图克蔬菜人祭司aartuk priests*和8名阿尔图克蔬菜人战士aartuk 
+      warriors，*和长老藤Eldervine 
+      (树人treant)
+生物舰 “ 长老藤 Eldervine ” ， 由奎斯 Queth 
+      ( 阿尔图克蔬菜人 长者 aartuk elder *) 领导，船上还有 2 名 阿尔图克蔬菜人祭司 aartuk priests * 和 8 名 阿尔图克蔬菜人战士 aartuk 
+      warriors ， * 和 长老藤 Eldervine 
+      ( 树人 treant )
+ | 1d10
+1d10
+
+ | 40-45
+40-45
+ | 鹦鹉螺“神经噬菌体Neurophage”，船上有4个夺心魔mind flayers和16只寇涛kuo-toa，以及充当乘客的1d6只触须怪grells和1d6只噬脑怪intellect devourers
+鹦鹉螺 “神经噬菌体 Neurophage ” ， 船上有 4 个 夺心魔 mind flayers 和 16 只 寇涛 kuo-toa ， 以及充当乘客的 1d6 只 触须怪 grells 和 1d6 只 噬脑怪 intellect devourers
+ | 1d6
+1d6
+
+ | 46-50
+46-50
+ | 夜蛛“恶怨Malevolence”，由耶什克Yeshk 
+      (纽吉怪虚空猎手neogi void 
+      hunter*)领导，船上还有24名纽吉怪海盗neogi pirates*和5头掘土巨怪umber hulks
+夜蛛 “ 恶怨 Malevolence ” ， 由 耶什克 Yeshk 
+      ( 纽吉怪虚空猎手 neogi void 
+      hunter *) 领导 ， 船上还有 24 名 纽吉怪海盗 neogi pirates * 和 5 头 掘土巨怪 umber hulks
+ | 1d6
+1d6
+
+ | 51-55
+51-55
+ | 蝎舰“胡拉吉之爪Claws of 
+      Huraj”，由胡拉吉Huraj 
+      (大地精长官hobgoblin 
+      captain)领导，船上还有1名熊地精bugbear(大副)，8名大地精hobgoblins，和2名大地精祭司priests
+蝎舰 “胡拉吉 之爪 Claws of 
+      Huraj ” ， 由胡拉吉 Huraj 
+      ( 大地精长官 hobgoblin 
+      captain ) 领导 ， 船上还有 1 名 熊地精 bugbear ( 大副 ) ， 8 名 大地精 hobgoblins ， 和 2 名 大地精 祭司 priests
+ | 1d12
+1d12
+
+ | 56-61
+56-61
+ | 伯劳鸟舰“费迪芬索Fedifensor”，由亚基Yaj 
+      (吉斯洋基人异构师githyanki 
+      xenomancer*)领导，船上还有10名吉斯洋基人海盗githyanki buccaneers*
+伯劳鸟舰 “费 迪 芬索 Fedifensor ” ， 由 亚基 Yaj 
+      ( 吉斯洋基人异构师 githyanki 
+      xenomancer *) 领导 ， 船上还有 10 名 吉斯洋基人海盗 githyanki buccaneers *
+ | 1d12
+1d12
+
+ | 62-66
+62-66
+ | 太空帆船“第十一号Eleventh”，由艾索帕十一眼Xorpha 
+      Eleven-Eyes (眼魔beholder)领导，船上还有1只观察者眼魔spectator(大副)，3名邪教狂热者cult fanatics，和16名邪教徒cultists
+太空帆船 “ 第十一号 Eleventh ” ， 由 艾索帕十一眼 Xorpha 
+      Eleven-Eyes ( 眼魔 beholder ) 领导 ， 船上还有 1 只 观察者眼魔 spectator ( 大副 ) ， 3 名 邪教狂热者 cult fanatics ， 和 16 名邪教徒 cultists
+ | 1d12
+1d12
+
+ | 67-72
+67-72
+ | 太空帆船“大鲸驮骊Great 
+      Kindori”，由强大者麦斯坦Mystan the 
+      Mighty (气巨灵djinni)领导，船上还有1名隐形追猎者invisiblestalker(大副)，1条羽蛇couatl，17名鸟羽人aarakocra，and 
+      1条闷人毯rug of smothering
+太空帆船 “ 大鲸驮骊 Great 
+      Kindori ” ， 由 强大者麦斯坦 Mystan the 
+      Mighty ( 气巨灵 djinni ) 领导 ， 船上还有 1 名 隐形追猎者 invisible stalker ( 大副 ) ， 1 条 羽蛇 couatl ， 17 名 鸟羽人 aarakocra ， and 
+      1 条 闷人毯 rug of smothering
+ | 2d6+2
+2d6+2
+
+ | 73-78
+73-78
+ | 鱿鱼舰“赛肯之航Syken’s 
+      Reach”，由海盗阿维格拉斯赛肯Arviglas 
+      Syken (人类强盗首领bandit 
+      captain)领导，船上还有1名坎比翁cambion(赛肯之女，特内布拉Syken’s 
+      daughter，Tenebra)和11名暴徒thugs
+鱿鱼舰 “赛肯 之航 Syken’s 
+      Reach ” ， 由海盗阿维格拉斯 赛肯 Arviglas 
+      Syken ( 人类强盗首领 bandit 
+      captain ) 领导 ， 船上还有 1 名 坎比翁 cambion ( 赛肯之女，特内布拉 Syken’s 
+      daughter ， Tenebra) 和 11 名 暴徒 thugs
+ | 1d12
+1d12
+
+ | 79-84
+79-84
+ | 星蛾“巅峰Apex”，由赛琳Xaleen 
+      (星界精灵指挥官astral elf 
+      commander*)领导，船上还有11名星界精灵战士astral elf 
+      warriors*和1名星界精灵贵族astral elf aristocrat*
+星蛾 “ 巅峰 Apex ” ， 由 赛琳 Xaleen 
+      ( 星界精灵指挥官 astral elf 
+      commander *) 领导 ， 船上还有 11 名 星界精灵战士 astral elf 
+      warriors * 和 1 名 星界精灵贵族 astral elf aristocrat *
+ | 1d12
+1d12
+
+ | 85-90
+85-90
+ | 海龟舰“潜航Snorkel”，由谢尔比诺克尔Shelby Norkel 
+      (侏儒魔法师mage)领导，船上还有15名自动侏儒autognomes*
+海龟舰 “ 潜航 Snorkel ” ， 由谢尔比 诺克尔 Shelby Norkel 
+      ( 侏儒 魔法师 mage ) 领导 ， 船上还有 15 名 自动侏儒 autognomes *
+ | 1d10+3
+1d10+3
+
+ | 91-94
+91-94
+ | 暴君舰“末日梦者Doomdreamer”，船上有2d4 + 
+      2只眼魔beholders
+暴君舰 “ 末日梦者 Doomdreamer ” ， 船上有 2d4 + 
+      2 只 眼魔 beholders
+ | 1d8
+1d8
+
+ | 95-00
+95-00
+ | 黄蜂舰“冒险Adventure”，她被抛弃且并漂流(船上有25%几率仍保留着法驱魔舵spelljamming helm)
+黄蜂舰 “ 冒险 Adventure ” ，她 被抛弃且 并漂流 ( 船上有 25% 几率仍 保留着 法驱魔舵 spelljamming helm )
+ |

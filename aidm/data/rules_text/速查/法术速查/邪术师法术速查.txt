@@ -1,0 +1,31 @@
+## 戏法(0环)
+剑刃防护Blade Ward 颤栗之触Chill Touch 魔能爆Eldritch Blast 交友术Friends 法师之手Mage Hand 次级幻象Minor Illusion 毒气喷涌Poison Spray 魔法伎俩Prestidigitation 克敌机先True Strike 霜噬Frostbite XGE 虫群孳生Infestation XGE 魔石术Magic Stone XGE 鸣雷破Thunderclap XGE 亡者丧钟Toll the Dead XGE 创造篝火Create Bonfire XGE 轰雷剑Booming Blade TCE 翠炎剑Green-Flame Blade TCE 闪电牵引Lightning Lure TCE 心灵之楔Mind Sliver TCE 剑刃爆发Sword Burst TCE
+
+## 1环
+黯冰狱铠Armor of Agathys 哈达之臂Arms of Hadar 魅惑类人Charm Person 通晓语言Comprehend Languages 脚底抹油Expeditious Retreat 炼狱叱喝Hellish Rebuke 脆弱诅咒Hex 迷幻手稿Illusory Script 防护善恶Protection from Evil and Good 隐形仆役Unseen Servant 巫术箭Witch Bolt 造成恐惧Cause Fear XGE 扭曲价值Distort Value AI
+
+## 2环
+匕首之云Cloud of Daggers 疯狂冠冕Crown of Madness 黑暗术Darkness 注目术Enthrall 定身类人Hold Person 隐形术Invisibility 镜影术Mirror Image 迷踪步Misty Step 衰弱射线Ray of Enfeeblement 粉碎音波Shatter 蛛行术Spider Climb 暗示术Suggestion 地缚Earthbind XGE 心灵尖刺Mind Spike XGE 幽影刃Shadow Blade XGE 借鉴才学Borrowed Knowledge SCC 侦测扭曲Warp Sense SO 卡牌喷射Spray of Cards BMT
+
+## 3环
+法术反制Counterspell 解除魔法Dispel Magic 恐惧术Fear 飞行术Fly 气化形体Gaseous Form 哈达之欲Hunger of Hadar 催眠图纹Hypnotic Pattern 防护法阵Magic Circle 高等幻象Major Image 移除诅咒Remove Curse 巧言术Tongues 吸血鬼之触Vampiric Touch 敌群环绕Enemies Abound XGE 低阶恶魔召唤术Summon Lesser Demon XGE 雷霆步Thunder Step XGE 智能壁垒Intellect Fortress TCE 魂灵环绕Spirit Shroud TCE 精类召唤术Summon Fey TCE 暗影衍体召唤术Summon Shadowspawn TCE 亡灵召唤术Summon Undead TCE 鼓动贪欲Incite Greed AI 敌意术Antagonize BMT
+
+## 4环
+放逐术Banishment 枯萎术Blight 任意门Dimension Door 幻景Hallucinatory Terrain 魅惑怪物Charm Monster XGE 元素灾厄Elemental Bane XGE 莫伊之影Shadow of Moil XGE 致病辐射Sickening Radiance XGE 高阶恶魔召唤术Summon Greater Demon XGE 异怪召唤术Summon Aberration TCE 劳洛希姆心灵长枪Raulothim's Psychic
+			Lance FTD 界门封锁Gate Seal SO 死神灵魄Spirit of Death BMT
+
+## 5环
+异界探知Contact Other Plane 托梦术Dream 定身怪物Hold Monster 假象术Mislead 探知Scrying 传送法阵Teleportation Circle 骷髅之舞Danse Macabre XGE 汲能术Enervation XGE 渺远步Far Step XGE 地狱呼唤Infernal Calling XGE 负能量洪流Negative Energy Flood XGE 突触静止Synaptic Static XGE 光墙术Wall of Light XGE
+
+## 6环
+秘法门Arcane Gate 死亡法阵Circle of Death 精类咒唤术Conjure Fey 唤起死灵Create Undead 摄心目光Eyebite 石化术Flesh to Stone 群体暗示术Mass Suggestion 异界誓盟Planar Ally 真知术True Seeing 炽焰赋权Investiture of Flame XGE 寒冰赋权Investiture of Ice XGE 磐石赋权Investiture of Stone XGE 清风赋权Investiture of Wind XGE 精神监狱Mental Prison XGE 散射术Scatter XGE 灵魂牢笼Soul Cage XGE 邪魔召唤术Summon Fiend TCE 塔莎超凡形态Tasha's Otherworldly
+			Guise TCE
+
+## 7环
+以太化Etherealness 死亡一指Finger of Death 力场监牢Forcecage 位面转移Plane Shift 众星冠冕Crown of Stars XGE 律令痛苦Power Word Pain XGE 蓝纱一梦Dream of the Blue Veil TCE
+
+## 8环
+创造半位面Demiplane 支配怪物Dominate Monster 弱智术Feeblemind 花言巧语Glibness 律令震慑Power Word Stun 疯狂之暗Maddening Darkness XGE
+
+## 9环
+星界投影Astral Projection 预见术Foresight 异界之门Gate 禁锢术Imprisonment 律令死亡Power Word Kill 完全变形术True Polymorph 怪影杀手Weird 心灵尖啸Psychic Scream XGE 灾厄之刃Blade of Disaster TCE

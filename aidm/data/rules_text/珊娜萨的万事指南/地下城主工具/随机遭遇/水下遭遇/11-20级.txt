@@ -1,0 +1,4 @@
+d100 遭遇 01-10       1 个 鲨华男爵 sahuagin
+baron ， 1d4 的 鲨华女祭司 sahuagin
+priestess 和 2d10 的 鲨华鱼人 sahuagin 11-35       1d10 只 虎鲸 killer whale 36-40 一艘从头顶开过的幽灵船，船上有 2d6+10 的 幽魂 ghost 41-60       1d6 只 巨鲨 giant shark 61-65 一个直径 1 里的球形区域，区域内的水满是气泡，能让呼吸空气的生物在其中正常呼吸 66-75       1d10 的 水元素 water
+elemental 76-80 一个闪烁着的蓝绿色通道，通往水之位面 81-90       1d4 的 水巨灵 marid 91-96       1d3 的 风暴巨人 storm giant 97-99       1 只 龙龟 dragon turtle 00         1 只 克拉肯 kraken

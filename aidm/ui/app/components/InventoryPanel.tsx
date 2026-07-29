@@ -81,88 +81,93 @@ export function InventoryPanel({ characterId, toast, onUpdated }: InventoryPanel
 
   return (
     <>
-      <button
-        onClick={openPanel}
-        className="w-full px-2 py-1.5 bg-neutral-800 border border-neutral-700 rounded text-xs hover:border-amber-400"
-      >
+      <button onClick={openPanel} className="btn btn-secondary w-full">
         🎒 物品栏
       </button>
 
       {open && (
-        <div
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="bg-neutral-900 border border-neutral-700 rounded-lg p-4 w-full max-w-md max-h-[70vh] overflow-y-auto space-y-3"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center">
-              <div className="text-sm font-bold text-amber-400">🎒 物品栏</div>
-              <button
-                onClick={() => setOpen(false)}
-                className="text-neutral-500 hover:text-neutral-300"
-              >
+        <div className="modal-overlay visible" onClick={() => setOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="mh-title">🎒 物品栏</div>
+              <button onClick={() => setOpen(false)} className="modal-close">
                 ✕
               </button>
             </div>
 
-            {busy ? (
-              <div className="text-xs text-neutral-500">加载中...</div>
-            ) : magicItems.length === 0 ? (
-              <div className="text-xs text-neutral-500">物品栏为空</div>
-            ) : (
-              <div className="space-y-2">
-                {magicItems.map((item) => {
-                  const isAttuned = attunedItems.includes(item.name);
-                  return (
-                    <div
-                      key={item.name}
-                      className="border border-neutral-700 rounded p-2 space-y-1"
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-bold text-blue-300">
-                          {item.name}
-                        </span>
-                        <span className="text-[10px] text-neutral-500">
-                          {item.rarity} · {item.item_type}
-                        </span>
-                      </div>
-                      {item.description && (
-                        <div className="text-[10px] text-neutral-400">
-                          {item.description}
-                        </div>
-                      )}
-                      <div className="flex gap-1">
-                        {item.requires_attunement && !isAttuned && (
-                          <button
-                            onClick={() => attune(item.name)}
-                            disabled={busy}
-                            className="px-2 py-0.5 bg-purple-800 border border-purple-600 rounded text-[10px] hover:bg-purple-700 disabled:opacity-40"
-                          >
-                            同调
-                          </button>
-                        )}
-                        {isAttuned && (
-                          <button
-                            onClick={() => breakAttunement(item.name)}
-                            disabled={busy}
-                            className="px-2 py-0.5 bg-red-900 border border-red-700 rounded text-[10px] hover:bg-red-800 disabled:opacity-40"
-                          >
-                            解除同调
-                          </button>
-                        )}
-                        {isAttuned && (
-                          <span className="text-[10px] text-green-400 self-center">
-                            ✓ 已同调
+            <div className="modal-body">
+              {busy ? (
+                <div className="text-sm text-muted">加载中...</div>
+              ) : magicItems.length === 0 ? (
+                <div className="text-sm text-muted">物品栏为空</div>
+              ) : (
+                <div className="flex-col">
+                  {magicItems.map((item) => {
+                    const isAttuned = attunedItems.includes(item.name);
+                    return (
+                      <div
+                        key={item.name}
+                        className="flex-col"
+                        style={{
+                          border: "0.5px solid var(--border)",
+                          borderRadius: "var(--radius-md)",
+                          background: "var(--bg-secondary)",
+                          padding: "10px 12px",
+                        }}
+                      >
+                        <div className="flex-between">
+                          <span className="text-sm text-bold text-blue">
+                            {item.name}
                           </span>
+                          <span className="text-10 text-muted">
+                            {item.rarity} · {item.item_type}
+                          </span>
+                        </div>
+                        {item.description && (
+                          <div className="text-10 text-muted">
+                            {item.description}
+                          </div>
                         )}
+                        <div className="flex-row">
+                          {item.requires_attunement && !isAttuned && (
+                            <button
+                              onClick={() => attune(item.name)}
+                              disabled={busy}
+                              className="btn btn-primary"
+                            >
+                              同调
+                            </button>
+                          )}
+                          {isAttuned && (
+                            <button
+                              onClick={() => breakAttunement(item.name)}
+                              disabled={busy}
+                              className="btn"
+                              style={{
+                                background: "var(--bg-red)",
+                                color: "var(--text-red)",
+                                border: "0.5px solid #f09595",
+                                fontWeight: 500,
+                              }}
+                            >
+                              解除同调
+                            </button>
+                          )}
+                          {isAttuned && (
+                            <span
+                              className="text-10 text-green"
+                              style={{ alignSelf: "center" }}
+                            >
+                              ✓ 已同调
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

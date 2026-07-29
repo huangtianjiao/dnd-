@@ -1,0 +1,35 @@
+## 戏法(零环)
+酸液飞溅Acid Splash 剑刃防护Blade Ward 颤栗之触Chill Touch 舞光术Dancing Lights 四象法门Elementalism 火焰箭Fire Bolt 交友术Friends 光亮术Light 法师之手Mage Hand 修复术Mending 传讯术Message 心灵之楔Mind Sliver 次级幻象Minor Illusion 毒气喷涌Poison Spray 魔法伎俩Prestidigitation 冷冻射线Ray of Frost 电爪Shocking Grasp 术法爆发Sorcerous Burst 鸣雷破Thunderclap 克敌先击True Strike 控火术Control Flames XGE 创造篝火Create Bonfire XGE 霜噬Frostbite XGE 舞风术Gust XGE 虫群孳生Infestation XGE 塑土术Mold Earth XGE 操水术Shape Water XGE 轰雷剑Booming Blade TCE 翠炎剑Green-Flame Blade TCE 闪电牵引Lightning Lure TCE 剑刃爆发Sword Burst TCE
+
+## 一环
+燃烧之手Burning Hands 魅惑类人Charm Person 繁彩球Chromatic Orb 七彩喷射Color Spray 通晓语言Comprehend Languages 侦测魔法Detect Magic 易容术Disguise Self 脚底抹油Expeditious Retreat 虚假生命False Life 羽落术Feather Fall 云雾术Fog Cloud 油腻术Grease 冰刃Ice Knife 跳跃术Jump 法师护甲Mage Armor 魔法飞弹Magic Missile 致病射线Ray of Sickness 护盾术Shield 无声幻影Silent Image 睡眠术Sleep 雷鸣波Thunderwave 巫术箭Witch Bolt 吸收元素Absorb Elements XGE 弹射术Catapult XGE 混乱箭Chaos Bolt XGE 地颤Earth Tremor XGE 塔莎酸蚀酿Tasha's Caustic Brew TCE 扭曲价值Distort Value AI 银光锐语Silvery Barbs SCC
+
+## 二环
+变身术Alter Self 复苏秘法Arcane Vigor 目盲术/耳聋术Blindness/Deafness 朦胧术Blur 匕首之云Cloud of Daggers 疯狂冠冕Crown of Madness 黑暗术Darkness 黑暗视觉Darkvision 侦测思想Detect Thoughts 龙息术Dragon's Breath 强化属性Enhance Ability 变巨术/缩小术Enlarge/Reduce 火焰刀Flame Blade 炽焰法球Flaming Sphere 造风术Gust of Wind 定身类人Hold Person 隐形术Invisibility 敲击术Knock 浮空术Levitate 魔化武器Magic Weapon 心灵尖刺Mind Spike 镜影术Mirror Image 迷踪步Misty Step 魅影之力Phantasmal Force 灼热射线Scorching Ray 识破隐形See Invisibility 粉碎音波Shatter 蛛行术Spider Climb 暗示术Suggestion 蛛网术Web 阿迦纳萨喷火术Aganazzar's Scorcher XGE 龙卷尘暴Dust Devil XGE 地缚Earthbind XGE 麦克斯米利安的地之攫Maximilian's Earthen
+			Grasp XGE 烟火术Pyrotechnics XGE 幽影刃Shadow Blade XGE 史尼洛雪球群Snilloc's Snowball
+			Swarm XGE 守护之风Warding Wind XGE 塔莎心灵鞭Tasha's Mind Whip TCE 纳撒尔恶作剧Nathair's Mischief FTD 雾凇霜缚Rime's Binding Ice FTD 卡牌喷射Spray of Cards BMT 动力短行Kinetic Jaunt SCC 涡旋翘曲Vortex Warp SCC 靡叶生华Wither and Bloom SCC 空气泡泡Air Bubble AAG 侦测扭曲Warp Sense SO
+
+## 三环
+闪现术Blink 鹰眼术Clairvoyance 法术反制Counterspell 昼明术Daylight 解除魔法Dispel Magic 恐惧术Fear 火球术Fireball 飞行术Fly 气化形体Gaseous Form 加速术Haste 催眠图纹Hypnotic Pattern 闪电束Lightning Bolt 高级幻影Major Image 防护能量Protection from Energy 雪雨暴Sleet Storm 缓慢术Slow 臭云术Stinking Cloud 巧言术Tongues 吸血鬼之触Vampiric Touch 水下呼吸Water Breathing 水上行走Water Walk 假寐术Catnap XGE 敌群环绕Enemies Abound XGE 土石喷发Erupting Earth XGE 烈焰箭矢Flame Arrows XGE 马友夫微流星Melf's Minute Meteors XGE 雷霆步Thunder Step XGE 潮涌Tidal Wave XGE 水墙术Wall of Water XGE 智能壁垒Intellect Fortress TCE 阿莎德隆奔行Ashardalon's Stride FTD 敌意术Antagonize BMT
+
+## 四环
+放逐术Banishment 枯萎术Blight 魅惑怪物Charm Monster 困惑术Confusion 任意门Dimension Door 支配野兽Dominate Beast 火焰护盾Fire Shield 高等隐形术Greater Invisibility 冰风暴Ice Storm 变形术Polymorph 石肤术Stoneskin 浓酸球Vitriolic Sphere 火墙术Wall of Fire 致病辐射Sickening Radiance XGE 风暴法球Storm Sphere XGE 碧水法球Watery Sphere XGE 劳洛希姆心灵长枪Raulothim's Psychic
+			Lance FTD 死神灵魄Spirit of Death BMT 界门封锁Gate Seal SO
+
+## 五环
+活化物件Animate Objects 毕格比之手Bigby's Hand 死云术Cloudkill 寒冰锥Cone of Cold 造物术Creation 支配类人Dominate Person 定身怪物Hold Monster 疫病虫群Insect Plague 伪装术Seeming 突触静止Synaptic Static 心灵遥控Telekinesis 传送法阵Teleportation Circle 石墙术Wall of Stone 操控风力Control Winds XGE 汲能术Enervation XGE 渺远步Far Step XGE 焚烧术Immolation XGE 授予技能Skill Empowerment XGE 光墙术Wall of Light XGE 龙类灵魄召唤术Summon Draconic Spirit FTD
+
+## 六环
+秘法门Arcane Gate 连锁闪电Chain Lightning 死亡法阵Circle of Death 解离术Disintegrate 摄心目光Eyebite 石化术Flesh to Stone 法术无效结界Globe of Invulnerability 群体暗示术Mass Suggestion 地动术Move Earth 欧提路克冰封法球Otiluke's Freezing Sphere 阳炎射线Sunbeam 真知术True Seeing 炽焰赋权Investiture of Flame XGE 寒冰赋权Investiture of Ice XGE 磐石赋权Investiture of Stone XGE 清风赋权Investiture of Wind XGE 精神监狱Mental Prison XGE 散射术Scatter XGE 塔莎超凡形态Tasha's Otherworldly
+			Guise TCE 费资本铂金盾Fizban's Platinum
+			Shield FTD
+
+## 七环
+延迟爆裂火球Delayed Blast Fireball 以太化Etherealness 死亡一指Finger of Death 火焰风暴Fire Storm 位面转移Plane Shift 虹光喷射Prismatic Spray 反转重力Reverse Gravity 传送术Teleport 众星冠冕Crown of Stars XGE 律令痛苦Power Word Pain XGE 旋风术Whirlwind XGE 蓝纱一梦Dream of the Blue Veil TCE 龙类变形Draconic Transformation FTD
+
+## 八环
+半位面Demiplane 支配怪物Dominate Monster 地震术Earthquake 焚云术Incendiary Cloud 律令震慑Power Word Stun 阳炎爆Sunburst 亚比达奇凋死术Abi-Dalzim's Horrid
+			Wilting XGE
+
+## 九环
+异界之门Gate 流星爆Meteor Swarm 律令死亡Power Word Kill 时间停止Time Stop 祈愿术Wish 群体变形术Mass Polymorph XGE 心灵尖啸Psychic Scream XGE 灾厄之刃Blade of Disaster TCE

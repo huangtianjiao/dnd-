@@ -1,0 +1,31 @@
+## 戏法(零环)
+剑刃防护Blade Ward 舞光术Dancing Lights 交友术Friends 光亮术Light 法师之手Mage Hand 修复术Mending 传讯术Message 次级幻象Minor Illusion 魔法伎俩Prestidigitation 点点星芒Starry Wisp 鸣雷破Thunderclap 克敌先击True Strike 恶言相加Vicious Mockery
+
+## 一环
+化兽为友Animal Friendship 灾祸术Bane 魅惑类人Charm Person 七彩喷射Color Spray 命令术Command 通晓语言Comprehend Languages 疗伤术Cure Wounds 侦测魔法Detect Magic 易容术Disguise Self 不谐低语Dissonant Whispers 妖火Faerie Fire 羽落术Feather Fall 治愈真言Healing Word 英雄气概Heroism 鉴定术Identify 迷幻手稿Illusory Script 大步奔行Longstrider 无声幻影Silent Image 睡眠术Sleep 动物交谈Speak with Animals 塔莎狂笑术Tasha's Hideous Laughter 雷鸣波Thunderwave 隐形仆役Unseen Servant 地颤Earth Tremor XGE 银光锐语Silvery Barbs SCC
+
+## 二环
+援助术Aid 动物信使Animal Messenger 目盲术/耳聋术Blindness/Deafness 安定心神Calm Emotions 匕首之云Cloud of Daggers 疯狂冠冕Crown of Madness 侦测思想Detect Thoughts 强化属性Enhance Ability 变巨术/缩小术Enlarge/Reduce 注目术Enthrall 灼热金属Heat Metal 定身类人Hold Person 隐形术Invisibility 敲击术Knock 次等复原术Lesser Restoration 动植物定位术Locate Animals or Plants 物件定位术Locate Object 魔嘴术Magic Mouth 镜影术Mirror Image 魅影之力Phantasmal Force 识破隐形See Invisibility 粉碎音波Shatter 沉默术Silence 暗示术Suggestion 诚实之域Zone of Truth 烟火术Pyrotechnics XGE 写入空中Skywrite XGE 守护之风Warding Wind XGE 纳撒尔恶作剧Nathair's Mischief FTD 卡牌喷射Spray of Cards BMT 借鉴才学Borrowed Knowledge SCC 动力短行Kinetic Jaunt SCC
+
+## 三环
+降咒Bestow Curse 鹰眼术Clairvoyance 解除魔法Dispel Magic 恐惧术Fear 假死术Feign Death 守卫刻纹Glyph of Warding 催眠图纹Hypnotic Pattern 李欧蒙小屋Leomund's Tiny Hut 高级幻影Major Image 群体治愈真言Mass Healing Word 回避侦测Nondetection 植物滋长Plant Growth 短讯术Sending 缓慢术Slow 死者交谈Speak with Dead 植物交谈Speak with Plants 臭云术Stinking Cloud 巧言术Tongues 假寐术Catnap XGE 敌群环绕Enemies Abound XGE 智能壁垒Intellect Fortress TCE 敌意术Antagonize BMT
+
+## 四环
+魅惑怪物Charm Monster 强迫术Compulsion 困惑术Confusion 任意门Dimension Door 月光涌泉Fount of Moonlight 行动自如Freedom of Movement 高等隐形术Greater Invisibility 幻景Hallucinatory Terrain 生物定位术Locate Creature 魅影杀手Phantasmal Killer 变形术Polymorph 劳洛希姆心灵长枪Raulothim's Psychic
+			Lance FTD
+
+## 五环
+活化物件Animate Objects 启蒙术Awaken 支配类人Dominate Person 托梦术Dream 指使术Geas 高等复原术Greater Restoration 定身怪物Hold Monster 通晓传奇Legend Lore 群体疗伤术Mass Cure Wounds 假象术Mislead 篡改记忆Modify Memory 异界誓缚Planar Binding 死者复活Raise Dead 拉瑞心灵联结Rary's Telepathic Bond 探知术Scrying 伪装术Seeming 突触静止Synaptic Static 传送法阵Teleportation Circle 悠兰德王者威仪Yolande's Regal Presence 授予技能Skill Empowerment XGE
+
+## 六环
+摄心目光Eyebite 寻路术Find the Path 铜墙铁壁Guards and Wards 英雄宴Heroes' Feast 群体暗示术Mass Suggestion 奥图迷舞Otto's Irresistible Dance 预置幻象Programmed Illusion 真知术True Seeing
+
+## 七环
+以太化Etherealness 力场监牢Forcecage 海市蜃楼Mirage Arcane 魔邓肯豪宅术Mordenkainen's Magnificent
+			Mansion 魔邓肯之剑Mordenkainen's Sword 律令巩固Power Word Fortify 虹光喷射Prismatic Spray 投影术Project Image 再生术Regenerate 复生术Resurrection 徽记术Symbol 传送术Teleport 蓝纱一梦Dream of the Blue Veil TCE
+
+## 八环
+嫌恶术/关怀术AntipathySympathy 摧心术Befuddlement 支配怪物Dominate Monster 花言巧语Glibness 心灵屏障Mind Blank 律令震慑Power Word Stun
+
+## 九环
+预见术Foresight 律令医疗Power Word Heal 律令死亡Power Word Kill 虹光法墙Prismatic Wall 完全变形术True Polymorph 群体变形术Mass Polymorph XGE 心灵尖啸Psychic Scream XGE

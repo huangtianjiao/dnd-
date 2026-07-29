@@ -1,0 +1,19 @@
+d100 遭遇 01            3d6 的 蝙蝠群 swarm
+of bats 02            1d4 只 巨蜘蛛 giant
+spider 或 1d4 只 巨蟾蜍 giant toad 03            1 只 拟身怪 mimic 04            2d4 只 灰泥怪 gray
+ooze 05            2d10 只 兽人 orc 或 3d6 只 穴蜥人 troglodyte 06            3d6 的 幽邃盲族 grimlock 07            1d6+2 只 熔岩魔蝠 magma mephit 08            1 只 地精头目 goblin
+boss 和 2d4 只 地精 goblin 09            2d4 只 暗幕魔兽 darkmantle 10            2d8+1 的 卓尔 drow 11            2d10 只 石锥怪 piercer 12            1d4 只 骷髅牛头人 minotaur skeleton 13-14 3d6 的 地底侏儒 deep gnome 15            1 位 德鲁伊 druid 和 1 只穴熊（ 白熊 polar bear ） 16-17 3d6 只 兽人 orc 18            1 个 骸骨纳迦 bone naga 19-20 2d6 只 熊地精 bugbear 21-25 岩壁上生长着发光的真菌，将整块区域笼罩在微光光照下 26            2d4 的 恶灵 specter 27            1d12+4 只 幽影 shadow 28            1d3 只 呓语之口 gibbering
+mouther 29-30 4d4 只 大地精 hobgoblin 31-32 1d4 只 食腐虫 carrion crawler 33-34 1 只 黑布丁 black pudding 35            1d4 只 赭冻怪 ochre
+jelly 36-40 一块霉斑，处于光线直射下时看起来是黄色的 41            1d4 只 诺斯怪 nothic 42-43 2d8+1 的 气孢菌 gas spore 44-45 1d3 只 凝胶方块 gelatinous cube 46            1 个 幽魂 ghost 47-48 1 个 燃焰之颅 flameskull 49-50 2d8 的 灰矮人 duergar 51            1 个 邪灵 wraith 52            1 只 掘土巨怪 umber
+hulk 53            1 只 石鼎兽 xorn 54            1d6+2 位搜寻着巨魔的矮人猎人（ 老兵 veteran ） 55            1 只 大地精长官 hobgoblin
+captain 和 3d10 只 大地精 hobgoblin 56            1 只 树绳妖 roper 57            1 个 寇涛监督 kuo -toa monitor ， 1d4 的 寇涛鞭策者 kuo -toa whip 和 1d8+1 的 寇涛 kuo -toa 58            1d3 只 水诡 water
+weird 59            1d4 的 妖鬼 ghast 和 1d10 的 食尸鬼 ghoul 60            1 只 食腐兽 otyugh 61-62 一支商队，包括 1 名 卓尔魔法师 drow mage ， 2 名 卓尔精英武者 drow elite warrior ，和 2d10 的 幽邃熊怪 quaggoth 63            1d4 的 尸妖 wight 64            1d4 只 变形怪 doppleganger 65            2d8 条 火蛇 fire
+snake 66            1d4 只 观察者眼魔 spectator 67            1 只 兽人 · 格乌什之眼 orc Eye of Gruumsh ， 1d4 只 魔兽人 orog 和 2d10+3 只 兽人 orc 68            1d3 的 初生吸血鬼 vampire spawn 69            1d4 只 恐爪怪 hook
+horror 或 1d4 的 牛头人 minotaur 70            3d6 的 幽邃熊怪孢子奴仆 quaggoth spore
+servant 71-72 1d3 只 触须怪 grell 73            1d6+1 只 噬脑怪 intellect devourer 74            1d10 只 石像鬼 gargoyle 75            1 只 眼魔丧尸 beholder
+zombie 76-77 1 个 幽邃熊怪 · 索诺祭司 quaggoth thonot 和 2d4 的 幽邃熊怪 quaggoth 78            1d6 的 双头巨人 ettin 或 1d4 只 巨魔 troll 79            1d8+1 只 相位蜘蛛 phase spider 80            1 个 废陋巨人 fomorian 或 1d3 的 独眼巨人 cyclops 81            1d4 的 土元素 earth
+elemental 82            3d6 的 食人魔 ogre 83            1d4+1 只 甲伏怪 chuul 84            1d10 只 地狱犬 hell
+hound 85            1d3 名 卓尔精英武者 drow elite warrior 86            1d4 只 奇美拉 chimera 87            1d4 只 火蜥蜴 salamander 88            1 只 蛰伏伪怪 cloaker 89            2d4 的 尸妖 wight 90            1d4 的 蛛化精灵 drider 91            1 个 火巨人 fire
+giant 92            1 只 穴居攫怪头领 grick alpha 和 2d4 只 穴居攫怪 grick 93            1 个 夺心魔奥术师 mind
+flayer arcanist 94            1d4 名 卓尔魔法师 drow mage 95            1 个 阴魂纳迦 spirit naga 96            1d4 的 夺心魔 mind
+flayer 97            1 只 青足龙蛇 behir 98            1 只 底栖魔鱼 aboleth 99            1 个 土巨灵 dao 或 1 个 石巨人 stone giant 00            1 只 眼魔 beholder

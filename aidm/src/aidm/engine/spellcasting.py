@@ -237,6 +237,12 @@ def resolve_upcast(spell: Spell, slot_level: int, caster_level: int) -> dict:
         if bonus_dice:
             result["damage_dice"] = f"{spell.damage_dice}+{bonus_dice}"
 
+    # 魔能爆型戏法：5/11/17级射线数递增
+    if "beam_scaling" in uc:
+        for threshold, count in uc["beam_scaling"]:
+            if caster_level >= threshold:
+                result["num_attacks"] = count
+
     # 魔法飞弹：每升一环多一支飞镖
     if uc.get("base_darts") is not None:
         result["num_darts"] = uc["base_darts"] + levels_above * uc.get("darts_per_level", 1)
@@ -272,6 +278,22 @@ def resolve_upcast(spell: Spell, slot_level: int, caster_level: int) -> dict:
             result["heal_dice"] = f"{spell.heal_dice}+{2*levels_above}d8"
         elif pl == "+1d4":
             result["heal_dice"] = f"{spell.heal_dice}+{levels_above}d4"
+
+    # 通用升环加骰（自动解析表法术的 "+1d8"/"+2d6" 等非特判格式）
+    # 规则: R-SPL-004 升环施法 — 每高一环伤害/治疗增加 NdM
+    import re as _re2
+    if (levels_above > 0 and pl and pl not in ("+1d6", "+2d4", "+2d8", "+1d4")
+            and _re2.fullmatch(r"\+\d+d\d+", pl)):
+        _um = _re2.match(r"\+(\d+)d(\d+)", pl)
+        _n, _s = int(_um.group(1)), int(_um.group(2))
+        if spell.damage_dice:
+            _bm = _re2.match(r"(\d+)d(\d+)", spell.damage_dice)
+            if _bm and int(_bm.group(2)) == _s:
+                result["damage_dice"] = f"{int(_bm.group(1)) + _n*levels_above}d{_s}"
+            else:
+                result["damage_dice"] = f"{spell.damage_dice}+{_n*levels_above}d{_s}"
+        if spell.heal_dice:
+            result["heal_dice"] = f"{spell.heal_dice}+{_n*levels_above}d{_s}"
 
     return result
 

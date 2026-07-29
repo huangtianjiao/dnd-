@@ -1,0 +1,43 @@
+
+> dev
+> next dev -p 3000
+
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 2.1s
+ ○ Compiling / ...
+ ✓ Compiled / in 2.4s (607 modules)
+ GET / 200 in 2537ms
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../typescript/lib/typescript' in d:\game\dnd\aidm\ui\node_modules\next\dist\build for build dependencies doesn't lead to expected result 'D:\game\dnd\aidm\ui\node_modules\typescript\lib\typescript.js', but to 'd:\game\dnd\aidm\ui\node_modules\typescript\lib\typescript.js' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../typescript/lib/typescript (expected D:\game\dnd\aidm\ui\node_modules\typescript\lib\typescript.js)
+<w>  at file dependencies d:\game\dnd\aidm\ui\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file d:\game\dnd\aidm\ui\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file dependencies d:\game\dnd\aidm\ui\node_modules\next\dist\build\webpack-config.js
+<w>  at file d:\game\dnd\aidm\ui\node_modules\next\dist\build\webpack-config.js
+<w>  at file dependencies d:\game\dnd\aidm\ui\node_modules\next\dist\build\handle-externals.js
+<w>  at file d:\game\dnd\aidm\ui\node_modules\next\dist\build\handle-externals.js
+<w>  at file dependencies d:\game\dnd\aidm\ui\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file d:\game\dnd\aidm\ui\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs d:\game\dnd\aidm\ui\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../typescript/lib/typescript' in d:\game\dnd\aidm\ui\node_modules\next\dist\build for build dependencies doesn't lead to expected result 'D:\game\dnd\aidm\ui\node_modules\typescript\lib\typescript.js', but to 'd:\game\dnd\aidm\ui\node_modules\typescript\lib\typescript.js' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../typescript/lib/typescript (expected D:\game\dnd\aidm\ui\node_modules\typescript\lib\typescript.js)
+<w>  at file dependencies d:\game\dnd\aidm\ui\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file d:\game\dnd\aidm\ui\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file dependencies d:\game\dnd\aidm\ui\node_modules\next\dist\build\webpack-config.js
+<w>  at file d:\game\dnd\aidm\ui\node_modules\next\dist\build\webpack-config.js
+<w>  at file dependencies d:\game\dnd\aidm\ui\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file d:\game\dnd\aidm\ui\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs d:\game\dnd\aidm\ui\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+ GET / 200 in 54ms
+ GET / 200 in 38ms
+ ✓ Compiled in 568ms (607 modules)
+ GET / 200 in 127ms
+ ✓ Compiled in 305ms (607 modules)
+ ✓ Compiled in 199ms (607 modules)
+ GET / 200 in 85ms
+ GET / 200 in 46ms
+ ✓ Compiled in 602ms (607 modules)
+ GET / 200 in 112ms

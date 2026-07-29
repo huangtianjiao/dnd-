@@ -26,6 +26,7 @@ class GameState(TypedDict):
     narration: str             # narrate 产物: DM 叙事
     state_changes: list        # narrate 产物: 结构化状态变更
     scene_update: str          # narrate 产物: 行动后场景新状态叙事（apply_node 据此更新 Scene.situation）
+    location_change: str       # narrate 产物: 玩家实际移动到的新地点短名（原地行动为空串；apply_node 据此迁移 Scene.location/npcs/environment）
     action_options: list       # narrate 产物: 玩家下一步可做的3个行动选项（透传给前端）
     combat: dict               # 战斗状态: {active, combat_id, round, current_index, combatants}
     # 元

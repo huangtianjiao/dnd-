@@ -1,0 +1,7 @@
+d100 遭遇 01-02       1d8+1 的 石化蜥蜴 basilisk 03-04       2d4 只 地狱犬 hell hound 05-06       1d3 只 奇美拉 chimera 07-08       1 个 格莱石人 galeb duhr 09-10       2d6 的 老兵 veteran 11-15       1 只 青年银龙 young silver
+dragon 16-20       2d4 的 巨魔 troll 21-25 一只 红龙 red dragon 在最高的山峰上方飞翔 26-30       1d8+1 只 刺尾狮 manticore 31-35       1d4 的 独眼巨人 cyclops 36-40 持续 1d6 小时的大雪 41-45       1d10 的 气元素 air
+elemental 46-50       1d6+2 只 鲨蜥 bulette 51-55       1d4 的 石巨人 stone giant 56-60       1 个 火巨人 fire giant 61-65 几百尺外 2 个用巨岩玩着抛接游戏的 石巨人 stone giant 66-70       1d8+1 的 双头巨人 ettin 71-75       1d3 的 霜巨人 frost giant 76-80 冰川中的一处宽裂隙，雾气使人看不清它的深度 81-85       1d4 的 云巨人 cloud giant 86-90       1 只 成年银龙 adult silver
+dragon 91-96       1 只 成年红龙 adult red
+dragon 97-98       1d4 只 鹏鸟 roc 99         1 只 远古银龙 ancient
+silver dragon 00         1 只 远古红龙 ancient
+red dragon

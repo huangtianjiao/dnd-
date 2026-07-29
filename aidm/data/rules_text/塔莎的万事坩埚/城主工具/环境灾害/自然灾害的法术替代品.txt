@@ -1,0 +1,162 @@
+自然灾害的法术替代品 Spell Equivalents of Natural 
+Hazards
+许多法术模仿自然之怒，而你可以使用法术效果来表现各种自然灾害。自然灾害法术表介绍了一些常见的环境危险和你可以用来模拟它们的法术。
+
+## 自然灾害法术Spells as 
+Natural Hazards
+
+ | 自然灾害Natural Hazard
+自然灾害 Natural Hazard
+ | 对应法术Approximate Spell
+对应法术 Approximate Spell
+
+ | 球形闪电Ball 
+      lightning
+球形闪电 Ball 
+      lightning
+ | 繁彩球chromatic orb
+繁彩球 chromatic orb
+
+ | 暴风雪Blizzard
+暴风雪 Blizzard
+ | 寒冰锥cone 
+      of cold，冰风暴ice 
+      storm，雪雨暴sleet 
+      storm
+寒冰锥 cone 
+      of cold ， 冰风暴 ice 
+      storm ， 雪雨暴 sleet 
+      storm
+
+ | 地震Earthquake
+地震 Earthquake
+ | 地震术earthquake
+地震术 earthquake
+
+ | 瓦砾坠落Falling debris
+瓦砾坠落 Falling debris
+ | 箭如雨下conjure barrage，万箭齐发conjure volley
+箭如雨下 conjure barrage ， 万箭齐发 conjure volley
+
+ | 洪水Flood 
+      Control water
+洪水 Flood 
+      Control water
+ | 海啸术tsunami
+海啸术 tsunami
+
+ | 雾气Fog
+雾气 Fog
+ | 云雾术fog 
+      cloud
+云雾术 fog 
+      cloud
+
+ | 熔岩爆发Lava 
+      bomb
+熔岩爆发 Lava 
+      bomb
+ | 火球术fireball,燃火术produceflame
+火球术 fireball, 燃火术 produce fl ame
+
+ | 闪电Lightning
+闪电 Lightning
+ | 召雷术call 
+      lightning，闪电束lightning bolt
+召雷术 call 
+      lightning ， 闪电束 lightning bolt
+
+ | 流星Meteor
+流星 Meteor
+ | 火球术fireball，流星爆meteor swarm
+火球术 fireball ， 流星爆 meteor swarm
+
+ | 海市蜃楼Mirage
+海市蜃楼 Mirage
+ | 幻景hallucinatory terrain
+幻景 hallucinatory terrain
+
+ | 火山碎屑流Pyroclasticflow
+火山碎屑流 Pyroclastic fl ow
+ | 焚云术incendiary cloud
+焚云术 incendiary cloud
+
+ | 辐射疾病Radiation Blight
+辐射疾病 Radiation Blight
+ | 死亡法阵circle of death
+死亡法阵 circle of death
+
+ | 烟尘Smoke
+烟尘 Smoke
+ | 云雾术fog 
+      cloud
+云雾术 fog 
+      cloud
+
+ | 圣艾尔摩之火St. Elmo'sfire
+圣艾尔摩之火 St. Elmo ' s fi re
+ | 妖火faeriefire
+妖火 faerie fire
+
+ | 沼气Swamp 
+      gas
+沼气 Swamp 
+      gas
+ | 舞光术dancing lights
+舞光术 dancing lights
+
+ | 潮汐Tidal 
+      wave
+潮汐 Tidal 
+      wave
+ | 海啸术tsunami
+海啸术 tsunami
+
+ | 毒物喷发Toxic 
+      eruption
+毒物喷发 Toxic 
+      eruption
+ | 酸液飞溅acid 
+      splash
+酸液飞溅 acid 
+      splash
+
+ | 毒气Toxic 
+      gas
+毒气 Toxic 
+      gas
+ | 死云术cloudkill，臭云术stinking cloud
+死云术 cloudkill ， 臭云术 stinking cloud
+
+ | 雷鸣Thunder
+雷鸣 Thunder
+ | 雷鸣波thunderwave
+雷鸣波 thunderwave
+
+ | 火山闪电Volcanic lightning
+火山闪电 Volcanic lightning
+ | 复仇风暴storm 
+      of vengeance
+复仇风暴 storm 
+      of vengeance
+
+ | 漩涡Whirlpool
+漩涡 Whirlpool
+ | 操控水体control water
+操控水体 control water
+
+ | 野火Wildfire
+野火 Wild fi re
+ | 火焰风暴fire 
+      storm，火墙术wall 
+      offire
+火焰风暴 fire 
+      storm ， 火墙术 wall 
+      of fi re
+
+ | 风暴Windstorm
+风暴 Windstorm
+ | 造风术gust 
+      of wind
+造风术 gust 
+      of wind

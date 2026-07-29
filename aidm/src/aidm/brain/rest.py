@@ -570,46 +570,61 @@ def _fail_interrupt(errors: list[str], cause: str) -> dict:
 # 短休恢复的特性映射：职业名 → 特性名列表
 # 规则: R-ADD-017 短休特性恢复钩子
 # 出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
-# 说明: 以下特性在短休完成时恢复使用次数（按各自描述）。
+# 说明: 以下特性在短休完成时恢复使用次数（按各自职业页描述，2026-07-27 逐条核对原文）。
 #   - 野蛮人狂暴（短休恢复1次/长休恢复全部）
-#   - 邪务师（Warlock）法术位：邪务师的法术位在短休时恢复（而非长休）。
-#   - 战士行动涌动（Action Surge）：短休或长休后恢复。
-#   - 武僧真气（Ki）：短休时恢复。
-#   - 吟游诗人灵感（Bardic Inspiration）：短休时恢复（5级及以上）。
-#   - 德鲁伊野性变身（Wild Shape）：短休时恢复（月亮结社可在短休时恢复）。
+#     出处: 野蛮人.htm「1级：狂暴」
+#   - 魔契师契约魔法法术位：完成短休或长休时重获全部（与长休恢复不冲突，两者都恢复）
+#     出处: 魔契师.htm「1级：契约魔法」
+#   - 战士动作如潮（Action Surge）：完成短休或长休后才能再次使用
+#     出处: 战士.htm「2级：动作如潮」
+#   - 武僧功力（Focus Points）：完成短休或长休时重获全部
+#     出处: 武僧.htm「2级：武僧武功」
+#   - 吟游诗人激励（Bardic Inspiration）：1-4级仅长休恢复；
+#     5级特性「激励之源」后短休/长休均恢复全部（等级门槛在函数内处理）
+#     出处: 吟游诗人.htm「1级：吟游诗人激励」「5级：激励之源」
+#   - 德鲁伊荒野变形（Wild Shape）：短休恢复1次/长休恢复全部
+#     出处: 德鲁伊.htm「2级：荒野变形」
 SHORT_REST_RECHARGE_FEATURES: dict[str, list[str]] = {
     "野蛮人": ["狂暴"],          # 短休：恢复1次已消耗的狂暴使用次数
-    "战士": ["行动涌动"],
-    "武僧": ["真气"],
-    "吟游诗人": ["吟游诗人灵感"],
-    "德鲁伊": ["野性变身"],
-    "魔契师": ["邪务师法术位"],  # 邪务师法术位在短休时恢复
+    "战士": ["动作如潮"],
+    "武僧": ["功力"],
+    "吟游诗人": ["吟游诗人激励"],  # 仅5级及以上（激励之源），见函数内等级门槛
+    "德鲁伊": ["荒野变形"],        # 短休仅恢复1次
+    "魔契师": ["契约魔法法术位"],  # 契约魔法法术位短休亦恢复
 }
+
+# 诗人激励短休恢复所需的最低等级（激励之源）
+# 出处: 吟游诗人.htm「5级：激励之源」
+BARD_SHORT_REST_MIN_LEVEL = 5
 
 # 短休部分恢复表：特性名 → 短休恢复的使用次数。
 # 不在此表中的特性默认短休恢复全部使用次数（"all"）。
-# 规则出处: 玩家手册2024/角色职业/野蛮人/野蛮人.htm:85
+# 规则出处: 玩家手册2024/角色职业/野蛮人/野蛮人.htm「1级：狂暴」
 #   "当你完成一次短休时，你重获一次已消耗的使用次数；
 #    当你完成一次长休时，你重获所有已消耗的使用次数。"
+# 规则出处: 玩家手册2024/角色职业/德鲁伊/德鲁伊.htm「2级：荒野变形」
+#   "你在完成短休后重获一次已消耗的使用次数，
+#    当你完成一次长休时，你重获全部已消耗的使用次数。"
 SHORT_REST_PARTIAL_RECHARGE: dict[str, int] = {
-    "狂暴": 1,  # 野蛮人狂暴：短休仅恢复1次
+    "狂暴": 1,      # 野蛮人狂暴：短休仅恢复1次
+    "荒野变形": 1,  # 德鲁伊荒野变形：短休仅恢复1次
 }
 
 # 长休恢复的特性映射：职业名 → 特性名列表
 # 规则: R-GLS-015 长休的增益  出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
-# 说明: 以下特性在长休完成时恢复使用次数（按各自描述）。
-#   - 所有施法者的法术位（除邪务师外——邪务师在短休恢复）
-#   - 战士行动涌动（也在短休恢复）
-#   - 武僧真气（也在短休恢复）
-#   - 吟游诗人灵感（也在短休恢复）
-#   - 德鲁伊野性变身（也在短休恢复）
-#   - 野蛮人狂暴（长休后恢复）
+# 说明: 以下特性在长休完成时恢复使用次数（按各自职业页描述）。
+#   - 所有施法者的法术位（含魔契师——契约魔法短休/长休均恢复）
+#   - 战士动作如潮（也在短休恢复）
+#   - 武僧功力（也在短休恢复）
+#   - 吟游诗人激励（任意等级长休恢复；5级后也可短休恢复）
+#   - 德鲁伊荒野变形（也在短休恢复，短休仅1次）
+#   - 野蛮人狂暴（长休恢复全部）
 LONG_REST_RECHARGE_FEATURES: dict[str, list[str]] = {
     "野蛮人": ["狂暴"],
-    "战士": ["行动涌动"],
-    "武僧": ["真气"],
-    "吟游诗人": ["吟游诗人灵感"],
-    "德鲁伊": ["野性变身"],
+    "战士": ["动作如潮"],
+    "武僧": ["功力"],
+    "吟游诗人": ["吟游诗人激励"],
+    "德鲁伊": ["荒野变形"],
     # 施法者法术位恢复由 long_rest 单独处理（spell_slots_restored）
 }
 
@@ -620,17 +635,24 @@ def recharge_features_on_short_rest(character: Any) -> list[str]:
     规则: R-ADD-017 短休特性恢复钩子
     出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
 
-    恢复的特性（按各自描述）：
+    恢复的特性（按各自职业页描述，2026-07-27 核对原文）：
         - 野蛮人狂暴：短休恢复1次已消耗的使用次数
-          （出处: 玩家手册2024/角色职业/野蛮人/野蛮人.htm:85）
-        - 邪务师法术位（魔契师）：短休时恢复全部
-        - 战士行动涌动：短休或长休后恢复全部
-        - 武僧真气：短休时恢复全部
-        - 吟游诗人灵感：短休时恢复全部
-        - 德鲁伊野性变身：短休时恢复（月亮结社）
+          （出处: 野蛮人.htm「1级：狂暴」）
+        - 契约魔法法术位（魔契师）：短休时恢复全部
+          （出处: 魔契师.htm「1级：契约魔法」）
+        - 战士动作如潮：短休或长休后恢复
+          （出处: 战士.htm「2级：动作如潮」）
+        - 武僧功力：短休或长休时恢复全部
+          （出处: 武僧.htm「2级：武僧武功」）
+        - 吟游诗人激励：仅5级及以上短休恢复全部（激励之源）；
+          1-4级短休不恢复（仅长休恢复）
+          （出处: 吟游诗人.htm「1级：吟游诗人激励」「5级：激励之源」）
+        - 德鲁伊荒野变形：短休恢复1次
+          （出处: 德鲁伊.htm「2级：荒野变形」）
 
     参数:
-        character: 角色对象，需有 char_class 或 class_name 属性
+        character: 角色对象，需有 char_class 或 class_name 属性；
+        吟游诗人需 level 属性以判定激励之源门槛
 
     返回:
         恢复的特性名列表。
@@ -642,9 +664,14 @@ def recharge_features_on_short_rest(character: Any) -> list[str]:
         or _get(character, "class_name", None)
         or ""
     )
+    level = _get(character, "level", 1) or 1
     recharged: list[str] = []
     features = SHORT_REST_RECHARGE_FEATURES.get(class_name, [])
     for feature in features:
+        # 吟游诗人激励：5级「激励之源」后短休才能恢复
+        # 出处: 吟游诗人.htm「1级：吟游诗人激励」（长休恢复）/「5级：激励之源」（短休恢复）
+        if class_name == "吟游诗人" and feature == "吟游诗人激励" and level < BARD_SHORT_REST_MIN_LEVEL:
+            continue
         recharged.append(feature)
     return recharged
 
@@ -668,14 +695,15 @@ def recharge_features_on_long_rest(character: Any) -> list[str]:
     规则: R-GLS-015 长休的增益
     出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
 
-    恢复的特性（按各自描述）：
-        - 野蛮人狂暴：长休后恢复
-        - 战士行动涌动：长休后恢复
-        - 武僧真气：长休后恢复
-        - 吟游诗人灵感：长休后恢复
-        - 德鲁伊野性变身：长休后恢复
+    恢复的特性（按各自职业页描述）：
+        - 野蛮人狂暴：长休后恢复全部
+        - 战士动作如潮：长休后恢复
+        - 武僧功力：长休后恢复
+        - 吟游诗人激励：长休后恢复（任意等级）
+        - 德鲁伊荒野变形：长休后恢复全部
 
-    注意：邪务师法术位在短休时恢复（而非长休），故不在长休恢复列表中。
+    注意：契约魔法法术位短休与长休均恢复（出处: 魔契师.htm「1级：契约魔法」），
+    短休分支由 recharge_features_on_short_rest 处理。
     施法者法术位恢复由 long_rest 单独处理（spell_slots_restored 字段）。
 
     参数:
@@ -770,23 +798,40 @@ def _self_test() -> None:
     assert r["success"] is False
     assert "不能为负" in r["errors"][0]
 
-    # 短休：恢复职业特性（战士行动涌动）
+    # 短休：恢复职业特性（战士动作如潮）
     c = MockCharacter(hp=10, max_hp=20, char_class="战士")
     r = short_rest(c, hit_dice_to_spend=0)
     assert r["success"] is True
-    assert "行动涌动" in r["features_recharged"]
+    assert "动作如潮" in r["features_recharged"]
 
-    # 短休：恢复职业特性（武僧真气）
+    # 短休：恢复职业特性（武僧功力）
     c = MockCharacter(hp=10, max_hp=20, char_class="武僧")
     r = short_rest(c, hit_dice_to_spend=0)
     assert r["success"] is True
-    assert "真气" in r["features_recharged"]
+    assert "功力" in r["features_recharged"]
 
-    # 短休：恢复职业特性（魔契师邪务师法术位）
+    # 短休：恢复职业特性（魔契师契约魔法法术位）
     c = MockCharacter(hp=10, max_hp=20, char_class="魔契师")
     r = short_rest(c, hit_dice_to_spend=0)
     assert r["success"] is True
-    assert "邪务师法术位" in r["features_recharged"]
+    assert "契约魔法法术位" in r["features_recharged"]
+
+    # 短休：德鲁伊荒野变形仅恢复1次（出处: 德鲁伊.htm「2级：荒野变形」）
+    c = MockCharacter(hp=10, max_hp=20, char_class="德鲁伊")
+    r = short_rest(c, hit_dice_to_spend=0)
+    assert r["success"] is True
+    assert "荒野变形" in r["features_recharged"]
+    assert r["feature_recharge_amounts"]["荒野变形"] == 1
+
+    # 短休：1-4级诗人激励不恢复（仅长休）；5级起短休恢复（激励之源）
+    c = MockCharacter(hp=10, max_hp=20, char_class="吟游诗人", level=3)
+    r = short_rest(c, hit_dice_to_spend=0)
+    assert r["success"] is True
+    assert "吟游诗人激励" not in r["features_recharged"]
+    c = MockCharacter(hp=10, max_hp=20, char_class="吟游诗人", level=5)
+    r = short_rest(c, hit_dice_to_spend=0)
+    assert r["success"] is True
+    assert "吟游诗人激励" in r["features_recharged"]
 
     # 短休：恢复职业特性（野蛮人狂暴——仅恢复1次）
     # 规则: 玩家手册2024/角色职业/野蛮人/野蛮人.htm:85

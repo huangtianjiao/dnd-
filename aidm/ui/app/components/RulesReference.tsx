@@ -2,39 +2,47 @@
 
 const RULES = [
   {
-    title: "d20 检定",
-    content: "d20 + 属性调整值 + 熟练加值（如适用）≥ DC = 成功\nDC 参考: 非常容易5 / 容易10 / 中等15 / 困难20 / 非常困难25 / 近乎不可能30",
+    title: "d20 检定公式",
+    html: <>d20 + 修正值 vs DC<br/><b>修正值</b> = 属性调整值 + 熟练加值(如熟练)<br/><b>自然1</b> = 总是失败 · <b>自然20</b> = 总是成功</>,
   },
   {
-    title: "优势与劣势",
-    content: "优势: 掷两个 d20 取高\n劣势: 掷两个 d20 取低\n不叠加: 多个优势仍只掷两骰\n抵消: 同时有优势和劣势只掷一骰",
+    title: "DC 难度表",
+    html: <><b>5</b> 非常简单 · <b>10</b> 简单<br/><b>15</b> 中等 · <b>20</b> 困难<br/><b>25</b> 非常困难 · <b>30</b> 几乎不可能</>,
   },
   {
-    title: "攻击检定",
-    content: "d20 + 攻击加值 ≥ 目标 AC = 命中\n天然 20: 必命中且暴击（伤害骰翻倍）\n天然 1: 必失手\n重击: 所有伤害骰 × 2（常数不加倍）",
+    title: "优势 / 劣势",
+    html: <><b>优势</b>: 掷两个d20取高<br/><b>劣势</b>: 掷两个d20取低<br/>多个优势/劣势不叠加——只要有任一来源的优势和劣势就互相抵消</>,
   },
   {
-    title: "死亡豁免",
-    content: "HP 归零时进入濒死状态\n每轮掷 d20（无修正）:\n  ≥ 10: 记一次成功\n  < 10: 记一次失败\n  天然 20: 恢复 1 HP\n  天然 1: 记两次失败\n3 次成功 → 稳定\n3 次失败 → 死亡",
+    title: "回合结构",
+    html: <>每回合可执行：<br/>· <b>移动</b> (速度尺数，可拆分)<br/>· <b>动作</b> (攻击/施法/闪避/协助/疾步/脱离/躲藏/使用物品)<br/>· <b>附赠动作</b> (仅当特性/法术允许)<br/>· <b>反应</b> (每轮1次，在他人回合触发)<br/>· <b>免费互动</b> (拔武器/开门等)</>,
+  },
+  {
+    title: "攻击流程",
+    html: <>1. 声明攻击目标<br/>2. 投 d20 + 攻击修正值<br/>3. 与目标 AC 比较 → 命中/未命中<br/>4. 命中则投伤害骰<br/>5. 暴击(自然20): 伤害骰翻倍</>,
+  },
+  {
+    title: "施法检查清单",
+    html: <>1. <b>施法时间</b>: 动作/附赠/反应/分钟<br/>2. <b>法术位</b>: 消耗对应环阶<br/>3. <b>成分</b>: V(言语) S(姿态) M(材料)<br/>4. <b>效果解决</b>: 攻击检定 or 豁免检定<br/>5. <b>专注</b>: 部分法术需专注维持<br/><span style={{ color: "var(--text-red)" }}>受伤害时专注DC = 10 或 伤害值/2(取高)</span></>,
   },
   {
     title: "休息机制",
-    content: "短休（1小时）: 消耗生命骰恢复 HP，恢复部分职业特性\n长休（8小时）: HP 回满，恢复一半生命骰，法术位全恢复，力竭 -1\n限制: 每 24 小时最多获益一次长休",
+    html: <><b>短休</b> (1小时): 消耗Hit Dice回HP, 恢复部分职业特性<br/><b>长休</b> (8小时): HP回满, 恢复一半Hit Dice, 法术位全恢复<br/><span style={{ color: "var(--text-tertiary)" }}>长休后需消耗1份口粮</span></>,
+  },
+  {
+    title: "死亡豁免",
+    html: <>HP = 0 时开始:<br/>· 每回合掷 d20 (无修饰)<br/>· <b>10+</b>: 1次成功<br/>· <b>9-</b>: 1次失败<br/>· <b>自然20</b>: 恢复1HP<br/>· <b>自然1</b>: 2次失败<br/>· 3次成功 → 稳定<br/>· 3次失败 → 死亡</>,
   },
 ];
 
 export function RulesReference() {
   return (
-    <div className="space-y-2 text-[10px]">
+    <div className="rules-ref">
       {RULES.map((r) => (
-        <details key={r.title} className="border border-neutral-800 rounded">
-          <summary className="px-2 py-1 cursor-pointer text-amber-400 hover:bg-neutral-800/50">
-            {r.title}
-          </summary>
-          <pre className="px-2 py-1 whitespace-pre-wrap text-neutral-400 font-sans">
-            {r.content}
-          </pre>
-        </details>
+        <div key={r.title} className="rules-section">
+          <div className="rs-title">{r.title}</div>
+          <div className="rs-content">{r.html}</div>
+        </div>
       ))}
     </div>
   );

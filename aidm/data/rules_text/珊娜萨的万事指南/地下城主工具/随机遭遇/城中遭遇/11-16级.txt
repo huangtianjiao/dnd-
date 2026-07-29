@@ -1,0 +1,9 @@
+d100 遭遇 01         1 只 拟身怪 mimic 02-05       1 个 强盗首领 bandit captain 和 5d10 的 强盗 bandit ，全都骑着 乘用马 riding horse 06-10       1d10 名骑着 战马 warhorse 的 骑士 knight （其中一名骑士是 变形怪 doppleganger ） 11-13       1d8 的 魅魔 succumbus 或 1d8 的 梦魔 incubus 14-16       3d6 的 邪教狂信者 cult
+fanatic 17-19       1d10 的 尸妖 wight 20-22       3d6 的 鼠人 wererat 23-25 从远处传来的爆炸声，接着城中另一端升起了一缕烟 26-28       1d8+1 的 幽魂 ghost 29-31       2d10 只 石像鬼 gargoyle 32-34       1d6+2 的 水诡 water weird 35-37       1d4+4 的 鬼火 will-o’-wisp 38-40 由街头表演者展示的木偶戏，两个木偶用木棍互殴，以此取乐围观的人群 41-43       2d4 条 羽蛇 couatl 44-46       2d8 的 妖鬼 ghast 47-51       1d8+1 的 老兵 veteran 52-55       3d4 位 祭司 priest 56-58       2d4 的 坎比翁 cambion 59-61       1d10 的 还魂尸 revenant 62-65       2d4 只 相位蜘蛛 phase spider 66-69 一个穿着邋遢的 平民 commoner ，急匆匆地躲进巷子里，从一个看似可疑的人那里买了什么东西 70-72       1d8 的 隐形追猎者 invisible
+stalker 73-75       1d8+1 的 角斗士 gladiator 76-80 两个农民为土豆的价格而互殴（ 50% 的几率其中一个是退役的 刺客 assassin ） 81-82       1d4 只 青年银龙 young silver
+dragon 83-84       1d4 的 刺客 assassin 85-86       1d8 的 恶鬼 oni 87-88       1d4 位 魔法师 mage 和 1d4 的 构装盾卫 shield guardian 89-90       1d10 的 初生吸血鬼 vampire
+spawn 91-92       1 只 成年银龙 adult silver
+dragon 93-94       1d4 只 史拉灰蟾 gray slaad 95-96       1 个 吸血鬼施法者 spellcaster
+vampire 或 1 个 吸血鬼武者 warrior
+vampire 97         1 位 大法师 archmage 骑着 乘用马 riding horse 在街上奔驰，以法术攻击 1d4 的 警卫 guard 98         1 个 罗刹 rakshasa 99         1 个 吸血鬼 vampire 00         1 只 远古银龙 ancient
+silver dragon

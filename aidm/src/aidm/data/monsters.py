@@ -82,85 +82,159 @@ class Monster:
 
 
 # ──────────────────────────────────────────────────────────────────────────
-# 怪物表（5E SRD，常见低-中 CR 怪物铺底）
+# 怪物表（规则书权威值；数值出处见各条 source 字段）
 # ──────────────────────────────────────────────────────────────────────────
 
+_SRC_2025 = "topics/怪物图鉴2025"
+_SRC_2014 = "topics/怪物图鉴2014"
+
 _MONSTERS_LIST: list[Monster] = [
-    Monster("狗头人", cr=0.125, hp=5, ac=12, dex_mod=2, attack_bonus=4,
-            damage_dice="1d4+2", damage_type="穿刺", speed=30,
+    Monster("狗头人", cr=0.125, hp=7, ac=14, dex_mod=2, attack_bonus=4,
+            damage_dice="1d6", damage_type="钝击", speed=30,
             abilities=["黑暗视觉60尺", "群体战术", "阳光敏感"],
-            senses="黑暗视觉60尺, 被动察觉12", creature_type="类人", size="小型"),
+            senses="黑暗视觉60尺, 被动察觉12", creature_type="龙类", size="小型",
+            source=_SRC_2025 + "/龙类/狗头人/狗头人武者.htm"),
     Monster("哥布林", cr=0.25, hp=7, ac=15, dex_mod=2, attack_bonus=4,
             damage_dice="1d6+2", damage_type="挥砍", speed=30,
-            abilities=["黑暗视觉60尺", "撤离(附赠动作)"],
-            senses="黑暗视觉60尺, 被动察觉9", creature_type="类人", size="小型"),
+            abilities=["黑暗视觉60尺", "迅捷逃逸(附赠动作撤离/躲藏)"],
+            senses="黑暗视觉60尺, 被动察觉9", creature_type="类人", size="小型",
+            source=_SRC_2014 + "/类人生物/地精.html"),
     Monster("狼", cr=0.25, hp=11, ac=12, dex_mod=2, attack_bonus=4,
             damage_dice="1d6+2", damage_type="穿刺", speed=40,
             abilities=["群体战术", "咬击击倒(力量豁免DC11)"],
-            senses="被动察觉13, 嗅觉敏锐", creature_type="野兽", size="中型"),
-    Monster("骷髅", cr=0.25, hp=13, ac=13, dex_mod=2, attack_bonus=4,
-            damage_dice="1d6+2", damage_type="穿刺", speed=30,
-            abilities=["伤害抗性(穿刺)", "免疫毒素"],
-            senses="黑暗视觉60尺, 被动察觉9", creature_type="不死", size="中型"),
-    Monster("僵尸", cr=0.25, hp=22, ac=8, dex_mod=-2, attack_bonus=3,
-            damage_dice="1d6+1", damage_type="钝击", speed=20,
-            abilities=["不朽之力(体质豁免DC5免死, 非光耀暴击直接死)"],
-            senses="被动察觉9", creature_type="不死", size="中型"),
+            senses="被动察觉13, 嗅觉敏锐", creature_type="野兽", size="中型",
+            source=_SRC_2025 + "/附录A/狼.htm"),
+    Monster("骷髅", cr=0.25, hp=13, ac=14, dex_mod=3, attack_bonus=5,
+            damage_dice="1d6+3", damage_type="穿刺", speed=30,
+            abilities=["伤害易伤(钝击)", "免疫毒素", "免疫恐慌/麻痹"],
+            senses="黑暗视觉60尺, 被动察觉9", creature_type="亡灵", size="中型",
+            source=_SRC_2025 + "/亡灵/骷髅/骷髅.htm"),
+    Monster("丧尸", cr=0.25, hp=15, ac=8, dex_mod=-2, attack_bonus=3,
+            damage_dice="1d8+1", damage_type="钝击", speed=20,
+            abilities=["不朽坚韧(生命值归0时体质豁免DC5+伤害值, 成功则保留1HP; 光耀/重击除外)"],
+            senses="黑暗视觉60尺, 被动察觉9", creature_type="亡灵", size="中型",
+            source=_SRC_2025 + "/亡灵/丧尸/丧尸.htm"),
     Monster("兽人", cr=0.5, hp=15, ac=13, dex_mod=1, attack_bonus=5,
             damage_dice="1d12+3", damage_type="挥砍", speed=30,
-            abilities=["恒怒(生命值低于一半时攻击优势)"],
-            senses="被动察觉10, 黑暗视觉60尺", creature_type="类人", size="中型"),
-    Monster("霍布哥布林", cr=0.5, hp=11, ac=18, dex_mod=1, attack_bonus=5,
-            damage_dice="1d8+3", damage_type="挥砍", speed=30,
-            abilities=["军事战术(触及内盟友攻击检定优势)"],
-            senses="黑暗视觉60尺, 被动察觉12", creature_type="类人", size="中型"),
-    Monster("黑熊", cr=0.5, hp=19, ac=11, dex_mod=2, attack_bonus=3,
-            damage_dice="1d6+2", damage_type="穿刺", speed=40,
-            abilities=["多重攻击(咬+爪)", "攀爬"],
-            senses="被动察觉13, 嗅觉敏锐", creature_type="野兽", size="中型"),
-    Monster("灰色软泥", cr=0.5, hp=22, ac=8, dex_mod=-5, attack_bonus=2,
-            damage_dice="1d6", damage_type="酸", speed=10,
-            abilities=["伪足", "腐蚀金属(非魔法金属护甲降AC)", "黏附"],
-            senses="盲视60尺(无视觉)", creature_type="泥形", size="中型"),
-    Monster("巨型蜘蛛", cr=1, hp=26, ac=14, dex_mod=4, attack_bonus=5,
+            abilities=["好斗(附赠动作向敌对生物移动至近身)", "黑暗视觉60尺"],
+            senses="被动察觉10, 黑暗视觉60尺", creature_type="类人", size="中型",
+            source=_SRC_2014 + "/类人生物/兽人.html"),
+    Monster("霍布哥布林", cr=0.5, hp=11, ac=18, dex_mod=1, attack_bonus=3,
+            damage_dice="1d8+1", damage_type="挥砍", speed=30,
+            abilities=["军事优势(盟友在目标5尺内时伤害+2d6, 每回合一次)"],
+            senses="黑暗视觉60尺, 被动察觉12", creature_type="类人", size="中型",
+            source=_SRC_2014 + "/类人生物/大地精.html"),
+    Monster("黑熊", cr=0.5, hp=19, ac=11, dex_mod=1, attack_bonus=4,
+            damage_dice="1d6+2", damage_type="挥砍", speed=40,
+            abilities=["多重攻击(咬+爪)", "攀爬30尺", "嗅觉敏锐"],
+            senses="被动察觉13, 嗅觉敏锐", creature_type="野兽", size="中型",
+            source=_SRC_2025 + "/附录A/黑熊.htm"),
+    Monster("灰泥怪", cr=0.5, hp=22, ac=9, dex_mod=-2, attack_bonus=3,
+            damage_dice="1d6", damage_type="钝击", speed=10,
+            abilities=["伪足(命中附加2d6强酸)", "腐蚀金属(非魔法金属护甲降AC)", "黏附"],
+            senses="盲视60尺(无视觉)", creature_type="泥怪", size="中型",
+            source=_SRC_2025 + "/泥怪/灰泥怪.htm"),
+    Monster("巨蜘蛛", cr=1, hp=26, ac=14, dex_mod=3, attack_bonus=5,
             damage_dice="1d8+3", damage_type="穿刺", speed=30,
             abilities=["喷网(射程30尺, 力量豁免DC12)", "攀爬", "蛛网感知"],
-            senses="盲视60尺, 被动察觉10", creature_type="野兽", size="大型"),
+            senses="盲视60尺, 被动察觉10", creature_type="野兽", size="大型",
+            source=_SRC_2025 + "/附录A/巨蜘蛛.htm"),
     Monster("龙裔战士", cr=1, hp=33, ac=16, dex_mod=1, attack_bonus=5,
             damage_dice="1d8+3", damage_type="挥砍", speed=30,
             abilities=["喷吐武器(锥形8d6能量, 敏捷豁免DC13)"],
-            senses="被动察觉11", creature_type="龙", size="中型"),
-    Monster("食人魔", cr=2, hp=52, ac=11, dex_mod=-1, attack_bonus=6,
+            senses="被动察觉11", creature_type="龙", size="中型",
+            source="无官方条目（SRD 近似值，待校对）"),
+    Monster("食人魔", cr=2, hp=68, ac=11, dex_mod=-1, attack_bonus=6,
             damage_dice="2d8+4", damage_type="钝击", speed=40,
             abilities=["巨棒(触及10尺)"],
-            senses="被动察觉9", creature_type="巨人", size="大型"),
-    Monster("巨魔", cr=5, hp=84, ac=14, dex_mod=1, attack_bonus=7,
-            damage_dice="1d6+4", damage_type="挥砍", speed=30,
-            abilities=["再生(每回合恢复10HP, 非强酸/火焰伤害致死则不再生)",
-                      "多重攻击(爪×2+咬)"],
-            senses="黑暗视觉60尺, 被动察觉9", creature_type="巨人", size="大型"),
+            senses="被动察觉9", creature_type="巨人", size="大型",
+            source=_SRC_2025 + "/巨人/食人魔/食人魔.htm"),
+    Monster("巨魔", cr=5, hp=94, ac=15, dex_mod=1, attack_bonus=7,
+            damage_dice="2d6+4", damage_type="挥砍", speed=30,
+            abilities=["再生(每回合恢复15HP, 受强酸/火焰伤害则下回合失效)",
+                      "多重攻击(撕裂×3)", "扰人断肢(4/日)"],
+            senses="黑暗视觉60尺, 被动察觉15", creature_type="巨人", size="大型",
+            source=_SRC_2025 + "/巨人/巨魔/巨魔.htm"),
 ]
 
 
 MONSTERS: dict[str, Monster] = {m.name: m for m in _MONSTERS_LIST}
 
 
+# ──────────────────────────────────────────────────────────────────────────
+# 全量表兜底：monsters_full.MONSTERS_FULL（505 个怪物，自动解析生成）
+# 手工精校表 MONSTERS 未命中时按名转换；遭遇池合并两表（手工表同名优先）。
+# ──────────────────────────────────────────────────────────────────────────
+
+_FULL_CACHE: dict[str, Monster] = {}
+_FULL_POOL: Optional[list[Monster]] = None
+
+
+def _monster_from_full(raw: dict) -> Monster:
+    """将 monsters_full 的 dict 条目转换为 Monster 对象（带缓存）。"""
+    name = raw["name"]
+    if name not in _FULL_CACHE:
+        _FULL_CACHE[name] = Monster(
+            name=name,
+            cr=raw["cr"],
+            hp=raw["hp"],
+            ac=raw["ac"],
+            dex_mod=raw["dex_mod"],
+            attack_bonus=raw["attack_bonus"],
+            damage_dice=raw["damage_dice"],
+            damage_type=raw["damage_type"],
+            speed=raw.get("speed", 30),
+            abilities=[],
+            senses=raw.get("senses", ""),
+            creature_type=raw.get("creature_type", "类人"),
+            size=raw.get("size", "中型"),
+            source=raw.get("source", "怪物图鉴2025（自动解析）"),
+        )
+    return _FULL_CACHE[name]
+
+
+def _full_pool() -> list[Monster]:
+    """全量表所有怪物（转换并缓存）。延迟导入避免大数据表拖慢启动。"""
+    global _FULL_POOL
+    if _FULL_POOL is None:
+        from .monsters_full import MONSTERS_FULL
+        _FULL_POOL = [_monster_from_full(raw) for raw in MONSTERS_FULL.values()]
+    return _FULL_POOL
+
+
 def get_monster(name: str) -> Optional[Monster]:
-    """按中文名查怪物。未收录返回 None（调用方走 LLM 填值/保守默认/RAG 兜底）。"""
-    return MONSTERS.get(name)
+    """按中文名查怪物。
+
+    优先命中手工精校表 MONSTERS（13 个，含战斗 AI 能力描述）；未命中则兜底
+    全量自动解析表 MONSTERS_FULL（505 个，2025/2014 图鉴权威值）。
+    均未收录返回 None（调用方走 LLM 填值/保守默认/RAG 兜底）。
+    """
+    if name in MONSTERS:
+        return MONSTERS[name]
+    from .monsters_full import MONSTERS_FULL
+    raw = MONSTERS_FULL.get(name)
+    return _monster_from_full(raw) if raw else None
 
 
 def list_monsters() -> list[str]:
-    """所有收录怪物名（调试/前端展示）。"""
-    return list(MONSTERS)
+    """所有收录怪物名（手工表 + 全量表，调试/前端展示）。"""
+    names = set(MONSTERS)
+    for m in _full_pool():
+        names.add(m.name)
+    return sorted(names)
 
 
 def monsters_by_cr(max_cr: float) -> list[Monster]:
     """返回 cr <= max_cr 的怪物（用于按等级/难度选遭遇怪）。
 
     例：1级角色用 monsters_by_cr(1.0) → 低 CR 怪池；5级用 monsters_by_cr(5.0)。
+    合并手工表与全量表，手工表同名优先（其 abilities 供战斗 AI 使用）。
     """
-    return [m for m in _MONSTERS_LIST if m.cr <= max_cr]
+    merged: dict[str, Monster] = {m.name: m for m in _full_pool() if m.cr <= max_cr}
+    for m in _MONSTERS_LIST:
+        if m.cr <= max_cr:
+            merged[m.name] = m
+    return list(merged.values())
 
 
 def pick_encounter_pool(level: int) -> list[Monster]:
@@ -201,6 +275,18 @@ def _self_test() -> None:
     assert get_monster("巨魔") in monsters_by_cr(5)
     assert len(pick_encounter_pool(1)) >= 1
     assert all(m.cr <= 1.0 for m in pick_encounter_pool(4))
+    # 权威值：巨魔 2025 版块（HP94/AC15/+7/2d6+4）
+    t = get_monster("巨魔")
+    assert t.hp == 94 and t.ac == 15 and t.attack_bonus == 7
+    assert t.damage_dice == "2d6+4" and "2025" in t.source
+    # 权威值：霍布哥布林 2014 版块（+3/1d8+1，修正旧近似值 +5/1d8+3）
+    h = get_monster("霍布哥布林")
+    assert h.attack_bonus == 3 and h.damage_dice == "1d8+1"
+    # 全量表兜底：手工表未收录的怪也能查到
+    assert get_monster("巫妖") is not None and get_monster("巫妖").hp > 100
+    assert get_monster("枭熊").cr == 3
+    # 遭遇池合并后低 CR 池远大于原 13 个
+    assert len(monsters_by_cr(1.0)) > 100
     print("[monsters] 自检通过 ✓")
 
 

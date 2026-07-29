@@ -1,0 +1,38 @@
+## 贤者谏言合集Sage Advice Compendium
+《贤者谏言合集》收集了有关 DND 五版规则的问题和答案。这是游戏主要规则开发者 杰里米·克劳福德 Jeremy Crawford 的官方判法。
+（注：在不全书中，所有版本的贤者谏言均会被放出，而已被移除的贤者谏言会被标注上删除线，而线上SA 
+Blog会被添加到各个页面的最下方（这块还没写））
+规则参考Rules References
+《龙与地下城》五版共有三本正式规则书，均于 2014 年首次出版： ● 玩家手册（缩写为 PH ） ● 怪物图鉴（缩写为 MM ） ● 
+城主指南（缩写为 DMG ）
+你可以在这里下载免费的基本规则，其包含这三本书的各一部分，可以在这里下载： http://dnd.wizards.com/articles/features/basicrules
+在 冒险者联盟Adventurers League 
+中进行的游戏也受《冒险者联盟玩家指南》管辖。
+勘误Errata
+合集已就某些第五版书籍的早期印发更正，并可在以下位置下载。
+怪物图鉴 
+Monster Manual http://media.wizards.com/2018/downloads/DND/MM-Errata.pdf
+施特拉德的诅咒 Curse of Strahd https://media.wizards.com/2021/dnd/downloads/CoS-Errata.pdf
+艾伯伦：从终末战争中崛起 Eberron: Rising from the Last War https://media.wizards.com/2020/dnd/downloads/ERftLW-Errata.pdf
+盐沼幽魂 Ghosts of Saltmarsh https://media.wizards.com/2020/dnd/downloads/GoS-Errata.pdf
+龙后的宝山 Hoard of the Dragon Queen http://media.wizards.com/2016/downloads/DND/HotDQ-Errata.pdf
+逃离深渊 Out of the 
+Abyss http://media.wizards.com/2020/dnd/downloads/OotA-Errata.pdf
+毁灭亲王 Princes of the Apocalypse http://media.wizards.com/2016/downloads/DND/PotA-Errata.pdf
+风暴君王的雷霆 Storm King's Thunder https://media.wizards.com/2021/dnd/downloads/SKT-Errata.pdf
+剑湾冒险者指南 Sword Coast Adventurer's Guide http://media.wizards.com/2021/dnd/downloads/SCAG-Errata.pdf
+哈欠门故事集 Tales from the Yawning Portal https://media.wizards.com/2021/dnd/downloads/TftYP-Errata.pdf
+塔莎的万事坩埚 Tasha's Cauldron of Everything https://media.wizards.com/2021/dnd/downloads/TCE-Errata.pdf
+湮灭之墓 
+Tomb of Annihilation https://media.wizards.com/2021/dnd/downloads/ToA-Errata.pdf
+瓦罗的怪物手册 Volo's Guide to Monsters http://media.wizards.com/2021/dnd/downloads/VGtM-Errata.pdf
+珊娜萨的万事指南 Xanathar's Guide to Everything https://media.wizards.com/2020/dnd/downloads/XGtE-Errata.pdf
+官方规则Official 
+Rulings
+《贤者谏言合集》中解释了官方是如何裁定规则的。 一名DM判定游戏，并决定是否要在游戏中使用官方裁定。
+D&D团队、或威世智的其他任何人的公开声明，都不能作为官方的裁定看待——他们只是建议。 不过有一个例外：那就是游戏的首席规则开发者 杰里米·克劳福德Jeremy Crawford。（推特账户 
+@JeremyECrawford） 他是游戏的首席规则开发者，因此可以做出官方裁定——包括在本文档内，和推特上作出裁定。 杰里米·克劳福德Jeremy Crawford ——游戏的首席规则开发者——的推特上（推特账户 
+@JeremyECrawford）有时会放出一些规则裁定的预览。
+回答汇总Compiled 
+Answers
+此处汇总了与特定状态下的裁定相应的 贤者谏言回答 。（见子页面）

@@ -282,6 +282,46 @@ def check_weapon_proficiency(character_weapon_prof: list[str], weapon_name: str)
     return False
 
 
+def class_weapon_proficient(char_class: str, weapon_name: str) -> bool:
+    """按职业判定是否熟练该武器（解析 classes.py 的 weapon_prof 描述串）。
+
+    规则: R-ITM-013 武器熟练 — 不熟练武器攻击检定不加熟练加值
+    出处: 装备/武器.txt ; 各职业页「武器熟练」
+    支持的描述模式（PHB2024 十二职业实际出现的全部变体）：
+      - 「简易和军用武器」→ 全部熟练
+      - 「简易武器」→ 仅简易
+      - 「简易与具有轻型词条的军用武器」（武僧）→ 简易 + 带轻型的军用
+      - 「简易武器和具有灵巧或轻型词条的军用武器」（游荡者）→ 简易 + 带灵巧/轻型的军用
+    徒手始终熟练；未知职业/未知武器保守放行（避免误伤自定义内容）。
+    """
+    if weapon_name in ("", "徒手", "徒手打击"):
+        return True
+    from .classes import get_class
+    cdef = get_class(char_class)
+    if not cdef:
+        return True
+    prof_str = cdef.get("weapon_prof", "") or ""
+    if weapon_name not in WEAPONS:
+        return True
+    entry = WEAPONS[weapon_name]
+    cat = entry["cat"]
+    props = entry.get("props", [])
+    if "简易和军用" in prof_str:
+        return True
+    if cat.startswith("简易"):
+        return "简易" in prof_str
+    if cat.startswith("军用"):
+        if "词条" in prof_str:          # 条件熟练：按词条匹配
+            need = []
+            if "轻型" in prof_str:
+                need.append("轻型")
+            if "灵巧" in prof_str:
+                need.append("灵巧")
+            return any(p in props for p in need)
+        return "军用" in prof_str
+    return True
+
+
 # ──────────────────────────────────────────────────────────────────────────
 # 职业→起始默认武器
 # 角色创建时填入 equipped_weapon 的兜底（不解析 classes.starting_equipment 自由文本）。

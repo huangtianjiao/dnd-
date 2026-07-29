@@ -1,0 +1,22 @@
+d100 遭遇 01         1 只 枯藤怪 vine blight 02         2d6 只 大地精 hobgoblin 或 2d6 只 兽人 orc 03         2d4 只 猿 ape 或 2d4 的 半羊人 satyr 04         1d3 的 鬼火 will-o’-wisp 05         1d4 的 毒蛇群 swarm of
+poisonous snakes 06         1 只 兽人 · 格乌什之眼 orc Eye of Gruumsh ， 1d3 只 魔兽人 orog 和 1d8+2 只 兽人 orc 07         1d3 条 蟒蛇 constrictor
+snake 或 1d4 只 老虎 tiger 08         1 只 地精头目 goblin
+boss 和 3d6 只 地精 goblin 09         1 只 妖精龙 faerie
+dragon （任何年龄） 10         1 只 棕熊 brown bear 或 1d6+2 只 黑熊 black bear 11-13       1d4 只 巨野猪 giant boar 14-15       1d8+1 只 巨蜘蛛 giant
+spider 16-17       1 只 蜥蜴人萨满 lizardfolk
+shaman 和 2d4 只 蜥蜴人 lizardfolk 18         1d10 只 巨蟾蜍 giant
+toad 19         1d4 只 掘地虫 ankheg 20         1d3 棵 启蒙树木 awakened
+tree （白天）或 1 个 女妖 banshee （夜晚） 21-25 一间几乎被树林完全掩盖住的小屋。屋内除了一个铸铁制造的大烤炉之外空无一物。 26         1 条 羽蛇 couatl 27-28       1d4 只 食人魔 ogre 或 1d6+2 只 半食人魔 half-ogre 29-30       1 只 鬣狗人首领 gnoll pack
+lord 和 1d4+1 只 巨鬣狗 giant
+hyena 31-32       1d6 的 鼠人 wererat 33         1d4 只 穴居攫怪 grick 34         1d8+1 的 纯血蛇人 yuan-ti
+pureblood 35         1d6 匹 天马 pegasus 36-40 一道古老的石质拱门，有很明显的精灵工艺痕迹。任何穿过拱门的角色在接下来的 1 小时内所做的感知（察觉）检定具有优势。 41-42       1d6+2 的 树精 dryad 43         1d4 只 巨赤鹿 giant elk 44         1d8+1 的 鸟妖 harpy 45-46       1 个 强盗首领 bandit captain ， 1 位 德鲁伊 druid 和 1d6+5 的 强盗 bandit 47-48       2d4 只 恐狼 dire wolf 49-50       2d4 只 熊地精 bugbear 51-52       2d4 的 人马 centaur 53-54       3d10 只 闪现犬 blink dog 55-56       1d4 只 枭熊 owlbear 57-58       1d8+1 的 狂战士 berserker 59-60       1d3 的 绿鬼婆 green hag 61-65 一池清澈的水，池边躺着 1d6 只熟睡的动物 66-67       1d4 的 狼人 werewolf 68-69       1 个 熊人 werebear 70-71       1d8+1 只 伊特怪 ettercap 72-73       2d10 只 赤鹿 elk 74-75       1d4 的 老兵 veteran 76-80 一棵老树，树干上刻着一张满是皱纹的脸 81         1d4 的 野猪人 wereboar 82         2d4 只 移位兽 displacer
+beast 83         1d4 只 蔓生怪 shambling
+mound 84         1 只 大地精长官 hobgoblin
+captain ， 3d10 只 大地精 hobgoblin 和 4d12 只 地精 goblin 85         1 个 憎恶蛇人 yuan-ti
+abomination 86         1d8+1 只 相位蜘蛛 phase
+spider 87         1d4 只 巨魔 troll 88         2d4 的 恶咒蛇人 yuan-ti
+malison 89         1 只 恶鬼 oni 90         1d4 只 独角兽 unicorn 91         1d6+2 的 虎人 weretiger 92         1 只 青年绿龙 young
+green dragon 93         1d4 只 石化牛 gorgon 94         1d6+2 只 鬣狗人 · 耶诺古毒牙 gnoll fang of Yeenoghu 95         1 个 树人 treant 96         1d4 的 还魂尸 revenant 97         1 只 穴居攫怪头领 grick
+alpha 和 1d6+1 只 穴居攫怪 grick 98         1d4 只 巨猿 giant ape 99         1 个 守秘纳迦 guardian
+naga 00         1 只 成年金龙 adult gold
+dragon

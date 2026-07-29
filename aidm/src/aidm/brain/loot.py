@@ -431,6 +431,13 @@ def attune_magic_item(character_id: int,
         return {"success": False, "message": f"角色不存在: {character_id}",
                 "attuned_items": []}
 
+    # 2.5. 拥有性门控：只能同调物品栏内的魔法物品（玩家手册 同调 ——
+    # 同调需与物品共处一个短休，未持有的物品无从同调）
+    if item_name not in ch.inventory:
+        return {"success": False,
+                "message": f"{item_name} 不在物品栏中，无法同调（需先获得该物品）",
+                "attuned_items": ch.attuned_items}
+
     # 3. 检查同调上限
     current = ch.attuned_items
     if len(current) >= ch.MAX_ATTUNED_ITEMS:

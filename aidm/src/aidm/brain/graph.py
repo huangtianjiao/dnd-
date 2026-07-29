@@ -38,6 +38,7 @@ from ..stats import store, models
 
 # 多智能体架构接入：Director + Rule Judge 从 agents 包导入
 from ..agents.director import classify_intent as _director_classify
+from ..agents.director import route_action as _director_route
 from ..agents.rule_judge import (
     retrieve as _judge_retrieve,
     retrieve_retry as _judge_retrieve_retry,
@@ -243,7 +244,20 @@ def _target_condition_state(it: dict) -> conditions.ConditionState:
 
 def _resolve_attack(ch, it) -> dict:
     ability = it.get("ability") or "str"
-    bonus = ch.ability_mod(ability) + ch.prof()
+    # —— 武器确定（掷骰前，熟练度影响命中加值）——
+    # 武器三级回退：玩家明说 → 角色卡 equipped_weapon → 徒手(1+力量)
+    # 详见 docs/GRAPH_DYNAMIC_REFACTOR.md 阶段A4/B1
+    wname = it.get("weapon") or getattr(ch, "equipped_weapon", "") or "徒手"
+    weapon_substituted = None
+    # 拥有性门控：未拥有的武器不可用，降级为已装备武器/徒手（R-ITM-012）；
+    # 拥有集 = inventory ∪ 当前装备（历史角色 inventory 可能未含起始武器）
+    _owned = set(getattr(ch, "inventory", []) or []) | {getattr(ch, "equipped_weapon", ""), "徒手"}
+    if wname not in _owned:
+        weapon_substituted = wname   # 叙述层据此说明换成了实际武器
+        wname = getattr(ch, "equipped_weapon", "") or "徒手"
+    # 武器熟练门控（R-ITM-013）：不熟练武器攻击检定不加熟练加值
+    proficient = equipment.class_weapon_proficient(ch.char_class, wname)
+    bonus = ch.ability_mod(ability) + (ch.prof() if proficient else 0)
     ac = int(it.get("target_ac") or 10)
 
     # R-GLS-044~058 条件优劣势：从角色卡读攻击者状态 + 从 intent 读目标状态
@@ -263,11 +277,13 @@ def _resolve_attack(ch, it) -> dict:
     atk = check.attack_roll(bonus=bonus, ac=ac, advantage=adv, disadvantage=dis,
                             circ=exh_penalty)             # R-CMB-017/022/023
     out = {"kind": "attack", "attack_total": atk.total, "d20": atk.d20,
-           "hit": atk.hit, "crit": atk.crit, "rolls": atk.rolls, "target_ac": ac, "bonus": bonus}
+           "hit": atk.hit, "crit": atk.crit, "rolls": atk.rolls, "target_ac": ac,
+           "bonus": bonus, "weapon": wname}
+    if weapon_substituted:
+        out["weapon_substituted"] = weapon_substituted
+    if not proficient:
+        out["weapon_not_proficient"] = True   # 叙述层可提及持用生疏
     if atk.hit:
-        # 武器三级回退：玩家明说 → 角色卡 equipped_weapon → 徒手(1+力量)
-        # 详见 docs/GRAPH_DYNAMIC_REFACTOR.md 阶段A4/B1
-        wname = it.get("weapon") or getattr(ch, "equipped_weapon", "") or "徒手"
         dice_expr, dmg_type = equipment.resolve_weapon_damage(wname)
         # R-GLS-052/058 麻痹/昏迷5尺内近战命中即重击
         crit = atk.crit or mods.target_auto_crit_if_hit
@@ -278,7 +294,7 @@ def _resolve_attack(ch, it) -> dict:
             vulnerabilities=it.get("vulnerabilities", []),
             immunities=it.get("immunities", []))
         out.update({"damage": dr.final, "damage_type": dmg_type,
-                    "damage_rolls": dr.dice_rolls, "weapon": wname,
+                    "damage_rolls": dr.dice_rolls,
                     "resisted": dr.resisted, "vulnerable": dr.vulnerable, "immune": dr.immune})
     return out
 
@@ -303,6 +319,14 @@ def _resolve_cast(ch, it) -> dict:
     # 则回退 LLM 猜测，不硬性报错——因 spells 表条目有限，报错会阻断多数施法。
     # 详见 docs/GRAPH_DYNAMIC_REFACTOR.md 阶段B2
     spell_name = it.get("spell_name", "")
+    # 拥有性门控：只能施展已学会的法术（R-SPL-036 职业法术列表）。
+    # 历史角色 known_spells 为空 → 动态回退职业默认表（不落盘，仅供校验）
+    if spell_name:
+        from ..data import spells as _sp_mod
+        _known = ch.known_spells or _sp_mod.default_known_spells(ch.char_class, ch.level)
+        if spell_name not in _known:
+            return {"kind": "cast",
+                    "error": f"尚未学会法术「{spell_name}」，无法施展（职业法术列表内且环阶可及的法术才可用）"}
     _spell = None
     if spell_name:
         try:
@@ -468,6 +492,24 @@ def _resolve_rest(state, ch, it) -> dict:
         hit_dice_to_spend = int(it.get("hit_dice_to_spend", 0))
         result = rest_mod.short_rest(ch, hit_dice_to_spend=hit_dice_to_spend)
     else:  # long
+        # 长休冷却（R-GLS-015）：完成后须等待至少 16 小时才能再次长休，
+        # 否则可无限长休刷满 HP/法术位/生命骰。上次长休完成时刻存
+        # Campaign.world_flags["last_long_rest_min_{cid}"]（apply_node 落盘）。
+        camp_id = state.get("campaign_id")
+        if camp_id:
+            try:
+                c = store.get_campaign(camp_id)
+                flags = c.world_flags if c else {}
+                last = flags.get(f"last_long_rest_min_{ch.id}")
+                now_min = int(flags.get("game_minutes", 8 * 60))
+                cd_min = rest_mod.LONG_REST_COOLDOWN_HOURS * 60
+                if last is not None and now_min - int(last) < cd_min:
+                    remain = cd_min - (now_min - int(last))
+                    return {"kind": "rest",
+                            "error": f"距上次长休不足{rest_mod.LONG_REST_COOLDOWN_HOURS}小时，"
+                                     f"还需等待约{max(1, remain // 60)}小时才能再次长休（可先短休）"}
+            except Exception as e:
+                _log.debug("长休冷却检查失败 camp=%s: %s", camp_id, e)
         result = rest_mod.long_rest(ch)
     result["kind"] = "rest"
     return result
@@ -732,8 +774,8 @@ def _resolve_travel(state, ch, it) -> dict:
         survival_total=nav_check.total, nav_dc=nav_dc,
     )
 
-    # 随机遭遇检定
-    encounter_result = exploration_mod.random_encounter_check()
+    # 随机遭遇检定已统一移至 resolve 的 _with_encounter 前置判定（矩阵#6：消除
+    # resolve travel 与 apply step5.5 双重检定结果可矛盾的问题）。
 
     # 被动察觉检测（队伍最高被动察觉，此处以角色单人代表）
     # 规则: R-DM-012  出处: 察觉.htm
@@ -755,7 +797,6 @@ def _resolve_travel(state, ch, it) -> dict:
             "nav_result": dataclasses.asdict(nav_result),
             "nav_check_total": nav_check.total,
             "nav_check_success": nav_check.success,
-            "encounter_result": dataclasses.asdict(encounter_result),
             "perception_result": dataclasses.asdict(perception_result),
             "nav_dc": nav_dc,
             "perception_dc": perception_dc,
@@ -785,23 +826,32 @@ def resolve(state: GameState) -> dict:
         return {"dice": {"kind": at, "error": "战斗中不能旅行/探索/休息/升级；逃跑用 dash/disengage，战斗用 attack/cast"}}
 
     if at == "attack":
-        return {"dice": _resolve_attack(ch, it)}
+        return _with_target_outcome(state, _resolve_attack(ch, it))
     if at == "cast":
-        return {"dice": _resolve_cast(ch, it)}
+        return _with_target_outcome(state, _resolve_cast(ch, it))
     if at in ("ability_check", "explore"):
-        return {"dice": _resolve_ability_check(ch, it)}
+        return _with_encounter(state, ch, _resolve_ability_check(ch, it))
     if at == "start_combat":
         return _resolve_start_combat(state, ch, it)
     if at == "end_combat":
         return {"dice": {"kind": "end_combat"}, "combat": {"active": False}}
     if at == "rest":
-        return {"dice": _resolve_rest(state, ch, it)}
+        _r = _resolve_rest(state, ch, it)
+        # 矩阵#8：休息时间推进（短休 1 小时/长休 8 小时，R-GLS-014/015）
+        _camp_r = state.get("campaign_id")
+        if _camp_r and not _r.get("error"):
+            _pi_r = state.get("player_input", "") or ""
+            _rt = it.get("rest_type") or ("long" if ("长休" in _pi_r or "long" in _pi_r.lower()) else "short")
+            _ti = _advance_game_time(_camp_r, 480 if _rt == "long" else 60)
+            if _ti.get("day"):
+                _r["time"] = _ti
+        return {"dice": _r}
     if at == "social":
         return {"dice": _resolve_social(state, ch, it)}
     if at == "levelup":
         return {"dice": _resolve_levelup(ch, it)}
     if at == "travel":
-        return {"dice": _resolve_travel(state, ch, it)}
+        return _with_encounter(state, ch, _resolve_travel(state, ch, it))
     # —— 战术动作（不掷骰，仅标记状态）——
     if at == "dash":
         return {"dice": {"kind": "dash", "extra_movement_ft": ch.speed}}
@@ -821,7 +871,7 @@ def resolve(state: GameState) -> dict:
     if at == "hide":
         return {"dice": _resolve_hide(ch, it)}
     if at == "search":
-        return {"dice": _resolve_search(ch, it)}
+        return _with_encounter(state, ch, _resolve_search(ch, it))
     if at == "use_item":
         item = it.get("item_name", "") or ""
         effect = it.get("item_effect", "") or ""
@@ -830,19 +880,28 @@ def resolve(state: GameState) -> dict:
         # 关键词 → 掷标准治疗药水(2d4+2)生成 heal，由 apply_node 应用（含死亡计数归零
         # R-ADD-008），打通 0HP倒下→喝药水→恢复HP。
         if any(k in (item + effect + pi) for k in ("治疗", "药水", "治愈", "回血", "生命药剂")):
-            rolls = engine_dice.roll_dice("2d4+2")
-            return {"dice": {"kind": "use_item", "item": item or "治疗药水", "effect": effect,
+            # 拥有性门控：包里必须有治疗药水类物品才能喝（消耗品，用后移除）
+            _inv = getattr(ch, "inventory", []) or []
+            _potion = next((n for n in _inv
+                            if "药水" in n and ("治疗" in n or "治愈" in n or "疗伤" in n)), None)
+            if _potion is None:
+                return {"dice": {"kind": "use_item", "item": item or "治疗药水",
+                                 "error": "你没有治疗药水（需先通过战利品/购买获得）"}}
+            # 高级治疗药水 4d4+4，普通 2d4+2（DMG2024 药水详述）
+            _expr = "4d4+4" if "高级" in _potion else "2d4+2"
+            rolls = engine_dice.roll_dice(_expr)
+            return {"dice": {"kind": "use_item", "item": _potion, "effect": effect,
                              "heal": rolls.total, "heal_rolls": rolls.dice_rolls,
-                             "heal_type": "治疗药水"}}
+                             "heal_type": "治疗药水", "consumed_item": _potion}}
         return {"dice": {"kind": "use_item", "item": item, "effect": effect}}
     if at == "grapple":
         return {"dice": _resolve_grapple(ch, it)}
     if at == "shove":
         return {"dice": _resolve_shove(ch, it)}
     if at == "study":
-        return {"dice": _resolve_study(ch, it)}
+        return _with_encounter(state, ch, _resolve_study(ch, it))
     if at == "opportunity_attack":
-        return {"dice": _resolve_opportunity_attack(ch, it)}
+        return _with_target_outcome(state, _resolve_opportunity_attack(ch, it))
     return {"dice": {}}  # other → 仅叙事
 
 
@@ -929,12 +988,48 @@ def _resolve_opportunity_attack(ch, it) -> dict:
     return out
 
 
+def _determine_surprise(state: GameState, ch, it, combatants) -> dict:
+    """B3 突袭判定（矩阵#7）：战斗开场显式输出突袭判定结果。
+
+    规则: R-CMB-002 + R-GLS-009（2024 突袭=先攻检定劣势，不跳回合）
+    优先级：intent.surprise 显式指定("player"/"enemy"/"none") > 自动判定
+    （敌方隐匿 d20+最高dex_mod vs 玩家被动察觉 10+wis_mod，隐匿胜→玩家被突袭）。
+    被突袭方 Combatant.surprised=True，由 roll_initiative 施加先攻劣势。
+    """
+    explicit = str(it.get("surprise") or "").strip().lower()
+    if explicit in ("player", "enemy", "none"):
+        surprised_side = None if explicit == "none" else explicit
+        note = "DM/系统指定"
+    else:
+        enemies = [c for c in combatants if not c.is_player]
+        surprised_side = None
+        note = "无敌方，无突袭"
+        if enemies:
+            stealth_best = max(int(getattr(c, "dex_mod", 0) or 0) for c in enemies)
+            stealth_roll = engine_dice.roll_die(20) + stealth_best
+            passive_perc = 10 + ch.ability_mod("wis")
+            if stealth_roll >= passive_perc:
+                surprised_side = "player"
+                note = f"敌方隐匿{stealth_roll}≥你的被动察觉{passive_perc}，你被突袭"
+            else:
+                note = f"敌方隐匿{stealth_roll}<你的被动察觉{passive_perc}，双方互相察觉"
+    if surprised_side:
+        for c in combatants:
+            if surprised_side == "player" and c.is_player:
+                c.surprised = True
+            elif surprised_side == "enemy" and not c.is_player:
+                c.surprised = True
+    return {"surprised_side": surprised_side, "note": note}
+
+
 def _resolve_start_combat(state: GameState, ch, it) -> dict:
-    """开始战斗：roll_initiative + persist。R-CMB-002
+    """开始战斗：突袭判定 + roll_initiative + persist。R-CMB-002
 
     敌人 HP 从 intent.enemies[].hp_max 读取（由 classify 从怪物数据/LLM 填入），
     未给则用保守默认 7（约一只低 CR 小怪），使战斗可分出胜负。
     玩家参战者 hp 从 Character 同步到 Combatant（角色卡仍为权威来源）。
+    B3：dice 显式输出 surprise 判定结果与先攻序列（含 surprised 标记），
+    供 narrate 按「遭遇→突袭→先攻」叙述（矩阵#7）。
     """
     enemies = it.get("enemies") or [{"name": "敌人", "dex_mod": 1, "side": "enemy"}]
     combatants = [cmb.Combatant(cid=str(state["character_id"]), name=ch.name,
@@ -966,6 +1061,8 @@ def _resolve_start_combat(state: GameState, ch, it) -> dict:
                                         hp=ehp, hp_max=ehp,
                                         attack_bonus=eab, damage_dice=edd, damage_type=edt,
                                         speed=espd))
+    # B3 突袭判定（2024 版：被突袭方先攻劣势，不跳回合）——在 roll_initiative 之前标记
+    surprise_info = _determine_surprise(state, ch, it, combatants)
     combat = cmb.Combat()
     order = cmb.roll_initiative(combatants)                  # R-CMB-002
     combat.participants = combatants
@@ -973,12 +1070,253 @@ def _resolve_start_combat(state: GameState, ch, it) -> dict:
     combat.round = 1; combat.current_index = 0; combat.active = True
     cs = store.save_combat(state["campaign_id"], combat)     # persist
     return {"dice": {"kind": "start_combat",
+                     "surprise": surprise_info,
                      "initiative_order": [{"name": c.name, "init": c.initiative,
-                                           "side": c.side} for c in order]},
+                                           "side": c.side,
+                                           "surprised": bool(getattr(c, "surprised", False))}
+                                          for c in order]},
             "combat": {"active": True, "combat_id": cs.id, "round": 1,
                        "current_index": 0,
                        "combatants": [{"name": c.name, "init": c.initiative, "side": c.side,
                                        "cid": c.cid, "hp": c.hp, "hp_max": c.hp_max} for c in order]}}
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 攻击目标确定性（矩阵#3/BUG#5：target_cid 预判结果，narrate 与实际扣血一致）
+# ──────────────────────────────────────────────────────────────────────────
+
+_HEAL_TYPES = ("治疗", "heal", "healing")
+
+
+def _with_target_outcome(state: GameState, dice_out: dict) -> dict:
+    """BUG#5/B2：攻击/单体法术造成伤害时，把目标与预计结果写入 dice。
+
+    classify 已把 target_name 匹配为 intent.target_cid；此处预判击杀并写入
+    dice.target_cid/target_name/target_hp_before/target_killed：
+      - narrate 据此叙述（击杀/未击杀与 apply 实际扣血一致，不再谎报击杀）
+      - apply 据此对 target_cid 确定性扣血（不再依赖 LLM state_changes 选目标）
+    AoE/未命中/豁免成功无伤害/治疗法术不预判（AoE 多目标保留 state_changes 分支）。
+    """
+    out: dict = {"dice": dice_out}
+    if dice_out.get("error") or dice_out.get("damage_type") in _HEAL_TYPES:
+        return out
+    dmg = int(dice_out.get("damage") or 0)
+    tcid = (state.get("intent", {}) or {}).get("target_cid")
+    if not tcid or dmg <= 0:
+        return out
+    kind = dice_out.get("kind")
+    if kind in ("attack", "opportunity_attack") and not dice_out.get("hit"):
+        return out
+    if kind == "cast":
+        if not dice_out.get("hit", True) and not dice_out.get("auto_hit"):
+            return out  # 法术攻击未命中
+        if dice_out.get("save_success") and dmg <= 0:
+            return out  # 豁免成功且无残伤
+    for c in (state.get("combat", {}) or {}).get("combatants", []):
+        if c.get("cid") == tcid:
+            hp_before = int(c.get("hp") or 0)
+            dice_out["target_cid"] = tcid
+            dice_out["target_name"] = c.get("name", "")
+            dice_out["target_hp_before"] = hp_before
+            dice_out["target_killed"] = dmg >= hp_before > 0
+            break
+    return out
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 遇敌前置判定（矩阵#1/#2/#6：narrate 之前判定 + 场景过滤 + 单次检定）
+# ──────────────────────────────────────────────────────────────────────────
+
+# 野外/危险场景关键词：命中则不抑制遭遇（优先级高于安全词，如"前往城市的路上"含"路"）
+_WILD_SCENE_KEYWORDS = (
+    "野", "林", "山", "洞", "地城", "沼泽", "荒", "路", "径", "谷", "废墟",
+    "forest", "dungeon", "cave", "wild", "road", "mountain", "swamp", "ruin",
+)
+# 镇内/室内等安全场景关键词：命中且不涉及野外词 → 不刷野外战斗遭遇
+_SAFE_SCENE_KEYWORDS = (
+    "镇", "村", "城", "市", "酒馆", "旅舍", "旅店", "客栈", "庙", "神殿", "教堂",
+    "商店", "店铺", "家", "屋内", "室内", "书房", "大厅", "王宫", "城堡",
+    "tavern", "inn", "town", "village", "city", "indoor", "shop", "temple",
+)
+
+
+def _scene_blocks_encounter(camp) -> bool:
+    """场景过滤（矩阵#2）：镇内/室内等安全场景不刷野外战斗遭遇。
+
+    依据 Scene.location + environment 关键词推断；无场景信息时不抑制（保守放行）。
+    "前往城市的路上"这类同时含安全词与野外词的文本按野外处理（不抑制）。
+    """
+    try:
+        sc = store.get_scene(camp)
+    except Exception:
+        return False
+    if not sc:
+        return False
+    text = f"{sc.location or ''} {sc.environment or ''}".lower()
+    if not text.strip():
+        return False
+    if any(k in text for k in _WILD_SCENE_KEYWORDS):
+        return False
+    return any(k in text for k in _SAFE_SCENE_KEYWORDS)
+
+
+def _pick_encounter_enemies(ch) -> tuple:
+    """按角色等级(CR段)从 monsters 表选遭遇怪（沿用原 apply step5.5 逻辑）。
+
+    BUG-E(遭遇平衡): n>=2 时仅从低CR(<=0.5)怪池选取，避免对单人角色生成致命级遭遇
+    （2×CR1≈CR2，对单人3级为致命级，R-DMG 遭遇难度阈值）。
+    返回 (enemies, enemy_name)；monsters 表不可用时兜底哥布林。
+    """
+    n = 1 if engine_dice.roll_die(2) == 1 else 2
+    try:
+        from ..data import monsters as _mon
+        _pool = _mon.pick_encounter_pool(ch.level)
+        if n >= 2:
+            _low = [m for m in _pool if getattr(m, "cr", 1) <= 0.5]
+            _sel = _low if _low else _pool
+        else:
+            _sel = _pool
+        _m = _sel[engine_dice.roll_die(len(_sel)) - 1] if _sel else None
+    except Exception:
+        _m = None
+    if _m:
+        _md = _m.to_combatant_dict()
+        return [dict(_md) for _ in range(n)], _m.name
+    return ([{"name": "哥布林", "dex_mod": 2, "side": "enemy", "hp_max": 7,
+              "attack_bonus": 4, "damage_dice": "1d6+2", "damage_type": "挥砍"}
+             for _ in range(n)], "哥布林")
+
+
+# ── 游戏内时间推进 + 遭遇时钟（矩阵#4/#5/#8）───────────────────────────────
+
+# 动作→时间推进（分钟）：旅行按小时、区域探索按半小时、搜索/研究/检定按10分钟
+_ACTION_MINUTES = {"travel": 60, "explore": 30, "search": 10, "study": 10, "ability_check": 10}
+# 遭遇时钟：每 4 游戏小时允许 1 次遭遇检定（对齐规则书“通常每日 2 次检定”，矩阵#4）
+_ENCOUNTER_CHECK_INTERVAL_MIN = 240
+# 非战斗遭遇叙述提示（矩阵#5：遭遇不一定是战斗）
+_ENCOUNTER_HINTS = {
+    "environment": "环境事件：天气骤变/地形阻碍/自然奇观等，呈现为旅途插曲",
+    "omen": "痕迹预兆：生物足迹/营地残骸/远处烟火等，暗示附近有威胁但未遭遇",
+    "npc": "NPC相遇：旅人/商人/巡逻队等友善或中立角色，可互动",
+}
+
+
+def _encounter_type(roll: int) -> str:
+    """遭遇类型分布（d20）：遭遇不一定是战斗（矩阵#5）。"""
+    if roll <= 10:
+        return "combat"        # 50% 战斗遭遇
+    if roll <= 15:
+        return "environment"   # 25% 环境事件
+    if roll <= 19:
+        return "omen"          # 20% 痕迹/预兆
+    return "npc"               # 5%  NPC 相遇
+
+
+def _advance_game_time(camp: int, minutes: int) -> dict:
+    """推进战役游戏内时间（矩阵#8），存 Campaign.world_flags["game_minutes"]。
+
+    返回 {advanced, minutes_before/after, day, clock}；clock 供场景时间与叙述派生。
+    默认起点：第 1 日 08:00（480 分钟）。
+    """
+    info: dict = {"advanced": minutes}
+    try:
+        c = store.get_campaign(camp)
+        if not c:
+            return info
+        flags = c.world_flags
+        before = int(flags.get("game_minutes", 8 * 60))
+        after = before + max(0, int(minutes))
+        flags["game_minutes"] = after
+        c.set_world_flags(flags)
+        store.save_campaign(c)
+        day = after // 1440 + 1
+        hour = (after % 1440) // 60
+        clock = ("凌晨" if hour < 6 else "早晨" if hour < 9 else
+                 "上午" if hour < 12 else "午后" if hour < 14 else
+                 "下午" if hour < 17 else "黄昏" if hour < 20 else "夜晚")
+        info.update({"minutes_before": before, "minutes_after": after,
+                     "day": day, "clock": clock})
+    except Exception as e:
+        _log.debug("游戏时间推进失败 campaign=%s: %s", camp, e)
+    return info
+
+
+def _encounter_clock_allows(camp: int, now_min: int) -> tuple:
+    """遭遇时钟（矩阵#4）：每 4 游戏小时最多 1 次遭遇检定（对齐“每日 2 次”）。
+
+    返回 (allowed, wait_min)。到点时记录本次检定时刻（写回 world_flags）。
+    """
+    try:
+        c = store.get_campaign(camp)
+        if not c:
+            return True, 0
+        flags = c.world_flags
+        last = int(flags.get("encounter_last_check_min", -10 ** 9))
+        wait = _ENCOUNTER_CHECK_INTERVAL_MIN - (now_min - last)
+        if wait > 0:
+            return False, wait
+        flags["encounter_last_check_min"] = now_min
+        c.set_world_flags(flags)
+        store.save_campaign(c)
+        return True, 0
+    except Exception:
+        return True, 0
+
+
+def _with_encounter(state: GameState, ch, dice_out: dict) -> dict:
+    """探索类动作统一处理（矩阵#1/#2/#4/#5/#6/#8，BUG#6 修复）。
+
+    在 resolve 阶段（narrate 之前）完成：时间推进 → 场景过滤 → 遭遇时钟 →
+    单次遭遇检定 → 遭遇类型（非战斗遭遇织入叙述）→ 战斗遭遇即开战。
+    结果写 dice.time / dice.encounter，combat 快照随返回值 merge。
+    规则: R-DM 随机遇遇——通常每日 2 次检定，遭遇不一定是战斗；玩家无权召唤怪物。
+    """
+    out: dict = {"dice": dice_out}
+    camp = state.get("campaign_id")
+    if not camp or not ch or ch.dead or dice_out.get("error"):
+        return out
+    if state.get("combat", {}).get("active"):
+        return out
+    # 矩阵#8：探索时间推进（旅行1h/区域探索30min/搜索研究检定10min）
+    time_info = _advance_game_time(camp, _ACTION_MINUTES.get(dice_out.get("kind"), 10))
+    if time_info.get("day"):
+        dice_out["time"] = time_info
+    # 场景过滤（矩阵#2）：镇内/室内不刷野外遭遇
+    if _scene_blocks_encounter(camp):
+        dice_out["encounter"] = {"triggered": False, "suppressed": "safe_scene"}
+        return out
+    # 遭遇时钟（矩阵#4）：每 4 游戏小时 1 次检定，杜绝每动作 15% 的频率失控
+    allowed, wait = _encounter_clock_allows(camp, int(time_info.get("minutes_after", 0)))
+    if not allowed:
+        dice_out["encounter"] = {"triggered": False, "suppressed": "clock",
+                                 "next_check_in_min": wait}
+        return out
+    # 单次遭遇检定（矩阵#6：原 resolve travel 与 apply 各掷一次，结果可矛盾）
+    enc = exploration_mod.random_encounter_check()
+    enc_info = dataclasses.asdict(enc)
+    if not enc.triggered:
+        dice_out["encounter"] = enc_info
+        return out
+    # 遭遇类型（矩阵#5）：触发不一定是战斗——环境事件/痕迹预兆/NPC 相遇
+    enc_type = _encounter_type(engine_dice.roll_die(20))
+    enc_info["encounter_type"] = enc_type
+    if enc_type != "combat":
+        enc_info.update({"combat_started": False,
+                         "prompt_hint": _ENCOUNTER_HINTS.get(enc_type, "")})
+        dice_out["encounter"] = enc_info
+        return out
+    # 战斗遭遇 → 选怪 → 立即开战（矩阵#1：narrate 之前完成）
+    enemies, enc_name = _pick_encounter_enemies(ch)
+    enc_state = {"character_id": state.get("character_id"), "campaign_id": camp}
+    enc_dice = _resolve_start_combat(enc_state, ch,
+                                     {"action_type": "start_combat", "enemies": enemies})
+    enc_info.update({"combat_started": True, "enemy_name": enc_name,
+                     "enemy_count": len(enemies),
+                     "surprise": enc_dice.get("dice", {}).get("surprise", {}),
+                     "initiative_order": enc_dice.get("dice", {}).get("initiative_order", [])})
+    dice_out["encounter"] = enc_info
+    out["combat"] = enc_dice.get("combat", {})
+    return out
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -1052,16 +1390,64 @@ def narrate(state: GameState) -> dict:
         f"规则摘要:\n{dig}\n玩家输入: {state['player_input']}\n"
         "然后输出结构化状态变更 + 更新后的场景叙事。只输出JSON: "
         '{"narration":"...", "state_changes":[{"target":"怪物名或character_id","field":"hp","delta":-N,"reason":"..."}], '
-        '"scene_update":"行动后场景的新状态叙事(1-2句,更新场景)"}\n'
+        '"scene_update":"行动后场景的新状态叙事(1-2句,更新场景)", '
+        '"location_change":"玩家实际移动到的新地点短名(仅当本次行动使地点发生改变,如从镇上进入矿坑/森林/洞穴;原地行动则为空串)"}\n'
         "然后给出3个玩家下一步可做的行动选项(区分细节,如DMG区分选项)。\n"
-        "只输出JSON: {\"narration\":\"叙事\",\"state_changes\":[],\"scene_update\":\"\",\"action_options\":[\"选项1\",\"选项2\",\"选项3\"]}\n"
+        "只输出JSON: {\"narration\":\"叙事\",\"state_changes\":[],\"scene_update\":\"\",\"location_change\":\"\",\"action_options\":[\"选项1\",\"选项2\",\"选项3\"]}\n"
     )
+    # 遭遇前移（矩阵#1/BUG#6）：resolve 已判定遇敌并开战，narrate 按序叙述遭遇，
+    # 不再由 apply 事后硬拼"【遭遇】"造成叙述自相矛盾。
+    # B3 战斗开场叙述（矩阵#7）：按「遭遇→突袭→先攻→对峙」顺序叙述，
+    # 覆盖遇敌开战（encounter.combat_started）与玩家/DM 主动开战（kind==start_combat）。
+    _enc = dice.get("encounter", {})
+    if _enc.get("combat_started") or dice.get("kind") == "start_combat":
+        _sp = dice.get("surprise") or _enc.get("surprise") or {}
+        if _sp.get("surprised_side") == "player":
+            _sp_text = f"②突袭判定：{_sp.get('note', '你被突袭')}（先攻劣势已体现）→"
+        elif _sp.get("surprised_side") == "enemy":
+            _sp_text = f"②突袭判定：{_sp.get('note', '敌人猝不及防')}（敌方先攻劣势）→"
+        else:
+            _sp_text = f"②突袭判定：{_sp.get('note', '双方互相察觉，无突袭')}→" if _sp else ""
+        _intro = (f"探索中触发遭遇：{_enc.get('enemy_count')}只「{_enc.get('enemy_name')}」出现。"
+                  if _enc.get("combat_started") else "战斗开始。")
+        prompt += (
+            f"\n【战斗开场】{_intro}\n"
+            f"按此顺序叙述(2-4句)：①敌人如何出现/对峙如何形成(环境/声音/视觉冲击)→{_sp_text}"
+            "③先攻序列(见战斗数据,逐一报出先后,序列靠前者抢占先机)→④开场对峙局势。\n"
+            "玩家尚未行动，不要叙述玩家的攻击或伤害结果。\n"
+        )
+    # 击杀/伤害确认（BUG#5/B2）：resolve 已按 target_cid 预判结果，叙述必须与之一致
+    if dice.get("target_killed"):
+        prompt += (f"\n【击杀确认】你的攻击/法术击杀了「{dice.get('target_name')}」"
+                   f"（伤害{dice.get('damage')}≥其剩余HP{dice.get('target_hp_before')}），请叙述其倒地身亡。\n")
+    elif dice.get("target_cid") and int(dice.get("damage") or 0) > 0:
+        prompt += (f"\n【伤害确认】你的攻击/法术对「{dice.get('target_name')}」造成{dice.get('damage')}点伤害，"
+                   "其尚未倒下——不要宣称击杀。\n")
+    # 非战斗遭遇叙述（矩阵#5）：环境事件/痕迹预兆/NPC相遇，织入叙述不强行开战
+    if _enc.get("triggered") and not _enc.get("combat_started") and _enc.get("encounter_type"):
+        prompt += (f"\n【非战斗遭遇】探索中触发遭遇：{_enc.get('prompt_hint', '')}\n"
+                   "将其自然织入叙述(2-3句)，给出可互动的钩子，不要开战。\n")
+    # 时间推进提示（矩阵#8）：叙述可体现游戏内时间光影/作息变化
+    _time = dice.get("time") or {}
+    if _time.get("clock"):
+        prompt += (f"\n【时间推进】游戏内时间推进至第{_time.get('day')}日{_time.get('clock')}"
+                   "（光影/作息变化可体现在叙述中）。\n")
+    # 伤势叙述规范（矩阵#12）：敌方半血以下提示浴血外观描述（DMG 战斗中的叙述）
+    if combat_ctx.get("active"):
+        _bloodied = [str(c.get("name", "")) for c in combat_ctx.get("combatants", [])
+                     if c.get("side") == "enemy" and not c.get("dead")
+                     and int(c.get("hp") or 0) > 0
+                     and int(c.get("hp") or 0) * 2 <= int(c.get("hp_max") or 1)]
+        if _bloodied:
+            prompt += (f"\n【伤势叙述】以下敌人已浴血（HP过半以下）：{'、'.join(_bloodied)}"
+                       "——叙述中体现其伤势外观（流血/踉跄/护住伤处），但不要透露具体HP数值。\n")
     raw = llm.chat("你是D&D DM,严格依据掷骰结果叙述,不改动数值。只输出JSON。", prompt, temperature=0.4)
     obj = _extract_json(raw)
     narration = obj.get("narration") or _strip_to_text(raw)
     return {"narration": narration,
             "state_changes": obj.get("state_changes", []),
             "scene_update": obj.get("scene_update", ""),
+            "location_change": obj.get("location_change", ""),
             "action_options": obj.get("action_options", [])}
 
 
@@ -1219,12 +1605,16 @@ def apply_node(state: GameState) -> dict:
         if _is_heal_sc:
             continue
         if field == "hp":
+            # 注入防护：LLM 给出的 delta 钳制到合理范围（±2×HP上限），
+            # 超出即为幻觉/异常值——过量伤害致死规则（R-DMG-014）在 2×上限内已可触发
+            _cap = max(1, 2 * int(ch.hp_max or 1))
+            delta = max(-_cap, min(_cap, delta))
             if delta < 0:
                 _apply_damage_to_character(ch, -delta, state)
             elif delta > 0:
                 _apply_healing_to_character(ch, delta)
         elif field == "temp_hp" and delta > 0:
-            ch.temp_hp = damage.grant_temp_hp(ch.temp_hp, delta)
+            ch.temp_hp = damage.grant_temp_hp(ch.temp_hp, min(delta, int(ch.hp_max or 1)))
 
     # 2) 施法消耗法术位 R-SPL-002
     if ch and state.get("dice", {}).get("kind") == "cast":
@@ -1245,6 +1635,18 @@ def apply_node(state: GameState) -> dict:
     # rest_mod 只计算不修改角色卡；此处将 HP 恢复 / 力竭 -1 / 临时HP清空 写回 Character。
     if ch and state.get("dice", {}).get("kind") == "rest":
         _apply_rest_to_character(ch, state["dice"])
+        # 长休完成 → 记录完成时刻（供 _resolve_rest 冷却检查，R-GLS-015）
+        if (camp and state["dice"].get("type") == "long"
+                and state["dice"].get("success")):
+            try:
+                _c_camp = store.get_campaign(camp)
+                if _c_camp:
+                    _fl = _c_camp.world_flags
+                    _fl[f"last_long_rest_min_{ch.id}"] = int(_fl.get("game_minutes", 8 * 60))
+                    _c_camp.set_world_flags(_fl)
+                    store.save_campaign(_c_camp)
+            except Exception as e:
+                _log.warning("长休时刻记录失败 camp=%s: %s", camp, e)
 
     # 2.6) 升级收益落盘 R-DM-043
     # _resolve_levelup 已对纯字典计算；此处把等级/HP 增量写回 Character。
@@ -1285,6 +1687,13 @@ def apply_node(state: GameState) -> dict:
         heal = int(state["dice"].get("heal", 0) or 0)
         if heal > 0:
             _apply_healing_to_character(ch, heal)
+        # 消耗品移除：药水用后从物品栏扣除（resolve 已做拥有性门控）
+        _consumed = state["dice"].get("consumed_item")
+        if _consumed:
+            _inv2 = ch.inventory
+            if _consumed in _inv2:
+                _inv2.remove(_consumed)
+                ch.set_inventory(_inv2)
 
     # 2.9) 施法治疗法术（疗伤术/治愈真言等）落盘：直接按 dice.damage(治疗) 应用到施法者，
     #      不依赖 narrate 的 state_changes——LLM 偶发漏给或用 name 而非 cid 致 step1 漏应用（BUG-F）。
@@ -1296,6 +1705,11 @@ def apply_node(state: GameState) -> dict:
                 _apply_healing_to_character(ch, _cast_heal)
 
     if ch:
+        # R-GLS-047 力竭 6 级即死（之前仅检定惩罚接入，6 级致死未强制）
+        if not ch.dead and ch.exhaustion >= 6:
+            ch.dead = True
+            state["narration"] = (state.get("narration", "") or "") + "\n【力竭】力竭达到 6 级，你死了。"
+            narration_changed = True
         store.save_character(ch)
 
     # 3) 战斗轮次推进 R-CMB-001/004 + 死亡豁免 R-DMG-017 + 怪物 HP 应用/判结束
@@ -1307,6 +1721,30 @@ def apply_node(state: GameState) -> dict:
             #     精确匹配，否则按 name 匹配第一个未死敌方。participants 与 initiative_order
             #     反序列化后是独立副本，找到目标后需双写。
             _enemy_damaged = False  # 追踪 LLM state_changes 是否已对敌方造成 hp 伤害（兜底用）
+            # 3a-target) BUG#5/B2 确定性扣血：攻击/单体法术按 dice.target_cid 直接扣血，
+            # 不再依赖 LLM 的 state_changes 选目标（LLM 会选错/编造目标致谎报击杀）。
+            # AoE/未给 target_cid 时跳过，保留下方 state_changes 与兑底分支。
+            _det_cid = None
+            _det_name = None
+            _dr0 = state.get("dice", {})
+            if (combat.active and _dr0.get("kind") in ("attack", "opportunity_attack", "cast")
+                    and _dr0.get("damage_type") not in _HEAL_TYPES
+                    and int(_dr0.get("damage") or 0) > 0 and _dr0.get("target_cid")):
+                _want = _dr0["target_cid"]
+                for _lst in (combat.participants, combat.initiative_order):
+                    for _c in _lst:
+                        if _c.cid == _want and not _c.is_player and not _c.dead:
+                            _det_cid = _c.cid
+                            _det_name = _c.name
+                if _det_cid:
+                    _dmg_val = int(_dr0["damage"])
+                    for _lst in (combat.participants, combat.initiative_order):
+                        for _c in _lst:
+                            if _c.cid == _det_cid:
+                                _c.hp = max(0, _c.hp - _dmg_val)
+                                if _c.hp <= 0:
+                                    _c.dead = True
+                    _enemy_damaged = True
             for chg in state.get("state_changes", []):
                 tgt = str(chg.get("target")); field = chg.get("field")
                 try:
@@ -1315,6 +1753,15 @@ def apply_node(state: GameState) -> dict:
                     continue
                 if field != "hp" or delta == 0 or tgt == str(cid):
                     continue
+                # B2：确定性扣血已应用时跳过 LLM 复述的敌方伤害（防双扣/防错目标）：
+                #   attack/opportunity_attack 单体攻击 —— 本回合伤害已全部确定应用，
+                #     LLM 的任何敌方负 delta 都不可信（选错目标/重复复述），一律跳过；
+                #   cast —— 可能是 AoE 多目标，仅跳过确定性目标本身，保留其他目标分支。
+                if _det_cid and delta < 0:
+                    if _dr0.get("kind") in ("attack", "opportunity_attack"):
+                        continue
+                    if tgt in (_det_cid, _det_name):
+                        continue
                 target_cid = None
                 for _lst in (combat.participants, combat.initiative_order):
                     for _c in _lst:
@@ -1345,6 +1792,7 @@ def apply_node(state: GameState) -> dict:
             _dr = state.get("dice", {})
             if (combat.active and not _enemy_damaged
                     and _dk in ("attack", "opportunity_attack", "cast")
+                    and _dr.get("damage_type") not in _HEAL_TYPES  # 治疗法术不扣敌方血
                     and int(_dr.get("damage") or 0) > 0):
                 _dmg_val = int(_dr["damage"])
                 _tgt_name = state.get("intent", {}).get("target_name", "")
@@ -1422,13 +1870,28 @@ def apply_node(state: GameState) -> dict:
                         f"\n【脱战】你成功摆脱追击逃离战斗（d20={_flee_roll}+dex vs DC{_flee_dc}）！"
                     narration_changed = True
                     store.save_combat(camp, combat)
-            if combat.active:
+            # 开战回合（遇敌前移，dice.encounter.combat_started）：不 advance——
+            # 先攻序列首位参战者的回合不应被跳过；直接进怪物回合循环，
+            # 先攻高于玩家的怪物立即行动（2024 突袭=先攻劣势，由 roll_initiative 处理）。
+            _just_started = bool(state.get("dice", {}).get("encounter", {}).get("combat_started"))
+            if combat.active and not _just_started:
                 cmb.advance_turn(combat)               # 玩家行动后推进到下一参战者
             monster_events = []
+            _skip_guard = 0
             while combat.active and ch:
                 cur = cmb.current_combatant(combat)
-                if cur is None or cur.is_player or cur.dead or cur.hp <= 0:
-                    break  # 轮到玩家或怪物已倒下 → 停止自动结算
+                if cur is None or cur.is_player:
+                    break  # 轮到玩家 → 停止自动结算
+                if cur.dead or cur.hp <= 0:
+                    # 跳过已倒下参战者（D4 实测：此前 break 会停在尸体上，
+                    # 玩家永无回合 → 战斗软锁）
+                    _skip_guard += 1
+                    # 安全阀：最多连续跳过一整圈参战者（+2 容错）；
+                    # 若全员均已倒下仍未由 check_combat_end 收尾，强制退出防死循环
+                    if _skip_guard > len(combat.initiative_order) + 2:
+                        break
+                    cmb.advance_turn(combat)
+                    continue
                 # 怪物回合：攻击玩家（玩家已倒下则跳过攻击）
                 if ch.hp_current > 0 and not ch.dead:
                     ev = _run_monster_turn(cur, ch, state)
@@ -1475,50 +1938,23 @@ def apply_node(state: GameState) -> dict:
             sc.situation = scene_update
             store.save_scene(sc)
 
-    # 5.5) 系统自动遇敌（R-DM 随机遇遇）：玩家无权召唤怪物/开战，故遇敌由系统判定。
-    #      玩家在探索/旅行/叙事推进类动作后，DM 可能引入遭遇（确定性掷骰，非玩家触发）。
-    _explore_kinds = ("explore", "travel", "ability_check", "other", "search", "study")
-    if (camp and ch and not combat_active and not ch.dead
-            and state.get("dice", {}).get("kind") in _explore_kinds):
-        try:
-            enc = exploration_mod.random_encounter_check()
-            if enc.triggered:
-                # B5: 按角色等级(CR段)从 monsters.py 选遇遇怪池，取真实数值，不再永远哥布林。
-                # 详见 docs/GRAPH_DYNAMIC_REFACTOR.md 阶段B5
-                try:
-                    from ..data import monsters as _mon
-                    _pool = _mon.pick_encounter_pool(ch.level)
-                    n = 1 if engine_dice.roll_die(2) == 1 else 2
-                    # BUG-E(遭遇平衡): n>=2 时仅从低CR(<=0.5)怪池选取，避免对单人
-                    # 角色生成致命级遭遇（2×CR1龙裔战士≈CR2，对单人3级为致命级，
-                    # R-DMG 遭遇难度阈值）。单怪仍可从全池取（含CR1，单人3级为中等）。
-                    if n >= 2:
-                        _low = [m for m in _pool if getattr(m, "cr", 1) <= 0.5]
-                        _sel = _low if _low else _pool
-                    else:
-                        _sel = _pool
-                    _m = _sel[engine_dice.roll_die(len(_sel)) - 1] if _sel else None
-                except Exception:
-                    _m = None
-                if _m:
-                    _md = _m.to_combatant_dict()
-                    enemies = [dict(_md) for _ in range(n)]
-                    _enc_name = _m.name
-                else:  # monsters 表不可用时的保守兜底
-                    enemies = [{"name": "哥布林", "dex_mod": 2, "side": "enemy",
-                                "hp_max": 7, "attack_bonus": 4,
-                                "damage_dice": "1d6+2", "damage_type": "挥砍"}
-                               for _ in range(n)]
-                    _enc_name = "哥布林"
-                enc_state = {"character_id": cid, "campaign_id": camp}
-                enc_dice = _resolve_start_combat(enc_state, ch,
-                                                 {"action_type": "start_combat", "enemies": enemies})
-                state["combat"] = enc_dice.get("combat", {})
-                state["narration"] = (state.get("narration", "") or "") + \
-                    f"\n【遭遇】{n}只{_enc_name}从暗处窜出，向你扑来！战斗开始（先攻已掷）。"
-                narration_changed = True
-        except Exception as e:
-            _log.warning("系统自动遇敌失败 campaign=%s: %s", camp, e)
+    # 5b) 地点迁移（矩阵#13，D4 实测发现）：此前 location/npcs 从开场起从不更新，
+    #     玩家叙事上已进入矿坑，系统场景仍停在镇上 → 遭遇被 safe_scene 永久抑制、
+    #     前端模式徽章停在社交。narrate 输出 location_change 时迁移场景：
+    #     location 更新为新地点，environment 清空（旧文本含安全场景关键词会继续抑制遭遇），
+    #     npcs 清空（原地点 NPC 不随玩家移动）。
+    loc_change = (state.get("location_change") or "").strip()
+    if loc_change and camp:
+        sc = store.get_scene(camp)
+        if sc and loc_change not in (sc.location or ""):
+            sc.location = loc_change
+            sc.environment = ""
+            sc.set_npcs([])
+            store.save_scene(sc)
+
+    # 5.5) 系统自动遇敌已前移到 resolve 的 _with_encounter（矩阵#1/#2/#6，BUG#6）：
+    #      narrate 之前完成遇敌判定+场景过滤+开战，narrate 据此正确叙述遭遇，
+    #      消除"叙述安宁场景后硬拼遭遇"的自相矛盾与 resolve/apply 双重检定。
 
     # 6) 记忆处理已移至 API 层异步执行，不阻塞图完成。
     #    见 api/main.py:chat() 和 api/ws.py:on_action() 中的 _async_memory_process()。
@@ -1583,7 +2019,10 @@ def build_graph():
     g.add_node("narrate", narrate)
     g.add_node("apply", apply_node)
     g.set_entry_point("classify")
-    g.add_edge("classify", "retrieve")
+    # 矩阵#10 轻管线：other/end_combat 无判定动作跳过 retrieve/verify 直接 resolve，
+    # 纯对话/自由扮演不被全量规则校验拖慢（route_action 见 agents.director）。
+    g.add_conditional_edges("classify", _director_route,
+                            {"retrieve": "retrieve", "resolve": "resolve"})
     g.add_edge("retrieve", "verify")
     g.add_conditional_edges("verify", _after_verify,
                             {"retrieve_retry": "retrieve_retry", "confirm": "confirm", "resolve": "resolve"})
@@ -1615,7 +2054,7 @@ def run(player_input: str, campaign_id: int, character_id: int,
             "character_id": character_id, "hitl": hitl,
             "intent": {}, "evidence": [], "verification": {}, "confirmed": False,
             "dice": {}, "narration": "", "state_changes": [],
-            "scene_update": "", "action_options": [],
+            "scene_update": "", "location_change": "", "action_options": [],
             "combat": _load_combat(campaign_id), "error": "", "summary": ""}
     return get_graph().invoke(init, config=cfg)
 
@@ -1634,7 +2073,7 @@ def run_turn(player_input: str, campaign_id: int, character_id: int,
             "character_id": character_id, "hitl": hitl,
             "intent": {}, "evidence": [], "verification": {}, "confirmed": False,
             "dice": {}, "narration": "", "state_changes": [],
-            "scene_update": "", "action_options": [],
+            "scene_update": "", "location_change": "", "action_options": [],
             "combat": _load_combat(campaign_id), "error": "", "summary": ""}
     r = get_graph().invoke(init, config=cfg)
     guard = 0

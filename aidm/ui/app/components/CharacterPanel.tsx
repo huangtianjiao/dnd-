@@ -1,135 +1,147 @@
 "use client";
 
 import type { CharacterSheet } from "../lib/types";
+import { ConditionTracker } from "./ConditionTracker";
+import { SpellSlots } from "./SpellSlots";
+import { HitDiceTracker } from "./HitDiceTracker";
+import { DeathSaveTracker } from "./DeathSaveTracker";
 
-const abbr: Record<string, string> = { str: "力", dex: "敏", con: "体", int: "智", wis: "感", cha: "魅" };
+const abbr: Record<string, string> = { str: "STR", dex: "DEX", con: "CON", int: "INT", wis: "WIS", cha: "CHA" };
 
-export function CharacterPanel({ character }: { character: CharacterSheet | null }) {
-  if (!character) return <div className="text-xs text-neutral-600">加载角色卡...</div>;
+interface CharacterPanelProps {
+  character: CharacterSheet | null;
+  onDeathSaveRoll?: () => void;
+}
+
+export function CharacterPanel({ character, onDeathSaveRoll }: CharacterPanelProps) {
+  if (!character) return <div className="text-muted">加载角色卡...</div>;
 
   const hpPct = Math.max(0, (character.hp / character.hp_max) * 100);
-  const hpColor = (pct: number) => (pct > 50 ? "#22aa22" : pct > 25 ? "#aaaa22" : "#aa2222");
+  const dexMod = character.abilities?.dex?.mod ?? 0;
 
   return (
     <>
-      <div className="text-center">
-        <div className="text-lg font-bold text-amber-400">{character.name}</div>
-        <div className="text-xs text-neutral-500">{character.race} {character.char_class}{character.subclass ? `(${character.subclass})` : ""} Lv{character.level}</div>
-        {character.background && (
-          <div className="text-[10px] text-neutral-500">背景: {character.background}</div>
-        )}
-        {character.alignment && (
-          <div className="text-[10px] text-neutral-500">阵营: {character.alignment}</div>
-        )}
+      {/* 角色头像 */}
+      <div className="char-portrait">
+        <div className="avatar">{character.name.charAt(0)}</div>
+        <div className="info">
+          <div className="name">{character.name}</div>
+          <div className="sub">
+            {character.race} {character.char_class}
+            {character.subclass ? `(${character.subclass})` : ""} Lv.{character.level}
+          </div>
+        </div>
       </div>
 
       {/* HP 条 */}
-      <div>
-        <div className="flex justify-between text-xs mb-1">
-          <span className="text-neutral-400">HP</span>
-          <span className="text-neutral-300">{character.hp}/{character.hp_max}{character.temp_hp ? ` (+${character.temp_hp})` : ""}</span>
+      <div className="hp-section">
+        <div className="label">生命值{character.temp_hp ? ` (临时+${character.temp_hp})` : ""}</div>
+        <div className="hp-bar-container">
+          <div className="hp-bar-fill" style={{ width: `${hpPct}%` }} />
         </div>
-        <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
-          <div
-            className="h-full transition-all duration-400 rounded-full"
-            style={{ width: `${hpPct}%`, background: hpColor(hpPct) }}
-          />
-        </div>
+        <div className="hp-text">{character.hp} / {character.hp_max}</div>
       </div>
 
-      {/* AC / 速度 / 熟练 */}
-      <div className="grid grid-cols-3 gap-1 text-center">
-        <div className="bg-neutral-800 rounded p-1">
-          <div className="text-base font-bold text-amber-400">{character.ac}</div>
-          <div className="text-[10px] text-neutral-500">AC</div>
+      {/* AC / 速度 / 先攻 */}
+      <div className="ac-speed">
+        <div className="stat-box">
+          <div className="val">{character.ac}</div>
+          <div className="lbl">AC</div>
         </div>
-        <div className="bg-neutral-800 rounded p-1">
-          <div className="text-base font-bold text-amber-400">{character.speed}</div>
-          <div className="text-[10px] text-neutral-500">速度</div>
+        <div className="stat-box">
+          <div className="val">{character.speed}</div>
+          <div className="lbl">速度 ft</div>
         </div>
-        <div className="bg-neutral-800 rounded p-1">
-          <div className="text-base font-bold text-amber-400">+{character.proficiency}</div>
-          <div className="text-[10px] text-neutral-500">熟练</div>
+        <div className="stat-box">
+          <div className="val">{dexMod >= 0 ? `+${dexMod}` : dexMod}</div>
+          <div className="lbl">先攻</div>
         </div>
       </div>
 
       {/* 六维属性 */}
-      <div className="grid grid-cols-2 gap-1">
+      <div className="ability-grid">
         {Object.entries(character.abilities).map(([k, v]) => (
-          <div key={k} className="bg-neutral-800 rounded p-1 text-center">
-            <div className="text-[10px] text-neutral-500">{abbr[k] || k}</div>
-            <div className="text-sm font-bold">{v.score}</div>
-            <div className="text-[10px] text-neutral-400">{v.mod >= 0 ? `+${v.mod}` : v.mod}</div>
+          <div key={k} className="ability-box" title={abbr[k] || k}>
+            <div className="abi-name">{abbr[k] || k}</div>
+            <div className="abi-val">{v.score}</div>
+            <div className="abi-mod">{v.mod >= 0 ? `+${v.mod}` : v.mod}</div>
           </div>
         ))}
       </div>
 
-      {/* 装备武器 */}
-      {character.equipped_weapon && (
-        <div className="text-[11px] text-neutral-400">
-          🗡️ 武器: <span className="text-amber-400">{character.equipped_weapon}</span>
+      {/* 死亡豁免追踪器（HP=0 时显示） */}
+      {character.hp <= 0 && !character.dead && (
+        <DeathSaveTracker
+          successes={character.death_successes || 0}
+          failures={character.death_failures || 0}
+          onRoll={onDeathSaveRoll || (() => {})}
+        />
+      )}
+
+      {/* 死亡状态 */}
+      {character.dead && (
+        <div className="death-save-box">
+          <div className="ds-title">💀 角色已死亡</div>
         </div>
       )}
 
-      {/* 生命骰 */}
-      {character.hit_dice_current !== undefined && character.hit_dice_max !== undefined && (
-        <div className="text-[11px] text-neutral-400">
-          🎲 生命骰: <span className="text-amber-400">{character.hit_dice_current}/{character.hit_dice_max}</span>
+      {/* 稳定状态 */}
+      {character.hp <= 0 && character.stable && !character.dead && (
+        <div className="death-save-box">
+          <div className="ds-title">已稳定</div>
         </div>
       )}
+
+      {/* 状态效果（只读） */}
+      <div className="panel-section">
+        <div className="section-title">状态效果</div>
+        <ConditionTracker conditions={character.conditions || []} />
+      </div>
 
       {/* 法术位（施法职业） */}
       {character.spell_slots && Object.keys(character.spell_slots).length > 0 && (
-        <div className="text-[11px]">
-          <div className="text-neutral-500 mb-1">法术位</div>
-          <div className="flex flex-wrap gap-1">
-            {Object.entries(character.spell_slots).map(([lvl, rem]) => (
-              <span
-                key={lvl}
-                className={`px-1.5 py-0.5 rounded border ${
-                  rem > 0
-                    ? "bg-purple-950 border-purple-700 text-purple-300"
-                    : "bg-neutral-800 border-neutral-700 text-neutral-600"
-                }`}
-              >
-                {lvl}环:{rem}
-              </span>
-            ))}
+        <div className="panel-section">
+          <div className="section-title">法术位</div>
+          <SpellSlots slots={character.spell_slots} />
+        </div>
+      )}
+
+      {/* 装备武器 */}
+      {character.equipped_weapon && (
+        <div className="panel-section">
+          <div className="section-title">装备</div>
+          <div className="skill-list">
+            <div className="inv-item equipped">
+              <span className="inv-name">🗡️ {character.equipped_weapon}</span>
+              <span className="inv-qty">主手</span>
+            </div>
           </div>
         </div>
       )}
 
-      {/* 状态条件 */}
-      {character.conditions && character.conditions.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {character.conditions.map((cond, i) => (
-            <span key={i} className="text-[10px] px-1.5 py-0.5 bg-neutral-800 rounded border border-neutral-700">
-              {cond}
+      {/* 生命骰（只读） */}
+      {character.hit_dice_current !== undefined && character.hit_dice_max !== undefined && (
+        <div className="panel-section">
+          <div className="section-title">
+            <span>Hit Dice</span>
+            <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>
+              {character.hit_dice_current}/{character.hit_dice_max}
             </span>
-          ))}
+          </div>
+          <HitDiceTracker
+            total={character.hit_dice_max || character.level}
+            remaining={character.hit_dice_current ?? character.level}
+            faces={8}
+          />
         </div>
       )}
 
       {/* 力竭等级 */}
       {character.exhaustion > 0 && (
-        <div className="text-xs text-orange-400">力竭等级: {character.exhaustion}/6</div>
-      )}
-
-      {/* 死亡豁免追踪器 */}
-      {character.hp <= 0 && !character.dead && (
-        <div className={`border rounded p-2 text-center ${character.stable ? "bg-green-950 border-green-800" : "bg-red-950 border-red-800"}`}>
-          <div className="text-xs text-red-400 mb-1">⚠️ 濒死状态</div>
-          {character.stable ? (
-            <div className="text-xs text-green-400">已稳定</div>
-          ) : (
-            <div className="text-xs text-neutral-400">需要死亡豁免检定</div>
-          )}
-        </div>
-      )}
-
-      {character.dead && (
-        <div className="bg-red-950 border border-red-800 rounded p-2 text-center">
-          <div className="text-sm font-bold text-red-400">💀 角色已死亡</div>
+        <div className="panel-section">
+          <div style={{ fontSize: 11, color: "var(--text-amber)" }}>
+            力竭等级: {character.exhaustion}/6
+          </div>
         </div>
       )}
     </>

@@ -1,0 +1,8991 @@
+| 法术名
+ | 环阶
+ | 学派
+ | 职业
+ | 言语
+ | 姿势
+ | 材料
+ | 仪式
+ | 专注
+ | 来源
+ | 亚比达奇凋死术Abi-Dalzim's Horrid
+					Wilting
+ | 八环
+ | 死灵
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | XGE
+ | 吸收元素Absorb Elements
+ | 一环
+ | 防护
+ | 德 软 术 法 械
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 酸液飞溅Acid Splash
+ | 戏法(零环)
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 阿迦纳萨喷火术Aganazzar's Scorcher
+ | 二环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | XGE
+ | 援助术Aid
+ | 二环
+ | 防护
+ | 诗 牧 德 帕 软
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 空气泡泡Air Bubble
+ | 二环
+ | 咒法
+ | 德 软 术 法 械
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | AAG
+ | 警报术Alarm
+ | 一环
+ | 防护
+ | 软 法
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB24
+ | 变身术Alter Self
+ | 二环
+ | 变化
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 化兽为友Animal Friendship
+ | 一环
+ | 惑控
+ | 诗 德 软
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 动物信使Animal Messenger
+ | 二环
+ | 惑控
+ | 诗 德 软
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB24
+ | 动物形态Animal Shapes
+ | 八环
+ | 变化
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 活化死尸Animate Dead
+ | 三环
+ | 死灵
+ | 牧 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 活化物件Animate Objects
+ | 五环
+ | 变化
+ | 诗 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 敌意术Antagonize
+ | 三环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | BMT
+ | 防活物护罩Antilife Shell
+ | 五环
+ | 防护
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 反魔法场Antimagic Field
+ | 八环
+ | 防护
+ | 牧 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 嫌恶术/关怀术AntipathySympathy
+ | 八环
+ | 惑控
+ | 诗 德 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 秘法眼Arcane Eye
+ | 四环
+ | 预言
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 秘法门Arcane Gate
+ | 六环
+ | 咒法
+ | 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 秘法锁Arcane Lock
+ | 二环
+ | 防护
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 复苏秘法Arcane Vigor
+ | 二环
+ | 防护
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 黯冰狱铠Armor of Agathys
+ | 一环
+ | 防护
+ | 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 哈达之臂Arms of Hadar
+ | 一环
+ | 咒法
+ | 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 阿莎德隆奔行Ashardalon's Stride
+ | 三环
+ | 变化
+ | 软 术 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | FTD
+ | 星界投影Astral Projection
+ | 九环
+ | 死灵
+ | 牧 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 卜筮术Augury
+ | 二环
+ | 预言
+ | 牧 德 法
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB24
+ | 生命灵光Aura of Life
+ | 四环
+ | 防护
+ | 牧 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 净化灵光Aura of Purity
+ | 四环
+ | 防护
+ | 牧 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 活力灵光Aura of Vitality
+ | 三环
+ | 塑能
+ | 牧 德 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 启蒙术Awaken
+ | 五环
+ | 变化
+ | 诗 德
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 灾祸术Bane
+ | 一环
+ | 惑控
+ | 诗 牧 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 放逐斩Banishing Smite
+ | 五环
+ | 咒法
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 放逐术Banishment
+ | 四环
+ | 防护
+ | 牧 帕 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 树肤术Barkskin
+ | 二环
+ | 变化
+ | 德 软
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 希望信标Beacon of Hope
+ | 三环
+ | 防护
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 兽之联结Beast Bond
+ | 一环
+ | 预言
+ | 德 软
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | XGE
+ | 野兽感官Beast Sense
+ | 二环
+ | 预言
+ | 德 软
+ | ×
+ | S
+ | ×
+ | √
+ | √
+ | PHB24
+ | 摧心术Befuddlement
+ | 八环
+ | 惑控
+ | 诗 德 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 降咒Bestow Curse
+ | 三环
+ | 死灵
+ | 诗 牧 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 毕格比之手Bigby's Hand
+ | 五环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 剑刃护壁Blade Barrier
+ | 六环
+ | 塑能
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 剑刃防护Blade Ward
+ | 戏法(零环)
+ | 防护
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 灾厄之刃Blade of Disaster
+ | 九环
+ | 咒法
+ | 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | TCE
+ | 祝福术Bless
+ | 一环
+ | 惑控
+ | 牧 帕
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 枯萎术Blight
+ | 四环
+ | 死灵
+ | 德 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 致盲斩Blinding Smite
+ | 三环
+ | 塑能
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 目盲术/耳聋术Blindness/Deafness
+ | 二环
+ | 变化
+ | 诗 牧 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 闪现术Blink
+ | 三环
+ | 变化
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 朦胧术Blur
+ | 二环
+ | 幻术
+ | 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 地之骨Bones of the Earth
+ | 六环
+ | 变化
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 轰雷剑Booming Blade
+ | 戏法(零环)
+ | 塑能
+ | 术 法 械 锁
+ | ×
+ | S
+ | M*
+ | ×
+ | ×
+ | TCE
+ | 借鉴才学Borrowed Knowledge
+ | 二环
+ | 预言
+ | 诗 牧 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | SCC
+ | 燃烧之手Burning Hands
+ | 一环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 召雷术Call Lightning
+ | 三环
+ | 咒法
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 安定心神Calm Emotions
+ | 二环
+ | 惑控
+ | 诗 牧
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 弹射术Catapult
+ | 一环
+ | 变化
+ | 术 法 械
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 假寐术Catnap
+ | 三环
+ | 惑控
+ | 诗 术 法 械
+ | ×
+ | S
+ | M
+ | ×
+ | ×
+ | XGE
+ | 造成恐惧Cause Fear
+ | 一环
+ | 死灵
+ | 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | XGE
+ | 典礼术Ceremony
+ | 一环
+ | 防护
+ | 牧 帕
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | XGE
+ | 连锁闪电Chain Lightning
+ | 六环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 混乱箭Chaos Bolt
+ | 一环
+ | 塑能
+ | 术
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 魅惑怪物Charm Monster
+ | 四环
+ | 惑控
+ | 诗 德 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 魅惑类人Charm Person
+ | 一环
+ | 惑控
+ | 诗 德 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 颤栗之触Chill Touch
+ | 戏法(零环)
+ | 死灵
+ | 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 繁彩球Chromatic Orb
+ | 一环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 死亡法阵Circle of Death
+ | 六环
+ | 死灵
+ | 术 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 原力法阵Circle of Power
+ | 五环
+ | 防护
+ | 牧 帕 法
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 鹰眼术Clairvoyance
+ | 三环
+ | 预言
+ | 诗 牧 术 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 克隆术Clone
+ | 八环
+ | 死灵
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 匕首之云Cloud of Daggers
+ | 二环
+ | 咒法
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 死云术Cloudkill
+ | 五环
+ | 咒法
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 七彩喷射Color Spray
+ | 一环
+ | 幻术
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 命令术Command
+ | 一环
+ | 惑控
+ | 诗 牧 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 通神术Commune
+ | 五环
+ | 预言
+ | 牧
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB24
+ | 问道自然Commune with Nature
+ | 五环
+ | 预言
+ | 德 软
+ | V
+ | S
+ | ×
+ | √
+ | ×
+ | PHB24
+ | 强令对决Compelled Duel
+ | 一环
+ | 惑控
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 通晓语言Comprehend Languages
+ | 一环
+ | 预言
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB24
+ | 强迫术Compulsion
+ | 四环
+ | 惑控
+ | 诗
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 寒冰锥Cone of Cold
+ | 五环
+ | 塑能
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 困惑术Confusion
+ | 四环
+ | 惑控
+ | 诗 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 咒唤兽群Conjure Animals
+ | 三环
+ | 咒法
+ | 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 箭如雨下Conjure Barrage
+ | 三环
+ | 咒法
+ | 软
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 咒唤圣光Conjure Celestial
+ | 七环
+ | 咒法
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 咒唤元素Conjure Elemental
+ | 五环
+ | 咒法
+ | 德 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 咒唤妖精Conjure Fey
+ | 六环
+ | 咒法
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 咒唤微元素群Conjure Minor Elementals
+ | 四环
+ | 咒法
+ | 德 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 万箭齐发Conjure Volley
+ | 五环
+ | 咒法
+ | 软
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 咒唤林地卫士Conjure Woodland Beings
+ | 四环
+ | 咒法
+ | 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 异界探知Contact Other Plane
+ | 五环
+ | 预言
+ | 法 锁
+ | V
+ | ×
+ | ×
+ | √
+ | ×
+ | PHB24
+ | 疫病术Contagion
+ | 五环
+ | 死灵
+ | 牧 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 触发术Contingency
+ | 六环
+ | 防护
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 不灭明焰Continual Flame
+ | 二环
+ | 塑能
+ | 牧 德 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 控火术Control Flames
+ | 戏法(零环)
+ | 变化
+ | 德 术 法
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 操控水体Control Water
+ | 四环
+ | 变化
+ | 牧 德 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 操控天气Control Weather
+ | 八环
+ | 变化
+ | 牧 德 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 操控风力Control Winds
+ | 五环
+ | 变化
+ | 德 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 警戒箭阵Cordon of Arrows
+ | 二环
+ | 变化
+ | 软
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 法术反制Counterspell
+ | 三环
+ | 防护
+ | 术 法 锁
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 创造篝火Create Bonfire
+ | 戏法(零环)
+ | 咒法
+ | 德 术 法 械 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 造粮术Create Food and Water
+ | 三环
+ | 咒法
+ | 牧 帕
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 创造人工生命体Create Homunculus
+ | 六环
+ | 变化
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | XGE
+ | 创造法驱魔舵Create Spelljamming Helm
+ | 五环
+ | 变化
+ | 法 械
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | AAG
+ | 唤起亡灵Create Undead
+ | 六环
+ | 死灵
+ | 牧 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 造水术/枯水术Create or Destroy Water
+ | 一环
+ | 变化
+ | 牧 德
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 造物术Creation
+ | 五环
+ | 幻术
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 疯狂冠冕Crown of Madness
+ | 二环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 众星冠冕Crown of Stars
+ | 七环
+ | 塑能
+ | 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 十字军披风Crusader's Mantle
+ | 三环
+ | 塑能
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 疗伤术Cure Wounds
+ | 一环
+ | 防护
+ | 诗 牧 德 帕 软
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 舞光术Dancing Lights
+ | 戏法(零环)
+ | 幻术
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 骷髅之舞Danse Macabre
+ | 五环
+ | 死灵
+ | 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 黑暗术Darkness
+ | 二环
+ | 塑能
+ | 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 黑暗视觉Darkvision
+ | 二环
+ | 变化
+ | 德 软 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 拂晓Dawn
+ | 五环
+ | 塑能
+ | 牧 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | XGE
+ | 昼明术Daylight
+ | 三环
+ | 塑能
+ | 牧 德 帕 软 术
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 防死结界Death Ward
+ | 四环
+ | 防护
+ | 牧 帕
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 延迟爆裂火球Delayed Blast Fireball
+ | 七环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 半位面Demiplane
+ | 八环
+ | 咒法
+ | 术 法 锁
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 湮灭波Destructive Wave
+ | 五环
+ | 塑能
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 侦测善恶Detect Evil and Good
+ | 一环
+ | 预言
+ | 牧 帕
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 侦测魔法Detect Magic
+ | 一环
+ | 预言
+ | 诗 牧 德 帕 软 术 法 锁
+ | V
+ | S
+ | ×
+ | √
+ | √
+ | PHB24
+ | 侦测毒性和疾病Detect Poison and Disease
+ | 一环
+ | 预言
+ | 牧 德 帕 软
+ | V
+ | S
+ | M
+ | √
+ | √
+ | PHB24
+ | 侦测思想Detect Thoughts
+ | 二环
+ | 预言
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 任意门Dimension Door
+ | 四环
+ | 咒法
+ | 诗 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 易容术Disguise Self
+ | 一环
+ | 幻术
+ | 诗 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 解离术Disintegrate
+ | 六环
+ | 变化
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 驱逐善恶Dispel Evil and Good
+ | 五环
+ | 防护
+ | 牧 帕
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 解除魔法Dispel Magic
+ | 三环
+ | 防护
+ | 诗 牧 德 帕 软 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 不谐低语Dissonant Whispers
+ | 一环
+ | 惑控
+ | 诗
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 扭曲价值Distort Value
+ | 一环
+ | 幻术
+ | 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | AI
+ | 预言术Divination
+ | 四环
+ | 预言
+ | 牧 德 法
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB24
+ | 神恩Divine Favor
+ | 一环
+ | 变化
+ | 帕
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 至圣斩Divine Smite
+ | 一环
+ | 塑能
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 圣言术Divine Word
+ | 七环
+ | 塑能
+ | 牧
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 支配野兽Dominate Beast
+ | 四环
+ | 惑控
+ | 德 软 术
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 支配怪物Dominate Monster
+ | 八环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 支配类人Dominate Person
+ | 五环
+ | 惑控
+ | 诗 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 龙类变形Draconic Transformation
+ | 七环
+ | 变化
+ | 德 术 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | FTD
+ | 龙息术Dragon's Breath
+ | 二环
+ | 变化
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 卓姆吉瞬间召唤Drawmij's Instant Summons
+ | 六环
+ | 咒法
+ | 法
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB24
+ | 托梦术Dream
+ | 五环
+ | 幻术
+ | 诗 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 蓝纱一梦Dream of the Blue Veil
+ | 七环
+ | 咒法
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | TCE
+ | 德鲁伊林地Druid Grove
+ | 六环
+ | 防护
+ | 德
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | XGE
+ | 德鲁伊伎俩Druidcraft
+ | 戏法(零环)
+ | 变化
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 龙卷尘暴Dust Devil
+ | 二环
+ | 咒法
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | XGE
+ | 地颤Earth Tremor
+ | 一环
+ | 塑能
+ | 诗 德 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 地缚Earthbind
+ | 二环
+ | 变化
+ | 德 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | XGE
+ | 地震术Earthquake
+ | 八环
+ | 变化
+ | 牧 德 术
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 魔能爆Eldritch Blast
+ | 戏法(零环)
+ | 塑能
+ | 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 元素灾厄Elemental Bane
+ | 四环
+ | 变化
+ | 德 法 械 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 元素武器Elemental Weapon
+ | 三环
+ | 变化
+ | 德 帕 软
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 四象法门Elementalism
+ | 戏法(零环)
+ | 变化
+ | 德 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 思想编码Encode Thoughts
+ | 戏法(零环)
+ | 惑控
+ | 无
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | GGR
+ | 敌群环绕Enemies Abound
+ | 三环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 汲能术Enervation
+ | 五环
+ | 死灵
+ | 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 强化属性Enhance Ability
+ | 二环
+ | 变化
+ | 诗 牧 德 软 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 变巨术/缩小术Enlarge/Reduce
+ | 二环
+ | 变化
+ | 诗 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 捕获打击Ensnaring Strike
+ | 一环
+ | 咒法
+ | 软
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 纠缠术Entangle
+ | 一环
+ | 咒法
+ | 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 注目术Enthrall
+ | 二环
+ | 惑控
+ | 诗 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 土石喷发Erupting Earth
+ | 三环
+ | 变化
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | XGE
+ | 以太化Etherealness
+ | 七环
+ | 咒法
+ | 诗 牧 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 艾伐黑触手Evard's Black Tentacles
+ | 四环
+ | 咒法
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 脚底抹油Expeditious Retreat
+ | 一环
+ | 变化
+ | 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 摄心目光Eyebite
+ | 六环
+ | 死灵
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 鬼斧神工Fabricate
+ | 四环
+ | 变化
+ | 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 妖火Faerie Fire
+ | 一环
+ | 塑能
+ | 诗 德
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 虚假生命False Life
+ | 一环
+ | 死灵
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 渺远步Far Step
+ | 五环
+ | 咒法
+ | 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | XGE
+ | 快速交友Fast Friends
+ | 三环
+ | 惑控
+ | 牧 法
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | AI
+ | 恐惧术Fear
+ | 三环
+ | 幻术
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 羽落术Feather Fall
+ | 一环
+ | 变化
+ | 诗 术 法
+ | V
+ | ×
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 假死术Feign Death
+ | 三环
+ | 死灵
+ | 诗 牧 德 法
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB24
+ | 寻获魔宠Find Familiar
+ | 一环
+ | 咒法
+ | 法
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB24
+ | 寻获高等坐骑Find Greater Steed
+ | 四环
+ | 咒法
+ | 帕
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 寻获坐骑Find Steed
+ | 二环
+ | 咒法
+ | 帕
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 寻找陷阱Find Traps
+ | 二环
+ | 预言
+ | 牧 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 寻路术Find the Path
+ | 六环
+ | 预言
+ | 诗 牧 德
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 死亡一指Finger of Death
+ | 七环
+ | 死灵
+ | 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 火焰箭Fire Bolt
+ | 戏法(零环)
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 火焰护盾Fire Shield
+ | 四环
+ | 塑能
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 火焰风暴Fire Storm
+ | 七环
+ | 塑能
+ | 牧 德 术
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 火球术Fireball
+ | 三环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 费资本铂金盾Fizban's Platinum Shield
+ | 六环
+ | 防护
+ | 术 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | FTD
+ | 烈焰箭矢Flame Arrows
+ | 三环
+ | 变化
+ | 德 软 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 火焰刀Flame Blade
+ | 二环
+ | 塑能
+ | 德 术
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 焰击术Flame Strike
+ | 五环
+ | 塑能
+ | 牧
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 炽焰法球Flaming Sphere
+ | 二环
+ | 咒法
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 石化术Flesh to Stone
+ | 六环
+ | 变化
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 飞行术Fly
+ | 三环
+ | 变化
+ | 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 云雾术Fog Cloud
+ | 一环
+ | 咒法
+ | 德 软 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 禁制术Forbiddance
+ | 六环
+ | 防护
+ | 牧
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB24
+ | 力场监牢Forcecage
+ | 七环
+ | 塑能
+ | 诗 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 预见术Foresight
+ | 九环
+ | 预言
+ | 诗 德 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 月光涌泉Fount of Moonlight
+ | 四环
+ | 塑能
+ | 诗 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 行动自如Freedom of Movement
+ | 四环
+ | 防护
+ | 诗 牧 德 软
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 交友术Friends
+ | 戏法(零环)
+ | 惑控
+ | 诗 术 法 锁
+ | ×
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 霜噬Frostbite
+ | 戏法(零环)
+ | 塑能
+ | 德 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 气化形体Gaseous Form
+ | 三环
+ | 变化
+ | 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 异界之门Gate
+ | 九环
+ | 咒法
+ | 牧 术 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 界门封锁Gate Seal
+ | 四环
+ | 防护
+ | 术 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | SO
+ | 指使术Geas
+ | 五环
+ | 惑控
+ | 诗 牧 德 帕 法
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 遗体防腐Gentle Repose
+ | 二环
+ | 死灵
+ | 牧 帕 法
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB24
+ | 巨虫术Giant Insect
+ | 四环
+ | 咒法
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 巧舌如簧Gift of Gab
+ | 二环
+ | 惑控
+ | 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | AI
+ | 花言巧语Glibness
+ | 八环
+ | 惑控
+ | 诗 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 法术无效结界Globe of Invulnerability
+ | 六环
+ | 防护
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 守卫刻纹Glyph of Warding
+ | 三环
+ | 防护
+ | 诗 牧 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 神莓术Goodberry
+ | 一环
+ | 咒法
+ | 德 软
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 擒抱藤Grasping Vine
+ | 四环
+ | 咒法
+ | 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 油腻术Grease
+ | 一环
+ | 咒法
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 高等隐形术Greater Invisibility
+ | 四环
+ | 幻术
+ | 诗 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 高等复原术Greater Restoration
+ | 五环
+ | 防护
+ | 诗 牧 德 帕 软
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 翠炎剑Green-Flame Blade
+ | 戏法(零环)
+ | 塑能
+ | 术 法 械 锁
+ | ×
+ | S
+ | M*
+ | ×
+ | ×
+ | TCE
+ | 信仰守卫Guardian of Faith
+ | 四环
+ | 咒法
+ | 牧
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 自然守卫Guardian of Nature
+ | 四环
+ | 变化
+ | 德 软
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | XGE
+ | 铜墙铁壁Guards and Wards
+ | 六环
+ | 防护
+ | 诗 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 神导术Guidance
+ | 戏法(零环)
+ | 预言
+ | 牧 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 光导箭Guiding Bolt
+ | 一环
+ | 塑能
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 舞风术Gust
+ | 戏法(零环)
+ | 变化
+ | 德 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 造风术Gust of Wind
+ | 二环
+ | 塑能
+ | 德 软 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 荆棘之雨Hail of Thorns
+ | 一环
+ | 咒法
+ | 软
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 圣居Hallow
+ | 五环
+ | 防护
+ | 牧
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 幻景Hallucinatory Terrain
+ | 四环
+ | 幻术
+ | 诗 德 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 重伤术Harm
+ | 六环
+ | 死灵
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 加速术Haste
+ | 三环
+ | 变化
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 医疗术Heal
+ | 六环
+ | 防护
+ | 牧 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 治愈之魂Healing Spirit
+ | 二环
+ | 咒法
+ | 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 治愈真言Healing Word
+ | 一环
+ | 防护
+ | 诗 牧 德
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 灼热金属Heat Metal
+ | 二环
+ | 变化
+ | 诗 德
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 炼狱叱喝Hellish Rebuke
+ | 一环
+ | 塑能
+ | 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 英雄宴Heroes' Feast
+ | 六环
+ | 咒法
+ | 诗 牧 德
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 英雄气概Heroism
+ | 一环
+ | 惑控
+ | 诗 帕
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 脆弱诅咒Hex
+ | 一环
+ | 惑控
+ | 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 定身怪物Hold Monster
+ | 五环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 定身类人Hold Person
+ | 二环
+ | 惑控
+ | 诗 牧 德 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 圣洁灵光Holy Aura
+ | 八环
+ | 防护
+ | 牧
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 神圣武器Holy Weapon
+ | 五环
+ | 塑能
+ | 牧 帕
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 哈达之欲Hunger of Hadar
+ | 三环
+ | 咒法
+ | 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 猎人印记Hunter's Mark
+ | 一环
+ | 预言
+ | 软
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 催眠图纹Hypnotic Pattern
+ | 三环
+ | 幻术
+ | 诗 术 法 锁
+ | ×
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 冰刃Ice Knife
+ | 一环
+ | 咒法
+ | 德 术 法
+ | ×
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 冰风暴Ice Storm
+ | 四环
+ | 塑能
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 鉴定术Identify
+ | 一环
+ | 预言
+ | 诗 法
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB24
+ | 幻影巨龙Illusory Dragon
+ | 八环
+ | 幻术
+ | 法
+ | ×
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 迷幻手稿Illusory Script
+ | 一环
+ | 幻术
+ | 诗 法
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB24
+ | 焚烧术Immolation
+ | 五环
+ | 塑能
+ | 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | XGE
+ | 禁锢术Imprisonment
+ | 九环
+ | 防护
+ | 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 焚云术Incendiary Cloud
+ | 八环
+ | 咒法
+ | 德 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 鼓动贪欲Incite Greed
+ | 三环
+ | 惑控
+ | 牧 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | AI
+ | 地狱呼唤Infernal Calling
+ | 五环
+ | 咒法
+ | 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | XGE
+ | 虫群孳生Infestation
+ | 戏法(零环)
+ | 咒法
+ | 德 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | XGE
+ | 致伤术Inflict Wounds
+ | 一环
+ | 死灵
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 疫病虫群Insect Plague
+ | 五环
+ | 咒法
+ | 牧 德 术
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 智能壁垒Intellect Fortress
+ | 三环
+ | 防护
+ | 诗 术 法 械 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | TCE
+ | 炽焰赋权Investiture of Flame
+ | 六环
+ | 变化
+ | 德 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 寒冰赋权Investiture of Ice
+ | 六环
+ | 变化
+ | 德 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 磐石赋权Investiture of Stone
+ | 六环
+ | 变化
+ | 德 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 清风赋权Investiture of Wind
+ | 六环
+ | 变化
+ | 德 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 隐形术Invisibility
+ | 二环
+ | 幻术
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 无敌术Invulnerability
+ | 九环
+ | 防护
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | XGE
+ | 贾拉兹光辉风暴Jallarzi's Storm of
+					Radiance
+ | 五环
+ | 塑能
+ | 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 吉姆的发光硬币Jim's Glowing Coin
+ | 二环
+ | 惑控
+ | 法
+ | ×
+ | S
+ | M
+ | ×
+ | ×
+ | AI
+ | 吉姆的魔法飞弹Jim's Magic Missile
+ | 一环
+ | 塑能
+ | 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | AI
+ | 跳跃术Jump
+ | 一环
+ | 变化
+ | 德 软 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 动力短行Kinetic Jaunt
+ | 二环
+ | 变化
+ | 诗 术 法 械
+ | ×
+ | S
+ | ×
+ | ×
+ | √
+ | SCC
+ | 敲击术Knock
+ | 二环
+ | 变化
+ | 诗 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 通晓传奇Legend Lore
+ | 五环
+ | 预言
+ | 诗 牧 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 李欧蒙秘藏箱Leomund's Secret Chest
+ | 四环
+ | 咒法
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 李欧蒙小屋Leomund's Tiny Hut
+ | 三环
+ | 塑能
+ | 诗 法
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB24
+ | 次等复原术Lesser Restoration
+ | 二环
+ | 防护
+ | 诗 牧 德 帕 软
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 浮空术Levitate
+ | 二环
+ | 变化
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 生命转换Life Transference
+ | 三环
+ | 死灵
+ | 牧 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 光亮术Light
+ | 戏法(零环)
+ | 塑能
+ | 诗 牧 术 法
+ | V
+ | ×
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 闪电箭矢Lightning Arrows
+ | 三环
+ | 变化
+ | 软
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 闪电束Lightning Bolt
+ | 三环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 闪电牵引Lightning Lure
+ | 戏法(零环)
+ | 塑能
+ | 术 法 械 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | TCE
+ | 动植物定位术Locate Animals or Plants
+ | 二环
+ | 预言
+ | 诗 德 软
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB24
+ | 生物定位术Locate Creature
+ | 四环
+ | 预言
+ | 诗 牧 德 帕 软 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 物件定位术Locate Object
+ | 二环
+ | 预言
+ | 诗 牧 德 帕 软 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 大步奔行Longstrider
+ | 一环
+ | 变化
+ | 诗 德 软 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 疯狂之暗Maddening Darkness
+ | 八环
+ | 塑能
+ | 法 锁
+ | V
+ | ×
+ | M
+ | ×
+ | √
+ | XGE
+ | 大漩涡Maelstrom
+ | 五环
+ | 塑能
+ | 德
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | XGE
+ | 法师护甲Mage Armor
+ | 一环
+ | 防护
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 法师之手Mage Hand
+ | 戏法(零环)
+ | 咒法
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 防护法阵Magic Circle
+ | 三环
+ | 防护
+ | 牧 帕 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 魔魂壶Magic Jar
+ | 六环
+ | 死灵
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 魔法飞弹Magic Missile
+ | 一环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 魔嘴术Magic Mouth
+ | 二环
+ | 幻术
+ | 诗 法
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB24
+ | 魔石术Magic Stone
+ | 戏法(零环)
+ | 变化
+ | 德 械 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 魔化武器Magic Weapon
+ | 二环
+ | 变化
+ | 帕 软 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 高级幻影Major Image
+ | 三环
+ | 幻术
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 群体疗伤术Mass Cure Wounds
+ | 五环
+ | 塑能
+ | 诗 牧 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 群体医疗术Mass Heal
+ | 九环
+ | 防护
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 群体治愈真言Mass Healing Word
+ | 三环
+ | 防护
+ | 诗 牧
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 群体变形术Mass Polymorph
+ | 九环
+ | 变化
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | XGE
+ | 群体暗示术Mass Suggestion
+ | 六环
+ | 惑控
+ | 诗 术 法
+ | V
+ | ×
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 麦克斯米利安的地之攫Maximilian's Earthen
+					Grasp
+ | 二环
+ | 变化
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | XGE
+ | 迷宫术Maze
+ | 八环
+ | 咒法
+ | 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 融身入石Meld Into Stone
+ | 三环
+ | 变化
+ | 牧 德 软
+ | V
+ | S
+ | ×
+ | √
+ | ×
+ | PHB24
+ | 马友夫强酸箭Melf's Acid Arrow
+ | 二环
+ | 塑能
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 马友夫微流星Melf's Minute Meteors
+ | 三环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | XGE
+ | 修复术Mending
+ | 戏法(零环)
+ | 变化
+ | 诗 牧 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 精神监狱Mental Prison
+ | 六环
+ | 幻术
+ | 术 法 锁
+ | ×
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 传讯术Message
+ | 戏法(零环)
+ | 变化
+ | 诗 德 术 法
+ | ×
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 流星爆Meteor Swarm
+ | 九环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 坚固堡垒Mighty Fortress
+ | 八环
+ | 咒法
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | XGE
+ | 心灵屏障Mind Blank
+ | 八环
+ | 防护
+ | 诗 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 心灵之楔Mind Sliver
+ | 戏法(零环)
+ | 惑控
+ | 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 心灵尖刺Mind Spike
+ | 二环
+ | 预言
+ | 术 法 锁
+ | ×
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 次级幻象Minor Illusion
+ | 戏法(零环)
+ | 幻术
+ | 诗 术 法 锁
+ | ×
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 海市蜃楼Mirage Arcane
+ | 七环
+ | 幻术
+ | 诗 德 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 镜影术Mirror Image
+ | 二环
+ | 幻术
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 假象术Mislead
+ | 五环
+ | 幻术
+ | 诗 法 锁
+ | ×
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 迷踪步Misty Step
+ | 二环
+ | 咒法
+ | 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 篡改记忆Modify Memory
+ | 五环
+ | 惑控
+ | 诗 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 塑土术Mold Earth
+ | 戏法(零环)
+ | 变化
+ | 德 术 法
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 月华之光Moonbeam
+ | 二环
+ | 塑能
+ | 德
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 魔邓肯忠犬Mordenkainen's Faithful
+					Hound
+ | 四环
+ | 咒法
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 魔邓肯豪宅术Mordenkainen's Magnificent
+					Mansion
+ | 七环
+ | 咒法
+ | 诗 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 魔邓肯私人密室Mordenkainen's Private
+					Sanctum
+ | 四环
+ | 防护
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 魔邓肯之剑Mordenkainen's Sword
+ | 七环
+ | 塑能
+ | 诗 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 励志演讲Motivational Speech
+ | 三环
+ | 惑控
+ | 牧
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | AI
+ | 地动术Move Earth
+ | 六环
+ | 变化
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 纳撒尔恶作剧Nathair's Mischief
+ | 二环
+ | 幻术
+ | 诗 术 法
+ | ×
+ | S
+ | M
+ | ×
+ | √
+ | FTD
+ | 负能量洪流Negative Energy Flood
+ | 五环
+ | 死灵
+ | 法 锁
+ | V
+ | ×
+ | M
+ | ×
+ | ×
+ | XGE
+ | 回避侦测Nondetection
+ | 三环
+ | 防护
+ | 诗 软 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 涅斯图魔法灵光Nystul's Magic Aura
+ | 二环
+ | 幻术
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 欧提路克冰封法球Otiluke's Freezing Sphere
+ | 六环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 欧提路克弹力法球Otiluke's Resilient Sphere
+ | 四环
+ | 防护
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 奥图迷舞Otto's Irresistible Dance
+ | 六环
+ | 惑控
+ | 诗 法
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 行动无踪Pass without Trace
+ | 二环
+ | 防护
+ | 德 软
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 穿墙术Passwall
+ | 五环
+ | 变化
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 魅影之力Phantasmal Force
+ | 二环
+ | 幻术
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 魅影杀手Phantasmal Killer
+ | 四环
+ | 幻术
+ | 诗 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 魅影驹Phantom Steed
+ | 三环
+ | 幻术
+ | 法
+ | V
+ | S
+ | ×
+ | √
+ | ×
+ | PHB24
+ | 异界誓盟Planar Ally
+ | 六环
+ | 咒法
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 异界誓缚Planar Binding
+ | 五环
+ | 咒法
+ | 诗 牧 德 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 位面转移Plane Shift
+ | 七环
+ | 咒法
+ | 牧 德 术 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 植物滋长Plant Growth
+ | 三环
+ | 变化
+ | 诗 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 毒气喷涌Poison Spray
+ | 戏法(零环)
+ | 死灵
+ | 德 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 变形术Polymorph
+ | 四环
+ | 变化
+ | 诗 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 律令巩固Power Word Fortify
+ | 七环
+ | 惑控
+ | 诗 牧
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 律令医疗Power Word Heal
+ | 九环
+ | 惑控
+ | 诗 牧
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 律令死亡Power Word Kill
+ | 九环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 律令痛苦Power Word Pain
+ | 七环
+ | 惑控
+ | 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 律令震慑Power Word Stun
+ | 八环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 治疗祷言Prayer of Healing
+ | 二环
+ | 防护
+ | 牧 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 魔法伎俩Prestidigitation
+ | 戏法(零环)
+ | 变化
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 原初蛮击Primal Savagery
+ | 戏法(零环)
+ | 变化
+ | 德
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 原初守护Primordial Ward
+ | 六环
+ | 防护
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 虹光喷射Prismatic Spray
+ | 七环
+ | 塑能
+ | 诗 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 虹光法墙Prismatic Wall
+ | 九环
+ | 防护
+ | 诗 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 燃火术Produce Flame
+ | 戏法(零环)
+ | 咒法
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 预置幻象Programmed Illusion
+ | 六环
+ | 幻术
+ | 诗 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 投影术Project Image
+ | 七环
+ | 幻术
+ | 诗 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 防护能量Protection from Energy
+ | 三环
+ | 防护
+ | 牧 德 软 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 防护善恶Protection from Evil and Good
+ | 一环
+ | 防护
+ | 牧 德 帕 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 防护毒素Protection from Poison
+ | 二环
+ | 防护
+ | 牧 德 帕 软
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 心灵尖啸Psychic Scream
+ | 九环
+ | 惑控
+ | 诗 术 法 锁
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 净化饮食Purify Food and Drink
+ | 一环
+ | 变化
+ | 牧 德 帕
+ | V
+ | S
+ | ×
+ | √
+ | ×
+ | PHB24
+ | 烟火术Pyrotechnics
+ | 二环
+ | 变化
+ | 诗 术 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 死者复活Raise Dead
+ | 五环
+ | 死灵
+ | 诗 牧 帕
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 拉瑞心灵联结Rary's Telepathic Bond
+ | 五环
+ | 预言
+ | 诗 法
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB24
+ | 劳洛希姆心灵长枪Raulothim's Psychic Lance
+ | 四环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | FTD
+ | 衰弱射线Ray of Enfeeblement
+ | 二环
+ | 死灵
+ | 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 冷冻射线Ray of Frost
+ | 戏法(零环)
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 致病射线Ray of Sickness
+ | 一环
+ | 死灵
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 再生术Regenerate
+ | 七环
+ | 变化
+ | 诗 牧 德
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 转生术Reincarnate
+ | 五环
+ | 死灵
+ | 德
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 移除诅咒Remove Curse
+ | 三环
+ | 防护
+ | 牧 帕 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 抵抗术Resistance
+ | 戏法(零环)
+ | 防护
+ | 牧 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 复生术Resurrection
+ | 七环
+ | 死灵
+ | 诗 牧
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 反转重力Reverse Gravity
+ | 七环
+ | 变化
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 回生术Revivify
+ | 三环
+ | 死灵
+ | 牧 德 帕 软
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 雾凇霜缚Rime's Binding Ice
+ | 二环
+ | 塑能
+ | 术 法
+ | ×
+ | S
+ | M
+ | ×
+ | ×
+ | FTD
+ | 魔绳术Rope Trick
+ | 二环
+ | 变化
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 圣火术Sacred Flame
+ | 戏法(零环)
+ | 塑能
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 庇护术Sanctuary
+ | 一环
+ | 防护
+ | 牧
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 散射术Scatter
+ | 六环
+ | 咒法
+ | 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 灼热射线Scorching Ray
+ | 二环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 探知术Scrying
+ | 五环
+ | 预言
+ | 诗 牧 德 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 炽焰斩Searing Smite
+ | 一环
+ | 塑能
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 识破隐形See Invisibility
+ | 二环
+ | 预言
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 伪装术Seeming
+ | 五环
+ | 幻术
+ | 诗 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 短讯术Sending
+ | 三环
+ | 预言
+ | 诗 牧 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 隔离术Sequester
+ | 七环
+ | 变化
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 幽影刃Shadow Blade
+ | 二环
+ | 幻术
+ | 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 莫伊之影Shadow of Moil
+ | 四环
+ | 死灵
+ | 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | XGE
+ | 操水术Shape Water
+ | 戏法(零环)
+ | 变化
+ | 德 术 法
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 形体变化Shapechange
+ | 九环
+ | 变化
+ | 德 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 粉碎音波Shatter
+ | 二环
+ | 塑能
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 护盾术Shield
+ | 一环
+ | 防护
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 虔诚护盾Shield of Faith
+ | 一环
+ | 防护
+ | 牧 帕
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 橡棍术Shillelagh
+ | 戏法(零环)
+ | 变化
+ | 德
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 闪耀斩Shining Smite
+ | 二环
+ | 变化
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 电爪Shocking Grasp
+ | 戏法(零环)
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 致病辐射Sickening Radiance
+ | 四环
+ | 塑能
+ | 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 沉默术Silence
+ | 二环
+ | 幻术
+ | 诗 牧 软
+ | V
+ | S
+ | ×
+ | √
+ | √
+ | PHB24
+ | 无声幻影Silent Image
+ | 一环
+ | 幻术
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 银光锐语Silvery Barbs
+ | 一环
+ | 惑控
+ | 诗 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | SCC
+ | 拟像术Simulacrum
+ | 七环
+ | 幻术
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 授予技能Skill Empowerment
+ | 五环
+ | 变化
+ | 诗 术 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 写入空中Skywrite
+ | 二环
+ | 变化
+ | 诗 德 法 械
+ | V
+ | S
+ | ×
+ | √
+ | √
+ | XGE
+ | 睡眠术Sleep
+ | 一环
+ | 惑控
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 雪雨暴Sleet Storm
+ | 三环
+ | 咒法
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 缓慢术Slow
+ | 三环
+ | 变化
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 圈套术Snare
+ | 一环
+ | 防护
+ | 德 软 法 械
+ | ×
+ | S
+ | M*
+ | ×
+ | ×
+ | XGE
+ | 史尼洛雪球群Snilloc's Snowball Swarm
+ | 二环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | XGE
+ | 术法爆发Sorcerous Burst
+ | 戏法(零环)
+ | 塑能
+ | 术
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 灵魂牢笼Soul Cage
+ | 六环
+ | 死灵
+ | 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | XGE
+ | 维生术Spare the Dying
+ | 戏法(零环)
+ | 死灵
+ | 牧 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 动物交谈Speak with Animals
+ | 一环
+ | 预言
+ | 诗 德 软 锁
+ | V
+ | S
+ | ×
+ | √
+ | ×
+ | PHB24
+ | 死者交谈Speak with Dead
+ | 三环
+ | 死灵
+ | 诗 牧 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 植物交谈Speak with Plants
+ | 三环
+ | 变化
+ | 诗 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 蛛行术Spider Climb
+ | 二环
+ | 变化
+ | 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 荆棘丛生Spike Growth
+ | 二环
+ | 变化
+ | 德 软
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 灵体卫士Spirit Guardians
+ | 三环
+ | 咒法
+ | 牧
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 魂灵环绕Spirit Shroud
+ | 三环
+ | 死灵
+ | 牧 帕 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | TCE
+ | 死神灵魄Spirit of Death
+ | 四环
+ | 死灵
+ | 术 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | BMT
+ | 灵体武器Spiritual Weapon
+ | 二环
+ | 塑能
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 卡牌喷射Spray of Cards
+ | 二环
+ | 咒法
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | BMT
+ | 惊惧斩Staggering Smite
+ | 四环
+ | 惑控
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 点点星芒Starry Wisp
+ | 戏法(零环)
+ | 塑能
+ | 诗 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 钢风斩Steel Wind Strike
+ | 五环
+ | 咒法
+ | 软 法
+ | ×
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 臭云术Stinking Cloud
+ | 三环
+ | 咒法
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 塑石术Stone Shape
+ | 四环
+ | 变化
+ | 牧 德 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 石肤术Stoneskin
+ | 四环
+ | 防护
+ | 德 软 术 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 风暴法球Storm Sphere
+ | 四环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 复仇风暴Storm of Vengeance
+ | 九环
+ | 咒法
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 暗示术Suggestion
+ | 二环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | ×
+ | M
+ | ×
+ | √
+ | PHB24
+ | 异怪召唤术Summon Aberration
+ | 四环
+ | 咒法
+ | 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 野兽召唤术Summon Beast
+ | 二环
+ | 咒法
+ | 德 软
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 天界召唤术Summon Celestial
+ | 五环
+ | 咒法
+ | 牧 帕
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 构装召唤术Summon Construct
+ | 四环
+ | 咒法
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 龙类灵魄召唤术Summon Draconic Spirit
+ | 五环
+ | 咒法
+ | 德 术 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | FTD
+ | 龙类召唤术Summon Dragon
+ | 五环
+ | 咒法
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 元素召唤术Summon Elemental
+ | 四环
+ | 咒法
+ | 德 软 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 妖精召唤术Summon Fey
+ | 三环
+ | 咒法
+ | 德 软 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 邪魔召唤术Summon Fiend
+ | 六环
+ | 咒法
+ | 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 高阶恶魔召唤术Summon Greater Demon
+ | 四环
+ | 咒法
+ | 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | XGE
+ | 低阶恶魔召唤术Summon Lesser Demon
+ | 三环
+ | 咒法
+ | 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | XGE
+ | 暗影衍体召唤术Summon Shadowspawn
+ | 三环
+ | 咒法
+ | 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | TCE
+ | 亡灵召唤术Summon Undead
+ | 三环
+ | 死灵
+ | 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 阳炎射线Sunbeam
+ | 六环
+ | 塑能
+ | 牧 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 阳炎爆Sunburst
+ | 八环
+ | 塑能
+ | 牧 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 迅捷箭袋Swift Quiver
+ | 五环
+ | 变化
+ | 软
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB24
+ | 剑刃爆发Sword Burst
+ | 戏法(零环)
+ | 咒法
+ | 术 法 械 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | TCE
+ | 徽记术Symbol
+ | 七环
+ | 防护
+ | 诗 牧 德 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 突触静止Synaptic Static
+ | 五环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 塔莎泡泡坩埚Tasha's Bubbling Cauldron
+ | 六环
+ | 咒法
+ | 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 塔莎酸蚀酿Tasha's Caustic Brew
+ | 一环
+ | 塑能
+ | 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | TCE
+ | 塔莎狂笑术Tasha's Hideous Laughter
+ | 一环
+ | 惑控
+ | 诗 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 塔莎心灵鞭Tasha's Mind Whip
+ | 二环
+ | 惑控
+ | 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | TCE
+ | 塔莎超凡形态Tasha's Otherworldly Guise
+ | 六环
+ | 变化
+ | 术 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | TCE
+ | 心灵遥控Telekinesis
+ | 五环
+ | 变化
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 心灵感应Telepathy
+ | 八环
+ | 预言
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 传送术Teleport
+ | 七环
+ | 咒法
+ | 诗 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 传送法阵Teleportation Circle
+ | 五环
+ | 咒法
+ | 诗 术 法 锁
+ | V
+ | ×
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 神庙术Temple of the Gods
+ | 七环
+ | 咒法
+ | 牧
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | XGE
+ | 谭森浮碟术Tenser's Floating Disk
+ | 一环
+ | 咒法
+ | 法
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB24
+ | 谭森变形术Tenser's Transformation
+ | 六环
+ | 变化
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | XGE
+ | 奇术Thaumaturgy
+ | 戏法(零环)
+ | 变化
+ | 牧
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 荆棘之鞭Thorn Whip
+ | 戏法(零环)
+ | 变化
+ | 德
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 雷霆步Thunder Step
+ | 三环
+ | 咒法
+ | 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 鸣雷破Thunderclap
+ | 戏法(零环)
+ | 塑能
+ | 诗 德 术 法 锁
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 雷鸣斩Thunderous Smite
+ | 一环
+ | 塑能
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 雷鸣波Thunderwave
+ | 一环
+ | 塑能
+ | 诗 德 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 潮涌Tidal Wave
+ | 三环
+ | 咒法
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | XGE
+ | 时间停止Time Stop
+ | 九环
+ | 变化
+ | 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 迷你仆役Tiny Servant
+ | 三环
+ | 变化
+ | 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 亡者丧钟Toll the Dead
+ | 戏法(零环)
+ | 死灵
+ | 牧 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 巧言术Tongues
+ | 三环
+ | 预言
+ | 诗 牧 术 法 锁
+ | V
+ | ×
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 转化岩石Transmute Rock
+ | 五环
+ | 变化
+ | 德 法 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | XGE
+ | 木遁术Transport via Plants
+ | 六环
+ | 咒法
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 树跃术Tree Stride
+ | 五环
+ | 咒法
+ | 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 完全变形术True Polymorph
+ | 九环
+ | 变化
+ | 诗 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 完全复生术True Resurrection
+ | 九环
+ | 死灵
+ | 牧 德
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 真知术True Seeing
+ | 六环
+ | 预言
+ | 诗 牧 术 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 克敌先击True Strike
+ | 戏法(零环)
+ | 预言
+ | 诗 术 法 锁
+ | ×
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 海啸术Tsunami
+ | 八环
+ | 咒法
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 隐形仆役Unseen Servant
+ | 一环
+ | 咒法
+ | 诗 法 锁
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB24
+ | 吸血鬼之触Vampiric Touch
+ | 三环
+ | 死灵
+ | 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 恶言相加Vicious Mockery
+ | 戏法(零环)
+ | 惑控
+ | 诗
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 浓酸球Vitriolic Sphere
+ | 四环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 涡旋翘曲Vortex Warp
+ | 二环
+ | 咒法
+ | 术 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | SCC
+ | 火墙术Wall of Fire
+ | 四环
+ | 塑能
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 力场墙Wall of Force
+ | 五环
+ | 塑能
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 冰墙术Wall of Ice
+ | 六环
+ | 塑能
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 光墙术Wall of Light
+ | 五环
+ | 塑能
+ | 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | XGE
+ | 沙墙术Wall of Sand
+ | 三环
+ | 塑能
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | XGE
+ | 石墙术Wall of Stone
+ | 五环
+ | 塑能
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 棘墙术Wall of Thorns
+ | 六环
+ | 咒法
+ | 德
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 水墙术Wall of Water
+ | 三环
+ | 塑能
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | XGE
+ | 守护之链Warding Bond
+ | 二环
+ | 防护
+ | 牧 帕
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB24
+ | 守护之风Warding Wind
+ | 二环
+ | 塑能
+ | 诗 德 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | XGE
+ | 侦测扭曲Warp Sense
+ | 二环
+ | 预言
+ | 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | SO
+ | 水下呼吸Water Breathing
+ | 三环
+ | 变化
+ | 德 软 术 法
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB24
+ | 水上行走Water Walk
+ | 三环
+ | 变化
+ | 牧 德 软 术
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB24
+ | 碧水法球Watery Sphere
+ | 四环
+ | 咒法
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | XGE
+ | 蛛网术Web
+ | 二环
+ | 咒法
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 怪影杀手Weird
+ | 九环
+ | 幻术
+ | 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB24
+ | 旋风术Whirlwind
+ | 七环
+ | 塑能
+ | 德 术 法
+ | V
+ | ×
+ | M
+ | ×
+ | √
+ | XGE
+ | 御风而行Wind Walk
+ | 六环
+ | 变化
+ | 德
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 风墙术Wind Wall
+ | 三环
+ | 塑能
+ | 德 软
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 祈愿术Wish
+ | 九环
+ | 咒法
+ | 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 巫术箭Witch Bolt
+ | 一环
+ | 塑能
+ | 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 靡叶生华Wither and Bloom
+ | 二环
+ | 死灵
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | SCC
+ | 光耀祷词Word of Radiance
+ | 戏法(零环)
+ | 塑能
+ | 牧
+ | V
+ | ×
+ | M
+ | ×
+ | ×
+ | PHB24
+ | 回返真言Word of Recall
+ | 六环
+ | 咒法
+ | 牧
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 自然之怒Wrath of Nature
+ | 五环
+ | 塑能
+ | 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 激愤斩Wrathful Smite
+ | 一环
+ | 死灵
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 悠兰德王者威仪Yolande's Regal Presence
+ | 五环
+ | 惑控
+ | 诗 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB24
+ | 西风打击Zephyr Strike
+ | 一环
+ | 变化
+ | 软
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | XGE
+ | 诚实之域Zone of Truth
+ | 二环
+ | 惑控
+ | 诗 牧 帕
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB24
+ | 酸液飞溅Acid Splash
+ | 戏法(零环)
+ | 咒法
+ | 术 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 援助术Aid
+ | 二环
+ | 防护
+ | 诗 牧 帕 软 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 警报术Alarm
+ | 一环
+ | 防护
+ | 软 法 械
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB14
+ | 变身术Alter Self
+ | 二环
+ | 变化
+ | 术 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 化兽为友Animal Friendship
+ | 一环
+ | 惑控
+ | 诗 德 软
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 动物信使Animal Messenger
+ | 二环
+ | 惑控
+ | 诗 德 软
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB14
+ | 动物形态Animal Shapes
+ | 八环
+ | 变化
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 活化死尸Animate Dead
+ | 三环
+ | 死灵
+ | 牧 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 活化物件Animate Objects
+ | 五环
+ | 变化
+ | 诗 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 防活物护罩Antilife Shell
+ | 五环
+ | 防护
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 反魔法场Antimagic Field
+ | 八环
+ | 防护
+ | 牧 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 嫌恶术/关怀术Antipathy/Sympathy
+ | 八环
+ | 惑控
+ | 诗 德 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 秘法眼Arcane Eye
+ | 四环
+ | 预言
+ | 法 械
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 秘法门Arcane Gate
+ | 六环
+ | 咒法
+ | 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 秘法锁Arcane Lock
+ | 二环
+ | 防护
+ | 法 械
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 黯冰狱铠Armor of Agathys
+ | 一环
+ | 防护
+ | 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 哈达之臂Arms of Hadar
+ | 一环
+ | 咒法
+ | 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 星界投影Astral Projection
+ | 九环
+ | 死灵
+ | 牧 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 卜筮术Augury
+ | 二环
+ | 预言
+ | 牧 德 法
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB14
+ | 生命灵光Aura of Life
+ | 四环
+ | 防护
+ | 牧 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 净化灵光Aura of Purity
+ | 四环
+ | 防护
+ | 牧 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 活力灵光Aura of Vitality
+ | 三环
+ | 塑能
+ | 牧 德 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 启蒙术Awaken
+ | 五环
+ | 变化
+ | 诗 德
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 灾祸术Bane
+ | 一环
+ | 惑控
+ | 诗 牧
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 放逐斩Banishing Smite
+ | 五环
+ | 防护
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 放逐术Banishment
+ | 四环
+ | 防护
+ | 牧 帕 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 树肤术Barkskin
+ | 二环
+ | 变化
+ | 德 软
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 希望信标Beacon of Hope
+ | 三环
+ | 防护
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 野兽知觉Beast Sense
+ | 二环
+ | 预言
+ | 德 软
+ | ×
+ | S
+ | ×
+ | √
+ | √
+ | PHB14
+ | 降咒Bestow Curse
+ | 三环
+ | 死灵
+ | 诗 牧 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 毕格比之手Bigby's Hand
+ | 五环
+ | 塑能
+ | 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 剑刃护壁Blade Barrier
+ | 六环
+ | 塑能
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 剑刃防护Blade Ward
+ | 戏法(零环)
+ | 防护
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 祝福术Bless
+ | 一环
+ | 惑控
+ | 牧 帕
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 枯萎术Blight
+ | 四环
+ | 死灵
+ | 德 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 致盲斩Blinding Smite
+ | 三环
+ | 塑能
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 目盲术/耳聋术Blindness/Deafness
+ | 二环
+ | 死灵
+ | 诗 牧 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 闪现术Blink
+ | 三环
+ | 变化
+ | 术 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 朦胧术Blur
+ | 二环
+ | 幻术
+ | 术 法 械
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 印记斩Branding Smite
+ | 二环
+ | 塑能
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 燃烧之手Burning Hands
+ | 一环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 召雷术Call Lightning
+ | 三环
+ | 咒法
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 安定心神Calm Emotions
+ | 二环
+ | 惑控
+ | 诗 牧
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 连锁闪电Chain Lightning
+ | 六环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 魅惑怪物Charm Monster
+ | 四环
+ | 惑控
+ | 诗 德 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 魅惑类人Charm Person
+ | 一环
+ | 惑控
+ | 诗 德 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 颤栗之触Chill Touch
+ | 戏法(零环)
+ | 死灵
+ | 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 繁彩球Chromatic Orb
+ | 一环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 死亡法阵Circle of Death
+ | 六环
+ | 死灵
+ | 术 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 原力法阵Circle of Power
+ | 五环
+ | 防护
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 鹰眼术Clairvoyance
+ | 三环
+ | 预言
+ | 诗 牧 术 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB14
+ | 克隆术Clone
+ | 八环
+ | 死灵
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 匕首之云Cloud of Daggers
+ | 二环
+ | 咒法
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 死云术Cloudkill
+ | 五环
+ | 咒法
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 七彩喷射Color Spray
+ | 一环
+ | 幻术
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 命令术Command
+ | 一环
+ | 惑控
+ | 诗 牧 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 通神术Commune
+ | 五环
+ | 预言
+ | 牧
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB14
+ | 问道自然Commune with Nature
+ | 五环
+ | 预言
+ | 德 软
+ | V
+ | S
+ | ×
+ | √
+ | ×
+ | PHB14
+ | 强令对决Compelled Duel
+ | 一环
+ | 惑控
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 通晓语言Comprehend Languages
+ | 一环
+ | 预言
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB14
+ | 强迫术Compulsion
+ | 四环
+ | 惑控
+ | 诗
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 寒冰锥Cone of Cold
+ | 五环
+ | 塑能
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 困惑术Confusion
+ | 四环
+ | 惑控
+ | 诗 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 动物咒唤术Conjure Animals
+ | 三环
+ | 咒法
+ | 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 箭如雨下Conjure Barrage
+ | 三环
+ | 咒法
+ | 软
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 天界咒唤术Conjure Celestial
+ | 七环
+ | 咒法
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 元素咒唤术Conjure Elemental
+ | 五环
+ | 咒法
+ | 德 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 精类咒唤术Conjure Fey
+ | 六环
+ | 咒法
+ | 德 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 次级元素咒唤术Conjure Minor
+					Elementals
+ | 四环
+ | 咒法
+ | 德 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 万箭齐发Conjure Volley
+ | 五环
+ | 咒法
+ | 软
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 林地之精咒唤术Conjure Woodland
+					Beings
+ | 四环
+ | 咒法
+ | 德 软
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 异界探知Contact Other Plane
+ | 五环
+ | 预言
+ | 法 锁
+ | V
+ | ×
+ | ×
+ | √
+ | ×
+ | PHB14
+ | 疫病术Contagion
+ | 五环
+ | 死灵
+ | 牧 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 触发术Contingency
+ | 六环
+ | 塑能
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 不灭明焰Continual Flame
+ | 二环
+ | 塑能
+ | 牧 德 法 械
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 操控水体Control Water
+ | 四环
+ | 变化
+ | 牧 德 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 操控天气Control Weather
+ | 八环
+ | 变化
+ | 牧 德 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 警戒箭阵Cordon of Arrows
+ | 二环
+ | 变化
+ | 软
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 法术反制Counterspell
+ | 三环
+ | 防护
+ | 术 法 锁
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 造粮术Create Food and Water
+ | 三环
+ | 咒法
+ | 牧 帕 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 唤起亡灵Create Undead
+ | 六环
+ | 死灵
+ | 牧 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 造水/枯水术Create or Destroy
+					Water
+ | 一环
+ | 变化
+ | 牧 德
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 造物术Creation
+ | 五环
+ | 幻术
+ | 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 疯狂冠冕Crown of Madness
+ | 二环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 十字军披风Crusader's Mantle
+ | 三环
+ | 塑能
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 疗伤术Cure Wounds
+ | 一环
+ | 塑能
+ | 诗 牧 德 帕 软 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 舞光术Dancing Lights
+ | 戏法(零环)
+ | 塑能
+ | 诗 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 黑暗术Darkness
+ | 二环
+ | 塑能
+ | 术 法 锁
+ | V
+ | ×
+ | M
+ | ×
+ | √
+ | PHB14
+ | 黑暗视觉Darkvision
+ | 二环
+ | 变化
+ | 德 软 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 昼明术Daylight
+ | 三环
+ | 塑能
+ | 牧 德 帕 软 术
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 防死结界Death Ward
+ | 四环
+ | 防护
+ | 牧 帕
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 延迟爆裂火球Delayed Blast
+					Fireball
+ | 七环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 半位面Demiplane
+ | 八环
+ | 咒法
+ | 术 法 锁
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 湮灭波Destructive Wave
+ | 五环
+ | 塑能
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 侦测善恶Detect Evil and Good
+ | 一环
+ | 预言
+ | 牧 帕
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 侦测魔法Detect Magic
+ | 一环
+ | 预言
+ | 诗 牧 德 帕 软 术 法 械
+ | V
+ | S
+ | ×
+ | √
+ | √
+ | PHB14
+ | 侦测毒性和疾病Detect Poison and
+					Disease
+ | 一环
+ | 预言
+ | 牧 德 帕 软
+ | V
+ | S
+ | M
+ | √
+ | √
+ | PHB14
+ | 侦测思想Detect Thoughts
+ | 二环
+ | 预言
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 任意门Dimension Door
+ | 四环
+ | 咒法
+ | 诗 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 易容术Disguise Self
+ | 一环
+ | 幻术
+ | 诗 术 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 解离术Disintegrate
+ | 六环
+ | 变化
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 驱逐善恶Dispel Evil and Good
+ | 五环
+ | 防护
+ | 牧 帕
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 解除魔法Dispel Magic
+ | 三环
+ | 防护
+ | 诗 牧 德 帕 术 法 械 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 不谐低语Dissonant Whispers
+ | 一环
+ | 惑控
+ | 诗
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 预言术Divination
+ | 四环
+ | 预言
+ | 牧 德 法
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB14
+ | 神恩Divine Favor
+ | 一环
+ | 塑能
+ | 帕
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 圣言术Divine Word
+ | 七环
+ | 塑能
+ | 牧
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 支配野兽Dominate Beast
+ | 四环
+ | 惑控
+ | 德 软 术
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 支配怪物Dominate Monster
+ | 八环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 支配类人Dominate Person
+ | 五环
+ | 惑控
+ | 诗 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 龙息术Dragon's Breath
+ | 二环
+ | 变化
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | XGE
+ | 卓姆吉瞬间召唤Drawmij's Instant
+					Summons
+ | 六环
+ | 咒法
+ | 法
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB14
+ | 托梦术Dream
+ | 五环
+ | 幻术
+ | 诗 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 德鲁伊伎俩Druidcraft
+ | 戏法(零环)
+ | 变化
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 地震术Earthquake
+ | 八环
+ | 塑能
+ | 牧 德 术
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 魔能爆Eldritch Blast
+ | 戏法(零环)
+ | 塑能
+ | 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 元素武器Elemental Weapon
+ | 三环
+ | 变化
+ | 德 帕 软 械
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 强化属性Enhance Ability
+ | 二环
+ | 变化
+ | 诗 牧 德 软 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 变巨术/缩小术Enlarge / Reduce
+ | 二环
+ | 变化
+ | 诗 德 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 捕获打击Ensnaring Strike
+ | 一环
+ | 咒法
+ | 软
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 纠缠术Entangle
+ | 一环
+ | 咒法
+ | 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 注目术Enthrall
+ | 二环
+ | 惑控
+ | 诗 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 以太化Etherealness
+ | 七环
+ | 变化
+ | 诗 牧 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 艾伐黑触手Evard's Black
+					Tentacles
+ | 四环
+ | 咒法
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 脚底抹油Expeditious Retreat
+ | 一环
+ | 变化
+ | 术 法 械 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 摄心目光Eyebite
+ | 六环
+ | 死灵
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 鬼斧神工Fabricate
+ | 四环
+ | 变化
+ | 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 妖火Faerie Fire
+ | 一环
+ | 塑能
+ | 诗 德 械
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 虚假生命False Life
+ | 一环
+ | 死灵
+ | 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 恐惧术Fear
+ | 三环
+ | 幻术
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 羽落术Feather Fall
+ | 一环
+ | 变化
+ | 诗 术 法 械
+ | V
+ | ×
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 弱智术Feeblemind
+ | 八环
+ | 惑控
+ | 诗 德 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 假死术Feign Death
+ | 三环
+ | 死灵
+ | 诗 牧 德 法
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB14
+ | 寻获魔宠Find Familiar
+ | 一环
+ | 咒法
+ | 法
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB14
+ | 寻获坐骑Find Steed
+ | 二环
+ | 咒法
+ | 帕
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 寻找陷阱Find Traps
+ | 二环
+ | 预言
+ | 牧 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 寻路术Find the Path
+ | 六环
+ | 预言
+ | 诗 牧 德
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB14
+ | 死亡一指Finger of Death
+ | 七环
+ | 死灵
+ | 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 火焰箭Fire Bolt
+ | 戏法(零环)
+ | 塑能
+ | 术 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 火焰护盾Fire Shield
+ | 四环
+ | 塑能
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 火焰风暴Fire Storm
+ | 七环
+ | 塑能
+ | 牧 德 术
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 火球术Fireball
+ | 三环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 火焰刀Flame Blade
+ | 二环
+ | 塑能
+ | 德 术
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 焰击术Flame Strike
+ | 五环
+ | 塑能
+ | 牧
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 炽焰法球Flaming Sphere
+ | 二环
+ | 咒法
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 石化术Flesh to Stone
+ | 六环
+ | 变化
+ | 德 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 飞行术Fly
+ | 三环
+ | 变化
+ | 术 法 械 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 云雾术Fog Cloud
+ | 一环
+ | 咒法
+ | 德 软 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 禁制术Forbiddance
+ | 六环
+ | 防护
+ | 牧
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB14
+ | 力场监牢Forcecage
+ | 七环
+ | 塑能
+ | 诗 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 预见术Foresight
+ | 九环
+ | 预言
+ | 诗 德 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 行动自如Freedom of Movement
+ | 四环
+ | 防护
+ | 诗 牧 德 软 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 交友术Friends
+ | 戏法(零环)
+ | 惑控
+ | 诗 术 法 锁
+ | ×
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 气化形体Gaseous Form
+ | 三环
+ | 变化
+ | 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 异界之门Gate
+ | 九环
+ | 咒法
+ | 牧 术 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB14
+ | 指使术Geas
+ | 五环
+ | 惑控
+ | 诗 牧 德 帕 法
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 遗体防腐Gentle Repose
+ | 二环
+ | 死灵
+ | 牧 帕 法
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB14
+ | 巨虫术Giant Insect
+ | 四环
+ | 变化
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 花言巧语Glibness
+ | 八环
+ | 变化
+ | 诗 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 法术无效结界Globe of
+					Invulnerability
+ | 六环
+ | 防护
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 守卫刻文Glyph of Warding
+ | 三环
+ | 防护
+ | 诗 牧 法 械
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 神莓术Goodberry
+ | 一环
+ | 变化
+ | 德 软
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 擒抱藤Grasping Vine
+ | 四环
+ | 咒法
+ | 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 油腻术Grease
+ | 一环
+ | 咒法
+ | 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 高等隐形术Greater Invisibility
+ | 四环
+ | 幻术
+ | 诗 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 高等复原术Greater Restoration
+ | 五环
+ | 防护
+ | 诗 牧 德 软 械
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 信仰守卫Guardian of Faith
+ | 四环
+ | 咒法
+ | 牧
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 铜墙铁壁Guards and Wards
+ | 六环
+ | 防护
+ | 诗 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 神导术Guidance
+ | 戏法(零环)
+ | 预言
+ | 牧 德 械
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 光导箭Guiding Bolt
+ | 一环
+ | 塑能
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 造风术Gust of Wind
+ | 二环
+ | 塑能
+ | 德 软 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 棘雹术Hail of Thorns
+ | 一环
+ | 咒法
+ | 软
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 圣居Hallow
+ | 五环
+ | 塑能
+ | 牧
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 幻景Hallucinatory Terrain
+ | 四环
+ | 幻术
+ | 诗 德 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 重伤术Harm
+ | 六环
+ | 死灵
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 加速术Haste
+ | 三环
+ | 变化
+ | 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 医疗术Heal
+ | 六环
+ | 塑能
+ | 牧 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 治愈真言Healing Word
+ | 一环
+ | 塑能
+ | 诗 牧 德
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 灼热金属Heat Metal
+ | 二环
+ | 变化
+ | 诗 德 械
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 炼狱叱喝Hellish Rebuke
+ | 一环
+ | 塑能
+ | 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 英雄宴Heroes' Feast
+ | 六环
+ | 咒法
+ | 诗 牧 德
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 英雄气概Heroism
+ | 一环
+ | 惑控
+ | 诗 帕
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 脆弱诅咒Hex
+ | 一环
+ | 惑控
+ | 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 定身怪物Hold Monster
+ | 五环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 定身类人Hold Person
+ | 二环
+ | 惑控
+ | 诗 牧 德 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 圣洁灵光Holy Aura
+ | 八环
+ | 防护
+ | 牧
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB14
+ | 哈达之欲Hunger of Hadar
+ | 三环
+ | 咒法
+ | 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 猎人印记Hunter's Mark
+ | 一环
+ | 预言
+ | 软
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 催眠图纹Hypnotic Pattern
+ | 三环
+ | 幻术
+ | 诗 术 法 锁
+ | ×
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 冰刃Ice Knife
+ | 一环
+ | 咒法
+ | 德 术 法
+ | ×
+ | S
+ | M
+ | ×
+ | ×
+ | XGE
+ | 冰风暴Ice Storm
+ | 四环
+ | 塑能
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 鉴定术Identify
+ | 一环
+ | 预言
+ | 诗 法 械
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB14
+ | 迷幻手稿Illusory Script
+ | 一环
+ | 幻术
+ | 诗 法 锁
+ | ×
+ | S
+ | M*
+ | √
+ | ×
+ | PHB14
+ | 禁锢术Imprisonment
+ | 九环
+ | 防护
+ | 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 焚云术Incendiary Cloud
+ | 八环
+ | 咒法
+ | 德 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 致伤术Inflict Wounds
+ | 一环
+ | 死灵
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 疫病虫群Insect Plague
+ | 五环
+ | 咒法
+ | 牧 德 术
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 隐形术Invisibility
+ | 二环
+ | 幻术
+ | 诗 术 法 械 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 跳跃术Jump
+ | 一环
+ | 变化
+ | 德 软 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 敲击术Knock
+ | 二环
+ | 变化
+ | 诗 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 通晓传奇Legend Lore
+ | 五环
+ | 预言
+ | 诗 牧 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 李欧蒙秘藏箱Leomund's Secret
+					Chest
+ | 四环
+ | 咒法
+ | 法 械
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 李欧蒙小屋Leomund's Tiny Hut
+ | 三环
+ | 塑能
+ | 诗 法
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB14
+ | 次等复原术Lesser Restoration
+ | 二环
+ | 防护
+ | 诗 牧 德 帕 软 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 浮空术Levitate
+ | 二环
+ | 变化
+ | 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 光亮术Light
+ | 戏法(零环)
+ | 塑能
+ | 诗 牧 术 法 械
+ | V
+ | ×
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 闪电箭矢Lightning Arrow
+ | 三环
+ | 变化
+ | 软
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 闪电束Lightning Bolt
+ | 三环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 动植物定位术Locate Animals or
+					Plants
+ | 二环
+ | 预言
+ | 诗 德 软
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB14
+ | 生物定位术Locate Creature
+ | 四环
+ | 预言
+ | 诗 牧 德 帕 软 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 物件定位术Locate Object
+ | 二环
+ | 预言
+ | 诗 牧 德 帕 软 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 大步奔行Longstrider
+ | 一环
+ | 变化
+ | 诗 德 软 法 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 法师护甲Mage Armor
+ | 一环
+ | 防护
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 法师之手Mage Hand
+ | 戏法(零环)
+ | 咒法
+ | 诗 术 法 械 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 防护法阵Magic Circle
+ | 三环
+ | 防护
+ | 牧 帕 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 魔魂壶Magic Jar
+ | 六环
+ | 死灵
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 魔法飞弹Magic Missile
+ | 一环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 魔嘴术Magic Mouth
+ | 二环
+ | 幻术
+ | 诗 法 械
+ | V
+ | S
+ | M*
+ | √
+ | ×
+ | PHB14
+ | 魔化武器Magic Weapon
+ | 二环
+ | 变化
+ | 帕 软 术 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 高级幻影Major Image
+ | 三环
+ | 幻术
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 群体疗伤术Mass Cure Wounds
+ | 五环
+ | 塑能
+ | 诗 牧 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 群体医疗术Mass Heal
+ | 九环
+ | 塑能
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 群体治愈真言Mass Healing Word
+ | 三环
+ | 塑能
+ | 诗 牧
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 群体暗示术Mass Suggestion
+ | 六环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | ×
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 迷宫术Maze
+ | 八环
+ | 咒法
+ | 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 融身入石Meld Into Stone
+ | 三环
+ | 变化
+ | 牧 德 软
+ | V
+ | S
+ | ×
+ | √
+ | ×
+ | PHB14
+ | 马友夫强酸箭Melf's Acid Arrow
+ | 二环
+ | 塑能
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 修复术Mending
+ | 戏法(零环)
+ | 变化
+ | 诗 牧 德 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 传讯术Message
+ | 戏法(零环)
+ | 变化
+ | 诗 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 流星爆Meteor Swarm
+ | 九环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 心灵屏障Mind Blank
+ | 八环
+ | 防护
+ | 诗 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 心灵之楔Mind Sliver
+ | 戏法(零环)
+ | 惑控
+ | 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | TCE
+ | 心灵尖刺Mind Spike
+ | 二环
+ | 预言
+ | 术 法 锁
+ | ×
+ | S
+ | ×
+ | ×
+ | √
+ | XGE
+ | 次级幻象Minor Illusion
+ | 戏法(零环)
+ | 幻术
+ | 诗 术 法 锁
+ | ×
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 海市蜃楼Mirage Arcane
+ | 七环
+ | 幻术
+ | 诗 德 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 镜影术Mirror Image
+ | 二环
+ | 幻术
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 假象术Mislead
+ | 五环
+ | 幻术
+ | 诗 法 锁
+ | ×
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 迷踪步Misty Step
+ | 二环
+ | 咒法
+ | 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 篡改记忆Modify Memory
+ | 五环
+ | 惑控
+ | 诗 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 月华之光Moonbeam
+ | 二环
+ | 塑能
+ | 德
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 魔邓肯忠犬Mordenkainen's
+					Faithful
+					Hound
+ | 四环
+ | 咒法
+ | 法 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 魔邓肯豪宅术Mordenkainen's
+					Magnificent Mansion
+ | 七环
+ | 咒法
+ | 诗 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 魔邓肯私人密室Mordenkainen's
+					Private Sanctum
+ | 四环
+ | 防护
+ | 法 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 魔邓肯之剑Mordenkainen's Sword
+ | 七环
+ | 塑能
+ | 诗 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB14
+ | 地动术Move Earth
+ | 六环
+ | 变化
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 回避侦测Nondetection
+ | 三环
+ | 防护
+ | 诗 软 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 涅斯图魔法灵光Nystul's Magic Aura
+ | 二环
+ | 幻术
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 欧提路克冰封法球Otiluke's Freezing
+					Sphere
+ | 六环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 欧提路克弹力法球Otiluke's
+					Resilient
+					Sphere
+ | 四环
+ | 塑能
+ | 法 械
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 奥图迷舞Otto's Irresistible
+					Dance
+ | 六环
+ | 惑控
+ | 诗 法
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 行动无踪Pass without Trace
+ | 二环
+ | 防护
+ | 德 软
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 穿墙术Passwall
+ | 五环
+ | 变化
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 魅影之力Phantasmal Force
+ | 二环
+ | 幻术
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 魅影杀手Phantasmal Killer
+ | 四环
+ | 幻术
+ | 诗 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 魅影驹Phantom Steed
+ | 三环
+ | 幻术
+ | 法
+ | V
+ | S
+ | ×
+ | √
+ | ×
+ | PHB14
+ | 异界誓盟Planar Ally
+ | 六环
+ | 咒法
+ | 牧 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 异界誓缚Planar Binding
+ | 五环
+ | 防护
+ | 诗 牧 德 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 位面转移Plane Shift
+ | 七环
+ | 咒法
+ | 牧 德 术 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 植物滋长Plant Growth
+ | 三环
+ | 变化
+ | 诗 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 毒气喷涌Poison Spray
+ | 戏法(零环)
+ | 咒法
+ | 德 术 法 械 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 变形术Polymorph
+ | 四环
+ | 变化
+ | 诗 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 律令医疗Power Word Heal
+ | 九环
+ | 塑能
+ | 诗 牧
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 律令死亡Power Word Kill
+ | 九环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 律令震慑Power Word Stun
+ | 八环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 治疗祷言Prayer of Healing
+ | 二环
+ | 塑能
+ | 牧 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 魔法伎俩Prestidigitation
+ | 戏法(零环)
+ | 变化
+ | 诗 术 法 械 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 虹光喷射Prismatic Spray
+ | 七环
+ | 塑能
+ | 诗 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 虹光法墙Prismatic Wall
+ | 九环
+ | 防护
+ | 诗 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 燃火术Produce Flame
+ | 戏法(零环)
+ | 咒法
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 预置幻象Programmed Illusion
+ | 六环
+ | 幻术
+ | 诗 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 投影术Project Image
+ | 七环
+ | 幻术
+ | 诗 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB14
+ | 防护能量Protection from
+					Energy
+ | 三环
+ | 防护
+ | 牧 德 软 术 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 防护善恶Protection from
+					Evil and
+					Good
+ | 一环
+ | 防护
+ | 牧 德 帕 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB14
+ | 防护毒素Protection from
+					Poison
+ | 二环
+ | 防护
+ | 牧 德 帕 软 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 净化饮食Purify Food and Drink
+ | 一环
+ | 变化
+ | 牧 德 帕 械
+ | V
+ | S
+ | ×
+ | √
+ | ×
+ | PHB14
+ | 死者复活Raise Dead
+ | 五环
+ | 死灵
+ | 诗 牧 帕
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 拉瑞心灵联结Rary's Telepathic
+					Bond
+ | 五环
+ | 预言
+ | 诗 法
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB14
+ | 衰弱射线Ray of Enfeeblement
+ | 二环
+ | 死灵
+ | 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 冷冻射线Ray of Frost
+ | 戏法(零环)
+ | 塑能
+ | 术 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 致病射线Ray of Sickness
+ | 一环
+ | 死灵
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 再生术Regenerate
+ | 七环
+ | 变化
+ | 诗 牧 德
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 转生术Reincarnate
+ | 五环
+ | 变化
+ | 德
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 移除诅咒Remove Curse
+ | 三环
+ | 防护
+ | 牧 帕 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 抵抗术Resistance
+ | 戏法(零环)
+ | 防护
+ | 牧 德 械
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 复生术Resurrection
+ | 七环
+ | 死灵
+ | 诗 牧
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 反转重力Reverse Gravity
+ | 七环
+ | 变化
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 回生术Revivify
+ | 三环
+ | 死灵
+ | 牧 德 帕 软 械
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 魔绳术Rope Trick
+ | 二环
+ | 变化
+ | 法 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 圣火术Sacred Flame
+ | 戏法(零环)
+ | 塑能
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 庇护术Sanctuary
+ | 一环
+ | 防护
+ | 牧 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 灼热射线Scorching Ray
+ | 二环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 探知术Scrying
+ | 五环
+ | 预言
+ | 诗 牧 德 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB14
+ | 炽焰斩Searing Smite
+ | 一环
+ | 塑能
+ | 帕 软
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 识破隐形See Invisibility
+ | 二环
+ | 预言
+ | 诗 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 伪装术Seeming
+ | 五环
+ | 幻术
+ | 诗 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 短讯术Sending
+ | 三环
+ | 塑能
+ | 诗 牧 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 隔离术Sequester
+ | 七环
+ | 变化
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 形体变化Shapechange
+ | 九环
+ | 变化
+ | 德 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB14
+ | 粉碎音波Shatter
+ | 二环
+ | 塑能
+ | 诗 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 护盾术Shield
+ | 一环
+ | 防护
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 虔诚护盾Shield of Faith
+ | 一环
+ | 防护
+ | 牧 帕
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 橡棍术Shillelagh
+ | 戏法(零环)
+ | 变化
+ | 德
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 电爪Shocking Grasp
+ | 戏法(零环)
+ | 塑能
+ | 术 法 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 沉默术Silence
+ | 二环
+ | 幻术
+ | 诗 牧 软
+ | V
+ | S
+ | ×
+ | √
+ | √
+ | PHB14
+ | 无声幻影Silent Image
+ | 一环
+ | 幻术
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 拟像术Simulacrum
+ | 七环
+ | 幻术
+ | 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 睡眠术Sleep
+ | 一环
+ | 惑控
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 雪雨暴Sleet Storm
+ | 三环
+ | 咒法
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 缓慢术Slow
+ | 三环
+ | 变化
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 维生术Spare the Dying
+ | 戏法(零环)
+ | 死灵
+ | 牧 械
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 动物交谈Speak with Animals
+ | 一环
+ | 预言
+ | 诗 德 软
+ | V
+ | S
+ | ×
+ | √
+ | ×
+ | PHB14
+ | 死者交谈Speak with Dead
+ | 三环
+ | 死灵
+ | 诗 牧 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 植物交谈Speak with Plants
+ | 三环
+ | 变化
+ | 诗 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 蛛行术Spider Climb
+ | 二环
+ | 变化
+ | 术 法 械 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 荆棘丛生Spike Growth
+ | 二环
+ | 变化
+ | 德 软
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 灵体卫士Spirit Guardians
+ | 三环
+ | 咒法
+ | 牧
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 灵体武器Spiritual Weapon
+ | 二环
+ | 塑能
+ | 牧
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 惊惧斩Staggering Smite
+ | 四环
+ | 塑能
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 钢风斩Steel Wind Strike
+ | 五环
+ | 咒法
+ | 软 法
+ | ×
+ | S
+ | M*
+ | ×
+ | ×
+ | XGE
+ | 臭云术Stinking Cloud
+ | 三环
+ | 咒法
+ | 诗 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 塑石术Stone Shape
+ | 四环
+ | 变化
+ | 牧 德 法 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 石肤术Stoneskin
+ | 四环
+ | 防护
+ | 德 软 术 法 械
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | PHB14
+ | 复仇风暴Storm of Vengeance
+ | 九环
+ | 咒法
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 暗示术Suggestion
+ | 二环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | ×
+ | M
+ | ×
+ | √
+ | PHB14
+ | 异怪召唤术Summon Aberration
+ | 四环
+ | 咒法
+ | 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | TCE
+ | 野兽召唤术Summon Beast
+ | 二环
+ | 咒法
+ | 德 软
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | TCE
+ | 天界召唤术Summon Celestial
+ | 五环
+ | 咒法
+ | 牧 帕
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | TCE
+ | 构装召唤术Summon Construct
+ | 四环
+ | 咒法
+ | 法 械
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | TCE
+ | 元素召唤术Summon Elemental
+ | 四环
+ | 咒法
+ | 德 软 法
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | TCE
+ | 精类召唤术Summon Fey
+ | 三环
+ | 咒法
+ | 德 软 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | TCE
+ | 邪魔召唤术Summon Fiend
+ | 六环
+ | 咒法
+ | 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | TCE
+ | 亡灵召唤术Summon Undead
+ | 三环
+ | 死灵
+ | 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | √
+ | TCE
+ | 阳炎射线Sunbeam
+ | 六环
+ | 塑能
+ | 牧 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 阳炎爆Sunburst
+ | 八环
+ | 塑能
+ | 牧 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 迅捷箭袋Swift Quiver
+ | 五环
+ | 变化
+ | 软
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 徽记术Symbol
+ | 七环
+ | 防护
+ | 诗 牧 德 法
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 突触静止Synaptic Static
+ | 五环
+ | 惑控
+ | 诗 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 塔莎狂笑术Tasha's Hideous
+					Laughter
+ | 一环
+ | 惑控
+ | 诗 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 心灵遥控Telekinesis
+ | 五环
+ | 变化
+ | 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 心灵感应Telepathy
+ | 八环
+ | 塑能
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 传送术Teleport
+ | 七环
+ | 咒法
+ | 诗 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 传送法阵Teleportation Circle
+ | 五环
+ | 咒法
+ | 诗 术 法 锁
+ | V
+ | ×
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 谭森浮碟术Tenser's Floating
+					Disk
+ | 一环
+ | 咒法
+ | 法
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB14
+ | 奇术Thaumaturgy
+ | 戏法(零环)
+ | 变化
+ | 牧
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 荆棘之鞭Thorn Whip
+ | 戏法(零环)
+ | 变化
+ | 德 械
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 鸣雷破Thunderclap
+ | 戏法(零环)
+ | 塑能
+ | 诗 德 术 法 械 锁
+ | ×
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 雷鸣斩Thunderous Smite
+ | 一环
+ | 塑能
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 雷鸣波Thunderwave
+ | 一环
+ | 塑能
+ | 诗 德 术 法
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 时间停止Time Stop
+ | 九环
+ | 变化
+ | 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 亡者丧钟Toll the Dead
+ | 戏法(零环)
+ | 死灵
+ | 牧 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | XGE
+ | 巧言术Tongues
+ | 三环
+ | 预言
+ | 诗 牧 术 法 锁
+ | V
+ | ×
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 木遁术Transport via Plants
+ | 六环
+ | 咒法
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 树跃术Tree Stride
+ | 五环
+ | 咒法
+ | 德 软
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 完全变形术True Polymorph
+ | 九环
+ | 变化
+ | 诗 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 完全复生术True Resurrection
+ | 九环
+ | 死灵
+ | 牧 德
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 真知术True Seeing
+ | 六环
+ | 预言
+ | 诗 牧 术 法 锁
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 克敌机先True Strike
+ | 戏法(零环)
+ | 预言
+ | 诗 术 法 锁
+ | ×
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 海啸术Tsunami
+ | 八环
+ | 咒法
+ | 德
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 隐形仆役Unseen Servant
+ | 一环
+ | 咒法
+ | 诗 法 锁
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB14
+ | 吸血鬼之触Vampiric Touch
+ | 三环
+ | 死灵
+ | 术 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 恶言相加Vicious Mockery
+ | 戏法(零环)
+ | 惑控
+ | 诗
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 浓酸球Vitriolic Sphere
+ | 四环
+ | 塑能
+ | 术 法
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | XGE
+ | 火墙术Wall of Fire
+ | 四环
+ | 塑能
+ | 德 术 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 力场墙Wall of Force
+ | 五环
+ | 塑能
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 冰墙术Wall of Ice
+ | 六环
+ | 塑能
+ | 法
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 石墙术Wall of Stone
+ | 五环
+ | 塑能
+ | 德 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 棘墙术Wall of Thorns
+ | 六环
+ | 咒法
+ | 德
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 守护之链Warding Bond
+ | 二环
+ | 防护
+ | 牧 帕
+ | V
+ | S
+ | M*
+ | ×
+ | ×
+ | PHB14
+ | 水下呼吸Water Breathing
+ | 三环
+ | 变化
+ | 德 软 术 法 械
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB14
+ | 水上行走Water Walk
+ | 三环
+ | 变化
+ | 牧 德 软 术 械
+ | V
+ | S
+ | M
+ | √
+ | ×
+ | PHB14
+ | 蛛网术Web
+ | 二环
+ | 咒法
+ | 术 法 械
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 怪影杀手Weird
+ | 九环
+ | 幻术
+ | 法 锁
+ | V
+ | S
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 御风而行Wind Walk
+ | 六环
+ | 变化
+ | 德
+ | V
+ | S
+ | M
+ | ×
+ | ×
+ | PHB14
+ | 风墙术Wind Wall
+ | 三环
+ | 塑能
+ | 德 软
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 祈愿术Wish
+ | 九环
+ | 咒法
+ | 术 法
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 巫术箭Witch Bolt
+ | 一环
+ | 塑能
+ | 术 法 锁
+ | V
+ | S
+ | M
+ | ×
+ | √
+ | PHB14
+ | 光耀祷词Word of Radiance
+ | 戏法(零环)
+ | 塑能
+ | 牧
+ | V
+ | ×
+ | M
+ | ×
+ | ×
+ | XGE
+ | 回返真言Word of Recall
+ | 六环
+ | 咒法
+ | 牧
+ | V
+ | ×
+ | ×
+ | ×
+ | ×
+ | PHB14
+ | 激愤斩Wrathful Smite
+ | 一环
+ | 塑能
+ | 帕
+ | V
+ | ×
+ | ×
+ | ×
+ | √
+ | PHB14
+ | 诚实之域Zone of Truth
+ | 二环
+ | 惑控
+ | 诗 牧 帕
+ | V
+ | S
+ | ×
+ | ×
+ | ×
+ | PHB14

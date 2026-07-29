@@ -100,21 +100,21 @@ export function RoomPanel({ view, defaultName, buildCharacter, onEntered, onBack
   // ── 视图：创建房间 ──
   if (view === "create") {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-neutral-900 text-neutral-100 p-4">
-        <div className="w-full max-w-md space-y-4">
-          <h2 className="text-2xl font-bold text-amber-400">创建房间</h2>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="角色名..." className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded" />
-          <input value={campaignName} onChange={(e) => setCampaignName(e.target.value)} placeholder="战役名（可选）..." className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded" />
-          <input value={createPassword} onChange={(e) => setCreatePassword(e.target.value)} type="password" placeholder="房间密码（可选）..." className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded" />
-          <label className="block text-xs text-neutral-500 space-y-1">
-            <span>人数上限</span>
-            <input type="number" min={1} max={8} value={maxPlayers} onChange={(e) => setMaxPlayers(Math.max(1, Math.min(8, parseInt(e.target.value) || 4)))} className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-neutral-100" />
+      <main className="screen">
+        <div className="screen-card flex-col">
+          <h2 className="title-lg">创建房间</h2>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="角色名..." className="form-input" />
+          <input value={campaignName} onChange={(e) => setCampaignName(e.target.value)} placeholder="战役名（可选）..." className="form-input" />
+          <input value={createPassword} onChange={(e) => setCreatePassword(e.target.value)} type="password" placeholder="房间密码（可选）..." className="form-input" />
+          <label>
+            <span className="form-label">人数上限</span>
+            <input type="number" min={1} max={8} value={maxPlayers} onChange={(e) => setMaxPlayers(Math.max(1, Math.min(8, parseInt(e.target.value) || 4)))} className="form-input" />
           </label>
-          <div className="flex gap-2">
-            <button onClick={createRoom} disabled={busy} className="flex-1 px-6 py-3 bg-amber-400 text-neutral-900 font-bold rounded hover:bg-amber-300 disabled:opacity-40">
+          <div className="flex-row">
+            <button onClick={createRoom} disabled={busy} className="btn btn-primary" style={{ flex: 1 }}>
               {busy ? "创建中..." : "🏰 创建并进入"}
             </button>
-            <button onClick={onBack} className="px-4 py-2 bg-neutral-800 border border-neutral-700 rounded text-sm">
+            <button onClick={onBack} className="btn btn-secondary">
               ← 返回
             </button>
           </div>
@@ -125,21 +125,21 @@ export function RoomPanel({ view, defaultName, buildCharacter, onEntered, onBack
 
   // ── 视图：房间列表 + 加入表单 ──
   return (
-    <main className="min-h-screen flex items-center justify-center bg-neutral-900 text-neutral-100 p-4">
-      <div className="w-full max-w-md space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-amber-400">房间列表</h2>
-          <button onClick={loadRooms} className="text-xs px-2 py-1 bg-neutral-800 border border-neutral-700 rounded hover:border-amber-400">
+    <main className="screen">
+      <div className="screen-card flex-col">
+        <div className="flex-between mb-2">
+          <h2 className="title-lg" style={{ margin: 0 }}>房间列表</h2>
+          <button onClick={loadRooms} className="btn btn-secondary text-xs">
             ⟳ 刷新
           </button>
         </div>
 
         {listLoading ? (
-          <p className="text-neutral-500 text-sm">加载中...</p>
+          <p className="text-sm text-muted">加载中...</p>
         ) : rooms.length === 0 ? (
-          <p className="text-neutral-500 text-sm">暂无开放的房间</p>
+          <p className="text-sm text-muted">暂无开放的房间</p>
         ) : (
-          <ul className="space-y-2 max-h-64 overflow-y-auto">
+          <ul className="flex-col" style={{ gap: 4, maxHeight: 256, overflowY: "auto" }}>
             {rooms.map((r) => (
               <li key={r.room_id}>
                 <button
@@ -148,12 +148,19 @@ export function RoomPanel({ view, defaultName, buildCharacter, onEntered, onBack
                     setJoinRoomId(r.room_id);
                     setJoinPassword("");
                   }}
-                  className={`w-full text-left px-4 py-3 bg-neutral-800 border rounded hover:border-amber-400 ${selectedRoom?.room_id === r.room_id ? "border-amber-400" : "border-neutral-700"}`}
+                  className="w-full"
+                  style={{
+                    textAlign: "left",
+                    padding: "12px 16px",
+                    borderRadius: "var(--radius-md)",
+                    border: selectedRoom?.room_id === r.room_id ? "1px solid var(--text-purple)" : "0.5px solid var(--border)",
+                    background: selectedRoom?.room_id === r.room_id ? "var(--bg-purple)" : "var(--bg-secondary)",
+                  }}
                 >
-                  <div className="font-bold text-amber-400">
+                  <div className="text-bold text-purple">
                     {r.has_password ? "🔒 " : ""}{r.campaign_name || `房间 ${r.room_id}`}
                   </div>
-                  <div className="text-xs text-neutral-500">
+                  <div className="text-xs text-muted">
                     #{r.room_id} · {r.player_count ?? "?"}/{r.max_players} 人
                   </div>
                 </button>
@@ -163,18 +170,18 @@ export function RoomPanel({ view, defaultName, buildCharacter, onEntered, onBack
         )}
 
         {/* 加入表单 */}
-        <div className="border-t border-neutral-800 pt-3 space-y-2">
-          <div className="text-sm text-neutral-400">加入房间</div>
-          <input value={joinRoomId} onChange={(e) => setJoinRoomId(e.target.value)} placeholder="房间号..." className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded" />
+        <div className="flex-col" style={{ gap: 6, borderTop: "0.5px solid var(--border)", paddingTop: 12, marginTop: 4 }}>
+          <div className="text-sm text-bold">加入房间</div>
+          <input value={joinRoomId} onChange={(e) => setJoinRoomId(e.target.value)} placeholder="房间号..." className="form-input" />
           {(!selectedRoom || selectedRoom.has_password) && (
-            <input value={joinPassword} onChange={(e) => setJoinPassword(e.target.value)} type="password" placeholder="密码（无则留空）..." className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded" />
+            <input value={joinPassword} onChange={(e) => setJoinPassword(e.target.value)} type="password" placeholder="密码（无则留空）..." className="form-input" />
           )}
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="角色名..." className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded" />
-          <div className="flex gap-2">
-            <button onClick={joinRoom} disabled={busy} className="flex-1 px-6 py-3 bg-amber-400 text-neutral-900 font-bold rounded hover:bg-amber-300 disabled:opacity-40">
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="角色名..." className="form-input" />
+          <div className="flex-row">
+            <button onClick={joinRoom} disabled={busy} className="btn btn-primary" style={{ flex: 1 }}>
               {busy ? "加入中..." : "🚪 加入"}
             </button>
-            <button onClick={onBack} className="px-4 py-2 bg-neutral-800 border border-neutral-700 rounded text-sm">
+            <button onClick={onBack} className="btn btn-secondary">
               ← 返回
             </button>
           </div>
@@ -239,19 +246,30 @@ export function HostControls({ roomId, myName, toast, onTransferred }: HostContr
   }, [roomId, target, myName, toast, onTransferred]);
 
   return (
-    <div className="border-t border-neutral-800 pt-2 space-y-1.5">
-      <div className="text-xs text-amber-400">👑 房主管理 (#{roomId})</div>
+    <div className="flex-col" style={{ gap: 6, borderTop: "0.5px solid var(--border)", paddingTop: 8, marginTop: 4 }}>
+      <div className="text-xs text-amber text-bold">👑 房主管理 (#{roomId})</div>
       <input
         value={target}
         onChange={(e) => setTarget(e.target.value)}
         placeholder="目标玩家名..."
-        className="w-full px-2 py-1 bg-neutral-800 border border-neutral-700 rounded text-xs"
+        className="form-input"
+        style={{ fontSize: 11, padding: "4px 8px" }}
       />
-      <div className="flex gap-1">
-        <button onClick={kick} disabled={busy} className="flex-1 px-2 py-1 bg-red-900 border border-red-700 rounded text-xs hover:bg-red-800 disabled:opacity-40">
+      <div className="flex-row" style={{ gap: 4 }}>
+        <button
+          onClick={kick}
+          disabled={busy}
+          className="btn btn-secondary"
+          style={{ flex: 1, background: "var(--bg-red)", color: "var(--text-red)", borderColor: "#f09595", fontSize: 11, padding: "4px 8px" }}
+        >
           踢出
         </button>
-        <button onClick={transfer} disabled={busy} className="flex-1 px-2 py-1 bg-neutral-800 border border-neutral-700 rounded text-xs hover:border-amber-400 disabled:opacity-40">
+        <button
+          onClick={transfer}
+          disabled={busy}
+          className="btn btn-secondary"
+          style={{ flex: 1, fontSize: 11, padding: "4px 8px" }}
+        >
           转让房主
         </button>
       </div>

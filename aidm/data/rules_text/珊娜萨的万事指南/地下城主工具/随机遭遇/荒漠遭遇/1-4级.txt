@@ -1,0 +1,19 @@
+d100 遭遇 01         3d8 只 蝎子 scorpion 02         2d4 只 秃鹫 vulture 03         1 匹被遗弃的 骡子 mule 04         2d6 的 平民 commoner 和 2d4 匹 骆驼 camel ，正在去往一座遥远城市的路上 05         1d6 条 飞蛇 flying
+snake 06         2d6 只 鬣狗 hyena 或 2d6 只 豺狗 jackal 07         1d6 的 警卫 guard 护送着一个 贵族 noble 前往荒漠边缘 08         1d6 只 猫 cat 09         1 只 伪龙 pseudodragon 10         1d4 条 毒蛇 poisonous
+snake 11-13       2d4 只 蚊蝠 stirge 14-15       1d6+2 只 巨狼蛛 giant wolf
+spider 16-17       1 个 斥候 scout 18-20       2d4 条 巨毒蛇 giant
+poisonous snake 21-25 延伸向沙漠深处的一排脚印 26-27       4d4 的 狗头人 kobold 28-29       1 只 化豺 jackalwere 30-31       3d6 的 部族武者 tribal
+warrior 32-33       1d6 只 巨蜥 giant lizard 34-35       1 个 昆虫集群 swarm of insect 36-40 一块周围环绕着一圈棕榈树的绿洲，里面有一处营地的痕迹 41-44       3d6 的 强盗 bandit 45-46       1d4 条 蟒蛇 constrictor
+snake 47-48       2d4 只 带翼狗头人 winged
+kobold 49-50       1 只 尘魔蝠 dust mephit 51-52       1d3+1 只 巨蟾蜍 giant toad 53-54       1d4 只 巨蜘蛛 giant spider 55         1 位 德鲁伊 druid 56-57       2d4 的 大地精 hobgoblin 58         1 个 尸妖 wight 59-60       1 只 食人魔 ogre 61-65 一盏倒在地上的黄铜油灯 66-67       1d4 的 巨秃鹫 giant vulture 68         1 只 相位蜘蛛 phase
+spider 69         1 条 巨蟒 giant
+constrictor snake 70-71       1 只 鬣狗人头领 gnoll pack
+lord 和 1d3 只 巨鬣狗 giant hyena 72         1d6+2 只 鬣狗人 gnoll 73-74       1 只 木乃伊 mummy 75         1d3 只 半食人魔 half-ogre 76-80 一堆用破烂的布包裹的类人生物的骨头 81-82       1 只 拉米亚 lamia 83         1 只 大地精长官 hobgoblin
+captain 和 2d6 只 大地精 hobgoblin 84         2d4 只 亡命恶犬 death
+dog 85-86       1d4 只 巨蝎 giant scorpion 87         1 个 恶咒蛇人 yuan-ti
+malison 和 1d4+1 的纯血蛇人 yuan-ti
+pureblood 88-89       1 个 强盗首领 bandit captain ， 1 位 德鲁伊 druid 和 3d6 的 强盗 bandit 90         2d4 的 螳螂人 thri-kreen 91         1 个 气元素 air
+elemental 92         1d3 的 羽蛇 couatl 93         1 个 火元素 fire
+elemental 94         1d4 只 鬣狗人 · 耶诺古毒牙 gnoll fangs of Yeenoghu 95         1 个 还魂尸 revenant 96         1d4 的 虎人 weretiger 97         1 个 独眼巨人 cyclops 98         1 只 青年黄铜龙 young
+brass dragon 99         1 个 美杜莎 medusa 00         1 个 憎恶蛇人 yuan-ti
+abomination

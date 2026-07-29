@@ -1,0 +1,11 @@
+d100 遭遇 01-02       1d10 的 天狗 kenku 03-04       2d6 只 巨蜈蚣 giant
+centipede 05-06       2d8 只 骷髅 skeleton 07-08       1d6 的 蝙蝠群 swarm of bats 和 1d6 的 鼠群 swarm of rats 09-10       3d6 只 带翼狗头人 winged
+kobold 11-13       2d4 的 恶灵 specter 14-16       1d4 的 尸妖 wight 17-19       4d4 位骑着 驮用马 draft horse 的 侍僧 acolyte 20-22       3d6 只 巨蜈蚣 giant
+centipede 23-25 一个话多的流浪儿，纠缠着过路的人以 1sp 的价格雇佣他做这块区域的向导 26-28       1d10 的 间谍 spy 29-31       3d6 只 鳄鱼 crocodile 32-34       1d6+2 的 昆虫集群 swarm of
+insects 35-37       2d4 的 烟魔蝠 smoke mephit 38-40 一个 贵族 noble 朝一个 强盗 bandit 大喊着 “ 小偷！停下！ ” 41-43       1 个 魅魔 succubus 或 1 个 梦魔 incubus 44-46       1d10 只 半食人魔 half-ogre 47-49       2d10 只 巨黄蜂 giant wasp 50-51       4d10 只 丧尸 zombie 52-53       1d4 名骑着 战马 warhorse 的 骑士 knight 54-55       1d4+1 的 水诡 water weird 56-57       1d8+1 只 拟身怪 mimic 58-59       2d8 只 巨蜘蛛 giant spider 60-61       3d6 只 幽影 shadow 62-65 一个演员从二楼窗户探身出来，向过路的人们宣告一场表演 66-67       1 个 强盗首领 bandit captain 和 3d8 的 强盗 bandit 68-69       1d10 的 鬼火 will-o’-wisp 70-71       2d4 位 祭司 priest 72-74       3d6 的 纯血蛇人 yuan-ti
+pureblood 75-76       2d10 的 暴徒 thug 77-80 一个报价 1sp ，以牌为工具的占卜师 81         1d3 的 角斗士 gladiator 82         1d4+1 条 羽蛇 couatl 83         1d8 的 幽魂 ghost 84         2d4 的 变形怪 doppelganger 85         1d6+2 只 相位蜘蛛 phase
+spider 86         2d4 的 老兵 veteran 87         1d8 的 妖鬼 ghast 和 2d6 只 食尸鬼 ghoul 88         3d6 只 石像鬼 gargoyle 89         2d10 的 邪教狂信者 cult
+fanatic 90         3d6 的 鼠人 wererat 91         1 个 刺客 assassin 92         1d3 的 隐形追猎者 invisible
+stalker 93         1 只 史拉灰蟾 gray slaad 94         1 只 青年银龙 young
+silver dragon 95         1d4 的 坎比翁 cambion 或 1d4 的 还魂尸 revenant 96         3d6 的 尸妖 wight 97         1 位 大法师 archmage 98         2d4 的 初生吸血鬼 vampire
+spawn 或 1d4 的 恶鬼 oni 99         1 位 魔法师 mage 和 1 个 构装盾卫 shield guardian 00         1 个 罗刹 rakshasa 或 1 个 吸血鬼 vampire

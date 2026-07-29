@@ -1,0 +1,29 @@
+## 戏法(零环)
+德鲁伊伎俩Druidcraft 四象法门Elementalism 神导术Guidance 修复术Mending 传讯术Message 毒气喷涌Poison Spray 燃火术Produce Flame 抵抗术Resistance 橡棍术Shillelagh 维生术Spare the Dying 点点星芒Starry Wisp 荆棘之鞭Thorn Whip 鸣雷破Thunderclap 控火术Control Flames XGE 创造篝火Create Bonfire XGE 霜噬Frostbite XGE 舞风术Gust XGE 虫群孳生Infestation XGE 魔石术Magic Stone XGE 塑土术Mold Earth XGE 原初蛮击Primal Savagery XGE 操水术Shape Water XGE
+
+## 一环
+化兽为友Animal Friendship 魅惑类人Charm Person 造水术/枯水术Create or Destroy Water 疗伤术Cure Wounds 侦测魔法Detect Magic 侦测毒性和疾病Detect Poison and Disease 纠缠术Entangle 妖火Faerie Fire 云雾术Fog Cloud 神莓术Goodberry 治愈真言Healing Word 冰刃Ice Knife 跳跃术Jump 大步奔行Longstrider 防护善恶Protection from Evil and Good 净化饮食Purify Food and Drink 动物交谈Speak with Animals 雷鸣波Thunderwave 吸收元素Absorb Elements XGE 兽之联结Beast Bond XGE 地颤Earth Tremor XGE 圈套术Snare XGE
+
+## 二环
+援助术Aid 动物信使Animal Messenger 卜筮术Augury 树肤术Barkskin 野兽感官Beast Sense 不灭明焰Continual Flame 黑暗视觉Darkvision 强化属性Enhance Ability 变巨术/缩小术Enlarge/Reduce 寻找陷阱Find Traps 火焰刀Flame Blade 炽焰法球Flaming Sphere 造风术Gust of Wind 灼热金属Heat Metal 定身类人Hold Person 次等复原术Lesser Restoration 动植物定位术Locate Animals or Plants 物件定位术Locate Object 月华之光Moonbeam 行动无踪Pass without Trace 防护毒素Protection from Poison 荆棘丛生Spike Growth 野兽召唤术Summon Beast 龙卷尘暴Dust Devil XGE 地缚Earthbind XGE 治愈之魂Healing Spirit XGE 写入空中Skywrite XGE 守护之风Warding Wind XGE 靡叶生华Wither and Bloom SCC 空气泡泡Air Bubble AAG
+
+## 三环
+活力灵光Aura of Vitality 召雷术Call Lightning 咒唤兽群Conjure Animals 昼明术Daylight 解除魔法Dispel Magic 元素武器Elemental Weapon 假死术Feign Death 融身入石Meld Into Stone 植物滋长Plant Growth 防护能量Protection from Energy 回生术Revivify 雪雨暴Sleet Storm 植物交谈Speak with Plants 妖精召唤术Summon Fey 水下呼吸Water Breathing 水上行走Water Walk 风墙术Wind Wall 土石喷发Erupting Earth XGE 烈焰箭矢Flame Arrows XGE 潮涌Tidal Wave XGE 水墙术Wall of Water XGE
+
+## 四环
+枯萎术Blight 魅惑怪物Charm Monster 困惑术Confusion 咒唤微元素群Conjure Minor Elementals 咒唤林地卫士Conjure Woodland Beings 操控水体Control Water 预言术Divination 支配野兽Dominate Beast 火焰护盾Fire Shield 月光涌泉Fount of Moonlight 行动自如Freedom of Movement 巨虫术Giant Insect 擒抱藤Grasping Vine 幻景Hallucinatory Terrain 冰风暴Ice Storm 生物定位术Locate Creature 变形术Polymorph 塑石术Stone Shape 石肤术Stoneskin 元素召唤术Summon Elemental 火墙术Wall of Fire 元素灾厄Elemental Bane XGE 自然守卫Guardian of Nature XGE 碧水法球Watery Sphere XGE
+
+## 五环
+防活物护罩Antilife Shell 启蒙术Awaken 问道自然Commune with Nature 寒冰锥Cone of Cold 咒唤元素Conjure Elemental 疫病术Contagion 指使术Geas 高等复原术Greater Restoration 疫病虫群Insect Plague 群体疗伤术Mass Cure Wounds 异界誓缚Planar Binding 转生术Reincarnate 探知术Scrying 树跃术Tree Stride 石墙术Wall of Stone 操控风力Control Winds XGE 大漩涡Maelstrom XGE 转化岩石Transmute Rock XGE 自然之怒Wrath of Nature XGE 龙类灵魄召唤术Summon Draconic Spirit FTD
+
+## 六环
+咒唤妖精Conjure Fey 寻路术Find the Path 石化术Flesh to Stone 医疗术Heal 英雄宴Heroes' Feast 地动术Move Earth 阳炎射线Sunbeam 木遁术Transport via Plants 棘墙术Wall of Thorns 御风而行Wind Walk 地之骨Bones of the Earth XGE 德鲁伊林地Druid Grove XGE 炽焰赋权Investiture of Flame XGE 寒冰赋权Investiture of Ice XGE 磐石赋权Investiture of Stone XGE 清风赋权Investiture of Wind XGE 原初守护Primordial Ward XGE
+
+## 七环
+火焰风暴Fire Storm 海市蜃楼Mirage Arcane 位面转移Plane Shift 再生术Regenerate 反转重力Reverse Gravity 徽记术Symbol 旋风术Whirlwind XGE 龙类变形Draconic Transformation FTD
+
+## 八环
+动物形态Animal Shapes 嫌恶术/关怀术AntipathySympathy 摧心术Befuddlement 操控天气Control Weather 地震术Earthquake 焚云术Incendiary Cloud 阳炎爆Sunburst 海啸术Tsunami
+
+## 九环
+预见术Foresight 形体变化Shapechange 复仇风暴Storm of Vengeance 完全复生术True Resurrection

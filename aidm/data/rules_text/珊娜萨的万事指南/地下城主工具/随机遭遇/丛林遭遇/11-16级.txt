@@ -1,0 +1,10 @@
+d100 遭遇 01-03       1 个 熊人 werebear 04-05       1d4 位 德鲁伊 druid 正为死者举行仪式（仅限白天）或 1d4 的 女妖 banshee （仅限夜晚） 06-07       1d3 条 羽蛇 couatl 08-10       1d3 只 鬣狗人 · 耶诺古毒牙 gnoll fang of Yeenoghu 和 2d6+3 只 鬣狗人 gnoll 11-15       2d4 只 移位兽 displacer
+beast 16-20       1d6+2 的 老兵 veteran 21-25 一个清澈平静的池塘。池底散落着金币，但金币在离开池塘时就会消失。 26-30       1d4+1 的 绿鬼婆 green hag 和 1d3 只 枭熊 owlbear 31-35       1d6+2 的 狼人 werewolf 36-40 一个小型的林地神社，为一个叫做西斯瓦 Siswa 的神秘宗教所建 41-45       1d6+2 只 相位蜘蛛 phase
+spider 46-50       2d4 的 恶咒蛇人 yuan-ti
+malison 51-52       1d3 的 熊人 werebear 53-54       1d4 的 还魂尸 revenant 55-56       1 只 青年绿龙 young green
+dragon 57-58       1d4 只 巨魔 troll 59-60       1d6+2 的 野猪人 wereboar 61-65 七个人（ 平民 commoner ）戴着动物面具穿行于树林间 66-67       1d4 只 石化牛 gorgon 68-69       1d3 只 蔓生怪 shambling
+mound 70-71       1 个 树人 treant 72-73       1d4 只 独角兽 unicorn 74-75       1d6+2 的 虎人 weretiger 76-80 从远处传来的响亮而清脆的笑声 81-82       1 个 守秘纳迦 guardian naga 83-84       1 只 青年金龙 young gold
+dragon 85-86       1 只 穴居攫怪头领 grick alpha 和 2d4 只 穴居攫怪 grick 87-88       1d3 的 憎恶蛇人 yuan-ti
+abomination 89-90       1 只 成年绿龙 adult green
+dragon 91-93       1d8+1 只 巨猿 giant ape 94-96       2d4 只 恶鬼 oni 97-99       1d3 的 树人 treant 00         1 只 远古绿龙 ancient
+green dragon
