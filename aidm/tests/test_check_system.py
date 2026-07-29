@@ -160,6 +160,52 @@ def test_ability_check_exact_dc():
 # 豁免检定
 # ──────────────────────────────────────────────────────────────────────────
 
+def test_ability_check_nat20_no_auto_success():
+    """属性检定天然20不再自动成功（仅攻击/死亡豁免有此规则）。R-DM-010"""
+    orig = dice.roll_d20
+    dice.roll_d20 = _fake_d20(20)
+    # 调整值 -5, DC 20 → total = 20 + (-5) = 15 < 20 → 失败（即使天然20）
+    r = check.ability_check(mod=-5, prof=0, proficient=False, dc=20)
+    assert r.success is False
+    assert r.d20 == 20
+    assert r.total == 15
+    dice.roll_d20 = orig
+
+
+def test_ability_check_nat1_no_auto_fail():
+    """属性检定天然1不再自动失败（仅攻击/死亡豁免有此规则）。R-DM-010"""
+    orig = dice.roll_d20
+    dice.roll_d20 = _fake_d20(1)
+    # 调整值 +15, DC 10 → total = 1 + 15 = 16 ≥ 10 → 成功（即使天然1）
+    r = check.ability_check(mod=15, prof=0, proficient=False, dc=10)
+    assert r.success is True
+    assert r.d20 == 1
+    assert r.total == 16
+    dice.roll_d20 = orig
+
+
+def test_saving_throw_nat20_no_auto_success():
+    """豁免检定天然20不再自动成功。R-DM-010"""
+    orig = dice.roll_d20
+    dice.roll_d20 = _fake_d20(20)
+    # 调整值 -5, DC 20 → total = 15 < 20 → 失败
+    r = check.saving_throw(mod=-5, prof=0, proficient=False, dc=20)
+    assert r.success is False
+    assert r.d20 == 20
+    dice.roll_d20 = orig
+
+
+def test_saving_throw_nat1_no_auto_fail():
+    """豁免检定天然1不再自动失败。R-DM-010"""
+    orig = dice.roll_d20
+    dice.roll_d20 = _fake_d20(1)
+    # 调整值 +15, DC 10 → total = 16 ≥ 10 → 成功
+    r = check.saving_throw(mod=15, prof=0, proficient=False, dc=10)
+    assert r.success is True
+    assert r.d20 == 1
+    dice.roll_d20 = orig
+
+
 def test_saving_throw_success():
     """豁免成功。R-CHK-011"""
     orig = dice.roll_d20
@@ -257,6 +303,10 @@ def main():
         test_ability_check_failure,
         test_ability_check_not_proficient,
         test_ability_check_exact_dc,
+        test_ability_check_nat20_no_auto_success,
+        test_ability_check_nat1_no_auto_fail,
+        test_saving_throw_nat20_no_auto_success,
+        test_saving_throw_nat1_no_auto_fail,
         test_saving_throw_success,
         test_saving_throw_waive,
         test_attack_roll_hit,

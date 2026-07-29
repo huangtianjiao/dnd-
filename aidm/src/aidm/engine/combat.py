@@ -562,44 +562,144 @@ def best_cover(covers: list[int]) -> int:
 
 
 # ──────────────────────────────────────────────────────────────────────────
-# 突围 / 推撞（Grapple / Shove）— 2024 规则为徒手打击选项
+# 擒抱 / 推撞（Grapple / Shove）— 对抗检定（Contested Check）
 # ──────────────────────────────────────────────────────────────────────────
 
-def grapple_dc(attacker_str_mod: int, prof: int) -> int:
-    """擒抱 DC = 8 + 力量调整值 + 熟练加值。
+def _contested_check(
+    atk_mod: int, atk_prof: int, atk_proficient: bool,
+    def_mod: int, def_prof: int, def_proficient: bool,
+) -> dict:
+    """对抗检定内部实现：双方各掷 d20 + 调整值，攻击方总值 >= 防守方总值则成功。
+
+    2024 PHB 规则: 对抗检定中双方各做属性检定，攻击方结果 >= 防守方结果则攻击方胜。
+    天然 20 / 天然 1 规则同样适用（由 ability_check 内部处理）。
+    """
+    # 攻击方先掷：DC 暂设为 0（对抗检定无固定 DC，后续比较双方总值）
+    atk_result = check.ability_check(
+        mod=atk_mod, prof=atk_prof, proficient=atk_proficient, dc=0)
+    # 防守方掷骰：DC 设为攻击方总值，则 success 表示防守方 >= 攻击方（即防守方赢）
+    def_result = check.ability_check(
+        mod=def_mod, prof=def_prof, proficient=def_proficient, dc=atk_result.total)
+    # 防守方 success=True 意味着 def_total >= atk_total → 攻击方失败
+    atk_wins = not def_result.success
+    return {
+        "attacker_total": atk_result.total,
+        "defender_total": def_result.total,
+        "attacker_d20": atk_result.d20,
+        "defender_d20": def_result.d20,
+        "attacker_wins": atk_wins,
+    }
+
+
+def attempt_grapple(
+    attacker_str_mod: int,
+    attacker_prof: int,
+    attacker_athletics_prof: bool,
+    target_choice: str = "strength",
+    target_str_mod: int = 0,
+    target_dex_mod: int = 0,
+    target_prof: int = 0,
+    target_athletics_prof: bool = False,
+    target_acrobatics_prof: bool = False,
+) -> dict:
+    """尝试擒抱：对抗检定——攻击方力量(运动) vs 目标选择的力量(运动)或敏捷(特技)。
 
     规则: 术语汇编/武器与徒手打击.txt「擒抱」
     出处: topics/玩家手册2024/术语汇编/武器与徒手打击.htm
+          topics/玩家手册/战斗/发起攻击.htm（行294-331）
+    说明:
+      - 攻击方: 力量(运动)检定 = d20 + STR调整值 + 运动熟练加值（如果熟练）
+      - 防守方: 选择力量(运动)或敏捷(特技)检定
+      - 攻击方总值 >= 防守方总值 → 擒抱成功，目标陷入受擒
+      - target_choice: "strength"=力量(运动), "dexterity"=敏捷(特技)
+
+    返回:
+      {"success": bool, "grappled": bool,
+       "attacker_total": int, "defender_total": int,
+       "attacker_d20": int, "defender_d20": int,
+       "target_choice": str}
     """
-    return 8 + attacker_str_mod + prof
+    # 防守方根据选择决定属性调整值和技能熟练
+    if target_choice == "dexterity":
+        def_mod = target_dex_mod
+        def_skill_prof = target_acrobatics_prof
+        skill_name = "acrobatics"
+    else:
+        def_mod = target_str_mod
+        def_skill_prof = target_athletics_prof
+        skill_name = "athletics"
+
+    result = _contested_check(
+        atk_mod=attacker_str_mod, atk_prof=attacker_prof,
+        atk_proficient=attacker_athletics_prof,
+        def_mod=def_mod, def_prof=target_prof,
+        def_proficient=def_skill_prof,
+    )
+    return {
+        "success": result["attacker_wins"],
+        "grappled": result["attacker_wins"],
+        "attacker_total": result["attacker_total"],
+        "defender_total": result["defender_total"],
+        "attacker_d20": result["attacker_d20"],
+        "defender_d20": result["defender_d20"],
+        "target_choice": target_choice,
+        "target_skill": skill_name,
+    }
 
 
-def attempt_grapple(attacker_str_mod: int, prof: int,
-                   target_save_bonus: int, target_save_ability: str = "str") -> dict:
-    """尝试擒抱：目标做力量或敏捷豁免（自选），失败陷入受擒。
-
-    规则: 术语汇编/武器与徒手打击.txt
-    出处: topics/玩家手册2024/术语汇编/武器与徒手打击.htm
-    """
-    dc = grapple_dc(attacker_str_mod, prof)
-    from . import check as _check
-    sv = _check.saving_throw(mod=target_save_bonus, prof=0, proficient=False, dc=dc)
-    return {"dc": dc, "save_success": sv.success, "grappled": not sv.success,
-            "save_total": sv.total, "save_ability": target_save_ability}
-
-
-def attempt_shove(attacker_str_mod: int, prof: int,
-                  target_save_bonus: int, target_save_ability: str = "str") -> dict:
-    """尝试推撞：目标做力量或敏捷豁免（自选），失败被推5尺或倒地（攻击者选）。
+def attempt_shove(
+    attacker_str_mod: int,
+    attacker_prof: int,
+    attacker_athletics_prof: bool,
+    target_choice: str = "strength",
+    target_str_mod: int = 0,
+    target_dex_mod: int = 0,
+    target_prof: int = 0,
+    target_athletics_prof: bool = False,
+    target_acrobatics_prof: bool = False,
+) -> dict:
+    """尝试推撞：对抗检定——攻击方力量(运动) vs 目标选择的力量(运动)或敏捷(特技)。
 
     规则: 术语汇编/武器与徒手打击.txt「推撞」
     出处: topics/玩家手册2024/术语汇编/武器与徒手打击.htm
+          topics/玩家手册/战斗/发起攻击.htm（行294-331）
+    说明:
+      - 攻击方: 力量(运动)检定 = d20 + STR调整值 + 运动熟练加值（如果熟练）
+      - 防守方: 选择力量(运动)或敏捷(特技)检定
+      - 攻击方总值 >= 防守方总值 → 推撞成功，可推5尺或使目标倒地
+      - target_choice: "strength"=力量(运动), "dexterity"=敏捷(特技)
+
+    返回:
+      {"success": bool, "shoved": bool,
+       "attacker_total": int, "defender_total": int,
+       "attacker_d20": int, "defender_d20": int,
+       "target_choice": str}
     """
-    dc = grapple_dc(attacker_str_mod, prof)  # 推撞 DC 与擒抱相同
-    from . import check as _check
-    sv = _check.saving_throw(mod=target_save_bonus, prof=0, proficient=False, dc=dc)
-    return {"dc": dc, "save_success": sv.success, "shoved": not sv.success,
-            "save_total": sv.total, "save_ability": target_save_ability}
+    if target_choice == "dexterity":
+        def_mod = target_dex_mod
+        def_skill_prof = target_acrobatics_prof
+        skill_name = "acrobatics"
+    else:
+        def_mod = target_str_mod
+        def_skill_prof = target_athletics_prof
+        skill_name = "athletics"
+
+    result = _contested_check(
+        atk_mod=attacker_str_mod, atk_prof=attacker_prof,
+        atk_proficient=attacker_athletics_prof,
+        def_mod=def_mod, def_prof=target_prof,
+        def_proficient=def_skill_prof,
+    )
+    return {
+        "success": result["attacker_wins"],
+        "shoved": result["attacker_wins"],
+        "attacker_total": result["attacker_total"],
+        "defender_total": result["defender_total"],
+        "attacker_d20": result["attacker_d20"],
+        "defender_d20": result["defender_d20"],
+        "target_choice": target_choice,
+        "target_skill": skill_name,
+    }
 
 
 # ──────────────────────────────────────────────────────────────────────────

@@ -4,7 +4,7 @@
 脱水/饥饿力竭、水下战斗修饰、骑乘上下马/受控坐骑动作/跌落坐骑豁免。
 叙事交给 LLM，危害的骰子与判定交给代码（不可绕过）。
 
-依赖 engine.dice（round_down）、engine.check（saving_throw）。
+依赖 engine.dice（round_down）、engine.check（saving_throw / ability_check）。
 标注约定：每条规则实现处标注 RULE_SPEC.md 规则点 ID + 原文出处路径
 （topics/.../xxx.htm），形成"代码↔规则"双向索引。
 
@@ -49,21 +49,35 @@ def fall_damage(fall_distance_ft: int) -> dict:
     }
 
 
-def fall_into_liquid_save(con_mod: int, con_prof: bool, prof: int) -> dict:
-    """坠入液体减半：反应 DC15 检定，成功则坠落伤害减半。
+def fall_into_liquid_check(
+    ability_mod: int,
+    prof: int,
+    proficient: bool,
+    dc: int = 15,
+    use_athletics: bool = True,
+) -> dict:
+    """坠入液体减半：反应 DC15 属性检定，成功则坠落伤害减半。
 
     规则: R-GLS-061 坠落危害（坠入水/液体条款）
           DC15 力量(运动)或敏捷(特技)检定，成功→由此次坠落导致的伤害减半
-    出处: topics/玩家手册2024/术语汇编/危害.htm
-    说明: 简化实现——用体质(CON)豁免模拟该反应检定（接受 con_mod/con_prof/prof）。
-          原规则为力(运动)或敏(特技)检定；此处统一走 check.saving_throw（DC15）。
-    返回: {"dc": 15, "success": bool, "half_damage": bool}
+    出处: topics/玩家手册/冒险/环境.htm ; topics/玩家手册2024/术语汇编/危害.htm
+    说明: 调用方通过 use_athletics 选择检定属性：
+          True  → 力量(运动)：传入 STR 调整值 + 运动熟练度
+          False → 敏捷(特技)：传入 DEX 调整值 + 特技熟练度
+          ability_mod 为对应属性调整值，proficient 为是否熟练该技能，
+          prof 为熟练加值。
+    返回: {"dc": 15, "ability": "力量"|"敏捷", "skill": "运动"|"特技",
+           "success": bool, "half_damage": bool}
     """
-    res = check.saving_throw(
-        mod=con_mod, prof=prof, proficient=con_prof, dc=15,
+    res = check.ability_check(
+        mod=ability_mod, prof=prof, proficient=proficient, dc=dc,
     )
+    ability_name = "力量" if use_athletics else "敏捷"
+    skill_name = "运动" if use_athletics else "特技"
     return {
-        "dc": 15,
+        "dc": dc,
+        "ability": ability_name,
+        "skill": skill_name,
         "success": res.success,
         "half_damage": res.success,   # 成功→坠落伤害减半
     }
@@ -273,21 +287,25 @@ def _self_test() -> None:
     assert fall_damage(250)["dice_count"] == 20            # 上限20d6（R-GLS-061）
     assert fall_damage(9999)["dice_count"] == 20           # 远超上限仍20
 
-    # —— 坠入液体减半（R-GLS-061 液体条款，DC15）—— 固定 d20
+    # —— 坠入液体减半（R-GLS-061 液体条款，DC15 属性检定）—— 固定 d20
     orig = dice.roll_d20
     class _Fake:
         def __init__(s, used, rolls, mode): s.used, s.rolls, s.mode = used, rolls, mode
-    # 成功: d20=15, con_mod=0, prof=0 → 15≥15 → 减半
+    # 成功(力量运动): d20=15, str_mod=0, prof=0 → 15≥15 → 减半
     dice.roll_d20 = lambda adv=False, dis=False: _Fake(15, [15], "normal")
-    r = fall_into_liquid_save(con_mod=0, con_prof=False, prof=0)
-    assert r["dc"] == 15 and r["success"] is True and r["half_damage"] is True
+    r = fall_into_liquid_check(ability_mod=0, prof=0, proficient=False)
+    assert r["dc"] == 15 and r["ability"] == "力量" and r["skill"] == "运动"
+    assert r["success"] is True and r["half_damage"] is True
     # 失败: d20=14 → 14<15 → 不减半
     dice.roll_d20 = lambda adv=False, dis=False: _Fake(14, [14], "normal")
-    r = fall_into_liquid_save(con_mod=0, con_prof=False, prof=0)
+    r = fall_into_liquid_check(ability_mod=0, prof=0, proficient=False)
     assert r["success"] is False and r["half_damage"] is False
-    # 熟练加成: d20=12, con_mod=1, prof=2, 熟练 → 12+1+2=15 ≥15 → 成功
+    # 敏捷特技: d20=12, dex_mod=1, prof=2, 熟练 → 12+1+2=15 ≥15 → 成功
     dice.roll_d20 = lambda adv=False, dis=False: _Fake(12, [12], "normal")
-    r = fall_into_liquid_save(con_mod=1, con_prof=True, prof=2)
+    r = fall_into_liquid_check(
+        ability_mod=1, prof=2, proficient=True, use_athletics=False,
+    )
+    assert r["ability"] == "敏捷" and r["skill"] == "特技"
     assert r["success"] is True
 
     # —— 窒息屏息分钟数（R-GLS-063）——

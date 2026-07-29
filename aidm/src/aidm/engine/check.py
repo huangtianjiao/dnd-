@@ -1,8 +1,9 @@
 """D20 检定引擎 — 属性检定 / 豁免 / 攻击命中。
 
 依赖 engine.dice（骰子）。本模块负责"掷 d20 → 加调整值 → 比 DC/AC"的判定，
-不含伤害结算（见 damage.py）。天然 20/1 的特殊效果仅对攻击检定生效
-（属性/豁免检定天然 20/1 默认无特殊，R-DM-010）。
+不含伤害结算（见 damage.py）。天然 20/1 的特殊效果仅对攻击检定（本模块）
+和死亡豁免（damage.py）生效；属性检定与豁免检定的天然 20/1 无特殊效果
+（R-DM-010）。
 
 标注约定：每条规则实现处标注 RULE_SPEC.md 规则点 ID + 原文出处路径。
 """
@@ -93,21 +94,24 @@ class CheckResult:
     modifier: int               # 调整值合计（total - d20）
 
 
-def _d20_check_core(mod, prof, proficient, target, advantage, disadvantage, circ=0) -> CheckResult:
+def _d20_check_core(mod, prof, proficient, target, advantage, disadvantage, circ=0,
+                     auto_success_on_nat20: bool = False,
+                     auto_fail_on_nat1: bool = False) -> CheckResult:
     """R-CHK-001 D20 检定三步流程的内部实现。
 
-    2024 PHB 规则: 天然 20 在任何 d20 检定中都是自动成功，
-    天然 1 都是自动失败（出处: 玩家手册2024/进行游戏/d20检定.htm）。
+    2024 PHB 规则: 天然 20/1 仅对攻击检定和死亡豁免有自动成功/失败效果，
+    普通属性检定与豁免检定的天然 20/1 无特殊效果（R-DM-010）。
+    通过 auto_success_on_nat20 / auto_fail_on_nat1 参数控制是否启用。
     """
     r = dice.roll_d20(advantage, disadvantage)        # R-CHK-004/005 优劣势
     prof_add = prof if proficient else 0              # R-CHK-016 熟练只加一次
     mod_total = mod + prof_add + circ                 # 属性调整值 + 熟练加值 + 临时加值
     total = r.used + mod_total                        # R-CHK-001 step2: 加调整值
 
-    # 2024 PHB: 天然 20 自动成功，天然 1 自动失败
-    if r.used == 20:
+    # 天然 20/1 自动成功/失败：仅攻击检定与死亡豁免启用
+    if auto_success_on_nat20 and r.used == 20:
         success = True
-    elif r.used == 1:
+    elif auto_fail_on_nat1 and r.used == 1:
         success = False
     else:
         success = total >= target                     # R-CHK-001 step3: 比目标数值（≥则成功）
