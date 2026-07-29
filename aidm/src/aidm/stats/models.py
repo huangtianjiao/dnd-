@@ -10,12 +10,11 @@
 from __future__ import annotations
 
 import json
-from typing import ClassVar, Optional
+from typing import ClassVar
 
-from sqlmodel import SQLModel, Field, create_engine
+from sqlmodel import Field, SQLModel, create_engine
 
-from ..engine import dice, damage, conditions
-
+from ..engine import conditions, damage, dice
 
 # ──────────────────────────────────────────────────────────────────────────
 # 建表
@@ -45,8 +44,8 @@ class Character(SQLModel, table=True):
 
     规则: R-DMG-007/009 HP与临时HP + R-DMG-017 死亡豁免计数 + R-GLS-043 状态集合
     """
-    id: Optional[int] = Field(default=None, primary_key=True)
-    campaign_id: Optional[int] = Field(default=None, foreign_key="campaign.id")
+    id: int | None = Field(default=None, primary_key=True)
+    campaign_id: int | None = Field(default=None, foreign_key="campaign.id")
     name: str
     race: str = ""
     char_class: str = ""
@@ -62,6 +61,12 @@ class Character(SQLModel, table=True):
     conditions_json: str = Field(default="[]")     # 状态集合
     attuned_items_json: str = Field(default="[]")  # 已同调魔法物品名称列表（最多3个）
     feats_json: str = Field(default="[]")          # 已选专长名列表（PHB 第五章）
+    skill_prof_json: str = Field(default="[]")      # 技能熟练列表（如 ["察觉","潜行"]）
+    # 专注跨回合持久化
+    concentration_spell: str = ""                    # 当前专注的法术名
+    concentration_dc: int = 0                        # 维持专注需检定的 DC
+    # 经验值
+    xp: int = 0                                     # 当前经验值
     # 当前手持武器（武器中文名）；攻击时优先于"徒手"兜底，由 /equip-weapon 或创建时按职业设默认。
     # 详见 docs/GRAPH_DYNAMIC_REFACTOR.md 阶段A。
     equipped_weapon: str = ""
@@ -72,6 +77,7 @@ class Character(SQLModel, table=True):
     ac: int = 10
     speed: int = 30
     exhaustion: int = 0
+    gold: int = 0                       # 金币(GP)， loot 分配落盘
     # 生命骰追踪（R-GLS-014 短休消耗 / R-GLS-015 长休恢复）
     hit_dice_current: int = 0   # 可用生命骰数量
     hit_dice_max: int = 0       # 生命骰上限（=等级）
@@ -163,6 +169,36 @@ class Character(SQLModel, table=True):
         """设置已选专长名列表。"""
         self.feats_json = json.dumps(names)
 
+    # —— 技能熟练桥接 ——
+    @property
+    def skill_proficiencies(self) -> list[str]:
+        """技能熟练列表。"""
+        return json.loads(self.skill_prof_json)
+
+    def set_skill_proficiencies(self, skills: list[str]) -> None:
+        """设置技能熟练列表。"""
+        self.skill_prof_json = json.dumps(skills)
+
+    def is_proficient(self, skill_name: str) -> bool:
+        """判断角色是否熟练某技能。"""
+        return skill_name in self.skill_proficiencies
+
+    # —— 专注状态桥接 ——
+    def start_concentration(self, spell_name: str, dc: int = 10) -> None:
+        """开始专注一个法术。规则: R-GLS-036 专注"""
+        self.concentration_spell = spell_name
+        self.concentration_dc = dc
+
+    def end_concentration(self) -> None:
+        """结束专注。"""
+        self.concentration_spell = ""
+        self.concentration_dc = 0
+
+    @property
+    def is_concentrating(self) -> bool:
+        """是否正在专注。"""
+        return bool(self.concentration_spell)
+
     # —— engine 桥接 ——
     def ability_score(self, ab: str) -> int:
         return self.abilities.get(ab, 10)
@@ -208,7 +244,7 @@ class Character(SQLModel, table=True):
 
 class Campaign(SQLModel, table=True):
     """战役：世界设定输入 + AI 生成的完整背景故事 + rolling summary + 世界标记。"""
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     name: str
     setting: str = Field(default="")                  # 玩家输入/编辑的世界设定提示词
     tone: str = Field(default="")                    # 基调（黑暗/英雄/恐怖...）
@@ -226,8 +262,8 @@ class Campaign(SQLModel, table=True):
 
 class Scene(SQLModel, table=True):
     """当前场景：地点/在场NPC/氛围/时间/场景叙事/可做之事/叙事日志。"""
-    id: Optional[int] = Field(default=None, primary_key=True)
-    campaign_id: Optional[int] = Field(default=None, foreign_key="campaign.id")
+    id: int | None = Field(default=None, primary_key=True)
+    campaign_id: int | None = Field(default=None, foreign_key="campaign.id")
     location: str = ""                    # 地点
     npcs_json: str = Field(default="[]")  # 在场 NPC [{name, attitude, role}]
     environment: str = ""                 # 环境（光照/遮蔽/地形）
@@ -258,8 +294,8 @@ class CombatState(SQLModel, table=True):
 
     规则: R-CMB-001/002  出处: 进行游戏/战斗流程.htm
     """
-    id: Optional[int] = Field(default=None, primary_key=True)
-    campaign_id: Optional[int] = Field(default=None, foreign_key="campaign.id")
+    id: int | None = Field(default=None, primary_key=True)
+    campaign_id: int | None = Field(default=None, foreign_key="campaign.id")
     initiative_order_json: str = Field(default="[]")   # [{cid,name,initiative,side}]
     participants_json: str = Field(default="[]")        # 参战者快照
     round: int = 0
@@ -276,8 +312,8 @@ class CombatState(SQLModel, table=True):
 
 class Log(SQLModel, table=True):
     """完整跑团日志（可审计回溯）：玩家输入/AI回复/骰子/状态变更/RAG引用。"""
-    id: Optional[int] = Field(default=None, primary_key=True)
-    campaign_id: Optional[int] = Field(default=None, foreign_key="campaign.id")
+    id: int | None = Field(default=None, primary_key=True)
+    campaign_id: int | None = Field(default=None, foreign_key="campaign.id")
     ts: str = ""
     player_input: str = ""
     dm_output: str = ""

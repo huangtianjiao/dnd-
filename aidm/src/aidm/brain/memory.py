@@ -23,12 +23,10 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
-import math
 from datetime import datetime
-from typing import Optional
 
-from ..config import get_settings
 from qdrant_client.models import (
     Distance,
     FieldCondition,
@@ -38,10 +36,10 @@ from qdrant_client.models import (
     VectorParams,
 )
 
-from . import llm
+from ..config import get_settings
 from ..knowledge import embedding, indexer
 from ..stats import store
-
+from . import llm
 
 # ──────────────────────────────────────────────────────────────────────────
 # 常量
@@ -178,7 +176,7 @@ def _ensure_collection() -> None:
 
 
 def store_memory(campaign_id: int, observation: dict,
-                 turn: int, obs_index: int = 0) -> Optional[int]:
+                 turn: int, obs_index: int = 0) -> int | None:
     """将观察嵌入并存储到 Qdrant dnd_memories collection。
 
     payload 包含: event, importance, entities, type, turn,
@@ -413,10 +411,8 @@ def process_turn_memories(campaign_id: int, player_input: str,
                 result["summary_compressed"] = True
 
     # 4. 自动清理：记忆数超过上限时删除最低分旧记忆
-    try:
+    with contextlib.suppress(Exception):
         cleanup_memories(campaign_id)
-    except Exception:
-        pass  # 清理失败不阻断主流程
 
     return result
 
@@ -582,13 +578,13 @@ def cleanup_memories(campaign_id: int) -> int:
 
 def _self_test() -> None:
     """memory.py 自检测试。"""
-    import tempfile
     import os
+    import tempfile
 
     # 创建临时数据库
-    tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-    tmp.close()
-    db = f"sqlite:///{tmp.name}"
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+        db_path = tmp.name
+    db = f"sqlite:///{db_path}"
 
     try:
         # 测试 1: extract_observations 返回列表
@@ -699,10 +695,8 @@ def _self_test() -> None:
         print("\n[memory] 自检通过 ✓")
 
     finally:
-        try:
-            os.unlink(tmp.name)
-        except PermissionError:
-            pass
+        with contextlib.suppress(PermissionError):
+            os.unlink(db_path)
 
 
 if __name__ == "__main__":

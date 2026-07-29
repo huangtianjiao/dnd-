@@ -11,12 +11,7 @@
 
 from __future__ import annotations
 
-import json
-import re
-from typing import Optional
-
 from . import llm
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # 场景插图生成
@@ -62,7 +57,7 @@ def generate_scene_description(narration: str) -> str:
 
 
 def generate_scene_image(narration: str,
-                         output_path: Optional[str] = None) -> dict:
+                         output_path: str | None = None) -> dict:
     """生成场景插图。
 
     流程:

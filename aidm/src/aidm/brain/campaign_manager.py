@@ -21,8 +21,6 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 数据表 — 从 DMG 第五章 HTML 原文提取
@@ -200,7 +198,7 @@ class Session:
       第零回（因为它在正式的第一次团之前进行）来确立期望、分享点子、讨论房规。
     """
     session_number: int                    # 回次编号（0=第零回）
-    adventure_id: Optional[str] = None     # 关联的冒险ID
+    adventure_id: str | None = None     # 关联的冒险ID
     summary: str = ""                      # 本次团的摘要
     log_entries: list[LogEntry] = field(default_factory=list)  # 日志条目
     date_played: str = ""                  # 游玩日期
@@ -277,7 +275,7 @@ class Campaign:
 def create_campaign(name: str,
                     tone: str = "heroic",
                     setting: str = "homebrew",
-                    seed: Optional[int] = None) -> Campaign:
+                    seed: int | None = None) -> Campaign:
     """创建战役 — DMG 第五章四步设计法第1步「布置背景」。
 
     规则依据: 城主指南2024/5.创作战役/一步步建立战役.htm
@@ -337,7 +335,7 @@ def create_campaign(name: str,
 
 
 def add_session(campaign: Campaign,
-                adventure_id: Optional[str] = None,
+                adventure_id: str | None = None,
                 summary: str = "",
                 is_session_zero: bool = False) -> Session:
     """添加一次团（Session）到战役 — DMG 第五章「开始战役」。
@@ -376,7 +374,7 @@ def add_session(campaign: Campaign,
 def log_campaign_event(campaign: Campaign,
                        event_type: str,
                        description: str,
-                       npcs_involved: Optional[list[str]] = None,
+                       npcs_involved: list[str] | None = None,
                        loot_gained: int = 0,
                        xp_gained: int = 0) -> LogEntry:
     """记录战役日志事件 — DMG 第五章「你的战役日志」。
@@ -547,7 +545,6 @@ def list_dnd_settings() -> list[dict]:
 
 def _self_test() -> None:
     """战役管理工具自检。"""
-    import os
 
     # ═══ 1. 创建战役 ═══
     camp = create_campaign("灰鹰编年史", tone="heroic", setting="greyhawk", seed=42)

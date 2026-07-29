@@ -15,13 +15,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Optional
-
 from . import check, damage
+from .actions import ActionResult, WeaponProfile
 from .combat import Combatant, use_reaction
-from .actions import WeaponProfile, ActionResult
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # 触发条件判定
@@ -61,14 +57,12 @@ def can_make_opportunity_attack(attacker: Combatant,
     # R-CMB-026: 撤离/传送/免费移动不引发借机攻击
     if movement_type in ("teleport", "free"):
         return False
-    if getattr(target, "disengage_active", False):
-        return False
-    return True
+    return not getattr(target, "disengage_active", False)
 
 
 def opportunity_attack(attacker: Combatant,
                        target: Combatant,
-                       weapon: Optional[WeaponProfile] = None,
+                       weapon: WeaponProfile | None = None,
                        target_ac: int = 10,
                        target_leaving_reach: bool = True,
                        target_visible: bool = True,

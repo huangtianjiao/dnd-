@@ -74,7 +74,8 @@ def parse_datajs(path: str) -> list[RuleEntry]:
 
     规则: 知识库 RAG 语料源（data.js 6238 条纯文本索引）
     """
-    raw = open(path, "rb").read().decode("utf-8", errors="replace")
+    with open(path, "rb") as f:
+        raw = f.read().decode("utf-8", errors="replace")
     start = raw.find("new Array(")
     if start < 0:
         raise ValueError("data.js 中未找到 'new Array(' —— 格式不符")

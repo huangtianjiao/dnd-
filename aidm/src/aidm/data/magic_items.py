@@ -17,8 +17,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # 枚举
@@ -607,7 +605,7 @@ MAGIC_ITEMS: dict[str, MagicItem] = {item.name: item for item in _MAGIC_ITEMS_LI
 # 查询函数
 # ──────────────────────────────────────────────────────────────────────────
 
-def get_magic_item(name: str) -> Optional[MagicItem]:
+def get_magic_item(name: str) -> MagicItem | None:
     """按名称查询魔法物品。
 
     Args:
@@ -621,8 +619,8 @@ def get_magic_item(name: str) -> Optional[MagicItem]:
     return MAGIC_ITEMS.get(name)
 
 
-def list_magic_items(rarity: Optional[Rarity] = None,
-                     item_type: Optional[ItemType] = None,
+def list_magic_items(rarity: Rarity | None = None,
+                     item_type: ItemType | None = None,
                      cursed_only: bool = False) -> list[MagicItem]:
     """列出魔法物品，支持按稀有度/类别/诅咒筛选。
 
@@ -660,9 +658,9 @@ def items_by_type(item_type: ItemType) -> list[MagicItem]:
 
 
 def random_magic_items(count: int = 1,
-                       max_rarity: Optional[Rarity] = None,
-                       min_rarity: Optional[Rarity] = None,
-                       seed: Optional[int] = None) -> list[MagicItem]:
+                       max_rarity: Rarity | None = None,
+                       min_rarity: Rarity | None = None,
+                       seed: int | None = None) -> list[MagicItem]:
     """随机抽取N个魔法物品（不放回）。
 
     用于战利品生成与随机魔法物品表。
@@ -707,7 +705,7 @@ MAX_ATTUNED = 3
 
 
 def attune_item(attuned_list: list[str], item_name: str,
-                cursed_items: Optional[set[str]] = None) -> dict:
+                cursed_items: set[str] | None = None) -> dict:
     """尝试与魔法物品建立同调。
 
     规则: 装备/魔法物品.txt「同调」— 需短休并保持物理接触；
@@ -737,7 +735,7 @@ def attune_item(attuned_list: list[str], item_name: str,
 
 
 def unattune_item(attuned_list: list[str], item_name: str,
-                 cursed_items: Optional[set[str]] = None) -> dict:
+                 cursed_items: set[str] | None = None) -> dict:
     """尝试解除魔法物品同调。
 
     规则: 装备/魔法物品.txt — 附诅咒物品不可自愿解除同调。

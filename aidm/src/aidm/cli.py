@@ -9,7 +9,7 @@ from __future__ import annotations
 import sys
 
 from .brain import graph
-from .stats import store, models
+from .stats import models, store
 
 
 def bootstrap_character(name: str = "勇者") -> tuple[models.Campaign, models.Character]:

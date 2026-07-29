@@ -13,7 +13,6 @@
 
 from __future__ import annotations
 
-
 # 属性缩写: STR 力量 / DEX 敏捷 / CON 体质 / INT 智力 / WIS 感知 / CHA 魅力
 BACKGROUNDS = {
     # ── 侍僧 Acolyte ─────────────────────────────────────

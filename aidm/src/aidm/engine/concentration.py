@@ -12,12 +12,9 @@
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
-from typing import Optional
 
-from . import dice, check
-
+from . import check, dice
 
 # ──────────────────────────────────────────────────────────────────────────
 # 集中状态
@@ -30,7 +27,7 @@ class ConcentrationSlot:
     规则: R-SPL-019 专注维持与打断（max 1 concurrent）
     出处: topics/玩家手册2024/第七章/施法.htm
     """
-    spell_id: Optional[str] = None     # 当前集中的法术标识（None=无集中）
+    spell_id: str | None = None     # 当前集中的法术标识（None=无集中）
     caster_id: str = ""                # 施法者标识（便于审计）
 
     @property
@@ -100,7 +97,7 @@ class ConcentrationManager:
         slot.spell_id = None
         return True
 
-    def get_active_concentration(self, caster_id: str) -> Optional[str]:
+    def get_active_concentration(self, caster_id: str) -> str | None:
         """获取当前集中的法术ID。
 
         规则: R-SPL-019 caster.concentration=newSpellInstance（旧结束）

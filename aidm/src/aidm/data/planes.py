@@ -22,8 +22,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # 枚举
@@ -902,7 +900,7 @@ _register(Plane(
 # 查询函数
 # ──────────────────────────────────────────────────────────────────────────
 
-def get_plane(name: str) -> Optional[Plane]:
+def get_plane(name: str) -> Plane | None:
     """按名称查询位面（支持中文名或英文名）。
 
     Args:
@@ -924,7 +922,7 @@ def get_plane(name: str) -> Optional[Plane]:
     return None
 
 
-def list_planes(plane_type: Optional[PlaneType] = None) -> list[Plane]:
+def list_planes(plane_type: PlaneType | None = None) -> list[Plane]:
     """列出所有位面，可按类型筛选。
 
     注意: PLANES 字典同时以中文名和英文名为键，为避免重复，

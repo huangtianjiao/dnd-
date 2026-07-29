@@ -20,10 +20,8 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 from ..data.planes import Plane, PlaneType, get_plane, list_planes
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # 枚举
@@ -94,7 +92,7 @@ class HazardResult:
     hazard_type: str = ""
     dc: int = 0
     save_attribute: str = ""
-    passed: Optional[bool] = None
+    passed: bool | None = None
     damage: int = 0
     effect: str = ""
     description: str = ""
@@ -109,7 +107,7 @@ def travel_to_plane(
     destination_plane: str,
     method: TRAVEL_METHODS = TRAVEL_METHODS.SPELL,
     *,
-    seed: Optional[int] = None,
+    seed: int | None = None,
 ) -> TravelResult:
     """执行位面旅行。
 
@@ -343,7 +341,7 @@ def apply_plane_hazards(
     plane_name: str,
     characters: list[dict],
     *,
-    seed: Optional[int] = None,
+    seed: int | None = None,
 ) -> list[HazardResult]:
     """应用位面危害到角色列表。
 
@@ -421,7 +419,7 @@ def _resolve_hazard_for_plane(
     intel: int,
     cha: int,
     rng: random.Random,
-) -> Optional[HazardResult]:
+) -> HazardResult | None:
     """根据位面解析具体的危害效应。"""
 
     # ── 妖精荒野：记忆丧失 ──
@@ -682,18 +680,17 @@ def list_available_destinations(origin_plane: str) -> list[Plane]:
     if origin.plane_type == PlaneType.ASTRAL:
         # 从星光位面可通过彩池前往大多数位面
         return destinations
-    elif origin.plane_type == PlaneType.ETHEREAL:
+    if origin.plane_type == PlaneType.ETHEREAL:
         # 从以太位面可通往边界以太重叠的位面
         return destinations
-    elif origin.plane_type == PlaneType.MATERIAL:
+    if origin.plane_type == PlaneType.MATERIAL:
         # 从物质位面可通过传送门/法术前往大多数位面
         return destinations
-    elif origin.plane_type == PlaneType.OUTER:
+    if origin.plane_type == PlaneType.OUTER:
         # 从外层位面可通过门镇/传送门前往其他外层位面
         return destinations
-    else:
-        # 其他情况默认所有位面可达
-        return destinations
+    # 其他情况默认所有位面可达
+    return destinations
 
 
 # ──────────────────────────────────────────────────────────────────────────

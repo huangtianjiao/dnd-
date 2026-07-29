@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-
 # ──────────────────────────────────────────────────────────────────────────
 # 钱币换算（以 GP 为基准）
 # 规则: R-ITM-001 钱币换算  出处: topics/玩家手册2024/装备/钱币.htm
@@ -277,9 +276,7 @@ def check_weapon_proficiency(character_weapon_prof: list[str], weapon_name: str)
     broad = "简易武器" if cat.startswith("简易") else ("军用武器" if cat.startswith("军用") else None)
     if broad and broad in character_weapon_prof:
         return True
-    if cat in character_weapon_prof:          # 细分类
-        return True
-    return False
+    return cat in character_weapon_prof          # 细分类
 
 
 def class_weapon_proficient(char_class: str, weapon_name: str) -> bool:

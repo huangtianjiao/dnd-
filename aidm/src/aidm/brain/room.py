@@ -17,13 +17,13 @@
 
 from __future__ import annotations
 
+import contextlib
+
 import secrets
 import string
 from dataclasses import dataclass, field
-from typing import Optional
 
 from fastapi import WebSocket
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # 房间数据结构
@@ -57,25 +57,25 @@ class Room:
     def is_full(self) -> bool:
         return self.player_count() >= self.max_players
 
-    def find_player_by_ws(self, ws: WebSocket) -> Optional[dict]:
+    def find_player_by_ws(self, ws: WebSocket) -> dict | None:
         for p in self.players:
             if p["ws"] is ws:
                 return p
         return None
 
-    def find_player_by_name(self, name: str) -> Optional[dict]:
+    def find_player_by_name(self, name: str) -> dict | None:
         for p in self.players:
             if p["name"] == name:
                 return p
         return None
 
-    def find_spectator_by_ws(self, ws: WebSocket) -> Optional[dict]:
+    def find_spectator_by_ws(self, ws: WebSocket) -> dict | None:
         for s in self.spectators:
             if s["ws"] is ws:
                 return s
         return None
 
-    def get_host(self) -> Optional[dict]:
+    def get_host(self) -> dict | None:
         for p in self.players:
             if p["is_host"]:
                 return p
@@ -161,7 +161,7 @@ class RoomManager:
         return {"ok": True, "room": room}
 
     def add_host(self, room_id: str, name: str, character_id: int,
-                 ws: WebSocket) -> Optional[Room]:
+                 ws: WebSocket) -> Room | None:
         """把房主作为第一个玩家加入房间。"""
         room = self.rooms.get(room_id)
         if room is None:
@@ -253,7 +253,7 @@ class RoomManager:
         return {"ok": True, "status": status}
 
     # —— 断线处理 ——
-    def disconnect(self, room_id: str, ws: WebSocket) -> Optional[dict]:
+    def disconnect(self, room_id: str, ws: WebSocket) -> dict | None:
         """玩家/观战者断线时移除。若房主离开，自动转让给最早加入的玩家。
 
         返回: {"room": Room, "left": name, "new_host": name|None} 或 None
@@ -287,14 +287,14 @@ class RoomManager:
         return {"room": room, "left": left_name, "new_host": None} if left_name else None
 
     # —— 查询 ——
-    def get_room(self, room_id: str) -> Optional[Room]:
+    def get_room(self, room_id: str) -> Room | None:
         return self.rooms.get(room_id)
 
     def list_rooms(self) -> list[dict]:
         return [r.to_dict() for r in self.rooms.values()]
 
     def broadcast_room(self, room: Room, message: dict,
-                       exclude: Optional[WebSocket] = None) -> None:
+                       exclude: WebSocket | None = None) -> None:
         """广播给房间内所有玩家+观战者（同步发送，ws.send_text 是 async，
         故本方法应在 async 上下文中 await，或由调用方自行遍历）。
 
@@ -307,10 +307,8 @@ class RoomManager:
         for ws in targets:
             if ws is exclude:
                 continue
-            try:
+            with contextlib.suppress(Exception):
                 # ws.send_text 是协程；这里不 await，仅作占位
-                pass
-            except Exception:
                 pass
 
 
@@ -319,7 +317,21 @@ class RoomManager:
 # ──────────────────────────────────────────────────────────────────────────
 
 import asyncio
+import os
 import time as _time
+
+
+def _parse_dispose_delay(default: float = 120.0) -> float:
+    """安全解析 ROOM_DISPOSE_DELAY 环境变量。
+
+    非法值（非数字）或 <=0 时回退默认值，避免模块导入时直接崩溃。
+    """
+    raw = os.getenv("ROOM_DISPOSE_DELAY", "")
+    try:
+        val = float(raw) if raw.strip() else default
+    except ValueError:
+        return default
+    return val if val > 0 else default
 
 
 @dataclass
@@ -359,16 +371,16 @@ class CampaignRoom:
 
     生命周期:
       get_or_create → add_player → ... → remove_player
-      当 players 为空时，调度 30 秒延迟销毁任务
+      当 players 为空时，调度延迟销毁任务（默认 120 秒，可用 ROOM_DISPOSE_DELAY 配置）
 
     规则出处:
       - R-CMB-004 回合开始——只有当前回合参战者可以行动
       - D&D 5E 本身无"房间"概念；本模块为多人在线跑团的协调层
     """
 
-    rooms: dict[int, "CampaignRoom"] = {}          # campaign_id → room
+    rooms: dict[int, CampaignRoom] = {}          # campaign_id → room
     _dispose_tasks: dict[int, asyncio.Task] = {}
-    DISPOSE_DELAY: float = 30.0                     # 空房 30 秒后销毁
+    DISPOSE_DELAY: float = _parse_dispose_delay()  # 空房销毁延迟（秒），默认 120，环境变量 ROOM_DISPOSE_DELAY 可覆盖
 
     def __init__(self, campaign_id: int):
         self.campaign_id = campaign_id
@@ -394,7 +406,7 @@ class CampaignRoom:
             task.cancel()
         return ps
 
-    def remove_player(self, sid: str) -> Optional[PlayerSession]:
+    def remove_player(self, sid: str) -> PlayerSession | None:
         """玩家离开房间。
 
         返回被移除的 PlayerSession，如果不存在返回 None。
@@ -409,14 +421,14 @@ class CampaignRoom:
             self._schedule_dispose()
         return ps
 
-    def get_player(self, sid: str) -> Optional[PlayerSession]:
+    def get_player(self, sid: str) -> PlayerSession | None:
         return self.players.get(sid)
 
     def get_players(self) -> list[dict]:
         """返回房间内所有玩家的公开信息。"""
         return [ps.to_dict() for ps in self.players.values()]
 
-    def find_by_character(self, character_id: int) -> Optional[PlayerSession]:
+    def find_by_character(self, character_id: int) -> PlayerSession | None:
         """通过角色ID查找玩家会话。"""
         for ps in self.players.values():
             if ps.character_id == character_id:
@@ -430,8 +442,8 @@ class CampaignRoom:
         规则: R-CMB-004 回合开始——只有当前回合参战者可以行动。
         """
         try:
-            from ..stats import store
             from ..engine import combat as cmb
+            from ..stats import store
             c = store.load_combat(self.campaign_id)
             if not c.active:
                 return True
@@ -440,11 +452,11 @@ class CampaignRoom:
         except Exception:
             return True
 
-    def current_turn_name(self) -> Optional[str]:
+    def current_turn_name(self) -> str | None:
         """当前回合是谁（给其他玩家提示'轮到 X'）。"""
         try:
-            from ..stats import store
             from ..engine import combat as cmb
+            from ..stats import store
             c = store.load_combat(self.campaign_id)
             if not c.active:
                 return None
@@ -455,7 +467,7 @@ class CampaignRoom:
 
     # —— 销毁调度 ——
     def _schedule_dispose(self) -> None:
-        """30秒后如果房间仍为空，则销毁并清理。
+        """DISPOSE_DELAY 秒后如果房间仍为空，则销毁并清理。
 
         参考 Colyseus Room 的 autoDispose 机制：
         当最后一个客户端断开时，延迟一段时间后自动销毁房间，
@@ -485,7 +497,7 @@ class CampaignRoom:
 
     # —— 类方法 ——
     @classmethod
-    def get_or_create(cls, campaign_id: int) -> "CampaignRoom":
+    def get_or_create(cls, campaign_id: int) -> CampaignRoom:
         """获取或创建战役房间。
 
         幂等操作：同一 campaign_id 多次调用返回同一实例。
@@ -497,8 +509,39 @@ class CampaignRoom:
         return room
 
     @classmethod
-    def get(cls, campaign_id: int) -> Optional["CampaignRoom"]:
+    def get(cls, campaign_id: int) -> CampaignRoom | None:
         return cls.rooms.get(campaign_id)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 兼容层：保留旧 API 名称供 routes / main.py 引用
+# ──────────────────────────────────────────────────────────────────────────
+
+class ConnectionManager:
+    """兼容旧代码的连接管理器外观。
+
+    新代码应直接使用 CampaignRoom 和 sio。
+    此类仅为保持向后兼容（main.py 中 manager.get_players 等）。
+    """
+
+    @staticmethod
+    def get_players(campaign_id: int) -> list[dict]:
+        room = CampaignRoom.get(campaign_id)
+        return room.get_players() if room else []
+
+    @staticmethod
+    def current_turn_name(campaign_id: int) -> str | None:
+        room = CampaignRoom.get(campaign_id)
+        return room.current_turn_name() if room else None
+
+    @staticmethod
+    def is_player_turn(campaign_id: int, character_id: int) -> bool:
+        """检查该角色在战斗中是否轮到其行动；非战斗/无房间一律返回 True。"""
+        room = CampaignRoom.get(campaign_id)
+        return room.is_player_turn(character_id) if room else True
+
+
+manager = ConnectionManager
 
 
 # ──────────────────────────────────────────────────────────────────────────

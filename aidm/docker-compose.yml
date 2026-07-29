@@ -1,0 +1,32 @@
+services:
+  aidm-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - AIDM_PROJECT_ROOT=/app
+      - AIDM_API_KEY=${AIDM_API_KEY:-}
+      - AIDM_ALLOWED_ORIGINS=${AIDM_ALLOWED_ORIGINS:-*}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
+      - AIDM_EMBEDDING_DEVICE=${AIDM_EMBEDDING_DEVICE:-cpu}
+    volumes:
+      - aidm-data:/app/data
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+volumes:
+  aidm-data:
+  redis-data:

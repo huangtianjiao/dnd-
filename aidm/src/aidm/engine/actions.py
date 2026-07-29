@@ -12,12 +12,12 @@ engine.combat（Combatant, use_action, conditions）。标注规则ID+出处。
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any
 
-from . import check, damage, conditions
+from . import check, conditions, damage
 from .combat import Combatant, use_action, use_bonus_action, use_reaction
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # 动作结果
@@ -29,8 +29,8 @@ class ActionResult:
     action_type: str                       # attack/dash/disengage/...
     success: bool = True                   # 动作是否成功执行
     message: str = ""                      # 叙事摘要
-    attack_result: Optional[check.AttackResult] = None   # 攻击检定结果
-    damage_result: Optional[damage.DamageResult] = None  # 伤害结算结果
+    attack_result: check.AttackResult | None = None   # 攻击检定结果
+    damage_result: damage.DamageResult | None = None  # 伤害结算结果
     extra: dict[str, Any] = field(default_factory=dict)  # 动作特定附加数据
 
 
@@ -178,7 +178,7 @@ def action_two_weapon_attack(attacker: Combatant, target: Combatant,
                              advantage: bool = False, disadvantage: bool = False,
                              target_ac: int = 10, distance_ft: int = 5,
                              off_advantage: bool = False, off_disadvantage: bool = False,
-                             off_hand_is_light: Optional[bool] = None) -> ActionResult:
+                             off_hand_is_light: bool | None = None) -> ActionResult:
     """双武器战斗：用攻击动作以主手武器攻击，再以附赠动作用另一把轻型武器攻击。
 
     规则: R-ITM-014 武器词条「轻型」  出处: 装备/词条.txt
@@ -315,7 +315,7 @@ def action_dodge(attacker: Combatant) -> ActionResult:
 
 
 def action_help(attacker: Combatant, ally: Combatant,
-                target: Optional[Combatant] = None,
+                target: Combatant | None = None,
                 mode: str = "attack",
                 medicine_mod: int = 0, medicine_prof: int = 0,
                 medicine_proficient: bool = False) -> ActionResult:
@@ -431,7 +431,7 @@ def action_ready(attacker: Combatant, trigger_condition: str,
                                "ready_action": ready_action})
 
 
-def trigger_ready(attacker: Combatant) -> Optional[ActionResult]:
+def trigger_ready(attacker: Combatant) -> ActionResult | None:
     """触发预备动作：消耗反应执行预备的动作/移动。返回 None 表示无预备。
 
     规则: 术语汇编/动作.txt — 触发时用反应执行。
@@ -565,8 +565,8 @@ COMBAT_ACTIONS: dict[str, Callable[..., ActionResult]] = {
 
 
 def resolve_combat_action(action_type: str, attacker: Combatant,
-                          target: Optional[Combatant] = None,
-                          weapon: Optional[WeaponProfile] = None,
+                          target: Combatant | None = None,
+                          weapon: WeaponProfile | None = None,
                           **kwargs) -> ActionResult:
     """分派并结算一次战斗动作。
 
@@ -599,7 +599,7 @@ def resolve_combat_action(action_type: str, attacker: Combatant,
                                 message="攻击动作需要 target 参数")
         return action_attack(attacker=attacker, target=target, weapon=weapon,
                              **kwargs)
-    elif action_type == "two_weapon_attack":
+    if action_type == "two_weapon_attack":
         if target is None:
             return ActionResult("two_weapon_attack", success=False,
                                 message="双武器攻击需要 target 参数")
@@ -611,30 +611,29 @@ def resolve_combat_action(action_type: str, attacker: Combatant,
         return action_two_weapon_attack(attacker=attacker, target=target,
                                         main_weapon=main_weapon,
                                         off_hand_weapon=off_hand_weapon, **kwargs)
-    elif action_type in ("dash", "disengage", "dodge"):
+    if action_type in ("dash", "disengage", "dodge"):
         return handler(attacker=attacker)
-    elif action_type == "help":
+    if action_type == "help":
         ally = kwargs.pop("ally", None)
         if ally is None:
             return ActionResult("help", success=False,
                                 message="协助动作需要 ally 参数")
         return action_help(attacker=attacker, ally=ally, target=target, **kwargs)
-    elif action_type == "hide":
+    if action_type == "hide":
         return action_hide(attacker=attacker, **kwargs)
-    elif action_type == "magic":
+    if action_type == "magic":
         return action_magic(attacker=attacker, **kwargs)
-    elif action_type == "ready":
+    if action_type == "ready":
         return action_ready(attacker=attacker, **kwargs)
-    elif action_type == "search":
+    if action_type == "search":
         return action_search(attacker=attacker, **kwargs)
-    elif action_type == "study":
+    if action_type == "study":
         return action_study(attacker=attacker, **kwargs)
-    elif action_type == "utilize":
+    if action_type == "utilize":
         return action_utilize(attacker=attacker, **kwargs)
-    elif action_type == "influence":
+    if action_type == "influence":
         return action_influence(attacker=attacker, **kwargs)
-    else:
-        return handler(attacker=attacker, target=target, weapon=weapon, **kwargs)
+    return handler(attacker=attacker, target=target, weapon=weapon, **kwargs)
 
 
 # ──────────────────────────────────────────────────────────────────────────

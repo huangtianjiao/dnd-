@@ -24,10 +24,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 from ..engine import dice
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # 数据结构
@@ -60,7 +58,7 @@ class LootItem:
     value_gp: int = 0                     # 价值（金币）
     quantity: int = 1                     # 数量
     description: str = ""                 # 描述
-    assigned_to: Optional[str] = None     # 已分配给的玩家名
+    assigned_to: str | None = None     # 已分配给的玩家名
 
 
 @dataclass
@@ -317,9 +315,9 @@ def distribute_loot(
     pool: LootPool,
     player_names: list[str],
     mode: DistributionMode = DistributionMode.ROUND_ROBIN,
-    initiative_order: Optional[list[str]] = None,
-    needs: Optional[dict[str, list[str]]] = None,
-    dm_assignments: Optional[dict[str, str]] = None,
+    initiative_order: list[str] | None = None,
+    needs: dict[str, list[str]] | None = None,
+    dm_assignments: dict[str, str] | None = None,
 ) -> DistributionRecord:
     """执行完整的战利品分配流程。
 
@@ -356,7 +354,7 @@ def distribute_loot(
 
     pool.distributed = True
 
-    record = DistributionRecord(
+    return DistributionRecord(
         record_id=f"rec_{_sec.token_hex(4)}",
         pool_id=pool.pool_id,
         campaign_id=pool.campaign_id,
@@ -365,7 +363,6 @@ def distribute_loot(
         item_distribution=item_dist,
         timestamp=datetime.datetime.now().isoformat(),
     )
-    return record
 
 
 # ──────────────────────────────────────────────────────────────────────────

@@ -24,17 +24,14 @@ from __future__ import annotations
 import random
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from ..data.strongholds import (
     ADD_BASIC_FACILITY_COST,
     BASIC_FACILITIES,
     ENLARGE_FACILITY_COST_GP,
-    FACILITIES,
     FacilitySpace,
     OrderType,
-    SPECIAL_FACILITY_ACQUISITION,
-    STRONGHOLD_EVENTS,
     StrongholdEvent,
     StrongholdType,
     get_event_by_roll,
@@ -42,7 +39,6 @@ from ..data.strongholds import (
     get_facility_count_for_level,
     list_facilities_by_level,
 )
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # 数据结构
@@ -188,7 +184,7 @@ def create_stronghold(
     name: str,
     stronghold_type: StrongholdType,
     initial_gold: float = 0.0,
-    rng: Optional[random.Random] = None,
+    rng: random.Random | None = None,
 ) -> Stronghold:
     """建立据点。
 
@@ -345,7 +341,7 @@ def build_facility(
     stronghold: Stronghold,
     facility_name: str,
     is_basic: bool = False,
-    target_space: Optional[FacilitySpace] = None,
+    target_space: FacilitySpace | None = None,
 ) -> Result:
     """建设设施（扣金币+建造时间）。
 
@@ -418,70 +414,69 @@ def build_facility(
             },
         )
 
-    else:
-        # 扩大特色设施
-        facility_instance = None
-        for f in stronghold.facilities:
-            if f.facility_name == facility_name:
-                facility_instance = f
-                break
+    # 扩大特色设施
+    facility_instance = None
+    for f in stronghold.facilities:
+        if f.facility_name == facility_name:
+            facility_instance = f
+            break
 
-        if facility_instance is None:
-            return Result(
-                success=False,
-                message=f"据点未拥有特色设施'{facility_name}'。",
-            )
-
-        if facility_instance.enlarged:
-            return Result(
-                success=False,
-                message=f"特色设施'{facility_name}'已被扩大，无法再次扩大。",
-            )
-
-        # 检查该设施是否支持扩大
-        facility_data = get_facility(facility_name)
-        if not facility_data.can_enlarge:
-            return Result(
-                success=False,
-                message=f"特色设施'{facility_name}'不支持扩大。",
-            )
-
-        cost_gp = ENLARGE_FACILITY_COST_GP  # 2000GP
-
-        if stronghold.treasury_gp < cost_gp:
-            return Result(
-                success=False,
-                message=(
-                    f"金库金币不足: 需要{cost_gp}GP，"
-                    f"当前{stronghold.treasury_gp}GP。"
-                ),
-            )
-
-        stronghold.treasury_gp -= cost_gp
-        facility_instance.enlarged = True
-        facility_instance.space = FacilitySpace.VAST
-
-        msg = (
-            f"特色设施'{facility_name}'已扩大为庞大设施。"
-            f"花费: {cost_gp}GP，剩余金币: {stronghold.treasury_gp}GP。"
-        )
-        stronghold.add_log(msg)
-
+    if facility_instance is None:
         return Result(
-            success=True,
-            message=msg,
-            data={
-                "cost_gp": cost_gp,
-                "remaining_gp": stronghold.treasury_gp,
-            },
+            success=False,
+            message=f"据点未拥有特色设施'{facility_name}'。",
         )
+
+    if facility_instance.enlarged:
+        return Result(
+            success=False,
+            message=f"特色设施'{facility_name}'已被扩大，无法再次扩大。",
+        )
+
+    # 检查该设施是否支持扩大
+    facility_data = get_facility(facility_name)
+    if not facility_data.can_enlarge:
+        return Result(
+            success=False,
+            message=f"特色设施'{facility_name}'不支持扩大。",
+        )
+
+    cost_gp = ENLARGE_FACILITY_COST_GP  # 2000GP
+
+    if stronghold.treasury_gp < cost_gp:
+        return Result(
+            success=False,
+            message=(
+                f"金库金币不足: 需要{cost_gp}GP，"
+                f"当前{stronghold.treasury_gp}GP。"
+            ),
+        )
+
+    stronghold.treasury_gp -= cost_gp
+    facility_instance.enlarged = True
+    facility_instance.space = FacilitySpace.VAST
+
+    msg = (
+        f"特色设施'{facility_name}'已扩大为庞大设施。"
+        f"花费: {cost_gp}GP，剩余金币: {stronghold.treasury_gp}GP。"
+    )
+    stronghold.add_log(msg)
+
+    return Result(
+        success=True,
+        message=msg,
+        data={
+            "cost_gp": cost_gp,
+            "remaining_gp": stronghold.treasury_gp,
+        },
+    )
 
 
 def run_stronghold_turn(
     stronghold: Stronghold,
     order_type: OrderType = OrderType.MAINTAIN,
-    facility_name: Optional[str] = None,
-    rng: Optional[random.Random] = None,
+    facility_name: str | None = None,
+    rng: random.Random | None = None,
 ) -> TurnResult:
     """执行据点回合。
 
@@ -605,7 +600,7 @@ def run_stronghold_turn(
 
 def trigger_event(
     stronghold: Stronghold,
-    rng: Optional[random.Random] = None,
+    rng: random.Random | None = None,
 ) -> EventResult:
     """触发据点事件。
 
@@ -734,7 +729,7 @@ def _apply_event_effects(
     stronghold: Stronghold,
     event_result: EventResult,
     turn_result: TurnResult,
-    rng: Optional[random.Random] = None,
+    rng: random.Random | None = None,
 ) -> None:
     """将事件效果应用到据点状态。
 

@@ -18,11 +18,9 @@
 from __future__ import annotations
 
 import random
-from typing import Any
 
-from aidm.data.classes import CLASSES, get_class, get_extra_attacks
 from aidm.data import feats as feat_db
-
+from aidm.data.classes import CLASSES, get_class, get_extra_attacks
 
 # ──────────────────────────────────────────────────────────────────────────
 # 经验值与等级表

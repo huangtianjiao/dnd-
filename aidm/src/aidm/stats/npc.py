@@ -13,14 +13,11 @@
 from __future__ import annotations
 
 import json
-import math
 from datetime import datetime
-from typing import Optional
 
-from sqlmodel import Field, SQLModel, Session, select
+from sqlmodel import Field, SQLModel, select
 
 from . import store
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # 数据模型
@@ -32,8 +29,8 @@ class NPCProfile(SQLModel, table=True):
     每个 NPC 有独立的人格、知识范围和秘密。
     与 NPCMemory 表配合实现记忆流。
     """
-    id: Optional[int] = Field(default=None, primary_key=True)
-    campaign_id: Optional[int] = Field(default=None, foreign_key="campaign.id")
+    id: int | None = Field(default=None, primary_key=True)
+    campaign_id: int | None = Field(default=None, foreign_key="campaign.id")
     name: str                                    # NPC 名称
     role: str = ""                               # 职业身份
     description: str = ""                        # 外貌描述
@@ -78,8 +75,8 @@ class NPCMemory(SQLModel, table=True):
     参考 Generative Agents 的 memory stream：
     每条记忆有 importance(1-10)、timestamp、embedding。
     """
-    id: Optional[int] = Field(default=None, primary_key=True)
-    npc_profile_id: Optional[int] = Field(default=None, foreign_key="npcprofile.id")
+    id: int | None = Field(default=None, primary_key=True)
+    npc_profile_id: int | None = Field(default=None, foreign_key="npcprofile.id")
     event: str                                   # 记忆内容描述
     importance: int = 5                          # 重要性 (1-10)
     turn: int = 0                                # 发生回合
@@ -115,13 +112,13 @@ def create_npc(campaign_id: int, name: str, role: str = "",
         return npc
 
 
-def get_npc(npc_id: int) -> Optional[NPCProfile]:
+def get_npc(npc_id: int) -> NPCProfile | None:
     """获取 NPC 档案。"""
     with store.session() as s:
         return s.get(NPCProfile, npc_id)
 
 
-def find_npc_by_name(campaign_id: int, name: str) -> Optional[NPCProfile]:
+def find_npc_by_name(campaign_id: int, name: str) -> NPCProfile | None:
     """按名称查找 NPC。"""
     with store.session() as s:
         stmt = (select(NPCProfile)
@@ -289,10 +286,7 @@ def record_interaction(npc: NPCProfile, event: str,
                turn=turn, memory_type="interaction")
 
     # 更新信任
-    if success:
-        npc = update_trust(npc, TRUST_GAIN_SUCCESS)
-    else:
-        npc = update_trust(npc, -TRUST_LOSS_FAILURE)
+    npc = update_trust(npc, TRUST_GAIN_SUCCESS) if success else update_trust(npc, -TRUST_LOSS_FAILURE)
 
     # 更新互动计数
     npc.interaction_count += 1
@@ -342,7 +336,7 @@ def _self_test() -> None:
     mem3 = add_memory(npc.id, "玩家威胁鲍勃交出信息", importance=8, turn=3)
     assert mem1.id is not None
     assert mem2.importance == 7
-    print(f"  ✓ 添加3条记忆成功")
+    print("  ✓ 添加3条记忆成功")
 
     # 测试 4: 获取记忆流
     print("[test4] get_memories...")
@@ -387,7 +381,7 @@ def _self_test() -> None:
     assert deleted is True
     npc_list = list_npcs(camp.id)
     assert len(npc_list) == 0
-    print(f"  ✓ 删除成功")
+    print("  ✓ 删除成功")
 
     print("\n[npc] 自检通过 ✓")
 

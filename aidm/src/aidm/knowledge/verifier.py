@@ -7,9 +7,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
-from . import retriever, hybrid
+from . import hybrid, retriever
 
 
 @dataclass
@@ -25,7 +24,7 @@ def gather_evidence(action_desc: str, limit: int = 5) -> list[dict]:
     return hybrid.search_spec_hybrid(action_desc, limit=limit)
 
 
-def keyword_preflight(proposed_check_type: Optional[str], proposed_dc: Optional[int],
+def keyword_preflight(proposed_check_type: str | None, proposed_dc: int | None,
                       results: list[dict]) -> list[str]:
     """简易关键词预检：若规则原文未提及 proposed 检定类型/DC，标记存疑。
 
@@ -41,8 +40,8 @@ def keyword_preflight(proposed_check_type: Optional[str], proposed_dc: Optional[
     return issues
 
 
-def verify(action_desc: str, *, proposed_check_type: Optional[str] = None,
-           proposed_dc: Optional[int] = None, limit: int = 8) -> Verification:
+def verify(action_desc: str, *, proposed_check_type: str | None = None,
+           proposed_dc: int | None = None, limit: int = 8) -> Verification:
     """校验一次判定：检索证据(hybrid, limit=8 保证机制类规则进上下文) + 关键词预检。
 
     返回 Verification（ok=True=无关键词冲突；evidence/digest 供 P3 LLM 语义校验）。

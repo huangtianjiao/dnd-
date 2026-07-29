@@ -8,10 +8,6 @@ R-GLS-043（不叠加）、R-GLS-047（力竭累加）。
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Iterable
-
-from . import dice
-
 
 # R-QCK-003（审计修正后）状态条件全集 15 项（含力竭）
 # 出处: topics/玩家手册2024/术语汇编/状态.htm

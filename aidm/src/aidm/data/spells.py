@@ -14,9 +14,7 @@ description, material_cost_gp, material_consumed.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Optional
-
+from dataclasses import dataclass
 
 # ──────────────────────────────────────────────────────────────────────────
 # 法术数据结构
@@ -45,14 +43,14 @@ class Spell:
     concentration: bool = False             # 是否需要专注 (R-SPL-019)
     ritual: bool = False                    # 是否可仪式施法 (R-SPL-005)
     effect_type: str = "automatic"          # attack_roll/saving_throw/automatic/heal/shield
-    save_ability: Optional[str] = None      # 豁免属性 DEX/CON/WIS/CHA/INT/STR
-    damage_dice: Optional[str] = None       # 伤害骰表达式 如 "1d10"
-    damage_type: Optional[str] = None       # 伤害类型 如 "fire"
+    save_ability: str | None = None      # 豁免属性 DEX/CON/WIS/CHA/INT/STR
+    damage_dice: str | None = None       # 伤害骰表达式 如 "1d10"
+    damage_type: str | None = None       # 伤害类型 如 "fire"
     half_on_save: bool = False              # 豁免成功是否仍受半伤（火球术=True；圣火术等=0伤）
-    heal_dice: Optional[str] = None         # 治疗骰表达式 如 "2d8"
+    heal_dice: str | None = None         # 治疗骰表达式 如 "2d8"
     add_casting_mod_to_heal: bool = False   # 治疗是否加施法属性调整值
     ac_bonus: int = 0                       # 护甲加值 (护盾术 +5)
-    upcast: Optional[dict] = None           # 升环效应 {per_level: dice_expr 或 count}
+    upcast: dict | None = None           # 升环效应 {per_level: dice_expr 或 count}
     description: str = ""
     class_list: tuple[str, ...] = ()        # 可施展职业列表 (R-SPL-036)
 

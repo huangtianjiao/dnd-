@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 
@@ -110,10 +111,8 @@ def narrate(state: GameState) -> dict:
     recap_text = ""
     if camp_id:
         from ..brain.memory import get_recap
-        try:
+        with contextlib.suppress(Exception):
             recap_text = get_recap(camp_id)
-        except Exception:
-            pass
 
     prompt = _NARRATOR_PROMPT.format(
         recap_text=recap_text or "(无前情提要)",

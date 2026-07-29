@@ -28,10 +28,8 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from typing import Optional
 
 from . import loot as loot_mod
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 数据表 — 从 DMG 第四五章 HTML 原文提取
@@ -340,7 +338,7 @@ class Ending:
     method: str               # resolution / cliffhanger
     climax: str = ""          # 高潮描述
     denouement: str = ""      # 收尾描述
-    rewards: Optional[dict] = None  # 冒险奖励
+    rewards: dict | None = None  # 冒险奖励
 
     def to_dict(self) -> dict:
         return {
@@ -360,12 +358,12 @@ class Adventure:
     name: str                            # 冒险名称
     level_range: tuple[int, int] = (1, 4)# 角色等级范围
     setting: str = ""                    # 冒险设定
-    hook: Optional[Hook] = None          # 导入玩家引子
-    background: Optional[Background] = None  # 布置背景
+    hook: Hook | None = None          # 导入玩家引子
+    background: Background | None = None  # 布置背景
     npcs: list[NPC] = field(default_factory=list)      # NPC列表
     encounters: list[Encounter] = field(default_factory=list)  # 遭遇列表
-    ending: Optional[Ending] = None      # 结束冒险
-    rewards: Optional[dict] = None       # 冒险奖励
+    ending: Ending | None = None      # 结束冒险
+    rewards: dict | None = None       # 冒险奖励
     design_steps: list[dict] = field(default_factory=lambda: [s for s in ADVENTURE_STEPS])
 
     def to_dict(self) -> dict:
@@ -409,12 +407,11 @@ def _level_to_tier(level: int) -> str:
         raise ValueError(f"角色等级必须在1-20之间，实际: {level}")
     if level <= 4:
         return "local_hero"
-    elif level <= 10:
+    if level <= 10:
         return "realm_hero"
-    elif level <= 16:
+    if level <= 16:
         return "master_realm"
-    else:
-        return "master_world"
+    return "master_world"
 
 
 def _roll_table(table: dict[int, str], rng: random.Random) -> tuple[int, str]:
@@ -434,7 +431,7 @@ def _roll_table(table: dict[int, str], rng: random.Random) -> tuple[int, str]:
 def create_adventure(name: str,
                      level_range: tuple[int, int] = (1, 4),
                      setting: str = "",
-                     seed: Optional[int] = None) -> Adventure:
+                     seed: int | None = None) -> Adventure:
     """创建冒险 — DMG 第四章四步设计法第1步「布置背景」。
 
     规则依据: 城主指南2024/4.创建冒险/冒险的设计步骤.htm
@@ -487,7 +484,7 @@ def create_adventure(name: str,
 
 
 def import_players(method: str = "sponsor",
-                   seed: Optional[int] = None) -> Hook:
+                   seed: int | None = None) -> Hook:
     """生成导入玩家引子 — DMG 第四章四步设计法第2步「导入玩家」。
 
     规则依据: 城主指南2024/4.创建冒险/导入玩家/导入玩家.htm
@@ -558,7 +555,7 @@ def add_encounter(adventure: Adventure,
                   description: str = "",
                   party_level: int = 1,
                   party_size: int = 4,
-                  monsters: Optional[list[dict]] = None) -> Encounter:
+                  monsters: list[dict] | None = None) -> Encounter:
     """添加遭遇到冒险 — DMG 第四章四步设计法第3步「规划遭遇」。
 
     规则依据: 城主指南2024/4.创建冒险/规划遭遇/规划遭遇.htm
@@ -655,8 +652,8 @@ def add_npc(adventure: Adventure,
 
 def end_adventure(adventure: Adventure,
                   method: str = "resolution",
-                  climax_roll: Optional[int] = None,
-                  seed: Optional[int] = None) -> Ending:
+                  climax_roll: int | None = None,
+                  seed: int | None = None) -> Ending:
     """结束冒险 — DMG 第四章四步设计法第4步「结束冒险」。
 
     规则依据: 城主指南2024/4.创建冒险/结束冒险/结束冒险.htm
@@ -721,7 +718,7 @@ def end_adventure(adventure: Adventure,
 
 def generate_rewards(cr_list: list[float],
                      include_magic_items: bool = True,
-                     seed: Optional[int] = None) -> dict:
+                     seed: int | None = None) -> dict:
     """生成冒险奖励 — DMG 第四章「冒险奖励」。
 
     规则依据: 城主指南2024/4.创建冒险/冒险奖励.htm
@@ -815,7 +812,7 @@ def get_xp_budget(party_level: int,
     return per_char_xp * party_size
 
 
-def roll_adventure_connection(seed: Optional[int] = None) -> tuple[int, str]:
+def roll_adventure_connection(seed: int | None = None) -> tuple[int, str]:
     """掷冒险间的关联表 — DMG 第五章「单元剧和连续剧」。
 
     规则依据: 城主指南2024/5.创作战役/规划冒险/单元剧和连续剧.htm
@@ -839,7 +836,6 @@ def roll_adventure_connection(seed: Optional[int] = None) -> tuple[int, str]:
 
 def _self_test() -> None:
     """冒险创建工具自检。"""
-    import os
 
     # ═══ 1. 等级梯队映射 ═══
     assert _level_to_tier(1) == "local_hero"

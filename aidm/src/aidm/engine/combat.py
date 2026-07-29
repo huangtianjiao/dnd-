@@ -12,10 +12,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
-from . import dice, check, conditions, concentration
-
+from . import check, concentration, conditions, dice
 
 # ──────────────────────────────────────────────────────────────────────────
 # 战斗参战者
@@ -46,7 +44,7 @@ class Combatant:
     damage_type: str = "挥砍"
     surprised: bool = False           # R-GLS-009 突袭 → 先攻劣势
     # 同组怪物共用先攻：同组标记后由 roll_initiative 只掷一次
-    group_id: Optional[str] = None
+    group_id: str | None = None
 
     # ── 动作经济（R-CMB-004/012/013, R-GLS-083）──
     action_used: bool = False
@@ -61,7 +59,7 @@ class Combatant:
     reach: int = 5                     # 近战触及范围（尺）；R-CMB-024 默认5尺
 
     # ── 专注（R-SPL-019 / R-GLS-013）──
-    concentrating_on: Optional[str] = None
+    concentrating_on: str | None = None
 
     # ── 状态条件（R-GLS-043~058）──
     conditions: conditions.ConditionState = field(default_factory=conditions.ConditionState)
@@ -70,9 +68,9 @@ class Combatant:
     disengage_active: bool = False     # R-CMB-007 撤离：本回合移动不引发借机攻击
     dodge_active: bool = False         # R-CMB-008 回避：对你攻击具有劣势
     hidden: bool = False               # R-CMB-009 躲藏成功 → 隐形状态
-    ready_trigger: Optional[str] = None  # R-CMB-014 准备动作触发条件
-    ready_action_name: Optional[str] = None  # 准备的动作名
-    help_advantage_target: Optional[str] = None  # 协助：下次对该目标攻击有优势
+    ready_trigger: str | None = None  # R-CMB-014 准备动作触发条件
+    ready_action_name: str | None = None  # 准备的动作名
+    help_advantage_target: str | None = None  # 协助：下次对该目标攻击有优势
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -122,9 +120,8 @@ def roll_initiative(combatants: list[Combatant]) -> list[Combatant]:
             rolled_groups.add(c.group_id)
             group_initiative[c.group_id] = c.initiative
     # 平局时：玩家优先于敌人，同级按敏捷调整值高者优先（DM可覆写）
-    order = sorted(combatants,
-                   key=lambda c: (-c.initiative, 0 if c.is_player else 1, -c.dex_mod))
-    return order
+    return sorted(combatants,
+                  key=lambda c: (-c.initiative, 0 if c.is_player else 1, -c.dex_mod))
 
 
 def resolve_initiative_ties(tied_combatants: list[Combatant]) -> list[Combatant]:
@@ -161,7 +158,7 @@ def start_combat(combat: Combat, combatants: list[Combatant]) -> None:
         _reset_turn_economy(cur)
 
 
-def current_combatant(combat: Combat) -> Optional[Combatant]:
+def current_combatant(combat: Combat) -> Combatant | None:
     """当前回合的参战者。规则: R-CMB-004"""
     if not combat.active or not combat.initiative_order:
         return None
@@ -187,7 +184,7 @@ def _reset_turn_economy(c: Combatant) -> None:
     c.dodge_active = False                            # R-CMB-008 至下回合开始
 
 
-def advance_turn(combat: Combat) -> Optional[Combatant]:
+def advance_turn(combat: Combat) -> Combatant | None:
     """推进到下一参战者回合：重置该回合动作经济；轮次结束则进入下一轮（+6秒）。
 
     规则: R-CMB-001 一轮约6秒 / R-CMB-004 回合开始
@@ -504,10 +501,8 @@ def drop_prone(c: Combatant) -> bool:
           cost = 0; precondition: speed > 0
     出处: topics/玩家手册2024/进行游戏/移动和位置.htm
     """
-    if c.speed <= 0:
-        return False
     # prone 状态由 conditions 模块管理；此处仅返回是否可执行
-    return True
+    return c.speed > 0
 
 
 def stand_from_prone(c: Combatant) -> bool:

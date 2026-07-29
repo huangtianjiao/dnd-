@@ -16,7 +16,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -167,7 +166,7 @@ MONSTERS: dict[str, Monster] = {m.name: m for m in _MONSTERS_LIST}
 # ──────────────────────────────────────────────────────────────────────────
 
 _FULL_CACHE: dict[str, Monster] = {}
-_FULL_POOL: Optional[list[Monster]] = None
+_FULL_POOL: list[Monster] | None = None
 
 
 def _monster_from_full(raw: dict) -> Monster:
@@ -202,7 +201,7 @@ def _full_pool() -> list[Monster]:
     return _FULL_POOL
 
 
-def get_monster(name: str) -> Optional[Monster]:
+def get_monster(name: str) -> Monster | None:
     """按中文名查怪物。
 
     优先命中手工精校表 MONSTERS（13 个，含战斗 AI 能力描述）；未命中则兜底

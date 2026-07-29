@@ -8,8 +8,7 @@
 from __future__ import annotations
 
 import os
-from functools import lru_cache
-from typing import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 
@@ -19,8 +18,11 @@ os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 
 from ..config import get_settings
 
-
 _embedder = None
+
+# 单条查询嵌入结果缓存（避免重复推理）
+_query_cache: dict[str, list[float]] = {}
+_QUERY_CACHE_MAX = 1024
 
 
 def get_embedder():
@@ -29,7 +31,8 @@ def get_embedder():
     if _embedder is None:
         from sentence_transformers import SentenceTransformer
         s = get_settings()
-        _embedder = SentenceTransformer(s.embedding_model, device="cpu")
+        device = os.getenv("AIDM_EMBEDDING_DEVICE", "cpu")
+        _embedder = SentenceTransformer(s.embedding_model, device=device)
     return _embedder
 
 
@@ -49,8 +52,17 @@ def embed_texts(texts: Iterable[str], batch_size: int = 64,
 
 
 def embed_query(text: str) -> list[float]:
-    """单条查询嵌入。"""
-    return embed_texts([text], show_progress=False)[0]
+    """单条查询嵌入（带结果缓存）。"""
+    if text in _query_cache:
+        return _query_cache[text]
+    result = embed_texts([text], show_progress=False)[0]
+    if len(_query_cache) >= _QUERY_CACHE_MAX:
+        # 简单淘汰：清空前半部分
+        keys = list(_query_cache.keys())
+        for k in keys[:len(keys) // 2]:
+            del _query_cache[k]
+    _query_cache[text] = result
+    return result
 
 
 def dim() -> int:
@@ -64,9 +76,9 @@ def dim() -> int:
 # ──────────────────────────────────────────────────────────────────────────
 
 def _serve(port: int = 8787) -> None:
+    import uvicorn
     from fastapi import FastAPI
     from pydantic import BaseModel
-    import uvicorn
 
     app = FastAPI(title="aidm-local-embedding")
 

@@ -20,8 +20,6 @@ import math
 import re
 import secrets
 from dataclasses import dataclass, field
-from typing import Iterable
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # 基础数值

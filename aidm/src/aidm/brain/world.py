@@ -11,8 +11,8 @@ from __future__ import annotations
 import json
 import re
 
+from ..stats import models, store
 from . import llm
-from ..stats import store, models
 
 
 def _extract_json(text: str) -> dict:

@@ -12,10 +12,8 @@ LLM 决策但受规则约束：不能做规则不允许的动作。
 from __future__ import annotations
 
 import json
-import re
 
 from ..brain import llm
-
 
 _ENEMY_SYSTEM = "你是D&D 5E怪物战术AI。基于怪物特性决定本回合行动。只输出JSON。"
 
@@ -94,10 +92,9 @@ def decide_action(monster_name: str, hp: int, max_hp: int,
                   "reason": "默认攻击行为"}
 
     # 后置校验：HP < 25% 但 LLM 选 attack → 强制改为 flee（除非狂暴）
-    if hp_pct < 25 and result.get("action") == "attack":
-        if "狂暴" not in abilities:
-            result["action"] = "flee"
-            result["reason"] = f"HP仅{hp_pct}%，被迫逃离"
+    if hp_pct < 25 and result.get("action") == "attack" and "狂暴" not in abilities:
+        result["action"] = "flee"
+        result["reason"] = f"HP仅{hp_pct}%，被迫逃离"
 
     return result
 

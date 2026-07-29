@@ -23,10 +23,9 @@ from __future__ import annotations
 import random
 from typing import Any
 
-from aidm.data.classes import CLASSES, get_class
-from aidm.data.races import RACES, get_race, dwarven_toughness
-from aidm.data.backgrounds import BACKGROUNDS, get_background
-
+from aidm.data.backgrounds import get_background
+from aidm.data.classes import get_class
+from aidm.data.races import dwarven_toughness, get_race
 
 # ──────────────────────────────────────────────────────────────────────────
 # 常量

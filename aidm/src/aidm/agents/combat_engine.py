@@ -11,13 +11,14 @@
 
 from __future__ import annotations
 
-import json
+import contextlib
 
 from ..brain.state import GameState
-from ..engine import check, damage, combat as cmb, conditions, dice as engine_dice
 from ..data import equipment
-from ..stats import store, models
-
+from ..engine import check, conditions, damage
+from ..engine import combat as cmb
+from ..engine import dice as engine_dice
+from ..stats import store
 
 # 职业→施法属性（确定性，优先于 LLM 猜测）
 CLASS_CAST_ABILITY = {
@@ -30,10 +31,8 @@ def _target_condition_state(it) -> conditions.ConditionState:
     """从 intent 构建目标条件状态。"""
     ts = conditions.ConditionState()
     for c in it.get("target_conditions", []):
-        try:
+        with contextlib.suppress(ValueError):
             ts.add(c)
-        except ValueError:
-            pass
     return ts
 
 

@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-
 # creature_type 生物类型 / size 体型选项 / speed 基础速度(尺) /
 # darkvision 黑暗视觉(尺,0表示无) / traits 特殊特质列表 /
 # subraces 子族/血系(可空)

@@ -14,16 +14,17 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
 import random
 from dataclasses import dataclass, field
-from typing import Optional
 
 from ..data.magic_items import (
-    MagicItem, Rarity, ItemType,
-    MAGIC_ITEMS, get_magic_item, random_magic_items,
+    MagicItem,
+    Rarity,
+    get_magic_item,
+    random_magic_items,
 )
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # CR → 战利品等级映射
@@ -47,12 +48,11 @@ def cr_to_loot_tier(cr: float) -> str:
     """
     if cr < 5:
         return "low"
-    elif cr < 11:
+    if cr < 11:
         return "mid"
-    elif cr < 17:
+    if cr < 17:
         return "high"
-    else:
-        return "top"
+    return "top"
 
 
 # CR → 金币范围映射（GP）
@@ -148,7 +148,7 @@ ART_TEMPLATES: list[dict] = [
 def generate_loot(cr: float,
                   count_enemies: int = 1,
                   include_magic_items: bool = True,
-                  seed: Optional[int] = None) -> LootPool:
+                  seed: int | None = None) -> LootPool:
     """按怪物CR生成战利品池。
 
     规则: 城主指南2024/7.宝藏/宝藏.htm
@@ -258,9 +258,9 @@ class LootDistribution:
 def distribute_loot(pool: LootPool,
                     players: list[str],
                     method: str = "need_priority",
-                    needs: Optional[dict[str, list[str]]] = None,
-                    dm_assignments: Optional[dict[str, list[str]]] = None,
-                    seed: Optional[int] = None) -> LootDistribution:
+                    needs: dict[str, list[str]] | None = None,
+                    dm_assignments: dict[str, list[str]] | None = None,
+                    seed: int | None = None) -> LootDistribution:
     """分配战利品（魔法物品部分）。
 
     规则依据: 城主指南2024/7.宝藏/宝藏主题.htm
@@ -341,7 +341,7 @@ def distribute_loot(pool: LootPool,
 def distribute_gold(total_gold: int,
                     players: list[str],
                     method: str = "equal",
-                    contributions: Optional[dict[str, float]] = None) -> dict[str, int]:
+                    contributions: dict[str, float] | None = None) -> dict[str, int]:
     """分配金币。
 
     规则依据: 城主指南2024/7.宝藏/钱币.htm
@@ -366,7 +366,7 @@ def distribute_gold(total_gold: int,
         result[players[0]] += remainder
         return result
 
-    elif method == "contribution":
+    if method == "contribution":
         # 按贡献比例分配
         contributions = contributions or {}
         total_contribution = sum(contributions.get(p, 0) for p in players)
@@ -387,8 +387,7 @@ def distribute_gold(total_gold: int,
             result[player] = share
         return result
 
-    else:
-        raise ValueError(f"未知金币分配方式: {method}，可选: 'equal' / 'contribution'")
+    raise ValueError(f"未知金币分配方式: {method}，可选: 'equal' / 'contribution'")
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -710,11 +709,11 @@ def _self_test() -> None:
     print("[loot] 金币分配 ✓")
 
     # ═══ 6. 同调管理 ═══
-    tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-    tmp.close()
-    db = f"sqlite:///{tmp.name}"
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+        db_path = tmp.name
+    db = f"sqlite:///{db_path}"
     try:
-        from ..stats import store, models
+        from ..stats import models, store
         store.get_engine(db)
 
         # 创建角色
@@ -841,10 +840,8 @@ def _self_test() -> None:
 
         print("[loot] 鉴定魔法物品 ✓")
     finally:
-        try:
-            os.unlink(tmp.name)
-        except PermissionError:
-            pass
+        with contextlib.suppress(PermissionError):
+            os.unlink(db_path)
 
     print("[loot] 自检通过 ✓")
 

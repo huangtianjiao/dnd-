@@ -8,13 +8,11 @@
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
-from . import dice, check, combat, damage
-from ..data.spells import Spell, get_spell, is_cantrip, get_casting_ability
-
+from ..data.spells import Spell, get_casting_ability, get_spell, is_cantrip
+from . import check, combat, damage, dice
 
 # ──────────────────────────────────────────────────────────────────────────
 # 施法者状态
@@ -36,7 +34,7 @@ class CasterState:
     spell_slots: dict[int, int] = field(default_factory=dict)  # {slot_level: remaining}
     max_spell_slots: dict[int, int] = field(default_factory=dict)
     spells_cast_with_slot_this_turn: int = 0   # R-SPL-007
-    concentrating_on: Optional[str] = None     # R-SPL-019 当前集中的法术实例ID
+    concentrating_on: str | None = None     # R-SPL-019 当前集中的法术实例ID
 
     def ability_mod(self, ability: str) -> int:
         """取属性调整值 = floor((score-10)/2)。
@@ -145,7 +143,150 @@ def reset_turn_spell_count(caster: CasterState) -> None:
 
 
 # ──────────────────────────────────────────────────────────────────────────
-# 成分校验
+# 成分校验（详细版）
+# ──────────────────────────────────────────────────────────────────────────
+
+# 阻止言语成分(V)的状态
+_V_BLOCKING_CONDITIONS = frozenset({"沉默", "石化", "昏迷", "麻痹", "震慑"})
+# 阻止姿势成分(S)的状态（失能性状态 + 束缚）
+_S_BLOCKING_CONDITIONS = frozenset({"石化", "昏迷", "麻痹", "震慑", "束缚", "失能"})
+
+
+def check_casting_components(
+    spell_components: dict,
+    character_state: dict,
+) -> dict:
+    """校验施法成分 V/S/M 是否满足，返回结构化数据供叙述节点使用。
+
+    规则: R-SPL-010 法术成分类型 / R-SPL-011 言语成分限制 /
+          R-SPL-012 姿势成分限制 / R-SPL-013 材料成分限制与替代
+    出处: topics/玩家手册2024/法术/法术成分.htm
+
+    本函数为纯数据层，不生成面向玩家的文本。返回结构化结果由叙述节点
+    （narrate）决定如何描述。
+
+    Args:
+        spell_components: 法术成分信息
+            {
+                "V": bool,          # 是否需要言语成分
+                "S": bool,          # 是否需要姿势成分
+                "M": str,           # 材料描述（"" 表示无材料成分）
+                "material_cost_gp": float,  # 材料价值(>0 须实备)
+                "material_consumed": bool,  # 材料是否被消耗
+            }
+        character_state: 角色状态
+            {
+                "conditions": list[str],    # 当前状态列表（如["沉默","束缚"]）
+                "free_hands": int,          # 空闲手数量 (0-2)
+                "has_material_pouch": bool, # 拥有材料包
+                "has_focus": bool,          # 拥有法器/圣徽
+                "has_specific_material": bool,  # 拥有法术指定的具体材料
+            }
+
+    Returns:
+        {
+            "can_cast": bool,
+            "component_results": {
+                "V": {"required": bool, "satisfied": bool,
+                      "blocking_conditions": [...]},
+                "S": {"required": bool, "satisfied": bool,
+                      "blocking_conditions": [...], "free_hands": int},
+                "M": {"required": bool, "satisfied": bool,
+                      "material_desc": str, "needs_specific": bool,
+                      "has_pouch": bool, "has_focus": bool,
+                      "has_specific": bool},
+            },
+            "materials_needed": [str],  # 缺少的材料描述列表
+        }
+    """
+    conditions = set(character_state.get("conditions", []))
+    free_hands = character_state.get("free_hands", 2)
+    component_results: dict = {}
+    materials_needed: list[str] = []
+
+    # --- V（言语）校验 ---
+    # 规则: R-SPL-011 言语成分限制 — 施法者必须能说话
+    v_required = bool(spell_components.get("V"))
+    if v_required:
+        blocking_v = sorted(conditions & _V_BLOCKING_CONDITIONS)
+        v_satisfied = len(blocking_v) == 0
+    else:
+        blocking_v = []
+        v_satisfied = True
+    component_results["V"] = {
+        "required": v_required,
+        "satisfied": v_satisfied,
+        "blocking_conditions": blocking_v,
+    }
+
+    # --- S（姿势）校验 ---
+    # 规则: R-SPL-012 姿势成分限制 — 至少一只空闲的手
+    s_required = bool(spell_components.get("S"))
+    if s_required:
+        blocking_s = sorted(conditions & _S_BLOCKING_CONDITIONS)
+        if blocking_s:
+            s_satisfied = False
+        elif free_hands < 1:
+            s_satisfied = False
+            blocking_s = ["双手被占用"]
+        else:
+            s_satisfied = True
+    else:
+        blocking_s = []
+        s_satisfied = True
+    component_results["S"] = {
+        "required": s_required,
+        "satisfied": s_satisfied,
+        "blocking_conditions": blocking_s,
+        "free_hands": free_hands,
+    }
+
+    # --- M（材料）校验 ---
+    # 规则: R-SPL-013 材料成分限制与替代
+    m_desc = spell_components.get("M", "")
+    m_required = bool(m_desc)
+    if m_required:
+        material_cost = spell_components.get("material_cost_gp", 0)
+        material_consumed = spell_components.get("material_consumed", False)
+        needs_specific = material_cost > 0 or material_consumed
+        has_pouch = character_state.get("has_material_pouch", False)
+        has_focus = character_state.get("has_focus", False)
+        has_specific = character_state.get("has_specific_material", False)
+
+        if needs_specific:
+            m_satisfied = has_specific
+        else:
+            m_satisfied = has_pouch or has_focus
+
+        if not m_satisfied:
+            materials_needed.append(m_desc)
+    else:
+        needs_specific = False
+        has_pouch = False
+        has_focus = False
+        m_satisfied = True
+
+    component_results["M"] = {
+        "required": m_required,
+        "satisfied": m_satisfied,
+        "material_desc": m_desc,
+        "needs_specific": needs_specific,
+        "has_pouch": has_pouch,
+        "has_focus": has_focus,
+        "has_specific": character_state.get("has_specific_material", False),
+    }
+
+    can_cast = v_satisfied and s_satisfied and m_satisfied
+
+    return {
+        "can_cast": can_cast,
+        "component_results": component_results,
+        "materials_needed": materials_needed,
+    }
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 成分校验（布尔版，供 cast_spell 内部使用）
 # ──────────────────────────────────────────────────────────────────────────
 
 def can_cast_by_components(spell: Spell, caster: CasterState,
@@ -258,16 +399,15 @@ def resolve_upcast(spell: Spell, slot_level: int, caster_level: int) -> dict:
         result["num_targets"] = base_targets + levels_above * uc["targets_per_level"]
 
     # 火球术/闪电束：每升一环多 1d6
-    if uc.get("per_level_above_base") == "+1d6":
-        if levels_above > 0:
-            base = spell.damage_dice  # e.g. "8d6"
-            # 解析基础骰数
-            import re as _re
-            m = _re.match(r"(\d+)d(\d+)", base)
-            if m:
-                count = int(m.group(1)) + levels_above
-                sides = int(m.group(2))
-                result["damage_dice"] = f"{count}d{sides}"
+    if uc.get("per_level_above_base") == "+1d6" and levels_above > 0:
+        base = spell.damage_dice  # e.g. "8d6"
+        # 解析基础骰数
+        import re as _re
+        m = _re.match(r"(\d+)d(\d+)", base)
+        if m:
+            count = int(m.group(1)) + levels_above
+            sides = int(m.group(2))
+            result["damage_dice"] = f"{count}d{sides}"
 
     # 治疗法术升环加骰
     pl = uc.get("per_level_above_base", "")
@@ -305,13 +445,13 @@ def resolve_upcast(spell: Spell, slot_level: int, caster_level: int) -> dict:
 def cast_spell(
     caster: CasterState,
     spell_name: str,
-    slot_level: Optional[int] = None,
-    targets: Optional[list[dict]] = None,
+    slot_level: int | None = None,
+    targets: list[dict] | None = None,
     *,
-    concentration_mgr: Optional[Any] = None,
-    component_kwargs: Optional[dict] = None,
+    concentration_mgr: Any | None = None,
+    component_kwargs: dict | None = None,
     ritual: bool = False,
-    combatant: Optional[Any] = None,
+    combatant: Any | None = None,
     has_reaction_available: bool = True,
 ) -> dict:
     """施展一道法术，返回完整结果字典。
@@ -369,15 +509,14 @@ def cast_spell(
         ritual_cast = True
         ritual_time_extra = 600  # R-SPL-005 仪式施法额外时间：10分钟（600秒）
 
-    if not ritual_cast:
+    if not ritual_cast and not is_cantrip(spell):
         # 非仪式法术：非戏法必须指定法术位环阶
-        if not is_cantrip(spell):
-            if slot_level is None:
-                errors.append("非戏法必须指定 slot_level")
-                return _fail(spell, slot_level, errors)
-            if slot_level < spell.level:
-                errors.append(f"法术位环阶 {slot_level} 低于法术环阶 {spell.level}")
-                return _fail(spell, slot_level, errors)
+        if slot_level is None:
+            errors.append("非戏法必须指定 slot_level")
+            return _fail(spell, slot_level, errors)
+        if slot_level < spell.level:
+            errors.append(f"法术位环阶 {slot_level} 低于法术环阶 {spell.level}")
+            return _fail(spell, slot_level, errors)
 
     # —— 成分校验 (R-SPL-010~013) ——
     if not can_cast_by_components(spell, caster, **comp_kw):
@@ -582,7 +721,7 @@ def cast_spell(
     }
 
 
-def _fail(spell: Spell, slot_level: Optional[int], errors: list[str],
+def _fail(spell: Spell, slot_level: int | None, errors: list[str],
           *, ritual: bool = False) -> dict:
     """构造失败结果。"""
     return {
@@ -672,11 +811,11 @@ class LongCastProgress:
 def cast_long_spell(
     caster: CasterState,
     spell_name: str,
-    slot_level: Optional[int] = None,
+    slot_level: int | None = None,
     *,
     casting_turns: int = 10,
-    concentration_mgr: Optional[Any] = None,
-    component_kwargs: Optional[dict] = None,
+    concentration_mgr: Any | None = None,
+    component_kwargs: dict | None = None,
 ) -> dict:
     """开始一道长时间施法（施法时间≥1分钟）。
 
@@ -733,9 +872,9 @@ def advance_long_spell(
     progress: LongCastProgress,
     *,
     concentration_broken: bool = False,
-    concentration_mgr: Optional[Any] = None,
-    targets: Optional[list[dict]] = None,
-    component_kwargs: Optional[dict] = None,
+    concentration_mgr: Any | None = None,
+    targets: list[dict] | None = None,
+    component_kwargs: dict | None = None,
 ) -> dict:
     """推进长时间施法一个回合。
 

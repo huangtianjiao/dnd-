@@ -25,8 +25,6 @@ Session 0 是 DM 与玩家在正式开跑前的对齐会议，用于设定战役
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # 枚举常量
@@ -88,12 +86,12 @@ class Session0Config:
     """
     tone: str = "高魔奇幻"
     seriousness: int = 5
-    lines: List[str] = field(default_factory=list)
-    veils: List[str] = field(default_factory=list)
+    lines: list[str] = field(default_factory=list)
+    veils: list[str] = field(default_factory=list)
     rule_version: str = "2024 修订版"
     advancement_mode: str = "经验值"
     resurrection_access: str = "困难获取"
-    safewords: List[str] = field(default_factory=lambda: ["暂停"])
+    safewords: list[str] = field(default_factory=lambda: ["暂停"])
     party_size_min: int = 4
     party_size_max: int = 6
 
@@ -124,7 +122,7 @@ def default_session0() -> Session0Config:
 # 校验逻辑
 # ──────────────────────────────────────────────────────────────────────────
 
-def validate_session0(config: Session0Config) -> List[str]:
+def validate_session0(config: Session0Config) -> list[str]:
     """校验 Session 0 配置合法性，返回错误信息列表（空列表表示通过）。
 
     校验项:
@@ -138,7 +136,7 @@ def validate_session0(config: Session0Config) -> List[str]:
 
     规则: R-DM-046 (团队规模范围)  出处: topics/城主指南2024/2.运作游戏/团队规模.htm
     """
-    errors: List[str] = []
+    errors: list[str] = []
 
     # 1. 基调
     if config.tone not in TONES:

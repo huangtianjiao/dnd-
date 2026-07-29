@@ -12,13 +12,12 @@ LangGraph 的 MemorySaver 仅用于图执行状态(HITL)，
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import time
-from typing import Optional
 
-from . import store, models
-
+from . import models, store
 
 # 快照存储目录
 CHECKPOINT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..",
@@ -149,14 +148,14 @@ def list_checkpoints(campaign_id: int) -> list[dict]:
         if filename.startswith(prefix) and filename.endswith(".json"):
             filepath = os.path.join(dir_path, filename)
             try:
-                with open(filepath, "r", encoding="utf-8") as f:
+                with open(filepath, encoding="utf-8") as f:
                     data = json.load(f)
                 checkpoints.append({
                     "checkpoint_id": data["checkpoint_id"],
                     "label": data["label"],
                     "timestamp": data["timestamp"],
                 })
-            except (json.JSONDecodeError, KeyError, IOError):
+            except (OSError, json.JSONDecodeError, KeyError):
                 continue
 
     # 按时间戳排序（新的在前）
@@ -187,9 +186,9 @@ def restore_checkpoint(checkpoint_id: str) -> dict:
         return {"error": f"检查点 {checkpoint_id} 不存在"}
 
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             checkpoint = json.load(f)
-    except (json.JSONDecodeError, IOError) as e:
+    except (OSError, json.JSONDecodeError) as e:
         return {"error": f"读取检查点失败: {e}"}
 
     campaign_id = checkpoint["campaign"]["id"]
@@ -277,8 +276,8 @@ def _self_test() -> None:
     import tempfile
 
     # 创建临时数据库
-    tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-    tmp.close()
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+        db_path = tmp.name
 
     global CHECKPOINT_DIR
     # 使用临时目录
@@ -332,21 +331,17 @@ def _self_test() -> None:
         checkpoints_after = list_checkpoints(camp.id)
         assert len(checkpoints_after) == 0, \
             f"期望0个检查点, 得到{len(checkpoints_after)}"
-        print(f"  ✓ 删除成功")
+        print("  ✓ 删除成功")
 
         print("\n[checkpoint] 自检通过 ✓")
 
     finally:
-        try:
-            os.unlink(tmp.name)
-        except PermissionError:
-            pass
+        with contextlib.suppress(PermissionError):
+            os.unlink(db_path)
         # 清理临时目录
         import shutil
-        try:
+        with contextlib.suppress(Exception):
             shutil.rmtree(test_dir)
-        except Exception:
-            pass
 
 
 if __name__ == "__main__":

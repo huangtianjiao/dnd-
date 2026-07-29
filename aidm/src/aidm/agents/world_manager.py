@@ -12,8 +12,11 @@
 
 from __future__ import annotations
 
+import contextlib
+
 from ..brain.state import GameState
-from ..engine import damage, combat as cmb
+from ..engine import combat as cmb
+from ..engine import damage
 from ..stats import store
 
 
@@ -87,7 +90,7 @@ def apply(state: GameState) -> dict:
             turn = store.get_recent_logs(camp, n=1)[0].id if camp else 0
         except Exception:
             turn = 0
-        try:
+        with contextlib.suppress(Exception):
             process_turn_memories(
                 campaign_id=camp,
                 player_input=state.get("player_input", ""),
@@ -95,7 +98,5 @@ def apply(state: GameState) -> dict:
                 intent=state.get("intent", {}),
                 turn=turn,
             )
-        except Exception:
-            pass  # 记忆处理失败不应阻断主流程
 
     return {}

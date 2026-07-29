@@ -25,10 +25,9 @@ from __future__ import annotations
 
 import enum
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
-from . import check, dice
-
+from . import check
 
 # ──────────────────────────────────────────────────────────────────────────
 # 核心循环状态枚举
@@ -184,7 +183,7 @@ class ActionResult:
     success: bool = True                          # 行动是否成功执行
     certainty: ActionCertainty = ActionCertainty.CERTAIN  # 确定性分类
     message: str = ""                             # 叙事摘要
-    check_result: Optional[check.CheckResult] = None     # D20 检定结果（若掷骰）
+    check_result: check.CheckResult | None = None     # D20 检定结果（若掷骰）
     extra: dict[str, Any] = field(default_factory=dict)  # 附加数据
 
 
@@ -192,7 +191,7 @@ def resolve_action(d20_result: int,
                    modifiers: int,
                    dc: int,
                    *,
-                   rolls: Optional[list[int]] = None,
+                   rolls: list[int] | None = None,
                    mode: str = "normal") -> ActionResult:
     """解决行动结果：d20 + 修正值 vs DC。
 
@@ -379,9 +378,9 @@ class CoreLoopMachine:
         self.iteration = 1
 
     def run_full_cycle(self,
-                       dm_describe_fn: Optional[callable] = None,
-                       player_act_fn: Optional[callable] = None,
-                       dm_resolve_fn: Optional[callable] = None) -> CoreLoopState:
+                       dm_describe_fn: callable | None = None,
+                       player_act_fn: callable | None = None,
+                       dm_resolve_fn: callable | None = None) -> CoreLoopState:
         """运行一个完整的循环周期（三步）。
 
         规则: 核心循环三步的完整执行

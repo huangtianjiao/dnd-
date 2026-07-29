@@ -10,7 +10,8 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 # 启用规则集：pyflakes(F)+pycodestyle(E,W)+isort(I)+pyupgrade(UP)
-select = ["E", "W", "F", "I", "UP"]
+#   +flake8-simplify(SIM)+flake8-return(RET)+flake8-use-pathlib(PTH)
+select = ["E", "W", "F", "I", "UP", "SIM", "RET", "PTH"]
 # 忽略：E501 行长由 line-length 控制，暂不强制折行
 ignore = ["E501"]
 
@@ -27,4 +28,4 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --tb=short"
+addopts = "-v --tb=short --cov=src/aidm --cov-report=term-missing --cov-report=html"

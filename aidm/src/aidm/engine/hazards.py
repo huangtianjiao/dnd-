@@ -22,8 +22,7 @@
 
 from __future__ import annotations
 
-from . import dice, check
-
+from . import check, dice
 
 # ──────────────────────────────────────────────────────────────────────────
 # 坠落危害

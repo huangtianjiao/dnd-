@@ -18,10 +18,9 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from ..engine import dice
-
 
 # ══════════════════════════════════════════════════════════════════════════
 # 一、旅行步调表（指南Ch5 / 报告§6）
@@ -247,8 +246,7 @@ def outdoor_visibility(weather: str = "晴朗", vantage: bool = False) -> int:
     if weather == "雨":
         return 1  # 1英里
     # 晴朗/正常
-    base = 40 if vantage else 2
-    return base
+    return 40 if vantage else 2
 
 
 def sea_visibility(sky_condition: str) -> int:
@@ -760,7 +758,7 @@ def travel_day(
     state: ExplorationState,
     party_size: int,
     navigator_survival_total: int,
-    foragers: Optional[list[tuple[str, int, int]]] = None,
+    foragers: list[tuple[str, int, int]] | None = None,
     good_road: bool = False,
     encounter_checks_per_day: int = 2,
 ) -> TravelDayResult:
@@ -822,11 +820,8 @@ def travel_day(
 
     # ── 计算当日行进距离 ──
     base_distance = pace.per_day_miles
-    if nav_result.lost:
-        # 迷路延长旅程：实际有效距离 = 基础距离 / 乘数（因为多走了路）
-        distance_miles = math.floor(base_distance / nav_result.length_multiplier)
-    else:
-        distance_miles = base_distance
+    # 迷路延长旅程：实际有效距离 = 基础距离 / 乘数（因为多走了路）
+    distance_miles = math.floor(base_distance / nav_result.length_multiplier) if nav_result.lost else base_distance
 
     # ── 第四步：天气 ──
     weather = weather_roll()
@@ -901,7 +896,7 @@ class DungeonTurnResult:
     """地城探索回合的结果。"""
     action: str                         # 执行的动作
     minutes_elapsed: int                # 本回合流逝时间（分钟）
-    check_result: Optional[dict] = None # 检定结果（若有）
+    check_result: dict | None = None # 检定结果（若有）
     detected: bool = False              # 被动察觉是否检测到隐藏物
     passive_score: int = 0              # 队伍最高被动察觉值
     notes: list[str] = field(default_factory=list)
@@ -910,9 +905,9 @@ class DungeonTurnResult:
 def dungeon_turn(
     state: ExplorationState,
     action: str,
-    party_passive_scores: Optional[list[tuple[str, int]]] = None,
-    check_dc: Optional[int] = None,
-    check_total: Optional[int] = None,
+    party_passive_scores: list[tuple[str, int]] | None = None,
+    check_dc: int | None = None,
+    check_total: int | None = None,
     ability: str = "",
 ) -> DungeonTurnResult:
     """执行一个地城探索回合（10分钟）。
@@ -944,7 +939,7 @@ def dungeon_turn(
     state.advance_time(DUNGEON_TURN_MINUTES)
     notes.append(f"执行动作: {action}（耗时{DUNGEON_TURN_MINUTES}分钟）")
 
-    check_result: Optional[dict] = None
+    check_result: dict | None = None
     detected = False
     passive_score = 0
 

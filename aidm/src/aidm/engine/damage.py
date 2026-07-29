@@ -7,11 +7,10 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Iterable
 
 from . import dice
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # 伤害类型（统一中文，与规则书原文一致）

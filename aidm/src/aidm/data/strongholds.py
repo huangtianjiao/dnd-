@@ -26,7 +26,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-
 # ──────────────────────────────────────────────────────────────────────────
 # 枚举定义
 # ──────────────────────────────────────────────────────────────────────────
@@ -505,14 +504,13 @@ def get_facility_count_for_level(level: int) -> int:
     """
     if level < 5:
         return 0
-    elif level < 9:
+    if level < 9:
         return 2
-    elif level < 13:
+    if level < 13:
         return 4
-    elif level < 17:
+    if level < 17:
         return 5
-    else:
-        return 6
+    return 6
 
 
 # ──────────────────────────────────────────────────────────────────────────

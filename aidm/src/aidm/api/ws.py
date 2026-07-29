@@ -21,19 +21,14 @@ from __future__ import annotations
 
 import asyncio
 import functools
-import json
-import os
-import time
-from dataclasses import dataclass, field
-from typing import Optional
 
 import socketio
 
 from ..brain import graph, world
-from .memory_bg import _async_memory_process
+from ..brain.room import CampaignRoom, ConnectionManager, manager
 from ..engine import combat as cmb
-from ..stats import store, models
-
+from ..stats import store
+from .memory_bg import _async_memory_process
 
 # ──────────────────────────────────────────────────────────────────────────
 # Socket.IO 服务器（ASGI 模式）
@@ -48,170 +43,27 @@ sio = socketio.AsyncServer(
 )
 
 
-def _parse_dispose_delay(default: float = 120.0) -> float:
-    """安全解析 ROOM_DISPOSE_DELAY 环境变量。
-
-    非法值（非数字）或 <=0 时回退默认值，避免模块导入时直接崩溃。
-    """
-    raw = os.getenv("ROOM_DISPOSE_DELAY", "")
-    try:
-        val = float(raw) if raw.strip() else default
-    except ValueError:
-        return default
-    return val if val > 0 else default
-
-
 # ──────────────────────────────────────────────────────────────────────────
-# Colyseus 风格 Room 生命周期管理（方案E）
+# 全局房间管理器单例（CampaignRoom 定义在 brain.room，此处仅保留别名）
 # ──────────────────────────────────────────────────────────────────────────
 
-@dataclass
-class PlayerSession:
-    """单个玩家的会话信息。"""
-    sid: str
-    character_id: int
-    name: str
-    is_dm: bool = False
-    connected: bool = True
-    last_seen: float = field(default_factory=time.time)
-
-    def to_dict(self) -> dict:
-        return {
-            "name": self.name,
-            "character_id": self.character_id,
-            "is_dm": self.is_dm,
-            "connected": self.connected,
-        }
-
-
-class CampaignRoom:
-    """一个 DND 战役房间，参考 Colyseus Room 设计。
-
-    职责:
-      - 管理房间内玩家会话（加入/离开/重连）
-      - 维护房间最后活动时间，空闲超时自动销毁
-      - 提供回合检查接口（委托给 engine.combat）
-
-    生命周期:
-      get_or_create → add_player → ... → remove_player
-      当 players 为空时，调度延迟销毁任务（默认 120 秒，可用 ROOM_DISPOSE_DELAY 配置）
-    """
-
-    rooms: dict[int, "CampaignRoom"] = {}          # campaign_id → room
-    _dispose_tasks: dict[int, asyncio.Task] = {}
-    DISPOSE_DELAY: float = _parse_dispose_delay()  # 空房销毁延迟（秒），默认 120，环境变量 ROOM_DISPOSE_DELAY 可覆盖
-
-    def __init__(self, campaign_id: int):
-        self.campaign_id = campaign_id
-        self.players: dict[str, PlayerSession] = {}   # sid → session
-        self.lock = asyncio.Lock()
-        self.created_at = time.time()
-        self.last_activity = time.time()
-
-    # —— 玩家管理 ——
-    def add_player(self, sid: str, character_id: int, name: str,
-                   is_dm: bool = False) -> PlayerSession:
-        ps = PlayerSession(sid=sid, character_id=character_id,
-                           name=name, is_dm=is_dm)
-        self.players[sid] = ps
-        self.last_activity = time.time()
-        # 取消挂起的销毁任务
-        task = self._dispose_tasks.pop(self.campaign_id, None)
-        if task and not task.done():
-            task.cancel()
-        return ps
-
-    def remove_player(self, sid: str) -> Optional[PlayerSession]:
-        ps = self.players.pop(sid, None)
-        if ps:
-            ps.connected = False
-        self.last_activity = time.time()
-        # 如果房间空了，调度延迟销毁
-        if not self.players:
-            self._schedule_dispose()
-        return ps
-
-    def get_player(self, sid: str) -> Optional[PlayerSession]:
-        return self.players.get(sid)
-
-    def get_players(self) -> list[dict]:
-        return [ps.to_dict() for ps in self.players.values()]
-
-    def find_by_character(self, character_id: int) -> Optional[PlayerSession]:
-        for ps in self.players.values():
-            if ps.character_id == character_id:
-                return ps
-        return None
-
-    # —— 回合检查 ——
-    def is_player_turn(self, character_id: int) -> bool:
-        """战斗中检查是否轮到该角色；非战斗时任何人都能行动。
-
-        规则: R-CMB-004 回合开始——只有当前回合参战者可以行动。
-        """
-        try:
-            c = store.load_combat(self.campaign_id)
-            if not c.active:
-                return True
-            cur = cmb.current_combatant(c)
-            return cur is not None and cur.cid == str(character_id)
-        except Exception:
-            return True
-
-    def current_turn_name(self) -> Optional[str]:
-        try:
-            c = store.load_combat(self.campaign_id)
-            if not c.active:
-                return None
-            cur = cmb.current_combatant(c)
-            return cur.name if cur else None
-        except Exception:
-            return None
-
-    # —— 销毁调度 ——
-    def _schedule_dispose(self) -> None:
-        """DISPOSE_DELAY 秒后如果房间仍为空，则销毁并清理。"""
-        # 取消已有任务
-        old = self._dispose_tasks.pop(self.campaign_id, None)
-        if old and not old.done():
-            old.cancel()
-
-        async def _dispose():
-            try:
-                await asyncio.sleep(self.DISPOSE_DELAY)
-                room = self.rooms.get(self.campaign_id)
-                if room and not room.players:
-                    del self.rooms[self.campaign_id]
-            except asyncio.CancelledError:
-                pass
-
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        task = loop.create_task(_dispose())
-        self._dispose_tasks[self.campaign_id] = task
-
-    # —— 类方法 ——
-    @classmethod
-    def get_or_create(cls, campaign_id: int) -> "CampaignRoom":
-        room = cls.rooms.get(campaign_id)
-        if room is None:
-            room = cls(campaign_id)
-            cls.rooms[campaign_id] = room
-        return room
-
-    @classmethod
-    def get(cls, campaign_id: int) -> Optional["CampaignRoom"]:
-        return cls.rooms.get(campaign_id)
-
-
-# 全局房间管理器单例
 room_manager = CampaignRoom
 
 # 序列化锁：graph.run 在线程池执行，需序列化以避免 Qdrant 并发问题
-_graph_lock = asyncio.Lock()
+# 升级为 per-campaign 锁：不同战役可并行执行，仅同一战役内串行
+_campaign_locks: dict[int, asyncio.Lock] = {}
+
+
+def get_campaign_lock(campaign_id: int) -> asyncio.Lock:
+    """获取指定战役的锁。不同战役可并行执行。"""
+    if campaign_id not in _campaign_locks:
+        _campaign_locks[campaign_id] = asyncio.Lock()
+    return _campaign_locks[campaign_id]
+
+
+def _cleanup_campaign_lock(campaign_id: int) -> None:
+    """清理不再使用的战役锁，避免内存泄漏。"""
+    _campaign_locks.pop(campaign_id, None)
 
 
 def _room_name(campaign_id: int) -> str:
@@ -355,10 +207,10 @@ async def on_action(sid, data):
                    room=room, skip_sid=sid)
     await sio.emit("processing", {"player": name}, to=sid)
 
-    # 序列化执行 graph.run
+    # 序列化执行 graph.run（per-campaign 锁，不同战役可并行）
     thread_id = f"campaign_{campaign_id}"
     try:
-        async with _graph_lock:
+        async with get_campaign_lock(campaign_id):
             loop = asyncio.get_event_loop()
             result = await loop.run_in_executor(
                 None,
@@ -539,34 +391,10 @@ async def _broadcast_state(campaign_id: int) -> None:
 
 
 # ──────────────────────────────────────────────────────────────────────────
-# 兼容层：保留旧 API 名称供 main.py 引用
+# 兼容层（ConnectionManager / manager 已迁移至 brain.room，此处仅 re-export）
+# main.py 的 `from .ws import manager` 和 routes/scene.py 的
+# `from ..ws import manager` 仍可通过本模块访问。
 # ──────────────────────────────────────────────────────────────────────────
-
-class ConnectionManager:
-    """兼容旧代码的连接管理器外观。
-
-    新代码应直接使用 CampaignRoom 和 sio。
-    此类仅为保持向后兼容（main.py 中 manager.get_players 等）。
-    """
-
-    @staticmethod
-    def get_players(campaign_id: int) -> list[dict]:
-        room = CampaignRoom.get(campaign_id)
-        return room.get_players() if room else []
-
-    @staticmethod
-    def current_turn_name(campaign_id: int) -> Optional[str]:
-        room = CampaignRoom.get(campaign_id)
-        return room.current_turn_name() if room else None
-
-    @staticmethod
-    def is_player_turn(campaign_id: int, character_id: int) -> bool:
-        """检查该角色在战斗中是否轮到其行动；非战斗/无房间一律返回 True。"""
-        room = CampaignRoom.get(campaign_id)
-        return room.is_player_turn(character_id) if room else True
-
-
-manager = ConnectionManager
 
 
 # ──────────────────────────────────────────────────────────────────────────

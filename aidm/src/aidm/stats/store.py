@@ -10,14 +10,12 @@ from __future__ import annotations
 
 import json
 import os
-from contextlib import contextmanager
-from typing import Optional
+from contextlib import contextmanager, suppress
 
 from sqlmodel import Session, select
 
-from . import models as M
 from ..engine import combat as cmb
-
+from . import models as M
 
 # ──────────────────────────────────────────────────────────────────────────
 # 引擎与会话
@@ -49,16 +47,9 @@ def _migrate(engine) -> None:
                     dv = f" DEFAULT {'NULL' if a is None else repr(a)}"
                 else:
                     tn = str(col.type).upper()
-                    if "INT" in tn:
-                        dv = " DEFAULT 0"
-                    elif "BOOL" in tn:
-                        dv = " DEFAULT 0"
-                    else:  # TEXT/VARCHAR/JSON
-                        dv = " DEFAULT ''"
-                try:
+                    dv = " DEFAULT 0" if "INT" in tn or "BOOL" in tn else " DEFAULT ''"
+                with suppress(Exception):
                     conn.execute(text(f'ALTER TABLE "{tbl}" ADD COLUMN "{col.name}" {coltype}{dv}'))
-                except Exception:
-                    pass
 
 
 _engines: dict[str, object] = {}
@@ -105,18 +96,31 @@ def save_character(ch: M.Character, db_path: str = DEFAULT_DB) -> M.Character:
         return ch
 
 
-def get_character(cid: int, db_path: str = DEFAULT_DB) -> Optional[M.Character]:
+def get_character(cid: int, db_path: str = DEFAULT_DB) -> M.Character | None:
     with session(db_path) as s:
         return s.get(M.Character, cid)
 
 
-def list_characters(campaign_id: Optional[int] = None,
+def list_characters(campaign_id: int | None = None,
                     db_path: str = DEFAULT_DB) -> list[M.Character]:
     with session(db_path) as s:
         stmt = select(M.Character)
         if campaign_id is not None:
             stmt = stmt.where(M.Character.campaign_id == campaign_id)
         return list(s.exec(stmt))
+
+
+def get_character_by_name(name: str, campaign_id: int | None = None,
+                          db_path: str = DEFAULT_DB) -> M.Character | None:
+    """按名字查找角色（用于战利品分配等按名字操作的场景）。
+
+    campaign_id 为 None 时全局搜索（返回第一个匹配）。
+    """
+    with session(db_path) as s:
+        stmt = select(M.Character).where(M.Character.name == name)
+        if campaign_id is not None:
+            stmt = stmt.where(M.Character.campaign_id == campaign_id)
+        return s.exec(stmt).first()
 
 
 def delete_character(cid: int, db_path: str = DEFAULT_DB) -> bool:
@@ -130,6 +134,113 @@ def delete_character(cid: int, db_path: str = DEFAULT_DB) -> bool:
             return False
         s.delete(ch)
         return True
+
+
+def add_character_gold(cid: int, amount: int, db_path: str = DEFAULT_DB) -> int:
+    """为角色增加/扣除金币，返回更新后的余额。
+
+    amount 可为负数（购买/消费时扣除）。
+    """
+    with session(db_path) as s:
+        ch = s.get(M.Character, cid)
+        if ch is None:
+            raise KeyError(f"角色 {cid} 不存在")
+        ch.gold = max(0, ch.gold + amount)
+        s.add(ch)
+        return ch.gold
+
+
+def set_character_gold(cid: int, amount: int, db_path: str = DEFAULT_DB) -> int:
+    """直接设置角色金币数量，返回更新后的余额。"""
+    with session(db_path) as s:
+        ch = s.get(M.Character, cid)
+        if ch is None:
+            raise KeyError(f"角色 {cid} 不存在")
+        ch.gold = max(0, amount)
+        s.add(ch)
+        return ch.gold
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 技能熟练
+# ──────────────────────────────────────────────────────────────────────────
+
+def set_character_skills(character_id: int, skills: list[str],
+                         db_path: str = DEFAULT_DB) -> list[str]:
+    """保存角色技能熟练列表，返回更新后的列表。"""
+    import json as _json
+    with session(db_path) as s:
+        ch = s.get(M.Character, character_id)
+        if ch is None:
+            raise KeyError(f"角色 {character_id} 不存在")
+        ch.skill_prof_json = _json.dumps(skills)
+        s.add(ch)
+        return ch.skill_proficiencies
+
+
+def get_character_skills(character_id: int,
+                         db_path: str = DEFAULT_DB) -> list[str]:
+    """读取角色技能熟练列表。"""
+    with session(db_path) as s:
+        ch = s.get(M.Character, character_id)
+        if ch is None:
+            return []
+        return ch.skill_proficiencies
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 专注状态
+# ──────────────────────────────────────────────────────────────────────────
+
+def set_concentration(character_id: int, spell_name: str, dc: int = 10,
+                      db_path: str = DEFAULT_DB) -> dict:
+    """设置角色专注状态（开始/结束专注）。返回当前专注信息。"""
+    with session(db_path) as s:
+        ch = s.get(M.Character, character_id)
+        if ch is None:
+            raise KeyError(f"角色 {character_id} 不存在")
+        if spell_name:
+            ch.start_concentration(spell_name, dc)
+        else:
+            ch.end_concentration()
+        s.add(ch)
+        return {"spell": ch.concentration_spell, "dc": ch.concentration_dc}
+
+
+def get_concentration(character_id: int,
+                      db_path: str = DEFAULT_DB) -> dict:
+    """读取角色专注状态。"""
+    with session(db_path) as s:
+        ch = s.get(M.Character, character_id)
+        if ch is None:
+            return {"spell": "", "dc": 0}
+        return {"spell": ch.concentration_spell, "dc": ch.concentration_dc}
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# XP
+# ──────────────────────────────────────────────────────────────────────────
+
+def add_character_xp(character_id: int, amount: int,
+                     db_path: str = DEFAULT_DB) -> int:
+    """为角色增加 XP，返回更新后的总 XP。"""
+    with session(db_path) as s:
+        ch = s.get(M.Character, character_id)
+        if ch is None:
+            raise KeyError(f"角色 {character_id} 不存在")
+        ch.xp = max(0, ch.xp + amount)
+        s.add(ch)
+        return ch.xp
+
+
+def get_character_xp(character_id: int,
+                     db_path: str = DEFAULT_DB) -> int:
+    """读取角色当前 XP。"""
+    with session(db_path) as s:
+        ch = s.get(M.Character, character_id)
+        if ch is None:
+            return 0
+        return ch.xp
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -149,7 +260,7 @@ def save_campaign(c: M.Campaign, db_path: str = DEFAULT_DB) -> M.Campaign:
         return c
 
 
-def get_campaign(campaign_id: int, db_path: str = DEFAULT_DB) -> Optional[M.Campaign]:
+def get_campaign(campaign_id: int, db_path: str = DEFAULT_DB) -> M.Campaign | None:
     with session(db_path) as s:
         return s.get(M.Campaign, campaign_id)
 
@@ -181,7 +292,7 @@ def get_summary(campaign_id: int, db_path: str = DEFAULT_DB) -> str:
 
 
 def set_campaign_setting(campaign_id: int, setting: str, tone: str = "",
-                         db_path: str = DEFAULT_DB) -> Optional[M.Campaign]:
+                         db_path: str = DEFAULT_DB) -> M.Campaign | None:
     """设置战役世界背景/基调。"""
     with session(db_path) as s:
         c = s.get(M.Campaign, campaign_id)
@@ -199,7 +310,7 @@ def save_scene(scene: M.Scene, db_path: str = DEFAULT_DB) -> M.Scene:
         return scene
 
 
-def get_scene(campaign_id: int, db_path: str = DEFAULT_DB) -> Optional[M.Scene]:
+def get_scene(campaign_id: int, db_path: str = DEFAULT_DB) -> M.Scene | None:
     """取战役当前场景（最新一条）。"""
     with session(db_path) as s:
         stmt = select(M.Scene).where(M.Scene.campaign_id == campaign_id)
@@ -300,9 +411,9 @@ def get_recent_logs(campaign_id: int, n: int = 6,
 
 def _self_test() -> None:
     import tempfile
-    tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-    tmp.close()
-    db = f"sqlite:///{tmp.name}"
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+        db_path = tmp.name
+    db = f"sqlite:///{db_path}"
     try:
         # 战役
         camp = create_campaign("测试战役", db)
@@ -349,10 +460,8 @@ def _self_test() -> None:
         eng = _engines.pop(db, None)
         if eng is not None:
             eng.dispose()
-        try:
-            os.unlink(tmp.name)
-        except PermissionError:
-            pass
+        with suppress(PermissionError):
+            os.unlink(db_path)
 
 
 if __name__ == "__main__":

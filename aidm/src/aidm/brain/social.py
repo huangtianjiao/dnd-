@@ -34,13 +34,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
-from . import llm
 from ..engine import check as check_engine
-from ..engine import dice as dice_engine
-from ..stats import store, models
-
+from . import llm
 
 # ──────────────────────────────────────────────────────────────────────────
 # 常量与枚举
@@ -150,7 +146,7 @@ class SocialState:
       consecutive_failures: 连续失败次数（用于态度降级）
       round: 当前对话轮次
     """
-    current_npc: Optional[NPC] = None
+    current_npc: NPC | None = None
     conversation_history: list[dict] = field(default_factory=list)
     attitude_changes: list[dict] = field(default_factory=list)
     revealed_secrets: list[str] = field(default_factory=list)
@@ -193,7 +189,7 @@ def check_social_dc(npc_attitude: str) -> int:
     return _SOCIAL_DC_MODIFIER[npc_attitude]
 
 
-def update_attitude(npc: NPC, success_count: int, failure_count: int) -> Optional[str]:
+def update_attitude(npc: NPC, success_count: int, failure_count: int) -> str | None:
     """根据连续成功/失败次数更新 NPC 态度。
 
     【设计决策，非规则书原文】

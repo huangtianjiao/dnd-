@@ -14,7 +14,8 @@ SPEC_PATH = r"D:\game\dnd\aidm\docs\RULE_SPEC.md"
 def parse_rulespec(path: str = SPEC_PATH) -> list[dict]:
     """解析 RULE_SPEC.md → 规则点 payload 列表（注入玩家别名以桥接检索）。"""
     from .aliases import ALIASES
-    text = open(path, "r", encoding="utf-8").read()
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
     # 按 "### R-XXX-NNN" 切分（每条规则点一个块）
     parts = re.split(r"\n(?=### R-[A-Z]+-\d+)", text)
     items: list[dict] = []

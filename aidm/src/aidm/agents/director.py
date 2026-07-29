@@ -11,6 +11,7 @@ AIDM 精简为单节点 LLM 分类 → 条件路由。
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 
@@ -232,10 +233,8 @@ def classify_intent(state: GameState) -> dict:
                            "请只输出一个JSON对象，不要markdown代码块或多余文字。" % attempts)
         intent = _extract_json(llm.chat(_DIRECTOR_PROMPT, feedback, temperature=0.1))
     intent.setdefault("action_type", "other")
-    try:
+    with contextlib.suppress(Exception):
         _resolve_target_cid(intent, state)   # BUG#5/B2：确定性目标匹配
-    except Exception:
-        pass  # 目标匹配失败不阻断分类（走 apply 兑底）
     return {"intent": intent, "error": "" if intent else "意图解析失败"}
 
 

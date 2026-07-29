@@ -19,10 +19,9 @@ R-ADD-016(长休恢复HP上限)、R-ADD-017(短休特性恢复钩子)。
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from ..engine import dice
-
 
 # ──────────────────────────────────────────────────────────────────────────
 # 常量
@@ -91,7 +90,7 @@ class RestState:
     """
     type: str = "short"               # "short" | "long"
     duration: float = 0.0             # 已休息时长（小时）
-    start_time: Optional[float] = None  # 世界时间戳（小时）
+    start_time: float | None = None  # 世界时间戳（小时）
     interrupted: bool = False
     completed: bool = False
     interrupt_count: int = 0          # 长休打断计数
