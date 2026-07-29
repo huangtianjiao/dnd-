@@ -396,7 +396,9 @@ def long_rest(character: Any) -> dict:
 
     # 收益5: 恢复所有法术位
     # 规则: R-SPL-003 法术位长休恢复  出处: topics/玩家手册2024/法术/法术环阶.htm
-    # 邪务师（Warlock）法术位在短休时恢复——此处简化：所有施法者长休都恢复
+    # 邪术师（Warlock）的契约魔法（Pact Magic）法术位通过短休的"魔法回复"
+    # 特性恢复，由短休流程中的专用钩子处理；此处长休恢复覆盖所有施法者，
+    # 邪术师长休时同样恢复全部法术位。
     spell_slots_restored = False
     max_spell_slots = _get(character, "max_spell_slots", {})
     if max_spell_slots:

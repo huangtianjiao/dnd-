@@ -339,6 +339,8 @@ def cast_spell(
         slot_level: int — 消耗的法术位环阶（0=戏法）
         slot_consumed: bool — 是否消耗了法术位
         ritual: bool — 是否以仪式方式施展
+        ritual_time_extra: int — 仪式额外施法时间（秒）。仪式时为 600（10分钟），
+            非仪式时为 0。调用方可据此计算总施法时间。
         effect_type: str — 效应类型
         save_dc: int — 法术豁免DC（如有）
         attack_bonus: int — 法术攻击加值（如有）
@@ -359,11 +361,13 @@ def cast_spell(
     # —— 仪式施法 (R-SPL-005) ——
     # 可仪式施展的法术：施法时间+10分钟、不消耗法术位（亦不计入每回合计数）
     ritual_cast = False
+    ritual_time_extra = 0  # 仪式额外施法时间（秒），10分钟=600秒
     if ritual:
         if not spell.ritual:
             errors.append("该法术不具备仪式标签，不可仪式施法")
             return _fail(spell, slot_level, errors, ritual=False)
         ritual_cast = True
+        ritual_time_extra = 600  # R-SPL-005 仪式施法额外时间：10分钟（600秒）
 
     if not ritual_cast:
         # 非仪式法术：非戏法必须指定法术位环阶
@@ -567,6 +571,7 @@ def cast_spell(
         "slot_level": slot_level,
         "slot_consumed": slot_consumed,
         "ritual": ritual_cast,
+        "ritual_time_extra": ritual_time_extra,  # R-SPL-005 仪式额外施法时间（秒），非仪式时为0
         "effect_type": spell.effect_type,
         "save_dc": save_dc,
         "attack_bonus": attack_bonus,
@@ -587,6 +592,7 @@ def _fail(spell: Spell, slot_level: Optional[int], errors: list[str],
         "slot_level": slot_level or 0,
         "slot_consumed": False,
         "ritual": ritual,
+        "ritual_time_extra": 0,
         "effect_type": spell.effect_type,
         "save_dc": 0,
         "attack_bonus": 0,

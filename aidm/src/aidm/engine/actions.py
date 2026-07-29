@@ -57,6 +57,17 @@ class WeaponProfile:
 
 
 # ──────────────────────────────────────────────────────────────────────────
+# 躲藏 DC 常量
+# ──────────────────────────────────────────────────────────────────────────
+
+# 2024 PHB 规则：躲藏检定 DC 固定为 15（非旧的被动察觉 DC）。
+# 出处: topics/玩家手册2024/术语汇编/动作.htm「躲藏」
+# 注意: 此为规则硬编码常量，不可被调用方覆盖。若未来需支持特殊魔法效果
+#       修改躲藏 DC，应在 action_hide 内部增加条件分支，而非改为参数。
+HIDE_DC: int = 15
+
+
+# ──────────────────────────────────────────────────────────────────────────
 # 各动作实现
 # ──────────────────────────────────────────────────────────────────────────
 
@@ -340,7 +351,7 @@ def action_help(attacker: Combatant, ally: Combatant,
 
 
 def action_hide(attacker: Combatant, stealth_mod: int, stealth_prof: int,
-                proficient: bool, dc: int = 15,
+                proficient: bool,
                 advantage: bool = False, disadvantage: bool = False,
                 has_cover: bool = False, heavily_obscured: bool = False,
                 not_in_enemy_sight: bool = True) -> ActionResult:
@@ -352,6 +363,10 @@ def action_hide(attacker: Combatant, stealth_mod: int, stealth_prof: int,
     出处: topics/玩家手册2024/术语汇编/动作.htm
     说明: 2024 规则改为固定 DC15（非旧的被动察觉 DC）。
           成功则进入隐形状态（hidden=True），失败则未躲藏。
+          DC 由模块级常量 HIDE_DC 提供，不可被调用方覆盖。
+    TODO: 特殊魔法效果（如 Nondetection 反侦测、Skulker 潜行者等）可能修改
+          躲藏 DC 或前置条件。实现时应在本函数内部增加条件分支处理，
+          而非将 dc 恢复为函数参数。详见 issue #345。
     """
     if not use_action(attacker):
         return ActionResult("hide", success=False, message="无可用动作")
@@ -362,15 +377,15 @@ def action_hide(attacker: Combatant, stealth_mod: int, stealth_prof: int,
                             message=f"{attacker.name} 无法躲藏：需遮蔽或掩护",
                             extra={"hidden": False, "reason": "no_obscurement"})
     r = check.ability_check(mod=stealth_mod, prof=stealth_prof,
-                            proficient=proficient, dc=dc,
+                            proficient=proficient, dc=HIDE_DC,
                             advantage=advantage, disadvantage=disadvantage,
                             circ=-conditions.d20_penalty(attacker.conditions))  # R-GLS-047
     if r.success:
         attacker.hidden = True                           # 躲藏成功 → 隐形
     return ActionResult("hide", success=r.success,
-                        message=f"{attacker.name} 躲藏检定 {r.total} vs DC{dc}："
+                        message=f"{attacker.name} 躲藏检定 {r.total} vs DC{HIDE_DC}："
                                 + ("成功" if r.success else "失败"),
-                        extra={"check_total": r.total, "dc": dc,
+                        extra={"check_total": r.total, "dc": HIDE_DC,
                                "hidden": attacker.hidden,
                                "detection_dc": r.total if r.success else None})
 
@@ -712,7 +727,7 @@ def _self_test() -> None:
         "margin": 5, "modifier": 5})()
     attacker5 = Combatant(cid="a5", name="游荡者", speed=30)
     rh = resolve_combat_action("hide", attacker5, stealth_mod=5,
-                               stealth_prof=3, proficient=True, dc=12)
+                               stealth_prof=3, proficient=True)
     assert rh.success and attacker5.hidden is True
     check.ability_check = orig_chk
 
