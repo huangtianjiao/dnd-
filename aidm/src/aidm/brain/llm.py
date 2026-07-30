@@ -1,11 +1,14 @@
 """LLM 客户端 — langchain_openai.ChatOpenAI（兼容 senseaudio 网关 deepseek-v4-flash）。
 
 P3 LangGraph 编排将基于此客户端。base_url/key/model 来自 config（读 .env）。
+支持主/备双 key：每次会话开始或继续时测试当前 key，失败自动切换到备用 key。
 """
 
 from __future__ import annotations
 
 import os
+import time
+from loguru import logger
 
 from ..config import get_settings
 
@@ -29,14 +32,92 @@ def _init_llm_cache():
             pass
 
 
+# ── 主/备 key 管理 ──────────────────────────────────────────────────────
+_active_key: str | None = None       # 当前使用的 key（None 表示尚未初始化）
+_last_check_time: float = 0.0        # 上次测试时间戳
+_KEY_CHECK_INTERVAL: float = 60.0    # key 测试缓存间隔（秒）
+
+
+def test_llm_key(api_key: str, timeout: float = 10.0) -> bool:
+    """测试 API key 是否可用（最小化调用，max_tokens=1）。"""
+    try:
+        from langchain_openai import ChatOpenAI
+        from langchain_core.messages import HumanMessage
+        s = get_settings()
+        test_llm = ChatOpenAI(
+            model=s.llm_model,
+            api_key=api_key,
+            base_url=s.llm_base_url,
+            max_tokens=1,
+            timeout=timeout,
+            cache=False,
+        )
+        test_llm.invoke([HumanMessage(content="hi")])
+        return True
+    except Exception as e:
+        logger.warning(f"API key 测试失败 (key={api_key[:8]}...{api_key[-4:]}): {e}")
+        return False
+
+
+def ensure_active_key() -> str:
+    """确保当前使用的是可用的 API key，返回可用的 key。
+
+    策略：
+    1. 首次调用时测试主 key，成功则设为活跃 key
+    2. 后续调用若距上次测试不足 60s，直接返回缓存结果
+    3. 若当前 key 测试失败，尝试切换到另一个 key
+    4. 两个 key 都不可用则抛出异常
+    """
+    global _active_key, _last_check_time
+    s = get_settings()
+    primary_key = s.llm_api_key
+    fallback_key = s.llm_fallback_key
+
+    now = time.time()
+    # 缓存未过期，直接返回当前 key
+    if _active_key and (now - _last_check_time < _KEY_CHECK_INTERVAL):
+        return _active_key
+
+    # 测试当前活跃 key（或首次使用主 key）
+    test_key = _active_key or primary_key
+    if test_key and test_llm_key(test_key):
+        _active_key = test_key
+        _last_check_time = now
+        return _active_key
+
+    # 当前 key 不可用，尝试切换到另一个 key
+    switched = False
+    if test_key != primary_key and primary_key:
+        if test_llm_key(primary_key):
+            _active_key = primary_key
+            _last_check_time = now
+            logger.info("API key 切换到主 key")
+            switched = True
+    if not switched and fallback_key and test_key != fallback_key:
+        if test_llm_key(fallback_key):
+            _active_key = fallback_key
+            _last_check_time = now
+            logger.info("API key 切换到备用 key")
+            switched = True
+
+    if not switched:
+        raise RuntimeError("所有 API key 均不可用，请检查 .env 配置")
+
+    return _active_key
+
+
 def get_llm(temperature: float = 0.3, streaming: bool = False, **kwargs):
-    """获取 LLM 实例（deepseek-v4-flash，OpenAI 兼容协议）。"""
+    """获取 LLM 实例（deepseek-v4-flash，OpenAI 兼容协议）。
+
+    自动通过 ensure_active_key() 选择可用的 API key。
+    """
     _init_llm_cache()
     from langchain_openai import ChatOpenAI
     s = get_settings()
+    active_key = ensure_active_key()
     llm = ChatOpenAI(
         model=s.llm_model,
-        api_key=s.llm_api_key,
+        api_key=active_key,
         base_url=s.llm_base_url,
         temperature=temperature,
         streaming=streaming,

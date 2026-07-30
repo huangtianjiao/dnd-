@@ -33,6 +33,7 @@ class Settings(BaseSettings):
 
     # —— LLM ——
     llm_api_key: str = Field("", validation_alias="key")     # .env 中字段名为 key
+    llm_fallback_key: str = Field("", validation_alias="fallback_key")  # 灾备 key
     llm_base_url: str = "https://api.senseaudio.cn/v1"
     llm_model: str = "deepseek-v4-flash"
 

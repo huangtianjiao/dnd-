@@ -500,8 +500,14 @@ body {
 @keyframes v2-tp { 30% { transform: translateY(-4px); opacity: 1; } 60% { opacity: 0.4; } }
 
 /* ---- 快捷行动 chips ---- */
-.v2-quickbar { flex: none; padding: 8px 16px 4px; display: flex; gap: 8px; overflow-x: auto; }
-.v2-quickbar .cap { flex: none; align-self: center; font-size: 10px; letter-spacing: 2px; color: var(--v2-ink-faint); }
+.v2-quickbar {
+  flex: none;
+  width: 100%; max-width: 792px; margin: 0 auto;
+  padding: 8px 16px 4px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.v2-quickrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.v2-quickrow .cap { flex: none; font-size: 10px; letter-spacing: 2px; color: var(--v2-ink-faint); }
 .v2-chip {
   flex: none;
   padding: 6px 14px;
@@ -519,7 +525,12 @@ body {
 .v2-chip.danger { border-color: rgba(196, 87, 78, 0.45); color: #d89a92; }
 .v2-chip.danger:hover:not(:disabled) { border-color: var(--v2-red); color: #f0c0ba; }
 .v2-chip.rest { border-color: rgba(95, 131, 180, 0.4); color: #9db8d6; }
-.v2-chip.choice { border-color: var(--v2-gold-dim); color: var(--v2-gold-hi); background: rgba(201, 164, 92, 0.08); }
+.v2-chip.choice {
+  border-color: var(--v2-gold-dim); color: var(--v2-gold-hi); background: rgba(201, 164, 92, 0.08);
+  flex: initial; max-width: 100%;
+  white-space: normal; text-align: left; line-height: 1.45;
+  border-radius: 16px;
+}
 
 /* ---- 输入区 ---- */
 .v2-inputbar { flex: none; padding: 8px 16px 14px; }

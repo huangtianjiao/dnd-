@@ -55,9 +55,14 @@ IMPORTANCE_WEIGHT = 2.0
 # 时间衰减率: 0.99/hr (来自 Generative Agents recency_decay=0.99)
 DECAY_RATE_PER_HOUR = 0.99
 
-# 压缩触发方式：根据 rolling_summary 占 LLM 上下文的比例动态触发。
-# 当 summary_tokens / llm_context_window > summary_compress_ratio 时压缩。
+# 摘要维护分两层：
+#   ① 周期折叠 — 每 COMPRESS_EVERY_N_TURNS 回合把最近日志压缩后追加进 summary，
+#      按日志数触发，与 summary 是否为空无关（避免空 summary 永不启动）。
+#   ② 超限浓缩 — summary_tokens / llm_context_window > summary_compress_ratio 时，
+#      用 LLM 浓缩 summary 自身（而非追加，防止越压越长）。
 # 配置见 config.py: llm_context_window, summary_compress_ratio
+
+COMPRESS_EVERY_N_TURNS = 10
 
 
 def _estimate_tokens(text: str) -> int:
@@ -71,14 +76,14 @@ def _estimate_tokens(text: str) -> int:
     return int(len(text) * 1.5)
 
 
-def _should_compress(campaign_id: int) -> bool:
-    """检查 rolling_summary 是否需要压缩。
+def _should_condense(campaign_id: int) -> bool:
+    """检查 rolling_summary 是否超限需要浓缩。
 
     触发条件：summary 的 token 估算值占 LLM 上下文窗口的比例
-    超过 summary_compress_ratio（默认 25%）。
+    超过 summary_compress_ratio（默认 15%）。
 
     Returns:
-        True 表示需要压缩。
+        True 表示需要浓缩。
     """
     s = get_settings()
     summary = store.get_summary(campaign_id)
@@ -89,6 +94,19 @@ def _should_compress(campaign_id: int) -> bool:
     threshold_tokens = int(s.llm_context_window * s.summary_compress_ratio)
 
     return summary_tokens > threshold_tokens
+
+
+def _should_fold(campaign_id: int) -> bool:
+    """检查是否到达周期折叠点（每 COMPRESS_EVERY_N_TURNS 回合）。
+
+    按战役日志总数取模触发，不依赖 summary 现状，
+    保证空 summary 也能在第 N 回合启动首次折叠。
+    """
+    try:
+        n = store.count_logs(campaign_id)
+    except Exception:
+        return False
+    return n > 0 and n % COMPRESS_EVERY_N_TURNS == 0
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -320,6 +338,42 @@ _COMPRESS_PROMPT = """\
 
 输出摘要(3-5句):"""
 
+_CONDENSE_PROMPT = """\
+你是D&D 5E记忆助手。以下是一段过长的战役滚动摘要，请将其浓缩到原长一半以内。
+保留: 主线任务进展、关键 NPC 关系、未解悬念、角色重大状态变化。
+丢弃: 重复信息、已完结且无后续影响的细节。
+若含 [前情提要] 标记段落，原样保留该段落不参与浓缩。
+
+现有摘要:
+{summary}
+
+输出浓缩后的摘要:"""
+
+
+def _condense_summary(campaign_id: int) -> bool:
+    """用 LLM 浓缩过长的 rolling_summary（替换而非追加）。
+
+    Returns:
+        True 表示浓缩成功并已保存。
+    """
+    summary = store.get_summary(campaign_id)
+    if not summary:
+        return False
+    condensed = llm.chat(
+        "你是D&D记忆助手。输出简洁摘要。",
+        _CONDENSE_PROMPT.format(summary=summary),
+        temperature=0.2,
+    ).strip()
+    # LLM 失败或输出异常（未变短）时不覆盖，保留原摘要
+    if not condensed or len(condensed) >= len(summary):
+        return False
+    camp = store.get_campaign(campaign_id)
+    if not camp:
+        return False
+    camp.rolling_summary = condensed
+    store.save_campaign(camp)
+    return True
+
 
 def compress_rolling_summary(campaign_id: int,
                              recent_logs: list) -> str:
@@ -368,7 +422,8 @@ def process_turn_memories(campaign_id: int, player_input: str,
     流程:
       1. extract_observations — LLM 从本回合叙事提取 1-3 条关键观察
       2. store_memory — 每条观察嵌入后存入 Qdrant dnd_memories
-      3. compress_rolling_summary — 每 COMPRESS_EVERY_N_TURNS 回合压缩一次
+      3. compress_rolling_summary — 每 COMPRESS_EVERY_N_TURNS 回合折叠一次，
+         summary 超限时再用 LLM 浓缩自身
 
     Args:
         campaign_id: 战役ID
@@ -397,18 +452,26 @@ def process_turn_memories(campaign_id: int, player_input: str,
         store_memory(campaign_id, obs, turn, obs_index=i)
         result["memories_stored"] += 1
 
-    # 3. 动态压缩：rolling_summary 占 LLM 上下文比例超阈值时压缩
-    if _should_compress(campaign_id):
-        recent_logs = store.get_recent_logs(campaign_id, n=20)
+    # 3. 周期折叠：每 COMPRESS_EVERY_N_TURNS 回合把最近日志压缩追加进 summary
+    if _should_fold(campaign_id):
+        recent_logs = store.get_recent_logs(campaign_id,
+                                            n=COMPRESS_EVERY_N_TURNS)
         if recent_logs:
             compressed = compress_rolling_summary(campaign_id, recent_logs)
-            existing = store.get_summary(campaign_id)
-            new_summary = (existing + "\n" + compressed) if existing else compressed
-            camp = store.get_campaign(campaign_id)
-            if camp:
-                camp.rolling_summary = new_summary
-                store.save_campaign(camp)
-                result["summary_compressed"] = True
+            if compressed:
+                existing = store.get_summary(campaign_id)
+                new_summary = ((existing + "\n" + compressed)
+                               if existing else compressed)
+                camp = store.get_campaign(campaign_id)
+                if camp:
+                    camp.rolling_summary = new_summary
+                    store.save_campaign(camp)
+                    result["summary_compressed"] = True
+
+    # 3b. 超限浓缩：summary 占 LLM 上下文比例超阈值时浓缩自身，防止无限增长
+    if _should_condense(campaign_id):
+        with contextlib.suppress(Exception):
+            _condense_summary(campaign_id)
 
     # 4. 自动清理：记忆数超过上限时删除最低分旧记忆
     with contextlib.suppress(Exception):

@@ -235,28 +235,35 @@ interface QuickChipsProps {
 export function QuickChips({ mode, choices, onAction, disabled }: QuickChipsProps) {
   return (
     <div className="v2-quickbar">
-      <span className="cap">行动</span>
-      {choices.map((c, i) => (
-        <button
-          key={`${i}-${c}`}
-          className="v2-chip choice"
-          disabled={disabled}
-          onClick={() => onAction(c)}
-        >
-          {i + 1}. {c}
-        </button>
-      ))}
-      {CHIPS[mode].map((ch) => (
-        <button
-          key={ch.label}
-          className={`v2-chip ${ch.cls || ""}`}
-          disabled={disabled}
-          onClick={() => onAction(ch.say)}
-        >
-          <span className="ico">{ch.ico}</span>
-          {ch.label}
-        </button>
-      ))}
+      {choices.length > 0 && (
+        <div className="v2-quickrow">
+          <span className="cap">选项</span>
+          {choices.map((c, i) => (
+            <button
+              key={`${i}-${c}`}
+              className="v2-chip choice"
+              disabled={disabled}
+              onClick={() => onAction(c)}
+            >
+              {i + 1}. {c}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="v2-quickrow">
+        <span className="cap">行动</span>
+        {CHIPS[mode].map((ch) => (
+          <button
+            key={ch.label}
+            className={`v2-chip ${ch.cls || ""}`}
+            disabled={disabled}
+            onClick={() => onAction(ch.say)}
+          >
+            <span className="ico">{ch.ico}</span>
+            {ch.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

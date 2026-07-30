@@ -405,6 +405,16 @@ def get_recent_logs(campaign_id: int, n: int = 6,
         return list(reversed(logs))  # 时间正序
 
 
+def count_logs(campaign_id: int, db_path: str = DEFAULT_DB) -> int:
+    """统计战役的日志总数（回合数，摘要折叠周期触发用）。"""
+    from sqlalchemy import func
+    with session(db_path) as s:
+        stmt = (select(func.count())
+                .select_from(M.Log)
+                .where(M.Log.campaign_id == campaign_id))
+        return int(s.exec(stmt).one())
+
+
 # ──────────────────────────────────────────────────────────────────────────
 # 自检
 # ──────────────────────────────────────────────────────────────────────────

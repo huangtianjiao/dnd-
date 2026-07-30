@@ -49,3 +49,105 @@
  ✓ Compiled in 89ms (293 modules)
  ✓ Compiled in 79ms (293 modules)
  ✓ Compiled in 91ms (293 modules)
+ ⨯ Internal error: Error: Could not find the module "D:\game\dnd\aidm\ui\node_modules\next\dist\client\components\app-router.js#" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at eb (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:136703)
+    at ek (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:140326)
+    at Array.toJSON (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135755)
+    at stringify (<anonymous>)
+    at eR (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142219)
+    at eE (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142698)
+    at Timeout._onTimeout (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135475)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+digest: "3261281839"
+ ⨯ Internal error: Error: Could not find the module "D:\game\dnd\aidm\ui\node_modules\next\dist\client\components\client-page.js#ClientPageRoot" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at eb (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:136703)
+    at ek (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:140326)
+    at Array.toJSON (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135755)
+    at stringify (<anonymous>)
+    at eR (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142219)
+    at eE (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142698)
+    at Timeout._onTimeout (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135475)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+digest: "681860495"
+ ⨯ Error: Could not find the module "D:\game\dnd\aidm\ui\app\page.tsx#default" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+digest: "2363735014"
+ ⨯ Internal error: Error: Could not find the module "D:\game\dnd\aidm\ui\node_modules\next\dist\client\components\layout-router.js#" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at eb (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:136703)
+    at ek (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:140326)
+    at Array.toJSON (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135755)
+    at stringify (<anonymous>)
+    at eR (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142219)
+    at eE (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142698)
+    at Timeout._onTimeout (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135475)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+digest: "2208012751"
+ ⨯ Internal error: Error: Could not find the module "D:\game\dnd\aidm\ui\node_modules\next\dist\client\components\render-from-template-context.js#" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at eb (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:136703)
+    at ek (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:140326)
+    at Array.toJSON (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135755)
+    at stringify (<anonymous>)
+    at eR (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142219)
+    at eE (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142698)
+    at Timeout._onTimeout (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135475)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+digest: "2466085967"
+ ⨯ Internal error: Error: Could not find the module "D:\game\dnd\aidm\ui\node_modules\next\dist\client\components\error-boundary.js#" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at eb (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:136703)
+    at ek (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:140326)
+    at Object.toJSON (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135755)
+    at stringify (<anonymous>)
+    at eR (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142219)
+    at eE (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142698)
+    at Timeout._onTimeout (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135475)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+digest: "4230591363"
+ ⨯ Internal error: Error: Could not find the module "D:\game\dnd\aidm\ui\node_modules\next\dist\client\components\app-router.js#" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at eb (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:136703)
+    at ek (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:140326)
+    at Array.toJSON (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135755)
+    at stringify (<anonymous>)
+    at eR (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142219)
+    at eE (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142698)
+    at Timeout._onTimeout (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135475)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+digest: "3261281839"
+ ⨯ Internal error: Error: Could not find the module "D:\game\dnd\aidm\ui\node_modules\next\dist\client\components\app-router.js#" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at eb (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:136703)
+    at ek (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:140326)
+    at Array.toJSON (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135755)
+    at stringify (<anonymous>)
+    at eR (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142219)
+    at eE (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142698)
+    at Timeout._onTimeout (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135475)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+digest: "3261281839"
+ ⨯ Internal error: Error: Could not find the module "D:\game\dnd\aidm\ui\node_modules\next\dist\client\components\error-boundary.js#" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at eb (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:136703)
+    at ek (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:140326)
+    at Object.toJSON (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135755)
+    at stringify (<anonymous>)
+    at eR (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142219)
+    at eE (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142698)
+    at Timeout._onTimeout (d:\game\dnd\aidm\ui\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135475)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+digest: "4230591363"
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+  digest: '3261281839'
+}
+ ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+  digest: '3261281839',
+  page: '/'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 943ms (831 modules)
+ GET / 500 in 1179ms
+[?25h
