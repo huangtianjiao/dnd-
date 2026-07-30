@@ -72,13 +72,24 @@ action_type 取值:
   target_name   目标名称
   target_ac     目标AC(整数,未知0)
   ability       str/dex/con/int/wis/cha
+  needs_check   本次行动是否需要掷骰检定(true/false),判定标准见【检定门槛】
   retrieval_query 用规则原词构造的检索串(动作规范名+检定类型+DC关键词)
+
+检定门槛(DMG「骰子的角色」:只有结果不确定且失败有实质后果时才掷骰):
+  needs_check=false(自动成功,不掷骰)的情形:
+    - 任务对角色轻而易举(踹开朽烂的门/回忆常识/无压力下爬结实的梯子)
+    - 失败无实质后果且可反复尝试(无时间压力、无风险的搜索/研究)
+    - 社交对象态度友好(friendly)且请求合理、不损其利益(问路/闲聊/正常买卖)
+    - 沿已知道路或有向导旅行(无迷路风险,免导航检定)
+  needs_check=true 时按DMG标准DC锚点给dc:
+    很容易5 / 容易10 / 中等15 / 困难20 / 极难25 / 几乎不可能30
+  attack/cast/start_combat/hide/grapple/shove/opportunity_attack 总是掷骰,不受此字段影响。
 
 attack专有: weapon(武器中文名)
 cast专有: spell_name, spell_level(整数), spell_dice(如8d6), damage_type(火焰/力场/...), \
 spell_attack(true=攻击检定型/false=豁免型), save_ability(con/dex/...目标豁免属性), \
 target_save_bonus(目标该豁免加值,未知0), casting_ability(int/wis/cha 施法属性)
-ability_check/explore专有: skill(技能名), dc(整数,未知给10), proficient(true/false)
+ability_check/explore/search/study/social专有: skill(技能名), dc(整数,按上方DC锚点), proficient(true/false)
 start_combat专有: enemies(数组[{name,dex_mod,side='enemy',hp_max(整数,该怪物HP上限,如哥布林7,兽人15,未知给7)}])
 
 只输出JSON。"""
@@ -121,7 +132,9 @@ def _build_classify_context(state: GameState) -> str:
             from ..stats import store as _store
             sc = _store.get_scene(camp_id)
             if sc:
-                npc_names = ", ".join(n.get("name", "") for n in sc.npcs[:5]) if sc.npcs else "无"
+                npc_names = ", ".join(
+                    f"{n.get('name', '')}(态度:{n.get('attitude', 'indifferent')})"
+                    for n in sc.npcs[:5]) if sc.npcs else "无"
                 parts.append(
                     f"【场景】地点:{sc.location or '?'} 环境/地形:{sc.environment or '?'} "
                     f"时间:{sc.time or '?'} 在场NPC:{npc_names} 情境:{(sc.situation or '')[:120]}"

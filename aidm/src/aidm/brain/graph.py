@@ -114,12 +114,14 @@ def classify(state: GameState) -> dict:
         "social|levelup|travel|hide|search|grapple|shove|dash|dodge|disengage|help|"
         "ready|use_item|study|opportunity_attack|other\n"
         "通用字段: target_name, target_ac(整数,未知0), ability(str/dex/con/int/wis/cha), "
+        "needs_check(true/false,DMG:仅结果不确定且失败有实质后果才掷骰;琐碎/无风险/友好NPC合理请求→false), "
         "retrieval_query(用规则原词构造的检索串:动作规范名+检定类型+DC关键词,如'徒手打击 推撞 豁免DC 8 力量 熟练')\n"
         "attack/opportunity_attack专有: weapon(武器中文名)\n"
         "cast专有: spell_name, spell_level(整数), spell_dice(如8d6), damage_type(火焰/力场/...), "
         "spell_attack(true=攻击检定型/false=豁免型), save_ability(con/dex/...目标豁免属性), "
         "target_save_bonus(目标该豁免加值,未知0), casting_ability(int/wis/cha 施法属性)\n"
-        "ability_check/explore/hide/search/study专有: skill(技能名), dc(整数,未知给10), proficient(true/false)\n"
+        "ability_check/explore/hide/search/study专有: skill(技能名), "
+        "dc(整数,DMG锚点:很容易5/容易10/中等15/困难20/极难25), proficient(true/false)\n"
         "grapple/shove专有: ability(str/dex), dc, shove_type(prone/push,仅shove)\n"
         "help专有: target_name(协助对象); ready专有: trigger_condition, readied_action\n"
         "use_item专有: item_name, item_effect; start_combat专有: enemies(数组[{name,dex_mod,side='enemy',hp_max(整数,怪物HP上限,如哥布林7,未知给7)}])\n"
@@ -192,6 +194,17 @@ def resolve(state: GameState) -> dict:
     # 战斗中动作限制
     if state.get("combat", {}).get("active") and at in ("travel", "explore", "rest", "levelup"):
         return {"dice": {"kind": at, "error": "战斗中不能旅行/探索/休息/升级；逃跑用 dash/disengage，战斗用 attack/cast"}}
+
+    # —— 免检定分支（DMG「骰子的角色」：结果确定或失败无实质后果→不掷骰自动成功）——
+    # 仅限非对抗的技能类动作；攻击/施法/躲藏/擒抱等对抗动作不受影响。
+    # social 的免检定在 resolve_social 内部处理（需校验存盘的 NPC 态度）。
+    _AUTO_OK = ("ability_check", "explore", "search", "study")
+    if at in _AUTO_OK and it.get("needs_check") is False:
+        auto = {"kind": at, "auto_success": True, "success": True,
+                "skill": it.get("skill", ""),
+                "note": "结果确定或失败无实质后果，无需检定（DMG：仅在结果不确定时掷骰）"}
+        # 探索类免检定仍可能触发遭遇（世界保持鲜活）
+        return _with_encounter(state, ch, auto)
 
     if at == "attack":
         return _with_target_outcome(state, _resolve_attack(ch, it))

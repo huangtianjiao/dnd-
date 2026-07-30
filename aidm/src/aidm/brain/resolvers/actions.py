@@ -288,6 +288,15 @@ def resolve_social(state, ch, it) -> dict:
                 consec_failure = int(n.get("failure_count", 0))
                 break
 
+    # 免检定（DMG「运作交涉」：友好/冷漠 NPC 面对合理、不损其利益的请求
+    # 无需魅力检定）。needs_check 由 Director 判断请求合理性；存盘态度为敌对时
+    # 不信任该判断，仍走掷骰（LLM 误判防护）。
+    if it.get("needs_check") is False and stored_attitude != social_mod.ATTITUDE_HOSTILE:
+        return {"kind": "social", "skill": skill, "auto_success": True, "success": True,
+                "npc_name": npc_name, "npc_attitude": stored_attitude,
+                "new_attitude": stored_attitude,
+                "note": "NPC态度非敌对且请求合理，无需检定（DMG：仅在结果不确定时掷骰）"}
+
     npc = social_mod.NPC(name=npc_name, attitude=stored_attitude)
     dc_modifier = social_mod.check_social_dc(npc.attitude)
     final_dc = max(1, dc + dc_modifier)
@@ -408,9 +417,16 @@ def resolve_travel(state, ch, it) -> dict:
         perception_dc = 15
 
     pace_info = exploration_mod.get_travel_pace(pace)
-    nav_check = check.ability_check(mod=ch.ability_mod("wis"), prof=ch.prof(),
-                                    proficient=True, dc=nav_dc)
-    nav_result = exploration_mod.navigation(survival_total=nav_check.total, nav_dc=nav_dc)
+    # 导航检定仅在有迷路风险时掷（R-DM-037；沿已知道路/有向导→免检定，
+    # 由 Director 的 needs_check 判断）；被动察觉本就不掷骰，照常计算。
+    if it.get("needs_check") is False:
+        nav_check = None
+        nav_result = exploration_mod.NavigationResult(success=True, lost=False,
+                                                      length_multiplier=1.0)
+    else:
+        nav_check = check.ability_check(mod=ch.ability_mod("wis"), prof=ch.prof(),
+                                        proficient=True, dc=nav_dc)
+        nav_result = exploration_mod.navigation(survival_total=nav_check.total, nav_dc=nav_dc)
 
     passive_perception = 10 + ch.ability_mod("wis")
     perception_result = exploration_mod.check_passive_perception(
@@ -426,8 +442,9 @@ def resolve_travel(state, ch, it) -> dict:
             "perception_disadvantage": pace_info.perception_disadvantage,
             "perception_advantage": pace_info.perception_advantage,
             "nav_result": dataclasses.asdict(nav_result),
-            "nav_check_total": nav_check.total,
-            "nav_check_success": nav_check.success,
+            "nav_check_total": nav_check.total if nav_check else None,
+            "nav_check_success": nav_result.success,
+            "nav_check_skipped": nav_check is None,
             "perception_result": dataclasses.asdict(perception_result),
             "nav_dc": nav_dc,
             "perception_dc": perception_dc,
