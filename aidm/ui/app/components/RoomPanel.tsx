@@ -9,7 +9,8 @@ interface RoomPanelProps {
   defaultName: string;
   /** 由页面根据当前角色创建配置生成角色字段（race/char_class/level/abilities/hp_max/ac/speed） */
   buildCharacter: (name: string) => Record<string, any>;
-  onEntered: (r: RoomJoinResult, isHost: boolean, name: string) => void;
+  /** setting 仅房主创建时传入，页面据此调 /open 生成开场 */
+  onEntered: (r: RoomJoinResult, isHost: boolean, name: string, setting?: string) => void;
   onBack: () => void;
   toast: (msg: string, type?: string) => void;
 }
@@ -19,6 +20,8 @@ export function RoomPanel({ view, defaultName, buildCharacter, onEntered, onBack
   const [campaignName, setCampaignName] = useState("");
   const [createPassword, setCreatePassword] = useState("");
   const [maxPlayers, setMaxPlayers] = useState(4);
+  const [worldSetting, setWorldSetting] = useState("");
+  const [genBusy, setGenBusy] = useState(false);
 
   // ── 房间列表 / 加入表单 ──
   const [rooms, setRooms] = useState<RoomInfo[]>([]);
@@ -46,7 +49,7 @@ export function RoomPanel({ view, defaultName, buildCharacter, onEntered, onBack
     if (view === "list") loadRooms();
   }, [view, loadRooms]);
 
-  // ── 创建房间：成功后房主自动以 is_host=true 加入 ──
+  // ── 创建房间：成功后房主自动以 is_host=true 加入；带世界设定则由页面生成开场 ──
   const createRoom = useCallback(async () => {
     const nm = name.trim() || "冒险者";
     setBusy(true);
@@ -64,13 +67,26 @@ export function RoomPanel({ view, defaultName, buildCharacter, onEntered, onBack
         ...buildCharacter(nm),
       });
       toast(`房间 ${room.room_id} 创建成功`, "success");
-      onEntered(joined, true, nm);
+      onEntered(joined, true, nm, worldSetting.trim() || undefined);
     } catch (e) {
       toast("创建房间失败: " + errMsg(e), "error");
     } finally {
       setBusy(false);
     }
-  }, [name, campaignName, createPassword, maxPlayers, buildCharacter, onEntered, toast]);
+  }, [name, campaignName, createPassword, maxPlayers, worldSetting, buildCharacter, onEntered, toast]);
+
+  /** AI 生成世界设定（与单人新游戏同一端点） */
+  const generateSetting = useCallback(async () => {
+    setGenBusy(true);
+    try {
+      const r = await apiPost("/generate_setting", {});
+      if (r.setting) setWorldSetting(r.setting);
+    } catch (e) {
+      toast("生成失败: " + errMsg(e), "error");
+    } finally {
+      setGenBusy(false);
+    }
+  }, [toast]);
 
   // ── 加入房间 ──
   const joinRoom = useCallback(async () => {
@@ -110,6 +126,11 @@ export function RoomPanel({ view, defaultName, buildCharacter, onEntered, onBack
             <span className="form-label">人数上限</span>
             <input type="number" min={1} max={8} value={maxPlayers} onChange={(e) => setMaxPlayers(Math.max(1, Math.min(8, parseInt(e.target.value) || 4)))} className="form-input" />
           </label>
+          <textarea value={worldSetting} onChange={(e) => setWorldSetting(e.target.value)} rows={4}
+            placeholder="世界设定（可选：填写后建房即生成 DM 开场叙事）..." className="form-input" style={{ resize: "none" }} />
+          <button onClick={generateSetting} disabled={genBusy} className="btn btn-secondary">
+            {genBusy ? "生成中..." : "✨ AI 生成世界设定"}
+          </button>
           <div className="flex-row">
             <button onClick={createRoom} disabled={busy} className="btn btn-primary" style={{ flex: 1 }}>
               {busy ? "创建中..." : "🏰 创建并进入"}

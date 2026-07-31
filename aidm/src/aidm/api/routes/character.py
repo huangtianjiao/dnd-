@@ -274,14 +274,24 @@ def list_spells(level: int | None = None):
 
 @router.post("/join")
 def join_campaign(req: JoinIn):
-    """加入已有战役：创建角色卡，返回 character_id + WebSocket URL。"""
+    """加入已有战役：创建角色卡，返回 character_id。
+
+    与 /character 同口径：校验战役存在性（避免输错房间号静默创建孤儿角色）、
+    校验属性生成方式、完整写入子职/背景/阵营/速度。
+    """
+    if store.get_campaign(req.campaign_id) is None:
+        raise HTTPException(status_code=404, detail={
+            "error": "campaign_not_found",
+            "message": f"战役 {req.campaign_id} 不存在，请确认房间号"})
+    validate_abilities(req.abilities, req.ability_method)
     ch = models.Character(name=req.name, race=req.race, char_class=req.char_class,
-                          level=req.level, campaign_id=req.campaign_id)
+                          subclass=req.subclass, background=req.background,
+                          alignment=req.alignment, level=req.level,
+                          campaign_id=req.campaign_id)
     ch.set_abilities(req.abilities)
-    ch.hp_max = req.hp_max; ch.hp_current = req.hp_max; ch.ac = req.ac
+    ch.hp_max = req.hp_max; ch.hp_current = req.hp_max; ch.ac = req.ac; ch.speed = req.speed
     # 统一初始化拥有物（与 /character 一致）：法术位 + 已学法术 + 起始武器入包
     init_loadout(ch, req.equipped_weapon)
     ch = store.save_character(ch)
     return {"character_id": ch.id, "campaign_id": req.campaign_id,
-            "name": ch.name,
-            "ws_url": f"ws://{req.campaign_id}?character_id={ch.id}&name={req.name}"}
+            "name": ch.name}

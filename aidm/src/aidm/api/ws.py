@@ -24,9 +24,8 @@ import functools
 
 import socketio
 
-from ..brain import graph, world
+from ..brain import combat_flow, graph, world
 from ..brain.room import CampaignRoom, ConnectionManager, manager
-from ..engine import combat as cmb
 from ..stats import store
 from .memory_bg import _async_memory_process
 
@@ -91,7 +90,15 @@ async def connect(sid, environ, auth=None):
 
     连接参数通过 query string 传递:
       campaign_id=123&character_id=456&name=阿拉贡&role=player|dm
+      可选: api_key=...（AIDM_API_KEY 启用时必填）、dm_token=...（AIDM_DM_TOKEN 启用时 DM 必填）
+
+    握手校验（与 REST 层同口径，否则可绕过 /room/join 密码直连）:
+      1. API Key（若启用）
+      2. 战役存在、角色存在且属于该战役（DM 无角色卡时 character_id=0 豁免）
+      3. 若该战役存在带密码的 REST 房间 → 连接者必须已通过 /room/join 注册
+      4. DM 身份：若配置 AIDM_DM_TOKEN，role=dm 需持正确口令，否则降级为普通玩家
     """
+    import os
     import urllib.parse
     qs = environ.get("QUERY_STRING", "")
     # unquote：socket.io-client 会把中文 name 做 URL 编码，
@@ -100,15 +107,47 @@ async def connect(sid, environ, auth=None):
               for pair in qs.split("&") if "=" in pair
               for k, v in (pair.split("=", 1),)}
 
+    async def _reject(message: str):
+        """拒连：ConnectionRefusedError 的 message 会随 connect_error 送达客户端。"""
+        raise socketio.exceptions.ConnectionRefusedError(message)
+
+    # 1) API Key（与 HTTP 全局门同源：AIDM_API_KEY 存在时强制）
+    expected_key = os.getenv("AIDM_API_KEY", "")
+    if expected_key and params.get("api_key", "") != expected_key:
+        return await _reject("API Key 无效或缺失")
+
     try:
         campaign_id = int(params.get("campaign_id", "0"))
         character_id = int(params.get("character_id", "0"))
     except ValueError:
-        await sio.disconnect(sid)
-        return False
+        return await _reject("连接参数非法")
 
     name = params.get("name", "玩家")
     is_dm = params.get("role", "player") == "dm"
+
+    # 2) 战役/角色存在性
+    if store.get_campaign(campaign_id) is None:
+        return await _reject(f"战役 {campaign_id} 不存在")
+    if character_id:
+        ch = store.get_character(character_id)
+        if ch is None or ch.campaign_id != campaign_id:
+            return await _reject("角色不存在或不属于该战役")
+    elif not is_dm:
+        return await _reject("缺少 character_id")
+
+    # 3) 带密码房间：必须先走 /room/join 注册（按 character_id 校验成员资格）
+    from .routes.room import room_manager as rest_rooms
+    rest_room = rest_rooms.find_by_campaign(campaign_id)
+    if rest_room is not None and rest_room.password and not is_dm:
+        member = any(p["character_id"] == character_id for p in rest_room.players)
+        if not member:
+            return await _reject("该房间需要密码，请通过房间列表加入")
+
+    # 4) DM 口令（可选：未配置时保持向后兼容，任何人可自称 DM）
+    dm_token = os.getenv("AIDM_DM_TOKEN", "")
+    if is_dm and dm_token and params.get("dm_token", "") != dm_token:
+        await sio.emit("error", {"message": "DM 口令错误，已以普通玩家身份加入"}, to=sid)
+        is_dm = False
 
     # 加入 Socket.IO 房间
     room = f"campaign_{campaign_id}"
@@ -127,10 +166,10 @@ async def connect(sid, environ, auth=None):
     camp_room = CampaignRoom.get_or_create(campaign_id)
     camp_room.add_player(sid, character_id, name, is_dm)
 
-    # 通知其他玩家有新人加入
+    # 广播新人加入；不跳过本人 —— 新连接者依赖此事件初始化自己的队伍条
+    # （此前 skip_sid 导致进入游戏时看不到已在房玩家）
     players = camp_room.get_players()
-    await sio.emit("join", {"name": name, "players": players},
-                   room=room, skip_sid=sid)
+    await sio.emit("join", {"name": name, "players": players}, room=room)
 
     # 发送当前场景和战斗状态给新连接（增量同步：仅发送必要状态）
     scene = world.get_scene(campaign_id)
@@ -174,10 +213,10 @@ async def on_action(sid, data):
     """玩家发起行动：跑判定链，广播结果。
 
     流程:
-      1. 回合检查（战斗中必须轮到自己）
-      2. 通知全员：X 正在行动
-      3. 序列化执行 graph.run（线程池）
-      4. 广播叙事+骰子+行动选项给全员
+      1. 通知全员：X 正在行动
+      2. 锁内回合检查（战斗中必须轮到自己；D5 修复 TOCTOU 竞态）
+      3. 序列化执行 graph.run（线程池）；多人局行动不推进回合（显式 end_turn）
+      4. 广播叙事+骰子+行动选项给全员（含 turn_hint 动作耗尽提示）
       5. 广播更新后的场景+战斗状态（增量同步）
     """
     session = await sio.get_session(sid)
@@ -193,24 +232,23 @@ async def on_action(sid, data):
     if not player_input:
         return
 
-    # 回合检查
-    camp_room = CampaignRoom.get(campaign_id)
-    if camp_room and not camp_room.is_player_turn(character_id):
-        turn = camp_room.current_turn_name()
-        await sio.emit("error",
-                       {"message": f"还没轮到你，当前轮到 {turn}"},
-                       to=sid)
-        return
-
     # 通知全员：X 正在行动
     await sio.emit("player_acting", {"player": name, "action": player_input},
                    room=room, skip_sid=sid)
     await sio.emit("processing", {"player": name}, to=sid)
 
     # 序列化执行 graph.run（per-campaign 锁，不同战役可并行）
+    # 回合检查在锁内二次确认：两玩家并发时后排队者在前者推进回合后不应再执行
     thread_id = f"campaign_{campaign_id}"
     try:
         async with get_campaign_lock(campaign_id):
+            camp_room = CampaignRoom.get(campaign_id)
+            if camp_room and not camp_room.is_player_turn(character_id):
+                turn = camp_room.current_turn_name()
+                await sio.emit("error",
+                               {"message": f"还没轮到你，当前轮到 {turn}"},
+                               to=sid)
+                return
             loop = asyncio.get_event_loop()
             result = await loop.run_in_executor(
                 None,
@@ -218,7 +256,7 @@ async def on_action(sid, data):
                                   character_id, thread_id, False),
             )
     except Exception as e:
-        # 管线异常兜底：必须仍发 result，否则前端 busy 永久卡死（D4 实测发现）
+        # 管线异常兑底：必须仍发 result，否则前端 busy 永久卡死（D4 实测发现）
         import traceback
         traceback.print_exc()
         await sio.emit("result", {
@@ -234,12 +272,25 @@ async def on_action(sid, data):
     dice = result.get("dice", {})
     action_options = result.get("action_options", [])
 
-    await sio.emit("result", {
+    payload = {
         "player": name,
         "narration": narration,
         "dice": dice,
         "action_options": action_options,
-    }, room=room)
+    }
+    if result.get("turn_hint"):
+        payload["turn_hint"] = result["turn_hint"]     # 动作耗尽 → 前端高亮结束回合
+    await sio.emit("result", payload, room=room)
+
+    # 单人局自动推进可能已自然结束战斗 → 自动广播 combat_end
+    _res_combat = result.get("combat") or {}
+    if _res_combat.get("active") is False:
+        try:
+            _c_end = store.load_combat(campaign_id)
+            await sio.emit("combat_end",
+                           {"outcome": combat_flow.combat_outcome(_c_end)}, room=room)
+        except Exception:
+            pass
 
     # 增量同步：广播更新后的场景+战斗状态
     await _broadcast_state(campaign_id)
@@ -266,9 +317,38 @@ async def on_action(sid, data):
         ))
 
 
+async def _emit_flow_events(room: str, events: list[dict]) -> None:
+    """把 combat_flow 事件映射为 Socket.IO 事件逐条广播。
+
+    事件协议见 docs/MULTIPLAYER_COMBAT_REDESIGN.md §4.4.1；
+    monster_turn/monster_action 复用前端已监听的既有事件名。
+    """
+    for ev in events:
+        t = ev.get("type")
+        if t == "monster_action":
+            await sio.emit("monster_turn", {"monster": ev["monster"]}, room=room)
+            await sio.emit("monster_action",
+                           {"monster": ev["monster"], "result": ev}, room=room)
+        elif t == "death_save":
+            await sio.emit("death_save", ev, room=room)
+        elif t == "round_end":
+            await sio.emit("round_end", {"round": ev["round"]}, room=room)
+        elif t == "monster_flee":
+            await sio.emit("monster_action",
+                           {"monster": ev["monster"],
+                            "result": {"fled": True, "monster": ev["monster"]}},
+                           room=room)
+        elif t == "combat_end":
+            await sio.emit("combat_end", {"outcome": ev.get("outcome", "")}, room=room)
+
+
 @sio.on("end_turn")
 async def on_end_turn(sid, data):
-    """结束自己的回合，推进先攻序列。"""
+    """结束自己的回合：服务端回合状态机推进并自动结算怪物/濒死者回合，
+    直到轮到下一个可行动玩家或战斗结束（D5 死锁修复，见 combat_flow）。
+
+    全程持 campaign 锁：与 on_action 的 graph.run 互斥，避免丢失更新。
+    """
     session = await sio.get_session(sid)
     if not session:
         return
@@ -277,29 +357,37 @@ async def on_end_turn(sid, data):
     character_id = session["character_id"]
     room = f"campaign_{campaign_id}"
 
-    camp_room = CampaignRoom.get(campaign_id)
-    if camp_room and not camp_room.is_player_turn(character_id):
-        await sio.emit("error", {"message": "不是你的回合"}, to=sid)
+    async with get_campaign_lock(campaign_id):
+        camp_room = CampaignRoom.get(campaign_id)
+        if camp_room and not camp_room.is_player_turn(character_id):
+            await sio.emit("error", {"message": "不是你的回合"}, to=sid)
+            return
+        try:
+            loop = asyncio.get_event_loop()
+            flow = await loop.run_in_executor(
+                None, functools.partial(combat_flow.advance_and_resolve,
+                                        campaign_id))
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            await sio.emit("error", {"message": f"回合推进失败: {e}"}, to=sid)
+            return
+
+    if flow.combat is None:
+        await sio.emit("error", {"message": "无战斗状态"}, to=sid)
         return
 
-    try:
-        combat = store.load_combat(campaign_id)
-        prev_round = combat.round
-        nxt = cmb.advance_turn(combat)
-        store.save_combat(campaign_id, combat)
+    # 锁外逐条广播推进中发生的事件（怪物行动/死亡豁免/轮次/战斗结束）
+    await _emit_flow_events(room, flow.events)
+    await _broadcast_state(campaign_id)
 
-        if combat.round != prev_round:
-            await sio.emit("round_end", {"round": prev_round}, room=room)
-
-        await _broadcast_state(campaign_id)
-
-        if nxt:
-            await sio.emit("turn_advanced", {
-                "next": nxt.name,
-                "is_player": nxt.is_player,
-            }, room=room)
-    except KeyError:
-        await sio.emit("error", {"message": "无战斗状态"}, to=sid)
+    if flow.current is not None:
+        await sio.emit("turn_advanced", {
+            "next": flow.current.name,
+            "is_player": flow.current.is_player,
+            # DMG 跟进先攻：叫出当前者时顺口提及下一位
+            "next_next": combat_flow.peek_next_name(flow.combat),
+        }, room=room)
 
 
 @sio.on("ready")

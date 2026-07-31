@@ -2,9 +2,8 @@
 
 import { useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
+import { API, API_KEY } from "../lib/api";
 import type { LogEntry, SceneData, CombatData, PartyMember } from "../lib/types";
-
-const API = process.env.NEXT_PUBLIC_API || "";
 
 /**
  * 按 dice.kind 分派格式化行动骰子日志。
@@ -112,7 +111,7 @@ export function useSocket(opts: UseSocketOptions) {
   optsRef.current = opts;
 
   const connectWS = useCallback(
-    (cid: number, chId: number, name: string, role?: string) => {
+    (cid: number, chId: number, name: string, role?: string, dmToken?: string) => {
       if (socketRef.current) socketRef.current.disconnect();
 
       const o = optsRef.current;
@@ -122,7 +121,15 @@ export function useSocket(opts: UseSocketOptions) {
         reconnectionDelay: 1000,
         reconnectionDelayMax: 10000,
         reconnectionAttempts: 30,
-        query: { campaign_id: cid, character_id: chId, name, ...(role ? { role } : {}) },
+        query: {
+          campaign_id: cid,
+          character_id: chId,
+          name,
+          ...(role ? { role } : {}),
+          // 后端握手鉴权（ws.connect）：AIDM_API_KEY / AIDM_DM_TOKEN 启用时校验
+          ...(API_KEY ? { api_key: API_KEY } : {}),
+          ...(dmToken ? { dm_token: dmToken } : {}),
+        },
       });
 
       socket.on("connect", () => o.onLog({ c: "meta", t: "(已连接)" }));
@@ -183,6 +190,10 @@ export function useSocket(opts: UseSocketOptions) {
           }
           if (d.action_options) o.onChoices(d.action_options);
         }
+        // 多人回合制：动作耗尽提示（后端 apply_node turn_hint）
+        if (d.turn_hint === "action_exhausted" && d.player === name) {
+          o.onLog({ c: "meta", t: "（本回合动作已用完，可点击“结束回合”）" });
+        }
         o.onCharacterUpdate();
       });
 
@@ -192,8 +203,18 @@ export function useSocket(opts: UseSocketOptions) {
       });
       socket.on("scene_update", (d: any) => o.onScene(d.scene || d));
       socket.on("combat_update", (d: any) => o.onCombat(d));
-      socket.on("turn_advanced", (d: any) => o.onLog({ c: "meta", t: `轮到 ${d.next || "?"}` }));
+      socket.on("turn_advanced", (d: any) =>
+        o.onLog({
+          c: "meta",
+          t: `轮到 ${d.next || "?"}${d.next_next ? `（下一位：${d.next_next}）` : ""}`,
+        })
+      );
       socket.on("round_end", (d: any) => o.onLog({ c: "meta", t: `第 ${d.round} 轮结束` }));
+      // 死亡豁免（后端 combat_flow 回合开始时掷，R-DMG-017）
+      socket.on("death_save", (d: any) => {
+        o.onLog({ c: "system", t: d.text || `💀 ${d.player} 死亡豁免 d20=${d.roll}` });
+        o.onCharacterUpdate();
+      });
       socket.on("monster_turn", (d: any) => o.onLog({ c: "meta", t: `👾 ${d.monster} 的回合` }));
       socket.on("player_ready", (d: any) => o.onLog({ c: "meta", t: `✓ ${d.player} 已准备` }));
       socket.on("monster_action", (d: any) => {

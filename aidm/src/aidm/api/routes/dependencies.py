@@ -46,10 +46,15 @@ class JoinIn(BaseModel):
     name: str
     race: str = "人类"
     char_class: str = "战士"
+    subclass: str = ""
+    background: str = ""
+    alignment: str = "绝对中立"
     level: int = 5
     abilities: dict = {"str": 16, "dex": 10, "con": 15, "int": 10, "wis": 12, "cha": 10}
+    ability_method: str = "free"
     hp_max: int = 38
     ac: int = 18
+    speed: int = 30
     equipped_weapon: str = ""
     campaign_id: int
 

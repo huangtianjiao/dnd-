@@ -52,9 +52,11 @@ export default function Page() {
   const [campId, setCampId] = useState<number | null>(null);
   const [charId, setCharId] = useState<number | null>(null);
   const [inp, setInp] = useState("");
-  const [campaigns, setCampaigns] = useState<{ id: number; name: string; setting?: string }[]>([]);
+  const [campaigns, setCampaigns] = useState<{ id: number; name: string; setting?: string; summary?: string }[]>([]);
   const [myName, setMyName] = useState("");
   const [toastMsg, setToastMsg] = useState<{ msg: string; type: string } | null>(null);
+  // 多角色战役恢复：先拉完整状态，再弹窗选“我是谁”
+  const [pendingResume, setPendingResume] = useState<{ cid: number; st: any } | null>(null);
 
   // ── 房间（多人）/ 开场预览 ──
   const [roomId, setRoomId] = useState<string | null>(null);
@@ -82,6 +84,7 @@ export default function Page() {
 
   // ── DM 模式 ──
   const [isDm, setIsDm] = useState(false);
+  const [dmToken, setDmToken] = useState("");
 
   // ── v2 布局 UI state ──
   const [panelOpen, setPanelOpen] = useState(true);
@@ -102,6 +105,8 @@ export default function Page() {
   const myNameRef = useRef(myName);
   myNameRef.current = myName;
   const diceLayerRef = useRef<DiceLayerHandle>(null);
+  // 同配置重进（如从开场预览返回）时复用已建战役+角色，避免重复创建孤儿数据
+  const createdRef = useRef<{ campId: number; charId: number; key: string } | null>(null);
 
   const toast = useCallback((msg: string, type = "info") => {
     setToastMsg({ msg, type });
@@ -126,10 +131,11 @@ export default function Page() {
     apiGet("/spells").then((r: any) => setSpells(r.spells || [])).catch(() => {});
   }, []);
 
-  // ── 自己 HP 同步到队伍条 ──
+  // ── 自己 HP 同步到队伍条（依赖稳定的 syncOwnHp 而非 gs 对象，避免每渲染重跑） ──
   useEffect(() => {
     if (character && charId) gs.syncOwnHp(charId, character.hp, character.hp_max);
-  }, [character, charId, gs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [character, charId, gs.syncOwnHp]);
 
   const { connectWS, send: socketSend, endTurn, ready, dmMonsterTurn, dmCombatEnd, disconnect } = useSocket({
     onLog: gs.onLog,
@@ -155,46 +161,58 @@ export default function Page() {
       toast("未填写世界设定，已使用默认设定", "info");
     }
 
+    // 校验全部前置：避免先建战役再校验失败留下孤儿数据
+    const cls = classes.find((x) => x.name === charClass);
+    const raceData = races.find((x) => x.name === charRace);
+    if (!cls || !raceData) {
+      toast("种族/职业数据未就绪，请稍候", "error");
+      return;
+    }
+    const vals = Object.values(charAbilities);
+    if (abilityMethod === "point_buy" && vals.reduce((s, v) => s + (POINT_BUY_COST[v] ?? 0), 0) > 27) {
+      toast("购点法超支（>27），无法开始", "error");
+      return;
+    }
+    if (abilityMethod === "standard_array" && [...vals].sort((a, b) => a - b).join() !== "8,10,12,13,14,15") {
+      toast("标准阵列须为 [15,14,13,12,10,8] 的排列", "error");
+      return;
+    }
+
     setStarting(true);
     try {
-      const c = await apiPost("/campaign", { name: `${name}的冒险` });
-      const camp = c;
+      const cfgKey = JSON.stringify({ name, charRace, charClass, charSubclass, charBackground, charAlignment, charLevel, charAbilities, abilityMethod });
+      let cid: number;
+      let chid: number;
+      if (createdRef.current && createdRef.current.key === cfgKey) {
+        // 从开场预览返回后未改配置重新开始 → 直接复用
+        cid = createdRef.current.campId;
+        chid = createdRef.current.charId;
+      } else {
+        // 改了角色配置 → 复用已建战役，只重建角色
+        cid = createdRef.current?.campId ?? (await apiPost("/campaign", { name: `${name}的冒险` })).id;
+        const conMod = abilityMod(charAbilities.con);
+        const dexMod = abilityMod(charAbilities.dex);
+        const ch = await apiPost("/character", {
+          name,
+          race: charRace,
+          char_class: charClass,
+          subclass: charSubclass,
+          background: charBackground,
+          alignment: charAlignment,
+          level: charLevel,
+          abilities: charAbilities,
+          ability_method: abilityMethod,
+          hp_max: suggestHP(cls.hit_die, conMod, charLevel),
+          ac: suggestAC(cls.armor_training, dexMod),
+          speed: raceData.speed,
+          campaign_id: cid,
+        });
+        chid = ch.id;
+        createdRef.current = { campId: cid, charId: chid, key: cfgKey };
+      }
 
-      const cls = classes.find((x) => x.name === charClass);
-      const raceData = races.find((x) => x.name === charRace);
-      if (!cls || !raceData) {
-        toast("种族/职业数据未就绪，请稍候", "error");
-        return;
-      }
-      const vals = Object.values(charAbilities);
-      if (abilityMethod === "point_buy" && vals.reduce((s, v) => s + (POINT_BUY_COST[v] ?? 0), 0) > 27) {
-        toast("购点法超支（>27），无法开始", "error");
-        return;
-      }
-      if (abilityMethod === "standard_array" && [...vals].sort((a, b) => a - b).join() !== "8,10,12,13,14,15") {
-        toast("标准阵列须为 [15,14,13,12,10,8] 的排列", "error");
-        return;
-      }
-      const conMod = abilityMod(charAbilities.con);
-      const dexMod = abilityMod(charAbilities.dex);
-      const ch = await apiPost("/character", {
-        name,
-        race: charRace,
-        char_class: charClass,
-        subclass: charSubclass,
-        background: charBackground,
-        alignment: charAlignment,
-        level: charLevel,
-        abilities: charAbilities,
-        ability_method: abilityMethod,
-        hp_max: suggestHP(cls.hit_die, conMod, charLevel),
-        ac: suggestAC(cls.armor_training, dexMod),
-        speed: raceData.speed,
-        campaign_id: camp.id,
-      });
-
-      setCampId(camp.id);
-      setCharId(ch.id);
+      setCampId(cid);
+      setCharId(chid);
       setMyName(name);
       setWorldSetting(setting);
 
@@ -202,13 +220,12 @@ export default function Page() {
       const r = await apiPost("/open", {
         setting,
         tone: "",
-        campaign_id: camp.id,
-        character_id: ch.id,
+        campaign_id: cid,
+        character_id: chid,
       });
 
       setOpening({ narration: r.narration || "", action_options: r.action_options || [], scene: r.scene });
       setScreen("openingReview");
-      setInp("");
     } catch (e: any) {
       toast("创建游戏失败: " + errMsg(e), "error");
     } finally {
@@ -223,9 +240,11 @@ export default function Page() {
     if (opening?.action_options) gs.setChoices(opening.action_options);
     if (opening?.scene) gs.setScene(opening.scene);
     setScreen("game");
-    connectWS(campId, charId, name, isDm ? "dm" : undefined);
+    connectWS(campId, charId, name, isDm ? "dm" : undefined, dmToken || undefined);
     refreshChar();
-  }, [campId, charId, myName, opening, gs, connectWS, refreshChar, isDm]);
+    setInp("");
+    createdRef.current = null; // 正式开局，下次新游戏从零创建
+  }, [campId, charId, myName, opening, gs, connectWS, refreshChar, isDm, dmToken]);
 
   const regenerateOpening = useCallback(async () => {
     if (!campId || !charId) return;
@@ -255,14 +274,18 @@ export default function Page() {
       return {
         race: charRace,
         char_class: charClass,
+        subclass: charSubclass,
+        background: charBackground,
+        alignment: charAlignment,
         level: charLevel,
         abilities: charAbilities,
+        ability_method: abilityMethod,
         hp_max: suggestHP(hitDie, abilityMod(charAbilities.con), charLevel),
         ac: suggestAC(armor, abilityMod(charAbilities.dex)),
         speed,
       };
     },
-    [charRace, charClass, charLevel, charAbilities, classes, races]
+    [charRace, charClass, charSubclass, charBackground, charAlignment, charLevel, charAbilities, abilityMethod, classes, races]
   );
 
   const switchAbilityMethod = useCallback((m: "standard_array" | "point_buy" | "roll" | "free") => {
@@ -285,7 +308,7 @@ export default function Page() {
   }, [toast]);
 
   const enterRoomGame = useCallback(
-    (r: RoomJoinResult, host: boolean, name: string) => {
+    (r: RoomJoinResult, host: boolean, name: string, setting?: string) => {
       setCampId(r.campaign_id);
       setCharId(r.character_id);
       setMyName(name);
@@ -293,13 +316,28 @@ export default function Page() {
       setIsHost(host);
       gs.reset([{ type: "event", text: `加入房间 ${r.room_id}${host ? "（房主）" : ""}`, eventCls: "" }]);
       setScreen("game");
-      connectWS(r.campaign_id, r.character_id, name, isDm ? "dm" : undefined);
+      connectWS(r.campaign_id, r.character_id, name, isDm ? "dm" : undefined, dmToken || undefined);
       setTimeout(() => {
         apiGet(`/scene/${r.campaign_id}`).then(gs.setScene).catch(() => {});
         loadCombat(r.campaign_id);
       }, 100);
+      // 房主带世界设定建房 → 生成开场（与单人 /open 同链路，补齐多人局无开场的缺口）
+      if (host && setting) {
+        setWorldSetting(setting);
+        gs.pushEvent("⛳ DM 正在生成开场（约 10 秒）...", "");
+        apiPost("/open", {
+          setting,
+          tone: "",
+          campaign_id: r.campaign_id,
+          character_id: r.character_id,
+        })
+          .then((o: any) => {
+            gs.onResult({ player: name, narration: o.narration || "", action_options: o.action_options || [], scene: o.scene });
+          })
+          .catch((e) => toast("开场生成失败: " + errMsg(e), "error"));
+      }
     },
-    [gs, connectWS, loadCombat, isDm]
+    [gs, connectWS, loadCombat, isDm, dmToken, toast]
   );
 
   const saveSession = useCallback(async () => {
@@ -324,38 +362,64 @@ export default function Page() {
     }
   }, [toast]);
 
+  /** 选定角色后完成恢复：历史叙事流 + 场景/战斗 + 行动选项 + 房间上下文 */
+  const finishResume = useCallback(
+    (cid: number, st: any, ch: { id: number; name: string }) => {
+      setCharId(ch.id);
+      setMyName(ch.name);
+      setCampId(cid);
+      setPendingResume(null);
+      // 历史恢复：摘要在前，最近对话（Log 表）在后
+      const initial: { type: "event" | "dm" | "player"; text: string; speaker?: string; eventCls?: "" }[] = [];
+      if (st.summary) initial.push({ type: "event", text: `📖 剧情回顾：${st.summary}`, eventCls: "" });
+      for (const h of st.history || []) {
+        if (h.player_input) initial.push({ type: "player", speaker: ch.name, text: h.player_input });
+        if (h.dm_output) initial.push({ type: "dm", speaker: "地下城主", text: h.dm_output });
+      }
+      gs.reset(initial);
+      gs.setScene(st.scene ?? null);
+      // 行动选项：场景出路优先，否则给通用探索选项，避免恢复后快捷条空白
+      const exits: string[] = st.scene?.exits || [];
+      gs.setChoices(exits.length ? exits : ["观察四周", "回忆当前处境", "检查随身装备"]);
+      setCombat(st.combat ?? null);
+      setScreen("game");
+      connectWS(cid, ch.id, ch.name, isDm ? "dm" : undefined, dmToken || undefined);
+      // 房间上下文恢复（房间为内存对象，重启后 404 属正常 → 静默忽略）
+      apiGet(`/room/by-campaign/${cid}`)
+        .then((room: any) => {
+          setRoomId(room.room_id);
+          const host = (room.players || []).find((p: any) => p.is_host);
+          setIsHost(!!host && host.character_id === ch.id);
+        })
+        .catch(() => {});
+    },
+    [gs, setCombat, connectWS, isDm, dmToken]
+  );
+
   const resumeCampaign = useCallback(
     async (cid: number) => {
       try {
         const st = await apiGet(`/campaign/${cid}/state`);
-        if (st.characters && st.characters.length > 0) {
-          const ch = st.characters[0];
-          setCharId(ch.id);
-          setMyName(ch.name);
-          setCampId(cid);
-          gs.reset(
-            st.summary
-              ? [{ type: "event", text: `📖 剧情回顾：${st.summary.slice(0, 200)}…`, eventCls: "" }]
-              : []
-          );
-          gs.setScene(st.scene ?? null);
-          setCombat(st.combat ?? null);
-          setScreen("game");
-          connectWS(cid, ch.id, ch.name, isDm ? "dm" : undefined);
-        } else {
+        const chars = st.characters || [];
+        if (chars.length === 0) {
           toast("该战役没有角色", "warn");
+        } else if (chars.length === 1) {
+          finishResume(cid, st, chars[0]);
+        } else {
+          // 多角色战役 → 弹窗选择“我是谁”
+          setPendingResume({ cid, st });
         }
       } catch (e: any) {
         toast("继续游戏失败: " + errMsg(e), "error");
       }
     },
-    [gs, setCombat, connectWS, toast, isDm]
+    [finishResume, toast]
   );
 
   const joinGame = useCallback(async () => {
     const cid = parseInt(inp);
     if (!cid) {
-      toast("请填写房间号", "warn");
+      toast("请填写战役编号", "warn");
       return;
     }
     const name = myName.trim() || "冒险者";
@@ -364,14 +428,19 @@ export default function Page() {
       setCharId(ch.character_id || ch.id);
       setCampId(cid);
       setMyName(name);
-      gs.reset([{ type: "event", text: `加入房间 #${cid}`, eventCls: "" }]);
+      gs.reset([{ type: "event", text: `加入战役 #${cid}`, eventCls: "" }]);
       setScreen("game");
-      connectWS(cid, ch.character_id || ch.id, name, isDm ? "dm" : undefined);
+      connectWS(cid, ch.character_id || ch.id, name, isDm ? "dm" : undefined, dmToken || undefined);
       setInp("");
+      // 同步当前场景/战斗（晚于 WS 连接，作为兼容兑底）
+      setTimeout(() => {
+        apiGet(`/scene/${cid}`).then(gs.setScene).catch(() => {});
+        loadCombat(cid);
+      }, 100);
     } catch (e: any) {
-      toast("加入房间失败: " + errMsg(e), "error");
+      toast("加入战役失败: " + errMsg(e), "error");
     }
-  }, [inp, myName, gs, connectWS, toast, buildCharacter, isDm]);
+  }, [inp, myName, gs, connectWS, toast, buildCharacter, isDm, dmToken, loadCombat]);
 
   const generateWorld = useCallback(async () => {
     try {
@@ -404,11 +473,12 @@ export default function Page() {
           player_input: text,
           campaign_id: campId,
           character_id: charId,
-          thread_id: "default",
+          // 与 WS 路径（ws.on_action）同一 LangGraph 线程，避免双路径上下文分叉
+          thread_id: `campaign_${campId}`,
           hitl: true,
         });
         if (r.interrupted) {
-          setHitlData({ threadId: r.thread_id || "default", question: r.question || "确认执行此行动？" });
+          setHitlData({ threadId: r.thread_id || `campaign_${campId}`, question: r.question || "确认执行此行动？" });
         } else {
           applyChatResult(r);
         }
@@ -654,7 +724,8 @@ export default function Page() {
                 <li key={c.id}>
                   <button className="btn btn-secondary w-full" style={{ textAlign: "left" }} onClick={() => resumeCampaign(c.id)}>
                     <div className="text-purple text-bold">#{c.id} {c.name}</div>
-                    <div className="text-xs text-muted">{c.setting || "(无摘要)"}</div>
+                    <div className="text-xs text-muted">{c.setting || "(无设定)"}</div>
+                    {c.summary && <div className="text-xs text-muted">📖 {c.summary}</div>}
                   </button>
                 </li>
               ))}
@@ -662,6 +733,27 @@ export default function Page() {
           )}
           <button className="btn btn-secondary" onClick={() => setScreen("menu")}>← 返回</button>
         </div>
+
+        {/* 多角色战役：选择“我是谁” */}
+        {pendingResume && (
+          <div className="modal-overlay visible" onClick={() => setPendingResume(null)}>
+            <div className="modal" style={{ maxWidth: 380 }} onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <span className="mh-title">选择你的角色</span>
+                <button className="modal-close" onClick={() => setPendingResume(null)}>✕</button>
+              </div>
+              <div className="modal-body flex-col" style={{ gap: 8 }}>
+                {(pendingResume.st.characters || []).map((ch: any) => (
+                  <button key={ch.id} className="btn btn-secondary w-full" style={{ textAlign: "left" }}
+                    onClick={() => finishResume(pendingResume.cid, pendingResume.st, ch)}>
+                    <div className="text-purple text-bold">{ch.name}</div>
+                    <div className="text-xs text-muted">Lv{ch.level} {ch.char_class} · HP {ch.hp}/{ch.hp_max} · AC {ch.ac}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     );
   }
@@ -671,7 +763,7 @@ export default function Page() {
       <main className="screen">
         {toastEl}
         <div className="screen-card flex-col" style={{ gap: 12 }}>
-          <h2 className="title-lg">加入房间</h2>
+          <h2 className="title-lg">{isDm ? "以 DM 身份加入" : "加入战役"}</h2>
           <input className="form-input" value={myName} onChange={(e) => setMyName(e.target.value)} placeholder="角色名..." />
           <div className="flex-row" style={{ gap: 8 }}>
             <label className="form-label" style={{ flex: 1 }}>
@@ -692,10 +784,15 @@ export default function Page() {
                 onChange={(e) => setCharLevel(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))} />
             </label>
           </div>
-          <input className="form-input" value={inp} onChange={(e) => setInp(e.target.value)} placeholder="房间号（campaign_id）..." />
+          <input className="form-input" value={inp} onChange={(e) => setInp(e.target.value)} placeholder="战役编号（数字，好友屏幕右下角“战役 #”后的数字）..." />
+          <p className="text-xs text-muted" style={{ margin: 0 }}>若好友给的是 6 位房间短码，请从主菜单“📋 房间列表”加入</p>
+          {isDm && (
+            <input className="form-input" type="password" value={dmToken} onChange={(e) => setDmToken(e.target.value)}
+              placeholder="DM 口令（服务未配置 AIDM_DM_TOKEN 时可留空）..." />
+          )}
           <div className="flex-row" style={{ gap: 8 }}>
             <button className="btn btn-primary" style={{ flex: 1 }} onClick={joinGame}>🚪 加入</button>
-            <button className="btn btn-secondary" onClick={() => setScreen("menu")}>← 返回</button>
+            <button className="btn btn-secondary" onClick={() => { setIsDm(false); setScreen("menu"); }}>← 返回</button>
           </div>
         </div>
       </main>

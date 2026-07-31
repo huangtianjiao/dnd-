@@ -46,6 +46,9 @@ def get_campaign_state(campaign_id: int):
                                        for x in c.initiative_order]}
     except Exception:
         combat = None
+    # 最近对话历史（Log 表逐回合落盘）：继续游戏时恢复叙事流
+    history = [{"player_input": lg.player_input, "dm_output": lg.dm_output}
+               for lg in store.get_recent_logs(campaign_id, n=20)]
     return {
         "campaign": {"id": camp.id, "name": camp.name, "setting": camp.setting, "tone": camp.tone},
         "scene": scene,
@@ -54,4 +57,5 @@ def get_campaign_state(campaign_id: int):
                         "char_class": ch.char_class} for ch in chars],
         "summary": (camp.rolling_summary or "")[:300],
         "combat": combat,
+        "history": history,
     }

@@ -44,6 +44,7 @@ class Room:
     """
     room_id: str
     campaign_id: int
+    campaign_name: str = ""
     password: str = ""
     status: str = "waiting"          # waiting / playing / paused
     max_players: int = 6
@@ -92,6 +93,7 @@ class Room:
         return {
             "room_id": self.room_id,
             "campaign_id": self.campaign_id,
+            "campaign_name": self.campaign_name,
             "status": self.status,
             "max_players": self.max_players,
             "player_count": self.player_count(),
@@ -126,16 +128,24 @@ class RoomManager:
 
     # —— 创建 ——
     def create_room(self, campaign_id: int, password: str = "",
-                    max_players: int = 6) -> Room:
+                    max_players: int = 6, campaign_name: str = "") -> Room:
         """房主创建房间。返回新 Room。
 
         说明: 调用方应先把房主作为第一个 player 加入。
         """
         room_id = _gen_room_id(set(self.rooms.keys()))
         room = Room(room_id=room_id, campaign_id=campaign_id,
+                    campaign_name=campaign_name,
                     password=password, max_players=max_players)
         self.rooms[room_id] = room
         return room
+
+    def find_by_campaign(self, campaign_id: int) -> Room | None:
+        """按战役 ID 查房间（继续游戏时恢复 roomId/房主身份用）。"""
+        for r in self.rooms.values():
+            if r.campaign_id == campaign_id:
+                return r
+        return None
 
     # —— 加入 ——
     def join_room(self, room_id: str, password: str, name: str,

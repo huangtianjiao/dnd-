@@ -58,9 +58,13 @@ class RoomJoinIn(BaseModel):
     name: str
     race: str = "人类"
     char_class: str = "战士"
+    subclass: str = ""
+    background: str = ""
+    alignment: str = "绝对中立"
     level: int = 1
     abilities: dict = {"str": 10, "dex": 10, "con": 10,
                        "int": 10, "wis": 10, "cha": 10}
+    ability_method: str = "free"
     hp_max: int = 10
     ac: int = 10
     speed: int = 30
@@ -88,6 +92,7 @@ def create_room(req: RoomCreateIn):
         campaign_id=camp.id,
         password=req.password,
         max_players=req.max_players,
+        campaign_name=camp.name,
     )
     return {
         "room_id": room.room_id,
@@ -105,9 +110,13 @@ def join_room(req: RoomJoinIn):
     if room is None:
         raise _room_http_error("room_not_found")
 
-    # 先创建角色卡（关联到房间对应的战役）
+    # 先创建角色卡（关联到房间对应的战役；与 /character 同口径校验属性）
+    from .dependencies import validate_abilities
+    validate_abilities(req.abilities, req.ability_method)
     ch = models.Character(name=req.name, race=req.race,
                           char_class=req.char_class, level=req.level,
+                          subclass=req.subclass, background=req.background,
+                          alignment=req.alignment,
                           campaign_id=room.campaign_id)
     ch.set_abilities(req.abilities)
     ch.hp_max = req.hp_max; ch.hp_current = req.hp_max
@@ -137,6 +146,18 @@ def join_room(req: RoomJoinIn):
         "ws_url": f"ws://<host>/ws/{room.campaign_id}"
                   f"?character_id={ch.id}&name={req.name}",
     }
+
+
+@router.get("/room/by-campaign/{campaign_id}")
+def get_room_by_campaign(campaign_id: int):
+    """按战役 ID 查房间（继续游戏时恢复房间上下文）。
+
+    房间是纯内存对象，进程重启后不存在属正常情况 → 404。
+    """
+    room = room_manager.find_by_campaign(campaign_id)
+    if room is None:
+        raise _room_http_error("room_not_found")
+    return room.to_dict()
 
 
 @router.get("/room/{room_id}")

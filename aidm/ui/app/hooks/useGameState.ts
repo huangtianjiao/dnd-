@@ -419,9 +419,18 @@ export function useGameState(deps: UseGameStateDeps) {
     );
   }, []);
 
-  /** 自己角色卡刷新后 → 同步 HP 到队伍条 */
+  /** 自己角色卡刷新后 → 同步 HP 到队伍条（无变化时返回原引用，
+   *  避免 page 层 effect 依赖 gs 对象时陷入 setState → 重渲染循环） */
   const syncOwnHp = useCallback((charId: number, hp: number, hpMax: number) => {
-    setParty((prev) => prev.map((m) => (m.characterId === charId ? { ...m, hp, hpMax } : m)));
+    setParty((prev) => {
+      const idx = prev.findIndex((m) => m.characterId === charId);
+      if (idx < 0) return prev;
+      const m = prev[idx];
+      if (m.hp === hp && m.hpMax === hpMax) return prev;
+      const next = [...prev];
+      next[idx] = { ...m, hp, hpMax };
+      return next;
+    });
   }, []);
 
   /** 进入新会话/战役时重置本地流 */

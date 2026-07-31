@@ -5,7 +5,24 @@
  * 2. 旧端点 200 + {"error": "..."}
  */
 
-const API = process.env.NEXT_PUBLIC_API || "";
+/** API 基址：优先 NEXT_PUBLIC_API；未配置时按当前访问主机推导（后端默认 8080），
+ *  局域网多人时其他设备无需改配置即可连上。 */
+function resolveApiBase(): string {
+  if (process.env.NEXT_PUBLIC_API) return process.env.NEXT_PUBLIC_API;
+  if (typeof window !== "undefined") {
+    return `${window.location.protocol}//${window.location.hostname}:8080`;
+  }
+  return "";
+}
+
+const API = resolveApiBase();
+
+/** 后端启用 AIDM_API_KEY 时，前端用 NEXT_PUBLIC_API_KEY 配套（REST 走 X-API-Key 头，WS 走 query） */
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
+
+function authHeaders(): Record<string, string> {
+  return API_KEY ? { "X-API-Key": API_KEY } : {};
+}
 
 export class ApiError extends Error {
   status: number;
@@ -57,14 +74,14 @@ async function handleResponse<T>(res: Response): Promise<T> {
 export async function apiPost<T = any>(path: string, body: any): Promise<T> {
   const res = await fetch(`${API}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(body),
   });
   return handleResponse<T>(res);
 }
 
 export async function apiGet<T = any>(path: string): Promise<T> {
-  const res = await fetch(`${API}${path}`);
+  const res = await fetch(`${API}${path}`, { headers: authHeaders() });
   return handleResponse<T>(res);
 }
 
@@ -75,4 +92,4 @@ export function errMsg(e: unknown): string {
   return String(e);
 }
 
-export { API };
+export { API, API_KEY };
