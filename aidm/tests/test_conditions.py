@@ -238,6 +238,22 @@ def test_attack_modifiers_target_invisible():
     assert m.attacker_disadvantage is True
 
 
+def test_attack_modifiers_invisible_attacker_seen_no_advantage():
+    """隐形攻击者被目标看见（如真实视觉）→ 不获得优势。R-GLS-051 2024隐形可见性条件"""
+    attacker = conditions.ConditionState({"隐形"})
+    target = conditions.ConditionState()
+    m = conditions.attack_modifiers(attacker, target, attacker_visible_to_target=True)
+    assert m.attacker_advantage is False
+
+
+def test_attack_modifiers_invisible_target_seen_no_disadvantage():
+    """隐形目标被攻击者看见（如盲视）→ 攻击其无劣势。R-GLS-051 2024隐形可见性条件"""
+    attacker = conditions.ConditionState()
+    target = conditions.ConditionState({"隐形"})
+    m = conditions.attack_modifiers(attacker, target, target_visible_to_attacker=True)
+    assert m.attacker_disadvantage is False
+
+
 # ──────────────────────────────────────────────────────────────────────────
 # 专注打断
 # ──────────────────────────────────────────────────────────────────────────

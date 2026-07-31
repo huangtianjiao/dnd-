@@ -67,9 +67,11 @@ class Character(SQLModel, table=True):
     concentration_dc: int = 0                        # 维持专注需检定的 DC
     # 经验值
     xp: int = 0                                     # 当前经验值
-    # 当前手持武器（武器中文名）；攻击时优先于"徒手"兜底，由 /equip-weapon 或创建时按职业设默认。
+    # 当前手持武器（武器中文名）；攻击时优先于"徒手"兆底，由 /equip-weapon 或创建时按职业设默认。
     # 详见 docs/GRAPH_DYNAMIC_REFACTOR.md 阶段A。
     equipped_weapon: str = ""
+    # 当前穿戴的护甲（护甲中文名）；"" = 无甲。穿卸护甲时更新此字段并调用 recompute_ac()。
+    equipped_armor: str = ""
     # 数值
     hp_current: int = 0
     hp_max: int = 0
@@ -86,6 +88,8 @@ class Character(SQLModel, table=True):
     death_failures: int = 0
     stable: bool = False
     dead: bool = False
+    # 英雄气概（Heroic Inspiration） R-GLS-070
+    has_inspiration: bool = False
 
     # —— JSON 桥接 ——
     @property
@@ -236,6 +240,25 @@ class Character(SQLModel, table=True):
         self.death_failures = t.failures
         self.stable = t.stable
         self.dead = t.dead
+
+    def recompute_ac(self) -> None:
+        """根据当前装备、属性、职业重新计算 AC。
+
+        规则: R-ITM-004 AC计算公式 + 野蛮人/武僧无甲防御
+        出处: topics/玩家手册2024/装备/护甲.htm
+        说明: 穿卸护甲、升级、属性变化等场景后调用，自动写入 self.ac。
+              盾牌判定通过物品栏检查。
+        """
+        from ..data.equipment import compute_character_ac
+        dex = self.ability_mod("dex")
+        con = self.ability_mod("con")
+        wis = self.ability_mod("wis")
+        has_shield = "盾牌" in (self.inventory or [])
+        unarmored = self.char_class if self.char_class in ("野蛮人", "武僧") else None
+        self.ac = compute_character_ac(
+            self.equipped_armor or None, dex, has_shield,
+            unarmored_class=unarmored, con_mod=con, wis_mod=wis,
+        )
 
 
 # ──────────────────────────────────────────────────────────────────────────

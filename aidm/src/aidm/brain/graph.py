@@ -55,6 +55,7 @@ from .utils import (
 )
 from .resolvers import (
     resolve_attack as _resolve_attack,
+    resolve_multi_attack as _resolve_multi_attack,
     resolve_opportunity_attack as _resolve_opportunity_attack,
     resolve_cast as _resolve_cast,
     resolve_ability_check as _resolve_ability_check,
@@ -207,7 +208,7 @@ def resolve(state: GameState) -> dict:
         return _with_encounter(state, ch, auto)
 
     if at == "attack":
-        return _with_target_outcome(state, _resolve_attack(ch, it))
+        return _with_target_outcome(state, _resolve_multi_attack(ch, it))
     if at == "cast":
         return _with_target_outcome(state, _resolve_cast(ch, it))
     if at in ("ability_check", "explore"):

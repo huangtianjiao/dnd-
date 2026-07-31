@@ -153,6 +153,55 @@ def dehydration_exhaustion() -> int:
 
 
 # ──────────────────────────────────────────────────────────────────────────
+# 食物和水每日需求追踪
+# ──────────────────────────────────────────────────────────────────────────
+
+DAILY_FOOD_LB = 1.0    # 每日食物需求：1磅
+# 每日饮水需求：1加仑（炎热天气翻倍）
+DAILY_WATER_GAL = 1.0
+
+
+def check_daily_sustenance(
+    food_consumed_lb: float,
+    water_consumed_gal: float,
+    *,
+    hot_weather: bool = False,
+) -> dict:
+    """检查每日食物和水的摄入是否充足。
+
+    规则: R-GLS-060 脱水 / R-GLS-062 饥饿
+    出处: topics/玩家手册2024/术语汇编/危害.htm
+
+    参数:
+      food_consumed_lb: 当日进食量（磅）
+      water_consumed_gal: 当日饮水量（加仑）
+      hot_weather: 是否炎热天气（水需求翻倍）
+
+    返回:
+      {"food_sufficient": bool,           # 食物是否充足（≥需求半量）
+       "water_sufficient": bool,          # 饮水是否充足（≥需求半量）
+       "dehydration_exhaustion": bool,    # 是否触发脱水力竭
+       "starvation_check_needed": bool,   # 是否需投饥饿体质豁免（DC10）
+       "food_needed_lb": float,           # 当日食物需求量
+       "water_needed_gal": float}         # 当日饮水需求量
+    """
+    water_needed = DAILY_WATER_GAL * (2 if hot_weather else 1)
+    food_needed = DAILY_FOOD_LB
+
+    food_ok = food_consumed_lb >= food_needed / 2
+    water_ok = water_consumed_gal >= water_needed / 2
+
+    return {
+        "food_sufficient": food_ok,
+        "water_sufficient": water_ok,
+        "dehydration_exhaustion": not water_ok,
+        "starvation_check_needed": not food_ok,
+        "food_needed_lb": food_needed,
+        "water_needed_gal": water_needed,
+    }
+
+
+# ──────────────────────────────────────────────────────────────────────────
 # 水下战斗修饰
 # ──────────────────────────────────────────────────────────────────────────
 

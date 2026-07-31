@@ -1,13 +1,15 @@
-"""resolvers.attack — 攻击检定 + 伤害计算 + 借机攻击。
+"""resolvers.attack — 攻击检定 + 伤害计算 + 多次攻击 + 借机攻击。
 
 从 brain/graph.py 提取。包含:
-  - resolve_attack: 近战/远程武器攻击（含武器回退/拥有性门控/熟练度/条件优劣势/力竭惩罚）
+  - resolve_attack: 单次近战/远程武器攻击（含武器回退/拥有性门控/熟练度/条件优劣势/力竭惩罚）
+  - resolve_multi_attack: 攻击动作内多次攻击分配（额外攻击 Extra Attack）
   - resolve_opportunity_attack: 借机攻击（复用 attack 逻辑）
 """
 
 from __future__ import annotations
 
 from ...data import equipment
+from ...data.classes import get_extra_attacks
 from ...engine import check, conditions, damage
 from ..utils import target_condition_state
 
@@ -78,4 +80,77 @@ def resolve_opportunity_attack(ch, it) -> dict:
     """
     out = resolve_attack(ch, it)
     out["kind"] = "opportunity_attack"
+    return out
+
+
+# ──────────────────────────────────────────────────────────────────────
+# 多次攻击分配（Extra Attack）
+# ──────────────────────────────────────────────────────────────────────
+
+def resolve_multi_attack(ch, it) -> dict:
+    """攻击动作内多次攻击分配（额外攻击 Extra Attack）。
+
+    规则: 玩家手册2024/角色职业/各职业「额外攻击」特性（战士5/11/20级、2/3/4次；
+          野蛮人/武僧/圣武士/游侠5级、2次）
+    出处: topics/玩家手册2024/角色职业/战士.htm ; 野蛮人.htm ; 武僧.htm ; 圣武士.htm ; 游侠.htm
+    说明:
+      - 攻击动作内攻击次数 = 1 + 额外攻击次数。
+      - 每次攻击可选不同目标（通过 it["targets"] 列表指定，否则全部攻击同一目标）。
+      - 向后兼容：num_attacks=1 时输出结构与旧版一致（保留顶层 hit/damage/d20 等字段）。
+      - 多次攻击时输出 attacks[] 数组 + total_damage 汇总，及顶层兼容字段。
+    """
+    extra = get_extra_attacks(ch.char_class, ch.level)
+    num_attacks = 1 + extra
+
+    # 目标列表：支持指定每次攻击的不同目标（可选）
+    targets = it.get("targets") or []  # [{"target_ac":X, ...}, ...]
+
+    attacks: list[dict] = []
+    for i in range(num_attacks):
+        # 若指定了多目标，按索引切换目标 AC/状态；否则复用原始 it
+        if targets and i < len(targets):
+            attack_it = {**it, **targets[i]}
+        else:
+            attack_it = it
+        single = resolve_attack(ch, attack_it)
+        attacks.append(single)
+
+    total_damage = sum(a.get("damage", 0) for a in attacks)
+    total_hits = sum(1 for a in attacks if a.get("hit"))
+
+    # 向后兼容：单次攻击时保持旧输出格式（顶层有 hit/damage/d20 等）
+    if num_attacks == 1:
+        out = attacks[0]
+        out["num_attacks"] = 1
+        return out
+
+    # 多次攻击：新格式
+    first = attacks[0]  # 顶层兼容字段取第一次攻击的参数
+    out = {
+        "kind": "attack",
+        "num_attacks": num_attacks,
+        "attacks": attacks,
+        "total_damage": total_damage,
+        "total_hits": total_hits,
+        # 顶层兼容字段（供旧版 narrate/apply 不报错）
+        "hit": total_hits > 0,
+        "damage": total_damage,
+        "d20": first.get("d20"),
+        "attack_total": first.get("attack_total"),
+        "crit": any(a.get("crit") for a in attacks),
+        "rolls": first.get("rolls"),
+        "target_ac": first.get("target_ac"),
+        "bonus": first.get("bonus"),
+        "weapon": first.get("weapon"),
+    }
+    if first.get("weapon_substituted"):
+        out["weapon_substituted"] = first["weapon_substituted"]
+    if first.get("weapon_not_proficient"):
+        out["weapon_not_proficient"] = True
+    # 伤害类型取第一次命中的
+    for a in attacks:
+        if a.get("hit"):
+            out["damage_type"] = a.get("damage_type")
+            out["damage_rolls"] = a.get("damage_rolls")
+            break
     return out

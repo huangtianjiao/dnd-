@@ -227,23 +227,37 @@ class DeathTracker:
         self.failures = 0
 
 
-def death_save(tracker: DeathTracker) -> dict:
-    """死亡豁免检定：1d20（无属性）；≥10记成功，否则失败；3成功稳定/3失败死亡；
+def death_save(tracker: DeathTracker, *,
+               advantage: bool = False, disadvantage: bool = False,
+               modifier: int = 0) -> dict:
+    """死亡豁免检定：d20（无属性）；总值≥10记成功，否则失败；3成功稳定/3失败死亡；
     天然1记两次失败，天然20恢复1HP并归零。
 
     规则: R-DMG-017 死亡豁免检定（R-GLS-020 触发：回合开始HP=0）
     出处: topics/玩家手册2024/进行游戏/生命值降至0点.htm
+    参数: 死亡豁免也是豁免检定，可受外部效应影响——
+      advantage/disadvantage: 优劣势（如回避无关，但守护灵光等可给优势）
+      modifier: 数值修正（如祝福术 +1d4 掷后的值、力竭每级 −2）。
+      天然 1/20 的特殊效果基于实际采用的天然骰值，不受 modifier 影响。
     """
     if tracker.stable or tracker.dead:
         return {"roll": None, "skipped": True, "stable": tracker.stable, "dead": tracker.dead}
-    roll = dice.roll_die(20)
-    result = {"roll": roll, "regain_hp": 0, "stable": False, "dead": False}
+    # 无优劣势时直接掷单骰（保持与 roll_die 直接消费方/测试的兼容），
+    # 有优劣势时走 roll_d20（R-CHK-004/005）
+    if advantage or disadvantage:
+        r = dice.roll_d20(advantage=advantage, disadvantage=disadvantage)
+        roll, mode = r.used, r.mode
+    else:
+        roll, mode = dice.roll_die(20), "normal"
+    total = roll + modifier
+    result = {"roll": roll, "total": total, "mode": mode,
+              "regain_hp": 0, "stable": False, "dead": False}
     if roll == 1:                                     # R-DMG-017 天然1 → 两次失败
         tracker.failures += 2
     elif roll == 20:                                   # R-DMG-017 天然20 → 恢复1HP，计数归零
         result["regain_hp"] = 1
         tracker.reset()
-    elif roll >= 10:                                  # ≥10 → 一次成功
+    elif total >= 10:                                  # 总值≥10 → 一次成功
         tracker.successes += 1
     else:                                             # 否则 → 一次失败
         tracker.failures += 1

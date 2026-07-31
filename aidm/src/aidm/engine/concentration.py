@@ -116,6 +116,7 @@ class ConcentrationManager:
         prof_bonus: int,
         advantage: bool = False,
         disadvantage: bool = False,
+        circ: int = 0,
     ) -> dict:
         """集中者受伤时进行体质豁免维持集中。
 
@@ -130,7 +131,9 @@ class ConcentrationManager:
             con_mod: 体质调整值
             con_proficient: 是否熟练体质豁免
             prof_bonus: 熟练加值
-            advantage/disadvantage: 豁免优劣势
+            advantage/disadvantage: 豁免优劣势（如战争施法者专长→优势）
+            circ: 临时 d20 修正（如力竭每级 −2，传
+                  -conditions.d20_penalty(state)；R-GLS-047 适用于所有 d20 检定）
 
         返回 dict:
             success: bool — 是否维持集中
@@ -173,6 +176,7 @@ class ConcentrationManager:
             dc=dc,
             advantage=advantage,
             disadvantage=disadvantage,
+            circ=circ,
         )
 
         if not res.success:

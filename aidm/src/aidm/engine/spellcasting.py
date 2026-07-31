@@ -34,6 +34,7 @@ class CasterState:
     spell_slots: dict[int, int] = field(default_factory=dict)  # {slot_level: remaining}
     max_spell_slots: dict[int, int] = field(default_factory=dict)
     spells_cast_with_slot_this_turn: int = 0   # R-SPL-007
+    current_turn_key: str | None = None        # R-SPL-007 当前回合标识（任意回合）
     concentrating_on: str | None = None     # R-SPL-019 当前集中的法术实例ID
 
     def ability_mod(self, ability: str) -> int:
@@ -132,12 +133,16 @@ def restore_slots_on_long_rest(caster: CasterState) -> None:
 
 
 def reset_turn_spell_count(caster: CasterState) -> None:
-    """回合开始时重置本回合已施展的"消耗法术位的法术"计数。
+    """回合边界重置本回合已施展的"消耗法术位的法术"计数。
 
     规则: R-SPL-007 每回合一法术位法术
     出处: topics/玩家手册2024/法术/施法时间.htm
           「每个回合中，你通过施展法术的方式至多只能消耗一个法术位。」
-    说明: 应在该施法者回合开始时调用；仪式施法与戏法不计入此计数。
+    说明: 限制以「回合」为粒度——任何生物的回合都是新回合（在自己回合用
+          法术位施法后，在敌人回合用法术位施展护盾术是合法的）。
+          故应在每个回合边界（而非仅施法者自己回合开始）为所有施法者
+          调用本函数；或在 cast_spell 传入 turn_key（回合唯一标识）由其
+          自动在回合变更时重置。仪式施法与戏法不计入此计数。
     """
     caster.spells_cast_with_slot_this_turn = 0
 
@@ -148,8 +153,10 @@ def reset_turn_spell_count(caster: CasterState) -> None:
 
 # 阻止言语成分(V)的状态
 _V_BLOCKING_CONDITIONS = frozenset({"沉默", "石化", "昏迷", "麻痹", "震慑"})
-# 阻止姿势成分(S)的状态（失能性状态 + 束缚）
-_S_BLOCKING_CONDITIONS = frozenset({"石化", "昏迷", "麻痹", "震慑", "束缚", "失能"})
+# 阻止姿势成分(S)的状态（失能性状态）
+# 注: 束缚（Restrained）不阻止施法——其效应仅为速度0/攻击劣势/敏豁劣势，
+#     被蜘蛛网缠住仍可施展有姿势成分的法术（术语汇编/状态.htm「束缚」）。
+_S_BLOCKING_CONDITIONS = frozenset({"石化", "昏迷", "麻痹", "震慑", "失能"})
 
 
 def check_casting_components(
@@ -453,6 +460,7 @@ def cast_spell(
     ritual: bool = False,
     combatant: Any | None = None,
     has_reaction_available: bool = True,
+    turn_key: str | None = None,
 ) -> dict:
     """施展一道法术，返回完整结果字典。
 
@@ -472,6 +480,10 @@ def cast_spell(
             通过 combat.use_reaction 真正扣减反应（R-SPL-006）。
         has_reaction_available: 反应是否可用（无 combatant 时校验用，
             默认 True）。反应法术在反应不可用时被拒绝。
+        turn_key: 当前回合的唯一标识（如 "r3:goblin1"）。R-SPL-007 的
+            「每回合一法术位」限制以任意回合为粒度；传入后若与上次
+            施法的回合不同则自动重置计数（支持在敌人回合用法术位
+            施展反应法术）。不传则沿用 reset_turn_spell_count 手动重置。
 
     返回 dict:
         success: bool — 是否成功施展并产生效应
@@ -538,6 +550,12 @@ def cast_spell(
     # —— 法术位消耗 (R-SPL-002) + 每回合一法术位法术 (R-SPL-007) ——
     slot_consumed = False
     if not ritual_cast and not is_cantrip(spell):
+        # R-SPL-007 回合切换自动重置：turn_key 变更说明已进入新回合
+        # （任意生物的回合都是新回合，反应法术在敌方回合施展不受
+        # 自己回合已用法术位的限制）
+        if turn_key is not None and turn_key != caster.current_turn_key:
+            caster.spells_cast_with_slot_this_turn = 0
+            caster.current_turn_key = turn_key
         # R-SPL-007 强制检查：本回合已施展过消耗法术位的法术则拒绝
         if caster.spells_cast_with_slot_this_turn > 0:
             errors.append("本回合已施展过消耗法术位的法术（每回合一法术位法术）")
@@ -747,30 +765,33 @@ def _fail(spell: Spell, slot_level: int | None, errors: list[str],
 # ──────────────────────────────────────────────────────────────────────────
 
 # 法器类型 → 可使用该法器的职业集合
-# 规则: R-SPL-013 法器职业限制（奥术/德鲁伊/圣徽）
-# 出处: topics/玩家手册2024/装备/冒险装备.htm
+# 规则: R-SPL-013 法器职业限制（奥术/德鲁伊/圣徽/乐器）
+# 出处: topics/玩家手册2024/装备/冒险装备.htm ; 吟游诗人.htm
 #   - 奥术法器 Arcane Focus: 术士、魔契师、法师
 #   - 德鲁伊法器 Druidic Focus: 德鲁伊、游侠
 #   - 圣徽 Holy Symbol: 牧师、圣武士
+#   - 乐器 Musical Instrument: 吟游诗人（可用乐器作为施法法器）
 _FOCUS_CLASS_ACCESS: dict[str, frozenset[str]] = {
     "奥术法器": frozenset({"术士", "魔契师", "法师"}),
     "德鲁伊法器": frozenset({"德鲁伊", "游侠"}),
     "圣徽": frozenset({"牧师", "圣武士"}),
+    "乐器": frozenset({"吟游诗人"}),
 }
 
 
 def can_use_focus(char_class: str, focus_type: str) -> bool:
     """校验职业能否使用该类法器。
 
-    规则: R-SPL-013 法器职业限制（奥术/德鲁伊/圣徽）
-    出处: topics/玩家手册2024/装备/冒险装备.htm
+    规则: R-SPL-013 法器职业限制（奥术/德鲁伊/圣徽/乐器）
+    出处: topics/玩家手册2024/装备/冒险装备.htm ; 职业/吟游诗人.htm
           - 奥术法器: 术士、魔契师、法师
           - 德鲁伊法器: 德鲁伊、游侠
           - 圣徽: 牧师、圣武士
+          - 乐器: 吟游诗人
 
     参数:
         char_class: 职业名（法师/牧师/德鲁伊/术士/魔契师/圣武士/游侠/吟游诗人）
-        focus_type: 法器类型（"奥术法器"/"德鲁伊法器"/"圣徽"）
+        focus_type: 法器类型（"奥术法器"/"德鲁伊法器"/"圣徽"/"乐器"）
     返回: 该职业是否可使用该类法器作为材料成分替代。
     """
     classes = _FOCUS_CLASS_ACCESS.get(focus_type)
@@ -1186,7 +1207,29 @@ def _self_test() -> None:
     assert can_use_focus("牧师", "圣徽") is True
     assert can_use_focus("圣武士", "圣徽") is True
     assert can_use_focus("德鲁伊", "圣徽") is False
+    assert can_use_focus("吟游诗人", "乐器") is True
+    assert can_use_focus("法师", "乐器") is False
     assert can_use_focus("法师", "未知法器") is False
+
+    # —— turn_key 回合切换自动重置 (R-SPL-007) ——
+    # 自己回合用法术位施法后，敌人回合（新 turn_key）用法术位施展
+    # 反应法术应合法；同一回合内第二个法术位法术仍被拒。
+    wiz_tk = CasterState(
+        caster_id="wtk", class_name="法师", level=5,
+        ability_scores={"INT": 16, "STR": 10, "DEX": 10, "CON": 14, "WIS": 10, "CHA": 10},
+        spell_slots={1: 4}, max_spell_slots={1: 4},
+    )
+    r = cast_spell(wiz_tk, "魔法飞弹", slot_level=1, targets=[{"ac": 20}],
+                   component_kwargs={"free_hands": 2}, turn_key="r1:wtk")
+    assert r["success"] is True
+    # 同回合再施法术位法术 → 拒绝
+    r = cast_spell(wiz_tk, "魔法飞弹", slot_level=1, targets=[{"ac": 20}],
+                   component_kwargs={"free_hands": 2}, turn_key="r1:wtk")
+    assert r["success"] is False and "本回合" in r["errors"][0]
+    # 敌人回合（新 turn_key）施展护盾术（法术位反应法术）→ 合法
+    r = cast_spell(wiz_tk, "护盾术", slot_level=1, targets=[{}],
+                   component_kwargs={"free_hands": 2}, turn_key="r1:goblin")
+    assert r["success"] is True, r["errors"]
 
     # —— 长时间施展骨架 (R-SPL-006) ——
     wiz_long = CasterState(

@@ -31,6 +31,16 @@ class ConditionState:
     conditions: set[str] = field(default_factory=set)
     exhaustion: int = 0                # R-GLS-047 力竭等级 0..6
 
+    # —— 序列化（供 stats.store 持久化参战者状态，DMG「使用并跟进状态」）——
+    def to_dict(self) -> dict:
+        return {"conditions": sorted(self.conditions), "exhaustion": self.exhaustion}
+
+    @classmethod
+    def from_dict(cls, d: dict | None) -> "ConditionState":
+        d = d or {}
+        return cls(conditions=set(d.get("conditions", [])),
+                   exhaustion=int(d.get("exhaustion", 0)))
+
     def add(self, cond: str) -> bool:
         """施加状态。非力竭不叠加（仅有/无）；力竭等级+1。
 
@@ -112,12 +122,26 @@ class AttackModifiers:
 
 
 def attack_modifiers(attacker: ConditionState, target: ConditionState,
-                     distance_ft: int = 5) -> AttackModifiers:
+                     distance_ft: int = 5, *,
+                     target_is_grappler: bool = False,
+                     fear_source_visible: bool = True,
+                     attacker_visible_to_target: bool = False,
+                     target_visible_to_attacker: bool = False) -> AttackModifiers:
     """根据攻守双方状态计算攻击检定的优劣势与自动重击。
 
     规则: R-GLS-044目盲 / R-GLS-054中毒 / R-GLS-055倒地 / R-GLS-052麻痹 /
           R-GLS-058昏迷（5尺内命中即重击）/ R-GLS-056束缚 / R-GLS-051隐形
     出处: topics/玩家手册2024/术语汇编/状态.htm
+    参数:
+      target_is_grappler: 目标是否为攻击者的擒抱者。受擒状态原文：
+          「除擒抱者外，你对其他任何目标进行的攻击检定都具有劣势」。
+      fear_source_visible: 恐慌源是否在攻击者视线内。恐慌状态原文：
+          「只要恐惧源在你的视线范围内，你进行的属性检定与攻击检定就具有劣势」。
+      attacker_visible_to_target: 目标能否看见隐形的攻击者。隐形状态原文：
+          「如果一个生物能以某种方式看见你，那么你在面对该生物时不会获得这一增益」，
+          为 True 时隐形攻击者不获得攻击优势。
+      target_visible_to_attacker: 攻击者能否看见隐形的目标（如真实视觉/盲视），
+          为 True 时对隐形目标的攻击不受劣势。
     """
     adv = False
     dis = False
@@ -127,19 +151,25 @@ def attack_modifiers(attacker: ConditionState, target: ConditionState,
         dis = True
     if attacker.has("中毒"):            # R-GLS-054 攻击检定劣势
         dis = True
-    if attacker.has("束缚") or attacker.has("受擒"):  # R-GLS-056/049 自己攻击劣势
+    if attacker.has("束缚"):            # R-GLS-056 自己攻击劣势
         dis = True
-    if attacker.has("恐慌"):            # R-GLS-048 恐慌源可见时劣势
+    # R-GLS-049 受擒：仅对擒抱者以外的目标攻击劣势（2024）
+    if attacker.has("受擒") and not target_is_grappler:
+        dis = True
+    # R-GLS-048 恐慌：仅恐惧源在视线内时攻击劣势
+    if attacker.has("恐慌") and fear_source_visible:
         dis = True
     if attacker.has("倒地"):            # R-GLS-055 倒地自己攻击劣势
         dis = True
-    if attacker.has("隐形"):            # R-GLS-051 隐形自己攻击优势
+    # R-GLS-051 隐形：自己攻击优势；若目标能看见隐形者则无此增益（2024）
+    if attacker.has("隐形") and not attacker_visible_to_target:
         adv = True
 
     # —— 目标侧（对目标的攻击） ——
     if target.has("目盲"):              # R-GLS-044 目标目盲 → 攻击其有优势
         adv = True
-    if target.has("隐形"):              # R-GLS-051 目标隐形 → 攻击其劣势
+    # R-GLS-051 目标隐形 → 攻击其劣势；若攻击者能看见隐形目标则无劣势（2024）
+    if target.has("隐形") and not target_visible_to_attacker:
         dis = True
     if target.has("束缚") or target.has("麻痹") or target.has("震慑") or target.has("昏迷") or target.has("石化"):
         adv = True                       # R-GLS-052/053/056/057/058 攻击这些目标优势
@@ -174,19 +204,31 @@ def long_rest_reduce_exhaustion(state: ConditionState) -> None:
 # ──────────────────────────────────────────────────────────────────────────
 
 # 力/敏豁免自动失败的状态
-# 规则: 术语汇编/状态.txt — 麻痹/震慑/石化/束缚/昏迷 → 自动失败力量和敏捷豁免
-_AUTO_FAIL_SAVE_STATES = frozenset({"麻痹", "震慑", "石化", "束缚", "昏迷"})
+# 规则: 术语汇编/状态.htm — 麻痹/震慑/石化/昏迷 → 自动失败力量和敏捷豁免
+# 注意: 束缚（Restrained）不自动失败，原文仅为「敏捷豁免检定具有劣势」，
+#       见 save_disadvantage()。
+_AUTO_FAIL_SAVE_STATES = frozenset({"麻痹", "震慑", "石化", "昏迷"})
 
 
 def auto_fail_save_abilities(state: ConditionState) -> frozenset[str]:
     """返回该状态下自动失败的豁免属性集合。
 
-    规则: 术语汇编/状态.txt（麻痹/震慑/石化/束缚/昏迷 自动失败力/敏豁免）
+    规则: 术语汇编/状态.htm（麻痹/震慑/石化/昏迷 自动失败力/敏豁免）
     出处: topics/玩家手册2024/术语汇编/状态.htm
     """
     if any(state.has(c) for c in _AUTO_FAIL_SAVE_STATES):
         return frozenset({"str", "dex"})
     return frozenset()
+
+
+def save_disadvantage(state: ConditionState, save_ability: str) -> bool:
+    """该豁免是否因状态具有劣势。
+
+    规则: 术语汇编/状态.htm「束缚」— 你进行的敏捷豁免检定具有劣势。
+    出处: topics/玩家手册2024/术语汇编/状态.htm
+    用法: check.saving_throw(..., disadvantage=conditions.save_disadvantage(state, ability))
+    """
+    return save_ability.lower() == "dex" and state.has("束缚")
 
 
 def should_waive_save(state: ConditionState, save_ability: str) -> bool:
@@ -213,12 +255,25 @@ def condition_resistances(state: ConditionState) -> set[str]:
 def condition_immunities(state: ConditionState) -> set[str]:
     """状态衍生的伤害免疫集合。
 
-    规则: 术语汇编/状态.txt「石化」→ 中毒免疫
+    规则: 术语汇编/状态.htm「石化」
     出处: topics/玩家手册2024/术语汇编/状态.htm
+    说明: 2024 版石化的「中毒免疫」是对「中毒状态」的免疫而非毒素
+          伤害免疫（见 status_immunities），故此处不再返回伤害免疫。
+    """
+    return set()
+
+
+def status_immunities(state: ConditionState) -> set[str]:
+    """状态衍生的「状态免疫」集合（非伤害免疫）。
+
+    规则: 术语汇编/状态.htm「石化」— 中毒免疫Poison Immunity：
+          你具有中毒状态的免疫。
+    出处: topics/玩家手册2024/术语汇编/状态.htm
+    用法: 施加状态前检查 cond in status_immunities(state) 则跳过。
     """
     immuns: set[str] = set()
     if state.has("石化"):
-        immuns.add("毒素")  # 石化：中毒免疫
+        immuns.add("中毒")  # 石化：免疫中毒状态
     return immuns
 
 
@@ -264,6 +319,27 @@ def _self_test() -> None:
     assert m.attacker_disadvantage
     m = attack_modifiers(ConditionState(), ConditionState({"麻痹"}), 5)  # 麻痹5尺内自动重击
     assert m.target_auto_crit_if_hit and m.attacker_advantage
+    # 受擒：对擒抱者攻击无劣势，对其他目标劣势（R-GLS-049 2024）
+    m = attack_modifiers(ConditionState({"受擒"}), ConditionState(), target_is_grappler=True)
+    assert not m.attacker_disadvantage
+    m = attack_modifiers(ConditionState({"受擒"}), ConditionState(), target_is_grappler=False)
+    assert m.attacker_disadvantage
+    # 恐慌：恐惧源不在视线内则无劣势（R-GLS-048）
+    m = attack_modifiers(ConditionState({"恐慌"}), ConditionState(), fear_source_visible=False)
+    assert not m.attacker_disadvantage
+    m = attack_modifiers(ConditionState({"恐慌"}), ConditionState(), fear_source_visible=True)
+    assert m.attacker_disadvantage
+    # 豁免：束缚不自动失败，仅敏捷豁免劣势；麻痹自动失败力/敏
+    assert auto_fail_save_abilities(ConditionState({"束缚"})) == frozenset()
+    assert save_disadvantage(ConditionState({"束缚"}), "dex") is True
+    assert save_disadvantage(ConditionState({"束缚"}), "str") is False
+    assert auto_fail_save_abilities(ConditionState({"麻痹"})) == frozenset({"str", "dex"})
+    assert should_waive_save(ConditionState({"麻痹"}), "dex") is True
+    assert should_waive_save(ConditionState({"束缚"}), "dex") is False
+    # 石化：全伤害抗性 + 中毒状态免疫（非毒素伤害免疫）
+    assert condition_resistances(ConditionState({"石化"})) == {"*"}
+    assert condition_immunities(ConditionState({"石化"})) == set()
+    assert status_immunities(ConditionState({"石化"})) == {"中毒"}
     # 力竭6级死
     s3 = ConditionState()
     for _ in range(6):

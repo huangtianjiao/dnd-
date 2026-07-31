@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 from contextlib import contextmanager, suppress
@@ -15,6 +16,7 @@ from contextlib import contextmanager, suppress
 from sqlmodel import Session, select
 
 from ..engine import combat as cmb
+from ..engine import conditions as cond
 from . import models as M
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -322,33 +324,48 @@ def get_scene(campaign_id: int, db_path: str = DEFAULT_DB) -> M.Scene | None:
 # ──────────────────────────────────────────────────────────────────────────
 
 def _combatant_to_dict(c: cmb.Combatant) -> dict:
-    return {
-        "cid": c.cid, "name": c.name, "dex_mod": c.dex_mod,
-        "initiative": c.initiative, "side": c.side, "is_player": c.is_player,
-        "surprised": c.surprised, "action_used": c.action_used,
-        "bonus_action_used": c.bonus_action_used, "reaction_used": c.reaction_used,
-        "free_interaction_used": c.free_interaction_used,
-        "concentrating_on": c.concentrating_on,
-        "hp": c.hp, "hp_max": c.hp_max, "dead": c.dead,
-        "attack_bonus": c.attack_bonus, "damage_dice": c.damage_dice,
-        "damage_type": c.damage_type,
-    }
+    """全字段导出 Combatant（D5 修复：之前手写字段清单丢 conditions/speed_remaining/
+    group_id 等，导致状态条件跨行动全部丢失，违反 DMG「使用并跟进状态」）。"""
+    d = {}
+    for f in dataclasses.fields(cmb.Combatant):
+        v = getattr(c, f.name)
+        if f.name == "conditions":
+            v = v.to_dict()
+        elif f.name == "position":
+            v = list(v)
+        d[f.name] = v
+    return d
 
 
 def _dict_to_combatant(d: dict) -> cmb.Combatant:
-    return cmb.Combatant(**d)
+    """从 dict 恢复 Combatant。未知字段忽略、缺失字段用 dataclass 默认值，
+    保证旧存档（仅含旧字段清单）可加载。"""
+    valid = {f.name for f in dataclasses.fields(cmb.Combatant)}
+    kw = {k: v for k, v in d.items() if k in valid}
+    if "conditions" in kw:
+        kw["conditions"] = (cond.ConditionState.from_dict(kw["conditions"])
+                            if isinstance(kw["conditions"], dict)
+                            else cond.ConditionState())
+    if "position" in kw and isinstance(kw["position"], list):
+        kw["position"] = tuple(kw["position"])
+    return cmb.Combatant(**kw)
 
 
 def save_combat(campaign_id: int, combat: cmb.Combat,
                db_path: str = DEFAULT_DB) -> M.CombatState:
-    """把 engine.Combat 序列化为 CombatState 行（覆盖该战役的战斗行）。"""
+    """把 engine.Combat 序列化为 CombatState 行（覆盖该战役的战斗行）。
+
+    participants_json 升级为包裹格式 {"combatants": [...], "seconds_elapsed": n}，
+    免加列迁移即可持久化 seconds_elapsed；load 兼容旧 list 格式。
+    """
     order = [_combatant_to_dict(c) for c in combat.initiative_order]
     parts = [_combatant_to_dict(c) for c in combat.participants]
     with session(db_path) as s:
         existing = s.exec(select(M.CombatState).where(M.CombatState.campaign_id == campaign_id)).first()
         cs = existing or M.CombatState(campaign_id=campaign_id)
         cs.set_initiative_order(order)
-        cs.participants_json = json.dumps(parts)
+        cs.participants_json = json.dumps(
+            {"combatants": parts, "seconds_elapsed": combat.seconds_elapsed})
         cs.round = combat.round
         cs.current_index = combat.current_index
         cs.active = combat.active
@@ -357,14 +374,26 @@ def save_combat(campaign_id: int, combat: cmb.Combat,
 
 
 def load_combat(campaign_id: int, db_path: str = DEFAULT_DB) -> cmb.Combat:
-    """从 CombatState 行重建 engine.Combat。"""
+    """从 CombatState 行重建 engine.Combat。
+
+    participants 与 initiative_order 按 cid 共享同一批对象（D5 修复：
+    之前反序列化为两组独立对象，上层被迫双列表同步，漏写即不一致）。
+    """
     with session(db_path) as s:
         cs = s.exec(select(M.CombatState).where(M.CombatState.campaign_id == campaign_id)).first()
         if cs is None:
             raise KeyError(f"战役 {campaign_id} 无战斗状态")
         combat = cmb.Combat()
-        combat.participants = [_dict_to_combatant(d) for d in json.loads(cs.participants_json)]
+        raw = json.loads(cs.participants_json)
+        if isinstance(raw, dict):                       # 新包裹格式
+            parts_raw = raw.get("combatants", [])
+            combat.seconds_elapsed = int(raw.get("seconds_elapsed", 0))
+        else:                                            # 旧 list 格式
+            parts_raw = raw
         combat.initiative_order = [_dict_to_combatant(d) for d in cs.initiative_order]
+        by_cid = {c.cid: c for c in combat.initiative_order}
+        combat.participants = [by_cid.get(d.get("cid"), None) or _dict_to_combatant(d)
+                               for d in parts_raw]
         combat.round = cs.round
         combat.current_index = cs.current_index
         combat.active = cs.active

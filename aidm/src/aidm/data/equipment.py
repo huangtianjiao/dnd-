@@ -80,6 +80,61 @@ def compute_unarmored_ac(dex_mod: int) -> int:
     return 10 + dex_mod
 
 
+def compute_character_ac(
+    equipped_armor: str | None,
+    dex_mod: int,
+    has_shield: bool = False,
+    *,
+    unarmored_class: str | None = None,
+    con_mod: int = 0,
+    wis_mod: int = 0,
+    spell_ac_override: int | None = None,
+) -> int:
+    """根据角色装备状态自动计算 AC（含无甲防御与法术覆盖）。
+
+    规则: R-ITM-004 AC计算公式 + R-CMB-021 无甲基础 + 野蛮人无甲防御(10+敏+体) +
+          武僧无甲防御(10+敏+感)
+    出处: topics/玩家手册2024/装备/护甲.htm ; 角色职业/野蛮人.htm ; 角色职业/武僧.htm
+
+    参数:
+      equipped_armor: 已穿戴的护甲名（None/"" = 无甲）
+      dex_mod: 敏捷调整值
+      has_shield: 是否装备盾牌（+2）
+      unarmored_class: 拥有无甲防御的职业（"野蛮人"/"武僧" 或 None）
+      con_mod: 体质调整值（野蛮人无甲防御用）
+      wis_mod: 感知调整值（武僧无甲防御用）
+      spell_ac_override: 法师护甲等法术 AC 覆盖值（优先级最高，忽略其他计算）
+
+    返回: 最终 AC 值
+    说明:
+      - 法术 AC 覆盖（如法师护甲 13+敏）优先级最高，若传入则直接使用并加盾牌。
+      - 有护甲时用 compute_ac（已有函数）。
+      - 无护甲时：若有无甲防御职业则用职业公式，否则 10+敏。
+      - 野蛮人无甲防御：10+敏+体（不含盾牌），可加盾牌。
+      - 武僧无甲防御：10+敏+感（不含盾牌），不可加盾牌。
+    """
+    shield_bonus = 2 if has_shield else 0
+
+    # 法术 AC 覆盖（最高优先级）
+    if spell_ac_override is not None:
+        return spell_ac_override + shield_bonus
+
+    # 有护甲
+    if equipped_armor and equipped_armor in ARMOR:
+        entry = ARMOR[equipped_armor]
+        return compute_ac(entry, dex_mod, has_shield)
+
+    # 无护甲 + 无甲防御职业
+    if unarmored_class == "野蛮人":
+        return 10 + dex_mod + con_mod + shield_bonus
+    if unarmored_class == "武僧":
+        # 武僧无甲防御不可叠盾牌（规则原文：不穿甲且不持盾时才生效）
+        return 10 + dex_mod + wis_mod
+
+    # 无护甲 + 无特殊职业
+    return 10 + dex_mod + shield_bonus
+
+
 def armor_str_penalty(armor_entry: dict, str_score: int, base_speed: int) -> int:
     """力量低于护甲要求时移速 -10 尺。
 
@@ -117,6 +172,59 @@ def armor_doff_time(armor_name: str) -> float:
     规则: R-ITM-007 穿脱护甲时间  出处: 装备/护甲.txt
     """
     return get_armor_entry(armor_name)["doff_time"]
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 护甲熟练（R-ITM-008）
+# 规则: 穿着不熟练的护甲 → 攻击检定/属性检定/豁免检定劣势，且不能施法
+# 出处: topics/玩家手册2024/装备/护甲.htm
+# ──────────────────────────────────────────────────────────────────────────
+
+ARMOR_PROFICIENCY: dict[str, set[str]] = {
+    "战士": {"轻", "中", "重", "盾"},
+    "圣武士": {"轻", "中", "重", "盾"},
+    "游侠": {"轻", "中", "盾"},
+    "野蛮人": {"轻", "中", "盾"},
+    "牧师": {"轻", "中", "盾"},
+    "德鲁伊": {"轻", "中", "盾"},
+    "游荡者": {"轻"},
+    "吟游诗人": {"轻"},
+    "魔契师": {"轻"},
+    "法师": set(),
+    "术士": set(),
+    "武僧": set(),
+}
+
+
+def is_armor_proficient(char_class: str, armor_name: str) -> bool:
+    """判断职业是否熟练该护甲。
+
+    规则: R-ITM-008 护甲熟练
+    出处: topics/玩家手册2024/装备/护甲.htm
+    """
+    prof_set = ARMOR_PROFICIENCY.get(char_class, set())
+    if not prof_set:
+        return False
+    if armor_name not in ARMOR:
+        return False
+    cat = ARMOR[armor_name]["cat"]
+    return cat in prof_set
+
+
+def armor_nonproficiency_penalty() -> dict:
+    """不熟练护甲的惩罚效果。
+
+    规则: R-ITM-008 护甲熟练惩罚
+          穿着不熟练的护甲：攻击/属性检定/豁免检定均具劣势，且不能施法。
+    出处: topics/玩家手册2024/装备/护甲.htm
+    返回: 惩罚效果字典（由调用方应用到检定链路）
+    """
+    return {
+        "attack_disadvantage": True,
+        "check_disadvantage": True,
+        "save_disadvantage": True,
+        "cannot_cast": True,
+    }
 
 
 # ──────────────────────────────────────────────────────────────────────────

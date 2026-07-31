@@ -29,6 +29,7 @@ class Combatant:
     cid: str                          # 唯一标识（关联角色卡/怪物）
     name: str
     dex_mod: int = 0                  # 先攻计算用敏捷调整值
+    initiative_bonus: int = 0            # 先攻额外加值（专长/特性，如警觉+PB）
     initiative: int = 0
     side: str = "player"              # player / enemy
     is_player: bool = True
@@ -38,6 +39,7 @@ class Combatant:
     hp: int = 0
     hp_max: int = 0
     dead: bool = False
+    fled: bool = False                # 已逃离战场（士气崩溃/脱战），不再有回合
     # —— 怪物攻击档案（供 REST 自动结算怪回合用；玩家参战者不用）——
     attack_bonus: int = 0          # 命中加值（含属性+熟练）
     damage_dice: str = ""          # 伤害骰表达式，如 "1d6+2"
@@ -71,6 +73,14 @@ class Combatant:
     ready_trigger: str | None = None  # R-CMB-014 准备动作触发条件
     ready_action_name: str | None = None  # 准备的动作名
     help_advantage_target: str | None = None  # 协助：下次对该目标攻击有优势
+
+    # ── 传奇动作 / 传奇抗性 / 充能（R-LEG-001~003）──
+    legendary_actions_max: int = 0
+    legendary_actions_remaining: int = 0
+    legendary_resistances_max: int = 0
+    legendary_resistances_remaining: int = 0
+    recharge_min: int = 0              # 0=无充能; 5="充能5-6"; 6="充能6"
+    recharged: bool = True             # 当前是否已充能
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -115,7 +125,7 @@ def roll_initiative(combatants: list[Combatant]) -> list[Combatant]:
         adv = c.conditions.has("隐形")
         dis = c.surprised or c.conditions.is_incapacitated()
         r = dice.roll_d20(advantage=adv, disadvantage=dis)  # R-GLS-009 + 状态
-        c.initiative = r.used + c.dex_mod
+        c.initiative = r.used + c.dex_mod + c.initiative_bonus
         if c.group_id is not None and not c.is_player:
             rolled_groups.add(c.group_id)
             group_initiative[c.group_id] = c.initiative
@@ -184,23 +194,57 @@ def _reset_turn_economy(c: Combatant) -> None:
     c.dodge_active = False                            # R-CMB-008 至下回合开始
 
 
+def _cannot_act(c: Combatant) -> bool:
+    """死亡或已逃离战场者没有回合；0HP 昏迷玩家仍保留回合（回合开始掷死亡豁免）。
+
+    规则: R-DMG-017 死亡豁免触发时点=以0HP开始回合
+    出处: topics/玩家手册2024/进行游戏/生命值降至0点.htm
+    """
+    return c.dead or c.fled
+
+
 def advance_turn(combat: Combat) -> Combatant | None:
-    """推进到下一参战者回合：重置该回合动作经济；轮次结束则进入下一轮（+6秒）。
+    """推进到下一参战者回合：跳过死亡/已逃跑者；重置该回合动作经济；
+    轮次结束则进入下一轮（+6秒）。
 
     规则: R-CMB-001 一轮约6秒 / R-CMB-004 回合开始
     出处: topics/玩家手册2024/进行游戏/战斗流程.htm
+    说明: 全员丧失行动能力时置 active=False 并返回 None，
+          避免回合停在死者身上造成推进死锁（多人战斗 D5 修复）。
     """
-    if not combat.active:
+    if not combat.active or not combat.initiative_order:
         return None
-    combat.current_index += 1
-    if combat.current_index >= len(combat.initiative_order):     # 一轮结束
-        combat.current_index = 0
-        combat.round += 1
-        combat.seconds_elapsed += 6                               # R-CMB-001
-    cur = current_combatant(combat)
-    if cur is not None:
-        _reset_turn_economy(cur)
-    return cur
+    n = len(combat.initiative_order)
+    for _ in range(n + 1):                                        # guard: 至多绕一圈
+        combat.current_index += 1
+        if combat.current_index >= n:                             # 一轮结束
+            combat.current_index = 0
+            combat.round += 1
+            combat.seconds_elapsed += 6                           # R-CMB-001
+        cur = current_combatant(combat)
+        if cur is not None and not _cannot_act(cur):
+            _reset_turn_economy(cur)
+            return cur
+    combat.active = False                                         # 全员丧失行动能力
+    return None
+
+
+def begin_turn(combat: Combat, cur: Combatant) -> dict:
+    """回合开始钩子：产出待上层处理的事件（纯函数，不做 IO）。
+
+    规则: R-CMB-004 回合开始 / R-DMG-017 以0HP开始回合掷死亡豁免
+    出处: topics/玩家手册2024/进行游戏/战斗流程.htm ; 生命值降至0点.htm
+    返回: {"combatant": 名字, "needs_death_save": bool, "auto_end": bool}
+      - needs_death_save: 0HP 未死玩家 → 上层须为其掷死亡豁免
+      - auto_end: 昏迷/失能者无事可做，上层应直接结束其回合
+    """
+    ev = {"combatant": cur.name, "needs_death_save": False, "auto_end": False}
+    if cur.is_player and cur.hp <= 0 and cur.hp_max > 0 and not cur.dead:
+        ev["needs_death_save"] = True
+        ev["auto_end"] = True             # 昏迷=失能（R-GLS-058）
+    if cur.conditions.is_incapacitated():
+        ev["auto_end"] = True             # R-GLS-050 失能不能动作
+    return ev
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -505,6 +549,47 @@ def drop_prone(c: Combatant) -> bool:
     return c.speed > 0
 
 
+# ──────────────────────────────────────────────────────────────────────
+# 挤入空间（Squeezing）
+# ──────────────────────────────────────────────────────────────────────
+
+def move_squeeze(c: Combatant, distance_ft: int, difficult: bool = False) -> int:
+    """挤入比自身小一级的空间：移动力消耗×2（视为困难地形）。
+
+    规则: 术语汇编/移动与速度.htm「挤入」
+          生物可挤入比自身小一级的空间：移动力消耗×2（困难地形）。
+    出处: topics/玩家手册2024/术语汇编/移动与速度.htm
+    说明: 挤入移动始终视为困难地形，即使实际地形不困难。
+    """
+    # 挤入强制困难地形：每尺消耗2尺移动力（叠加困难地形则每尺3尺）
+    per_ft = 3 if difficult else 2
+    cost = distance_ft * per_ft
+    if cost > c.speed_remaining:
+        actual = dice.round_down(c.speed_remaining / per_ft)
+        c.speed_remaining -= actual * per_ft
+        return max(0, actual)
+    c.speed_remaining -= cost
+    return distance_ft
+
+
+def squeeze_modifiers(is_squeezing: bool) -> dict:
+    """挤入状态的攻防修饰。
+
+    规则: 术语汇编/移动与速度.htm「挤入」
+          挤入期间：攻击劣势、被攻击优势、敏捷豁免劣势。
+    出处: topics/玩家手册2024/术语汇编/移动与速度.htm
+    返回: 效果字典（由调用方应用到攻击/豁免检定链路）
+    """
+    if not is_squeezing:
+        return {"attack_disadvantage": False, "attacked_advantage": False,
+                "dex_save_disadvantage": False}
+    return {
+        "attack_disadvantage": True,
+        "attacked_advantage": True,
+        "dex_save_disadvantage": True,
+    }
+
+
 def stand_from_prone(c: Combatant) -> bool:
     """从倒地状态起立：消耗（条件减速后的）当前速度一半（向下取整），并移除倒地状态。
 
@@ -556,160 +641,262 @@ def best_cover(covers: list[int]) -> int:
     return max(covers) if covers else COVER_NONE
 
 
-# ──────────────────────────────────────────────────────────────────────────
-# 擒抱 / 推撞（Grapple / Shove）— 对抗检定（Contested Check）
-# ──────────────────────────────────────────────────────────────────────────
+def dodge_benefits_active(c: Combatant) -> bool:
+    """回避增益是否生效：失能或速度为0时失去回避增益。
 
-def _contested_check(
-    atk_mod: int, atk_prof: int, atk_proficient: bool,
-    def_mod: int, def_prof: int, def_proficient: bool,
-) -> dict:
-    """对抗检定内部实现：双方各掷 d20 + 调整值，攻击方总值 >= 防守方总值则成功。
-
-    2024 PHB 规则: 对抗检定中双方各做属性检定，攻击方结果 >= 防守方结果则攻击方胜。
-    天然 20 / 天然 1 规则同样适用（由 ability_check 内部处理）。
+    规则: R-CMB-008 动作:回避 — lose_if incapacitated OR speed==0
+    出处: topics/玩家手册2024/进行游戏/动作.htm
+    说明: 增益含「对你的攻击具劣势」与「你的敏捷豁免具优势」，
+          调用方（攻击/豁免链路）应用本函数而非直读 dodge_active。
     """
-    # 攻击方先掷：DC 暂设为 0（对抗检定无固定 DC，后续比较双方总值）
-    atk_result = check.ability_check(
-        mod=atk_mod, prof=atk_prof, proficient=atk_proficient, dc=0)
-    # 防守方掷骰：DC 设为攻击方总值，则 success 表示防守方 >= 攻击方（即防守方赢）
-    def_result = check.ability_check(
-        mod=def_mod, prof=def_prof, proficient=def_proficient, dc=atk_result.total)
-    # 防守方 success=True 意味着 def_total >= atk_total → 攻击方失败
-    atk_wins = not def_result.success
-    return {
-        "attacker_total": atk_result.total,
-        "defender_total": def_result.total,
-        "attacker_d20": atk_result.d20,
-        "defender_d20": def_result.d20,
-        "attacker_wins": atk_wins,
-    }
+    if not c.dodge_active:
+        return False
+    if c.conditions.is_incapacitated():
+        return False
+    return conditions.speed_after_conditions(c.speed, c.conditions) > 0
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 擒抱 / 推撞（Grapple / Shove）— 2024 徒手打击豁免机制
+# ──────────────────────────────────────────────────────────────────────────
+
+# 体型序列（用于「至多比你大一级」判定，复用 _SIZE_FOOTPRINT 的键序）
+_SIZE_ORDER = list(_SIZE_FOOTPRINT.keys())
+
+
+def unarmed_strike_dc(str_mod: int, prof: int) -> int:
+    """徒手打击（擒抱/推撞）的豁免 DC 与逃脱 DC = 8 + 力量调整值 + 熟练加值。
+
+    规则: 术语汇编/武器与徒手打击.htm「徒手打击」
+          「此次豁免的DC与任何逃脱行为的DC均等于8+你的力量调整值+你的熟练加值」
+    出处: topics/玩家手册2024/术语汇编/武器与徒手打击.htm
+    """
+    return 8 + str_mod + prof
+
+
+def size_within_one_larger(attacker_size: str, target_size: str) -> bool:
+    """目标体型是否至多比攻击者大一级（擒抱/推撞前置条件）。
+
+    规则: 术语汇编/武器与徒手打击.htm — 你只能擒抱/推撞体型至多比你
+          大一级的生物。
+    出处: topics/玩家手册2024/术语汇编/武器与徒手打击.htm
+    说明: 未知体型名不做限制（返回 True），由调用方保证合法输入。
+    """
+    try:
+        i_a = _SIZE_ORDER.index(attacker_size.lower())
+        i_t = _SIZE_ORDER.index(target_size.lower())
+    except ValueError:
+        return True
+    return i_t - i_a <= 1
+
+
+def escape_grapple(
+    escape_dc: int,
+    *,
+    check_choice: str = "athletics",
+    mod: int = 0,
+    prof: int = 0,
+    proficient: bool = False,
+    advantage: bool = False,
+    disadvantage: bool = False,
+) -> dict:
+    """逃脱擒抱：受擒生物用其动作进行力量（运动）或敏捷（特技）检定，
+    对抗逃脱 DC；成功则受擒状态结束。
+
+    规则: 术语汇编/武器与徒手打击.htm「逃脱擒抱Escaping a Grapple」
+          受擒生物可用其动作进行一次力量（运动）或敏捷（特技）检定，
+          对抗此次擒抱的逃脱DC，检定成功时受擒状态结束。另：擒抱者
+          陷入失能或双方距离超出擒抱范围时也提前结束（由调用方处理）。
+    出处: topics/玩家手册2024/术语汇编/武器与徒手打击.htm
+
+    参数:
+      check_choice: "athletics"=力量(运动) / "acrobatics"=敏捷(特技)（由逃脱者选择）
+      mod/prof/proficient: 逃脱者对应属性调整值、熟练加值与技能熟练
+
+    返回:
+      {"success": bool, "escaped": bool, "dc": int, "check_choice": str,
+       "check_d20": int, "check_total": int}
+    """
+    r = check.ability_check(mod=mod, prof=prof, proficient=proficient,
+                            dc=escape_dc, advantage=advantage,
+                            disadvantage=disadvantage)
+    return {"success": r.success, "escaped": r.success, "dc": escape_dc,
+            "check_choice": check_choice, "check_d20": r.d20,
+            "check_total": r.total}
 
 
 def attempt_grapple(
     attacker_str_mod: int,
     attacker_prof: int,
-    attacker_athletics_prof: bool,
-    target_choice: str = "strength",
-    target_str_mod: int = 0,
-    target_dex_mod: int = 0,
+    *,
+    save_choice: str = "strength",
+    target_save_mod: int = 0,
+    target_save_prof: bool = False,
     target_prof: int = 0,
-    target_athletics_prof: bool = False,
-    target_acrobatics_prof: bool = False,
+    attacker_size: str = "medium",
+    target_size: str = "medium",
+    has_free_hand: bool = True,
+    save_advantage: bool = False,
+    save_disadvantage: bool = False,
+    target_auto_fail: bool = False,
 ) -> dict:
-    """尝试擒抱：对抗检定——攻击方力量(运动) vs 目标选择的力量(运动)或敏捷(特技)。
+    """尝试擒抱（2024 徒手打击选项）：目标进行力量或敏捷豁免（由目标选择），
+    对抗 DC = 8 + 攻击者力量调整值 + 熟练加值；豁免失败则陷入受擒。
 
-    规则: 术语汇编/武器与徒手打击.txt「擒抱」
+    规则: 术语汇编/武器与徒手打击.htm「擒抱Grapple」
+          - 目标必须通过一次力量或敏捷豁免检定（由目标选择），否则陷入受擒。
+          - 豁免 DC 与逃脱 DC 均 = 8 + 力量调整值 + 熟练加值。
+          - 只能擒抱体型至多比你大一级的生物，且需要一只空着的手。
     出处: topics/玩家手册2024/术语汇编/武器与徒手打击.htm
-          topics/玩家手册/战斗/发起攻击.htm（行294-331）
-    说明:
-      - 攻击方: 力量(运动)检定 = d20 + STR调整值 + 运动熟练加值（如果熟练）
-      - 防守方: 选择力量(运动)或敏捷(特技)检定
-      - 攻击方总值 >= 防守方总值 → 擒抱成功，目标陷入受擒
-      - target_choice: "strength"=力量(运动), "dexterity"=敏捷(特技)
+    说明: 2014 版的对抗检定机制已废弃，2024 版改为目标豁免。
+
+    参数:
+      save_choice: 目标选择的豁免属性 "strength"/"dexterity"（由目标选择）
+      target_save_mod: 目标该属性的调整值
+      target_save_prof/target_prof: 目标豁免熟练与熟练加值
+      save_advantage/save_disadvantage: 目标豁免的优劣势（如束缚→敏豁
+          劣势，见 conditions.save_disadvantage）
+      target_auto_fail: 目标因状态自动失败力/敏豁免（麻痹/震慑等，
+          调用方可用 conditions.should_waive_save 计算）
 
     返回:
-      {"success": bool, "grappled": bool,
-       "attacker_total": int, "defender_total": int,
-       "attacker_d20": int, "defender_d20": int,
-       "target_choice": str}
+      {"success": bool, "grappled": bool, "dc": int, "escape_dc": int,
+       "save_choice": str, "save_d20": int, "save_total": int,
+       "save_success": bool, "reason": str|None}
     """
-    # 防守方根据选择决定属性调整值和技能熟练
-    if target_choice == "dexterity":
-        def_mod = target_dex_mod
-        def_skill_prof = target_acrobatics_prof
-        skill_name = "acrobatics"
-    else:
-        def_mod = target_str_mod
-        def_skill_prof = target_athletics_prof
-        skill_name = "athletics"
-
-    result = _contested_check(
-        atk_mod=attacker_str_mod, atk_prof=attacker_prof,
-        atk_proficient=attacker_athletics_prof,
-        def_mod=def_mod, def_prof=target_prof,
-        def_proficient=def_skill_prof,
-    )
-    return {
-        "success": result["attacker_wins"],
-        "grappled": result["attacker_wins"],
-        "attacker_total": result["attacker_total"],
-        "defender_total": result["defender_total"],
-        "attacker_d20": result["attacker_d20"],
-        "defender_d20": result["defender_d20"],
-        "target_choice": target_choice,
-        "target_skill": skill_name,
-    }
+    dc = unarmed_strike_dc(attacker_str_mod, attacker_prof)
+    # 前置条件：需要一只空着的手
+    if not has_free_hand:
+        return {"success": False, "grappled": False, "dc": dc, "escape_dc": dc,
+                "save_choice": save_choice, "save_d20": 0, "save_total": 0,
+                "save_success": True, "reason": "no_free_hand"}
+    # 前置条件：目标体型至多比你大一级
+    if not size_within_one_larger(attacker_size, target_size):
+        return {"success": False, "grappled": False, "dc": dc, "escape_dc": dc,
+                "save_choice": save_choice, "save_d20": 0, "save_total": 0,
+                "save_success": True, "reason": "target_too_large"}
+    # 目标豁免；自动失败（麻痹等）用 waive 直接判败（R-CHK-011）
+    sv = check.saving_throw(mod=target_save_mod, prof=target_prof,
+                            proficient=target_save_prof, dc=dc,
+                            advantage=save_advantage,
+                            disadvantage=save_disadvantage,
+                            waive=target_auto_fail)
+    grappled = not sv.success
+    return {"success": grappled, "grappled": grappled, "dc": dc, "escape_dc": dc,
+            "save_choice": save_choice, "save_d20": sv.d20,
+            "save_total": sv.total, "save_success": sv.success, "reason": None}
 
 
 def attempt_shove(
     attacker_str_mod: int,
     attacker_prof: int,
-    attacker_athletics_prof: bool,
-    target_choice: str = "strength",
-    target_str_mod: int = 0,
-    target_dex_mod: int = 0,
+    *,
+    save_choice: str = "strength",
+    target_save_mod: int = 0,
+    target_save_prof: bool = False,
     target_prof: int = 0,
-    target_athletics_prof: bool = False,
-    target_acrobatics_prof: bool = False,
+    attacker_size: str = "medium",
+    target_size: str = "medium",
+    shove_type: str = "prone",
+    save_advantage: bool = False,
+    save_disadvantage: bool = False,
+    target_auto_fail: bool = False,
 ) -> dict:
-    """尝试推撞：对抗检定——攻击方力量(运动) vs 目标选择的力量(运动)或敏捷(特技)。
+    """尝试推撞（2024 徒手打击选项）：目标进行力量或敏捷豁免（由目标选择），
+    对抗 DC = 8 + 攻击者力量调整值 + 熟练加值；豁免失败则被推开5尺或倒地。
 
-    规则: 术语汇编/武器与徒手打击.txt「推撞」
+    规则: 术语汇编/武器与徒手打击.htm「推撞Shove」
+          - 目标必须通过一次力量或敏捷豁免检定（由目标选择），
+            否则将被你推开5尺距离或陷入倒地状态（由你选择）。
+          - 豁免 DC = 8 + 力量调整值 + 熟练加值。
+          - 只能推撞体型至多比你大一级的生物。
     出处: topics/玩家手册2024/术语汇编/武器与徒手打击.htm
-          topics/玩家手册/战斗/发起攻击.htm（行294-331）
-    说明:
-      - 攻击方: 力量(运动)检定 = d20 + STR调整值 + 运动熟练加值（如果熟练）
-      - 防守方: 选择力量(运动)或敏捷(特技)检定
-      - 攻击方总值 >= 防守方总值 → 推撞成功，可推5尺或使目标倒地
-      - target_choice: "strength"=力量(运动), "dexterity"=敏捷(特技)
+    说明: 2014 版的对抗检定机制已废弃，2024 版改为目标豁免。
+
+    参数: 同 attempt_grapple（推撞无需空手）；
+      shove_type: "push"=推离5尺 / "prone"=击倒（由攻击者选择）。
 
     返回:
-      {"success": bool, "shoved": bool,
-       "attacker_total": int, "defender_total": int,
-       "attacker_d20": int, "defender_d20": int,
-       "target_choice": str}
+      {"success": bool, "shoved": bool, "shove_type": str, "dc": int,
+       "save_choice": str, "save_d20": int, "save_total": int,
+       "save_success": bool, "reason": str|None}
     """
-    if target_choice == "dexterity":
-        def_mod = target_dex_mod
-        def_skill_prof = target_acrobatics_prof
-        skill_name = "acrobatics"
-    else:
-        def_mod = target_str_mod
-        def_skill_prof = target_athletics_prof
-        skill_name = "athletics"
-
-    result = _contested_check(
-        atk_mod=attacker_str_mod, atk_prof=attacker_prof,
-        atk_proficient=attacker_athletics_prof,
-        def_mod=def_mod, def_prof=target_prof,
-        def_proficient=def_skill_prof,
-    )
-    return {
-        "success": result["attacker_wins"],
-        "shoved": result["attacker_wins"],
-        "attacker_total": result["attacker_total"],
-        "defender_total": result["defender_total"],
-        "attacker_d20": result["attacker_d20"],
-        "defender_d20": result["defender_d20"],
-        "target_choice": target_choice,
-        "target_skill": skill_name,
-    }
+    dc = unarmed_strike_dc(attacker_str_mod, attacker_prof)
+    # 前置条件：目标体型至多比你大一级
+    if not size_within_one_larger(attacker_size, target_size):
+        return {"success": False, "shoved": False, "shove_type": shove_type,
+                "dc": dc, "save_choice": save_choice, "save_d20": 0,
+                "save_total": 0, "save_success": True, "reason": "target_too_large"}
+    sv = check.saving_throw(mod=target_save_mod, prof=target_prof,
+                            proficient=target_save_prof, dc=dc,
+                            advantage=save_advantage,
+                            disadvantage=save_disadvantage,
+                            waive=target_auto_fail)
+    shoved = not sv.success
+    return {"success": shoved, "shoved": shoved, "shove_type": shove_type,
+            "dc": dc, "save_choice": save_choice, "save_d20": sv.d20,
+            "save_total": sv.total, "save_success": sv.success, "reason": None}
 
 
 # ──────────────────────────────────────────────────────────────────────────
 # 击晕生物（Knockout）
 # ──────────────────────────────────────────────────────────────────────────
 
-def knockout_damage(target_hp: int, target_max_hp: int, dmg: int) -> dict:
+def knockout_damage(target_hp: int, target_max_hp: int, dmg: int,
+                    *, is_melee: bool = True) -> dict:
     """近战将生物HP降至0时可改为降至1HP，陷入昏迷并开始短休。
 
-    规则: 术语汇编/武器与徒手打击.txt「击晕」
+    规则: 术语汇编/武器与徒手打击.htm「击晕生物」
+          - 仅限近战攻击（is_melee=False 时不可击晕）。
+          - 该生物保持昏迷，直到其恢复任何生命值或某人用动作施予救治
+            （DC10 感知(医药)检定）。
     出处: topics/玩家手册2024/术语汇编/武器与徒手打击.htm
+    返回: knocked_out 时附 wake_on（唤醒条件）供上层处理后续状态。
     """
     if target_hp - dmg <= 0:
-        return {"knocked_out": True, "new_hp": 1, "condition": "昏迷"}
+        if not is_melee:
+            return {"knocked_out": False, "new_hp": max(0, target_hp - dmg),
+                    "reason": "not_melee"}
+        return {"knocked_out": True, "new_hp": 1, "condition": "昏迷",
+                "starts_short_rest": True,
+                "wake_on": ["恢复任何生命值", "动作救治（DC10感知(医药)检定）"]}
     return {"knocked_out": False, "new_hp": target_hp - dmg}
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 传奇动作 / 传奇抗性 / 充能 (R-LEG-001~003)
+# ──────────────────────────────────────────────────────────────────────────
+
+def use_legendary_action(c: Combatant, cost: int = 1) -> bool:
+    """消耗传奇动作。规则: 怪物图鉴「传奇动作」。出处: 怪物图鉴2025/生物数据卡.htm"""
+    if c.legendary_actions_remaining >= cost:
+        c.legendary_actions_remaining -= cost
+        return True
+    return False
+
+
+def use_legendary_resistance(c: Combatant) -> bool:
+    """消耗传奇抗性：豁免失败时改为成功。规则: 怪物图鉴「传奇抗性」。"""
+    if c.legendary_resistances_remaining > 0:
+        c.legendary_resistances_remaining -= 1
+        return True
+    return False
+
+
+def reset_legendary_actions(c: Combatant) -> None:
+    """每回合开始恢复全部传奇动作。规则: 怪物图鉴「传奇动作」。"""
+    c.legendary_actions_remaining = c.legendary_actions_max
+
+
+def roll_recharge(c: Combatant) -> bool:
+    """回合开始掷d6充能检查。规则: 怪物图鉴「充能X-6」— ≥X则充能恢复。"""
+    if c.recharge_min <= 0 or c.recharged:
+        return False
+    roll = dice.roll_die(6)
+    if roll >= c.recharge_min:
+        c.recharged = True
+        return True
+    return False
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -729,8 +916,8 @@ def check_combat_end(combat: Combat) -> str:
     """
     def _down(c: Combatant) -> bool:
         if c.is_player:
-            return c.dead or c.conditions.is_dead_from_exhaustion()
-        return c.dead or c.hp <= 0 or c.conditions.is_dead_from_exhaustion()
+            return c.dead or c.fled or c.conditions.is_dead_from_exhaustion()
+        return c.dead or c.fled or c.hp <= 0 or c.conditions.is_dead_from_exhaustion()
 
     players_alive = [c for c in combat.participants if c.side == "player" and not _down(c)]
     enemies_alive = [c for c in combat.participants if c.side == "enemy" and not _down(c)]
@@ -756,15 +943,19 @@ def concentration_save_dc(damage_taken: int) -> int:
     return concentration.concentration_save_dc(damage_taken)
 
 
-def concentration_save(con_mod: int, con_prof: bool, prof: int, damage_taken: int) -> bool:
+def concentration_save(con_mod: int, con_prof: bool, prof: int, damage_taken: int,
+                       circ: int = 0) -> bool:
     """专注者受伤时进行体质豁免维持专注。
 
     规则: R-GLS-013 专注维持检定（DC=max(10,dmg/2) 上限30）
     出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
+    参数: circ — 临时 d20 修正（如力竭惩罚 -conditions.d20_penalty(state)，
+          R-GLS-047 力竭适用于含豁免在内的所有 d20 检定）。
     返回: 是否维持专注（True=维持，False=失去）。
     """
     dc = concentration.concentration_save_dc(damage_taken)
-    res = check.saving_throw(mod=con_mod, prof=prof, proficient=con_prof, dc=dc)
+    res = check.saving_throw(mod=con_mod, prof=prof, proficient=con_prof, dc=dc,
+                             circ=circ)
     return res.success
 
 
@@ -890,6 +1081,41 @@ def _self_test() -> None:
     roll_initiative([g1, g2])
     assert g1.initiative == g2.initiative == 12       # 同组共用
     dice.roll_d20 = orig
+
+    # ── 擒抱/推撞（2024 徒手打击豁免机制）──
+    assert unarmed_strike_dc(3, 2) == 13              # 8+3+2
+    assert size_within_one_larger("medium", "large") is True
+    assert size_within_one_larger("medium", "huge") is False
+    # 目标豁免失败 → 受擒（固定 d20=5：5+0 < DC13）
+    dice.roll_d20 = lambda advantage=False, disadvantage=False: _R(5)
+    g = attempt_grapple(3, 2, target_save_mod=0)
+    assert g["grappled"] and g["dc"] == 13 and g["escape_dc"] == 13
+    # 目标豁免成功 → 未受擒（固定 d20=15：15 ≥ 13）
+    dice.roll_d20 = lambda advantage=False, disadvantage=False: _R(15)
+    g = attempt_grapple(3, 2, target_save_mod=0)
+    assert not g["grappled"] and g["save_success"]
+    # 无空手/体型过大 → 直接失败
+    assert attempt_grapple(3, 2, has_free_hand=False)["reason"] == "no_free_hand"
+    assert attempt_grapple(3, 2, attacker_size="small",
+                           target_size="huge")["reason"] == "target_too_large"
+    # 目标麻痹自动失败（waive）→ 必受擒
+    g = attempt_grapple(3, 2, target_auto_fail=True)
+    assert g["grappled"] is True
+    # 推撞：豁免失败 → 倒地/推离
+    dice.roll_d20 = lambda advantage=False, disadvantage=False: _R(5)
+    s = attempt_shove(3, 2, shove_type="prone")
+    assert s["shoved"] and s["shove_type"] == "prone" and s["dc"] == 13
+    # 逃脱擒抱：检定 ≥ 逃脱DC → 成功
+    dice.roll_d20 = lambda advantage=False, disadvantage=False: _R(15)
+    e = escape_grapple(13, mod=2, prof=2, proficient=True)
+    assert e["escaped"] is True                        # 15+2+2=19 ≥ 13
+    dice.roll_d20 = orig
+
+    # ── 击晕：仅限近战；降至1HP+昏迷 ──
+    ko = knockout_damage(5, 20, 8)
+    assert ko["knocked_out"] and ko["new_hp"] == 1 and ko["condition"] == "昏迷"
+    ko2 = knockout_damage(5, 20, 8, is_melee=False)
+    assert not ko2["knocked_out"] and ko2["reason"] == "not_melee"
 
     print("[combat] 自检通过 ✓")
 

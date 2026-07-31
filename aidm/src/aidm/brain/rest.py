@@ -207,9 +207,9 @@ def short_rest(
         - 必须具有至少1点生命值才能开始短休
 
     收益:
-        - 消耗生命骰恢复HP：投掷任意枚生命骰，加上等于投掷次数倍的体质调整值。
-          每次投掷后可决定是否继续消耗（此处由 hit_dice_to_spend 参数一次性指定）。
-          恢复量至少为1（每枚骰子的恢复不低于1）。
+        - 消耗生命骰恢复HP：每消耗一枚生命骰，掷该骰并加上体质调整值，
+          恢复等同总值的HP（总恢复量至少 1）。每次投掷后可决定
+          是否继续消耗（此处由 hit_dice_to_spend 参数一次性指定）。
         - 特殊特性恢复：某些职业特性在短休时恢复使用次数。
 
     参数:
@@ -251,23 +251,21 @@ def short_rest(
 
     # 消耗生命骰恢复HP
     # 规则: R-GLS-014  出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
-    #   投掷任意枚生命骰，加上等于投掷次数倍的体质调整值。
-    #   恢复量至少为1。
+    #   每消耗一枚生命骰：掷该骰并加上体质调整值；
+    #   原文「你恢复的生命值等于所掷生命值骰的骰点总数（至少1）」
+    #   —— 总恢复量下限为 1（负体质也至少恢复 1 HP）。
     hp_restored = 0
     hd_rolls: list[int] = []
     con_mod = _get(character, "con_mod", 0)
     hit_die_faces = _get(character, "hit_die_faces", 8)  # 生命骰面数
 
     if hit_dice_to_spend > 0:
-        total_roll = 0
         for _ in range(hit_dice_to_spend):
             roll = dice.roll_die(hit_die_faces)
             hd_rolls.append(roll)
-            total_roll += roll
-        # 恢复量 = 骰点总和 + 体质调整值 × 投掷次数，至少1
-        hp_restored = total_roll + con_mod * hit_dice_to_spend
-        if hp_restored < 1:
-            hp_restored = 1
+            hp_restored += roll + con_mod
+        # 总恢复量至少 1（2024 规则原文「至少1」）
+        hp_restored = max(1, hp_restored)
 
     # 恢复职业特性（短休恢复的特性）
     # 规则: R-ADD-017 短休特性恢复钩子
@@ -360,6 +358,19 @@ def long_rest(character: Any) -> dict:
     if current_hp < 1:
         errors.append(f"长休需要至少1点生命值，当前HP={current_hp}")
         return _fail_long(errors)
+    
+    # 冷却检查：完成后须等待至少16小时才能再次长休
+    # 规则: R-GLS-015  出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
+    last_long_rest_time = _get(character, "last_long_rest_time", None)
+    current_time = _get(character, "world_time_hours", None)
+    if last_long_rest_time is not None and current_time is not None:
+        elapsed = current_time - last_long_rest_time
+        if elapsed < LONG_REST_COOLDOWN_HOURS:
+            remaining = LONG_REST_COOLDOWN_HOURS - elapsed
+            errors.append(f"距上次长休不足16小时（已过{elapsed:.1f}小时），不可再次长休")
+            result = _fail_long(errors)
+            result["next_long_rest_available_in"] = remaining
+            return result
 
     # 记录恢复前的状态
     max_hp = _get(character, "max_hp", 0)
@@ -740,6 +751,7 @@ class MockCharacter:
     hit_die_faces: int = 10
     exhaustion: int = 0
     char_class: str = "战士"
+    level: int = 3                     # 职业等级（诗人激励等按等级判定的特性用）
     base_max_hp: int = 20
     reduced_ability_scores: bool = False
     spell_slots: dict = field(default_factory=lambda: {1: 2})
@@ -780,6 +792,20 @@ def _self_test() -> None:
     # 恢复量 = 2d8 + CON×2 ∈ [8, 22]
     assert 8 <= r["hp_restored"] <= 22
     assert len(r["hd_rolls"]) == 2
+
+    # 短休：负体质逐骰保底 0（2024 规则：每枚骰最低 0，非总和保底 1）
+    # 固定骰点=1，con_mod=-3 → 每枚 max(0, 1-3)=0，共 0
+    _orig_roll_die = dice.roll_die
+    dice.roll_die = lambda faces: 1
+    c = MockCharacter(hp=5, max_hp=20, con_mod=-3, hit_die_faces=6)
+    r = short_rest(c, hit_dice_to_spend=2)
+    assert r["success"] is True and r["hp_restored"] == 0, r
+    # 骰点=6，con_mod=-3 → 每枚 3，共 6
+    dice.roll_die = lambda faces: 6
+    c = MockCharacter(hp=5, max_hp=20, con_mod=-3, hit_die_faces=6)
+    r = short_rest(c, hit_dice_to_spend=2)
+    assert r["hp_restored"] == 6, r
+    dice.roll_die = _orig_roll_die
 
     # 短休：HP不足1点
     c = MockCharacter(hp=0, max_hp=20)
@@ -846,7 +872,7 @@ def _self_test() -> None:
     # 短休：默认特性恢复全部使用次数（"all"）
     c = MockCharacter(hp=10, max_hp=20, char_class="战士")
     r = short_rest(c, hit_dice_to_spend=0)
-    assert r["feature_recharge_amounts"]["行动涌动"] == "all"
+    assert r["feature_recharge_amounts"]["动作如潮"] == "all"
 
     # === 长休测试 ===
 
@@ -911,11 +937,11 @@ def _self_test() -> None:
     assert r["success"] is True
     assert "狂暴" in r["features_recharged"]
 
-    # 长休：恢复职业特性（战士行动涌动）
+    # 长休：恢复职业特性（战士动作如潮）
     c = MockCharacter(hp=5, max_hp=20, char_class="战士")
     r = long_rest(c)
     assert r["success"] is True
-    assert "行动涌动" in r["features_recharged"]
+    assert "动作如潮" in r["features_recharged"]
 
     # 长休：清空临时生命值（长休后临时HP消失）
     # 规则: 临时生命值持续至被消耗或完成一次长休

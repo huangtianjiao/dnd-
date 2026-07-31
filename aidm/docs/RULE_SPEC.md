@@ -3992,6 +3992,13 @@ aidm/engine/concentration.py :: ConcentrationSlot + ConcentrationManager  # 新�
 aidm/engine/concentration.py :: concentration_save_on_damage(caster_id,damage_taken) -> bool  # R-SPL-020 受伤体质豁免DC=max(10,floor(dmg/2))至高30
 aidm/engine/spellcasting.py :: CasterState(caster_id,class_name,level,ability_scores,spell_slots,...)  # 新建, 施法者运行时状态
 aidm/engine/spellcasting.py :: cast_spell(caster,spell_name,slot_level,targets) -> dict  # 完整施法流程: 检查法术位→检查成分(V/S/M)→解决效果(attack_roll/saving_throw/automatic/heal/shield)→消耗法术位→设置集中
+
+# === 2026-07-30 规则书对照审计修复（三组并行审计 26 模块，5 项差异已修复，回归 tests/test_rule_fixes.py）===
+aidm/engine/mastery.py :: _mastery_vex(hit)  # R-ITM-015 补第8精通词条「侵扰Vex」(命中造伤→下次对其攻击优势至下回合结束)  精通词条.htm
+aidm/data/spells.py :: SPELL_SLOTS_BY_LEVEL[17:20]  # R-SPL-002 修正18-20级法术位(18级5环=3/19级6环=2/20级7环=2)，与 multiclass.py 表对齐
+aidm/engine/conditions.py :: attack_modifiers(attacker_visible_to_target,target_visible_to_attacker)  # R-GLS-051 隐形可见性条件(2024「能看见你则无增益」)  状态.htm
+aidm/engine/actions.py :: action_two_weapon_attack(has_weapon_mastery,nick_active)  # R-ITM-015 迅击Nick: 额外攻击并入攻击动作不耗附赠动作  精通词条.htm
+aidm/brain/rest.py :: short_rest()  # R-GLS-014 短休生命骰总恢复量下限 1(原文「至少1」，原实现为逐骰保底0)  常见规则词汇.htm
 ```
 
 ---

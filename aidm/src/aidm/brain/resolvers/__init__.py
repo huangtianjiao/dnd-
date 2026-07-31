@@ -7,7 +7,7 @@
   - apply: apply_node + 伤害/治疗/怪物回合
 """
 
-from .attack import resolve_attack, resolve_opportunity_attack
+from .attack import resolve_attack, resolve_multi_attack, resolve_opportunity_attack
 from .cast import resolve_cast
 from .actions import (
     resolve_ability_check,

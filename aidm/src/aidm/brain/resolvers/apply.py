@@ -1,26 +1,36 @@
 """resolvers.apply — apply_node 及其辅助函数。
 
 从 brain/graph.py 提取。包含:
-  - apply_node: 状态应用 + 持久化 + 战斗轮次推进 + 死亡豁免
+  - apply_node: 状态应用 + 持久化 + 动作经济标记
   - apply_damage_to_character: 伤害施加（含死亡/过量/专注豁免）
   - apply_healing_to_character: 治疗施加（含死亡计数归零）
-  - run_monster_turn: 怪物回合自动攻击
-  - render_monster_events: 怪物回合叙述渲染
+
+回合推进/怪物回合/死亡豁免已迁至 brain/combat_flow.py（服务端回合状态机，
+见 docs/MULTIPLAYER_COMBAT_REDESIGN.md）：
+  - 玩家行动不再隐式结束回合；单人局由 post_action_advance 保留自动推进
+  - 死亡豁免时点修正为「以0HP开始回合时」（R-DMG-017）
+  - run_monster_turn / render_monster_events 保留 re-export 兼容旧引用
 """
 
 from __future__ import annotations
 
-import json
 import logging
 
 from ...engine import check, damage
 from ...engine import combat as cmb
 from ...engine import dice as engine_dice
 from ...stats import store
-from ..utils import CLASS_CON_PROFICIENCY, _HEAL_TYPES, combatant_view
+from ..utils import _HEAL_TYPES, CLASS_CON_PROFICIENCY, combatant_view
 from .actions import apply_levelup_to_character, apply_rest_to_character
 
 _log = logging.getLogger(__name__)
+
+
+# 规则: R-CMB-011 一次一个动作 —— 这些 dice.kind 消耗本回合的一个动作
+# 出处: topics/玩家手册2024/进行游戏/动作.htm
+_ACTION_KINDS = ("attack", "cast", "dash", "dodge", "disengage", "help",
+                 "hide", "search", "study", "use_item", "grapple", "shove",
+                 "ready", "social")
 
 
 def apply_damage_to_character(ch, dmg: int, state) -> dict:
@@ -60,8 +70,11 @@ def apply_damage_to_character(ch, dmg: int, state) -> dict:
     if conc_on and not ch.dead:
         conc_dc = cmb.concentration_save_dc(dmg)
         con_proficient = ch.char_class in CLASS_CON_PROFICIENCY
+        # R-GLS-047 力竭适用于含豁免在内的所有 d20 检定（每级 −2）
+        exh_penalty = -conditions.d20_penalty(ch.to_condition_state())
         sv = check.saving_throw(mod=ch.ability_mod("con"), prof=ch.prof(),
-                                proficient=con_proficient, dc=conc_dc)
+                                proficient=con_proficient, dc=conc_dc,
+                                circ=exh_penalty)
         result["concentration_save"] = {
             "spell": conc_on, "dc": conc_dc, "success": sv.success, "d20": sv.d20}
         if not sv.success:
@@ -84,42 +97,16 @@ def apply_healing_to_character(ch, heal: int) -> dict:
     return result
 
 
-def run_monster_turn(monster, ch, state) -> dict:
-    """怪物回合自动攻击玩家（确定性，不调 LLM）。"""
-    atk = check.attack_roll(bonus=monster.attack_bonus, ac=ch.ac)
-    ev = {"monster": monster.name, "hit": atk.hit, "damage": 0,
-          "damage_type": monster.damage_type or "挥砍", "d20": atk.d20,
-          "attack_total": atk.total, "player_hp_after": ch.hp_current}
-    if atk.hit:
-        dr = damage.roll_damage(damage.DamageRequest(
-            dice_expr=monster.damage_dice or "1d6+2",
-            damage_type=monster.damage_type or "挥砍",
-            ability_mod=0, add_mod=False))
-        ev["damage"] = dr.final
-        res = apply_damage_to_character(ch, dr.final, state)
-        ev["player_hp_after"] = ch.hp_current
-        ev["died"] = res.get("died", False)
-        ev["concentration_save"] = res.get("concentration_save")
-    return ev
+def run_monster_turn(monster, ch, state=None) -> dict:
+    """已迁至 brain/combat_flow.py；此处保留兼容包装供旧引用。"""
+    from ..combat_flow import run_monster_turn as _impl
+    return _impl(monster, ch, state)
 
 
-def render_monster_events(events: list) -> str:
-    """把怪物回合事件渲染为追加到 narration 的文本。"""
-    parts = []
-    for ev in events:
-        if ev.get("hit"):
-            line = (f"【{ev['monster']}回合】攻击命中你（d20={ev['d20']}，攻击总值"
-                    f"{ev['attack_total']}），造成{ev['damage']}点{ev['damage_type']}伤害，"
-                    f"你当前HP {ev['player_hp_after']}。" +
-                    ("你倒下了！" if ev.get("died") else ""))
-        else:
-            line = f"【{ev['monster']}回合】攻击未命中你（d20={ev['d20']}）。"
-        cs = ev.get("concentration_save")
-        if cs:
-            line += f" 专注豁免DC{cs.get('dc')}（{cs.get('spell')}）d20={cs.get('d20')}→" + \
-                    ("维持专注。" if cs.get("success") else "失去专注！")
-        parts.append(line)
-    return "\n" + "\n".join(parts)
+def render_monster_events(events: list, self_name: str | None = None) -> str:
+    """已迁至 brain/combat_flow.py；此处保留兼容包装供旧引用。"""
+    from ..combat_flow import render_monster_events as _impl
+    return _impl(events, self_name=self_name)
 
 
 def apply_node(state) -> dict:
@@ -350,35 +337,23 @@ def apply_node(state) -> dict:
                             _c.hp = ch.hp_current; _c.dead = ch.dead
             # 3c) 判战斗结束
             cmb.check_combat_end(combat)
-            # 3d) 死亡豁免
-            if (combat.active and ch and ch.hp_current == 0
-                    and not ch.dead and not ch.stable):
-                tracker = ch.to_death_tracker()
-                ds = damage.death_save(tracker)
-                ch.apply_death_tracker(tracker)
-                regain = int(ds.get("regain_hp", 0))
-                if regain:
-                    ch.hp_current = max(ch.hp_current, regain)
-                roll = ds.get("roll", 0)
-                if regain:
-                    ds_text = f"【死亡豁免】d20={roll}，天然20！恢复1HP并苏醒。"
-                elif ds.get("stable"):
-                    ds_text = f"【死亡豁免】d20={roll}，累计3次成功，伤势稳定。"
-                elif ds.get("dead"):
-                    ds_text = f"【死亡豁免】d20={roll}，累计3次失败，你死了。"
-                elif roll >= 10:
-                    ds_text = f"【死亡豁免】d20={roll}≥10成功（成功{tracker.successes}/失败{tracker.failures}）。"
-                else:
-                    ds_text = f"【死亡豁免】d20={roll}<10失败（成功{tracker.successes}/失败{tracker.failures}）。"
-                state["narration"] = (state.get("narration", "") or "") + "\n" + ds_text
-                narration_changed = True
-                store.save_character(ch)
-                for _lst in (combat.participants, combat.initiative_order):
-                    for _c in _lst:
-                        if _c.is_player and _c.cid == str(cid):
-                            _c.hp = ch.hp_current; _c.dead = ch.dead
-            # 3e) 推进回合 + 自动结算连续怪物回合
+            # 3d) 动作经济标记（R-CMB-011 一次一个动作；P0 宽松版：只标记不硬拒，
+            #     避免 LLM 意图分类误伤；P1 收紧为硬约束）
+            #     死亡豁免已迁至 combat_flow（回合开始时掷，R-DMG-017）。
             _dk = state.get("dice", {}).get("kind")
+            if combat.active:
+                _cur = cmb.current_combatant(combat)
+                if _cur is not None and _cur.is_player and _cur.cid == str(cid):
+                    if _dk in _ACTION_KINDS:
+                        if not cmb.use_action(_cur):
+                            state["narration"] = (state.get("narration", "") or "") + \
+                                "\n（本回合动作已用完，可结束回合。）"
+                            narration_changed = True
+                        if not cmb.can_take_action(_cur):
+                            state["turn_hint"] = "action_exhausted"
+                    elif _dk == "opportunity_attack":
+                        cmb.use_reaction(_cur)                    # R-CMB-013
+            # 玩家主动脱战（disengage/dash 逃跑检定）
             if combat.active and _dk in ("disengage", "dash") and ch and ch.hp_current > 0:
                 _alive_e = sum(1 for c in combat.participants
                                if c.side == "enemy" and not c.dead and c.hp > 0)
@@ -389,47 +364,20 @@ def apply_node(state) -> dict:
                     state["narration"] = (state.get("narration", "") or "") + \
                         f"\n【脱战】你成功摆脱追击逃离战斗（d20={_flee_roll}+dex vs DC{_flee_dc}）！"
                     narration_changed = True
-                    store.save_combat(camp, combat)
-            _just_started = bool(state.get("dice", {}).get("encounter", {}).get("combat_started"))
-            if combat.active and not _just_started:
-                cmb.advance_turn(combat)
-            monster_events = []
-            _skip_guard = 0
-            while combat.active and ch:
-                cur = cmb.current_combatant(combat)
-                if cur is None or cur.is_player:
-                    break
-                if cur.dead or cur.hp <= 0:
-                    _skip_guard += 1
-                    if _skip_guard > len(combat.initiative_order) + 2:
-                        break
-                    cmb.advance_turn(combat)
-                    continue
-                if ch.hp_current > 0 and not ch.dead:
-                    ev = run_monster_turn(cur, ch, state)
-                    monster_events.append(ev)
-                    for _lst in (combat.participants, combat.initiative_order):
-                        for _c in _lst:
-                            if _c.is_player and _c.cid == str(cid):
-                                _c.hp = ch.hp_current; _c.dead = ch.dead
-                if ch.hp_current <= 0 or ch.dead:
-                    cmb.check_combat_end(combat)
-                    break
-                cmb.check_combat_end(combat)
-                if not combat.active:
-                    break
-                cmb.advance_turn(combat)
             if ch:
                 store.save_character(ch)
             store.save_combat(camp, combat)
-            if monster_events:
-                state["narration"] = (state.get("narration") or "") + render_monster_events(monster_events)
-            state["combat"] = {
-                "active": combat.active, "combat_id": None, "round": combat.round,
-                "current_index": combat.current_index,
-                "combatants": [combatant_view(_c) for _c in combat.initiative_order]}
+            # 3e) 回合推进：多人局由 ws.on_end_turn 显式推进（服务端回合状态机）；
+            #     单人局由 post_action_advance 保留旧「行动即结束回合」体验。
+            from ..combat_flow import post_action_advance
+            monster_events = post_action_advance(camp, cid, state)
+            if not monster_events:
+                state["combat"] = {
+                    "active": combat.active, "combat_id": None, "round": combat.round,
+                    "current_index": combat.current_index,
+                    "combatants": [combatant_view(_c) for _c in combat.initiative_order]}
         except Exception as e:
-            _log.warning("战斗轮次推进/死亡豁免失败 campaign=%s cid=%s: %s", camp, cid, e)
+            _log.warning("战斗状态应用/推进失败 campaign=%s cid=%s: %s", camp, cid, e)
 
     # 4) 持久化日志
     if camp:
@@ -456,8 +404,12 @@ def apply_node(state) -> dict:
             store.save_scene(sc)
 
     # 6) 记忆处理已移至 API 层异步执行
+    out: dict = {}
+    if state.get("turn_hint"):
+        out["turn_hint"] = state["turn_hint"]
     if narration_changed or monster_events:
-        return {"narration": state.get("narration", ""), "combat": state.get("combat", {})}
-    if combat_active:
-        return {"combat": state.get("combat", {})}
-    return {}
+        out["narration"] = state.get("narration", "")
+        out["combat"] = state.get("combat", {})
+    elif combat_active:
+        out["combat"] = state.get("combat", {})
+    return out

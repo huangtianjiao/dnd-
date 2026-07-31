@@ -17,7 +17,17 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from . import check, conditions, damage
-from .combat import Combatant, use_action, use_bonus_action, use_reaction
+from .combat import (
+    COVER_HALF,
+    COVER_NONE,
+    COVER_THREE_QUARTERS,
+    COVER_TOTAL,
+    Combatant,
+    dodge_benefits_active,
+    use_action,
+    use_bonus_action,
+    use_reaction,
+)
 
 # ──────────────────────────────────────────────────────────────────────────
 # 动作结果
@@ -98,8 +108,8 @@ def action_attack(attacker: Combatant, target: Combatant,
     mods = conditions.attack_modifiers(attacker.conditions, target.conditions, distance_ft)
     adv = advantage or mods.attacker_advantage
     dis = disadvantage or mods.attacker_disadvantage
-    # R-CMB-008 目标回避 → 攻击劣势
-    if target.dodge_active:
+    # R-CMB-008 目标回避 → 攻击劣势（失能/速度0时目标失去回避增益）
+    if dodge_benefits_active(target):
         dis = True
     # 力竭 d20 惩罚
     exh_penalty = -conditions.d20_penalty(attacker.conditions)
@@ -173,25 +183,47 @@ def _is_light_weapon(weapon: WeaponProfile) -> bool:
         return False
 
 
+def _weapon_mastery_name(weapon: WeaponProfile) -> str:
+    """查询武器的精通词条名（按名称查 data.equipment 武器表）。
+
+    规则: R-ITM-015 精通词条  出处: 装备/精通词条.htm
+    """
+    try:
+        from ..data import equipment
+        return equipment.get_weapon_entry(weapon.name).get("mastery", "")
+    except KeyError:
+        return ""
+
+
 def action_two_weapon_attack(attacker: Combatant, target: Combatant,
                              main_weapon: WeaponProfile, off_hand_weapon: WeaponProfile,
                              advantage: bool = False, disadvantage: bool = False,
                              target_ac: int = 10, distance_ft: int = 5,
                              off_advantage: bool = False, off_disadvantage: bool = False,
-                             off_hand_is_light: bool | None = None) -> ActionResult:
-    """双武器战斗：用攻击动作以主手武器攻击，再以附赠动作用另一把轻型武器攻击。
+                             main_is_light: bool | None = None,
+                             off_hand_is_light: bool | None = None,
+                             has_weapon_mastery: bool = False,
+                             nick_active: bool | None = None) -> ActionResult:
+    """双武器战斗：用攻击动作以主手轻型武器攻击，再以另一把轻型武器追加一次攻击。
 
     规则: R-ITM-014 武器词条「轻型」  出处: 装备/词条.txt
           当你在自己回合中执行攻击动作、并用一把轻型武器发动一次攻击后，
           可用附赠动作用另一把轻型武器再攻击一次；该次额外攻击的伤害
           不加入属性调整值（除非该调整值为负数）。
+          R-ITM-015 精通词条「迅击 Nick」  出处: 装备/精通词条.htm
+          发动由轻型词条提供的额外攻击时，可将其视作攻击动作的一部分
+          而非使用附赠动作（每回合仍仅 1 次）。
     说明:
-      - 主手攻击消耗动作（复用 action_attack 的命中/重击/条件优劣势逻辑）。
-      - 副手攻击消耗附赠动作；副手须为轻型武器（默认按名称查 data.equipment
-        武器表，off_hand_is_light 可显式覆写以支持自定义武器）。
-      - 副手伤害不加属性调整值（ability_mod < 0 时仍施加负值）。
+      - 主手与副手均须为轻型武器（规则原文「用一把轻型武器发动攻击后，
+        可用另一把轻型武器再攻击」）；默认按名称查 data.equipment 武器表，
+        main_is_light / off_hand_is_light 可显式覆写以支持自定义武器。
+      - 主手非轻型时仍执行主手攻击（普通攻击动作），但不触发副手攻击。
+      - 迅击：has_weapon_mastery 且副手武器精通为「迅击」时（或 nick_active
+        显式指定），额外攻击并入攻击动作，不消耗附赠动作。
+      - 非迅击时副手攻击消耗附赠动作；副手伤害不加属性调整值（ability_mod < 0 时仍施加负值）。
       - 返回的 ActionResult.attack_result/damage_result 为主手结果；副手结果存于
-        extra["off_hand"]，extra["bonus_action_used"] 标示是否消耗了附赠动作。
+        extra["off_hand"]，extra["bonus_action_used"] 标示是否消耗了附赠动作，
+        extra["nick_applied"] 标示迅击是否生效。
     """
     # 主手攻击：消耗动作（若无可用动作则整体失败）
     main_result = action_attack(attacker, target, main_weapon,
@@ -201,13 +233,17 @@ def action_two_weapon_attack(attacker: Combatant, target: Combatant,
         return ActionResult("two_weapon_attack", success=False,
                             message=main_result.message or "无可用动作")
 
-    # 副手须为轻型武器
+    # 主手与副手均须为轻型武器（R-ITM-014）
+    main_light = (main_is_light if main_is_light is not None
+                  else _is_light_weapon(main_weapon))
     off_light = (off_hand_is_light if off_hand_is_light is not None
                  else _is_light_weapon(off_hand_weapon))
-    if not off_light:
+    if not main_light or not off_light:
+        which = (f"主手 {main_weapon.name}" if not main_light
+                 else f"副手 {off_hand_weapon.name}")
         return ActionResult("two_weapon_attack", success=True,
                             message=(main_result.message
-                                     + f"；副手 {off_hand_weapon.name} 非轻型武器，未发动额外攻击"),
+                                     + f"；{which} 非轻型武器，未发动额外攻击"),
                             attack_result=main_result.attack_result,
                             damage_result=main_result.damage_result,
                             extra={"main": {"attack_result": main_result.attack_result,
@@ -215,8 +251,13 @@ def action_two_weapon_attack(attacker: Combatant, target: Combatant,
                                    "off_hand": {"attempted": False, "reason": "not_light"},
                                    "bonus_action_used": False})
 
-    # 消耗附赠动作
-    if not use_bonus_action(attacker):
+    # 迅击(Nick)精通：额外攻击并入攻击动作，不消耗附赠动作（R-ITM-015）
+    if nick_active is None:
+        nick_active = (has_weapon_mastery
+                       and _weapon_mastery_name(off_hand_weapon) == "迅击")
+
+    # 消耗附赠动作（迅击生效时跳过）
+    if not nick_active and not use_bonus_action(attacker):
         return ActionResult("two_weapon_attack", success=True,
                             message=(main_result.message + "；无可用附赠动作，未发动副手攻击"),
                             attack_result=main_result.attack_result,
@@ -230,7 +271,7 @@ def action_two_weapon_attack(attacker: Combatant, target: Combatant,
     mods = conditions.attack_modifiers(attacker.conditions, target.conditions, distance_ft)
     off_adv = off_advantage or mods.attacker_advantage
     off_dis = off_disadvantage or mods.attacker_disadvantage
-    if target.dodge_active:                          # R-CMB-008 目标回避 → 攻击劣势
+    if dodge_benefits_active(target):                # R-CMB-008 目标回避 → 攻击劣势
         off_dis = True
     exh = -conditions.d20_penalty(attacker.conditions)   # 力竭 d20 惩罚
     off_atk = check.attack_roll(bonus=off_hand_weapon.attack_bonus, ac=target_ac,
@@ -238,7 +279,10 @@ def action_two_weapon_attack(attacker: Combatant, target: Combatant,
 
     off_hand: dict[str, Any] = {"attempted": True, "attack_result": off_atk,
                                 "damage_result": None}
-    message = main_result.message + f"；{attacker.name} 用 {off_hand_weapon.name} 发动副手攻击"
+    message = main_result.message + (
+        f"；{attacker.name} 用 {off_hand_weapon.name} 发动迅击额外攻击（不耗附赠动作）"
+        if nick_active else
+        f"；{attacker.name} 用 {off_hand_weapon.name} 发动副手攻击")
 
     if not off_atk.hit:
         message += "：未命中"
@@ -264,7 +308,8 @@ def action_two_weapon_attack(attacker: Combatant, target: Combatant,
                         extra={"main": {"attack_result": main_result.attack_result,
                                         "damage_result": main_result.damage_result},
                                "off_hand": off_hand,
-                               "bonus_action_used": True})
+                               "bonus_action_used": not nick_active,
+                               "nick_applied": bool(nick_active)})
 
 
 def action_dash(attacker: Combatant) -> ActionResult:
@@ -306,12 +351,19 @@ def action_dodge(attacker: Combatant) -> ActionResult:
           duration = until start of next turn;
           lose_if incapacitated OR speed==0
     出处: topics/玩家手册2024/进行游戏/动作.htm
+    说明: 增益是否生效由 combat.dodge_benefits_active 判定（失能/速度0
+          时失效）；敏捷豁免优势由豁免链路调用方据此函数注入。
+          速度为0时仍可执行该动作（仅无增益），消耗动作照常。
     """
     if not use_action(attacker):
         return ActionResult("dodge", success=False, message="无可用动作")
     attacker.dodge_active = True                         # R-CMB-008
+    effective = dodge_benefits_active(attacker)
     return ActionResult("dodge", success=True,
-                        message=f"{attacker.name} 回避，对自身的攻击具有劣势")
+                        message=(f"{attacker.name} 回避，对其攻击具劣势、敏捷豁免具优势"
+                                 if effective else
+                                 f"{attacker.name} 回避，但因失能或速度为0而无法获得增益"),
+                        extra={"benefits_active": effective})
 
 
 def action_help(attacker: Combatant, ally: Combatant,
@@ -353,14 +405,21 @@ def action_help(attacker: Combatant, ally: Combatant,
 def action_hide(attacker: Combatant, stealth_mod: int, stealth_prof: int,
                 proficient: bool,
                 advantage: bool = False, disadvantage: bool = False,
-                has_cover: bool = False, heavily_obscured: bool = False,
+                cover: int = COVER_NONE, heavily_obscured: bool = False,
                 not_in_enemy_sight: bool = True) -> ActionResult:
     """躲藏动作：进行一次敏捷（隐匿）检定（2024规则：固定DC15）。
 
     规则: 术语汇编/动作.txt「躲藏」(2024) — DC15 隐匿检定；
-          需满足前置条件：重度遮蔽/3/4掩护/全身掩护/不在敌视野内。
+          前置条件（均需满足，AND 关系）：
+            1. 重度遮蔽 或 处于3/4掩护/全身掩护之后（半身掩护不满足）；
+            2. 不在任何敌人的视线内。
           成功后检定总值成为他人察觉该生物的 DC。
     出处: topics/玩家手册2024/术语汇编/动作.htm
+    参数:
+      cover: 掩护等级（combat.COVER_NONE/HALF/THREE_QUARTERS/TOTAL）；
+             仅 3/4 掩护及全身掩护满足躲藏前置条件。
+      heavily_obscured: 是否处于重度遮蔽。
+      not_in_enemy_sight: 是否不在任何敌人视线内（硬性前置条件）。
     说明: 2024 规则改为固定 DC15（非旧的被动察觉 DC）。
           成功则进入隐形状态（hidden=True），失败则未躲藏。
           DC 由模块级常量 HIDE_DC 提供，不可被调用方覆盖。
@@ -370,12 +429,16 @@ def action_hide(attacker: Combatant, stealth_mod: int, stealth_prof: int,
     """
     if not use_action(attacker):
         return ActionResult("hide", success=False, message="无可用动作")
-    # 前置条件检查：需有遮蔽/掩护或不在敌视野内
-    can_hide = has_cover or heavily_obscured or not_in_enemy_sight
-    if not can_hide:
+    # 前置条件（AND）：（重度遮蔽 或 ≥3/4掩护）且 不在敌人视线内
+    sufficient_cover = cover in (COVER_THREE_QUARTERS, COVER_TOTAL)
+    if not (heavily_obscured or sufficient_cover):
         return ActionResult("hide", success=False,
-                            message=f"{attacker.name} 无法躲藏：需遮蔽或掩护",
+                            message=f"{attacker.name} 无法躲藏：需重度遮蔽或3/4以上掩护",
                             extra={"hidden": False, "reason": "no_obscurement"})
+    if not not_in_enemy_sight:
+        return ActionResult("hide", success=False,
+                            message=f"{attacker.name} 无法躲藏：仍在敌人视线内",
+                            extra={"hidden": False, "reason": "in_enemy_sight"})
     r = check.ability_check(mod=stealth_mod, prof=stealth_prof,
                             proficient=proficient, dc=HIDE_DC,
                             advantage=advantage, disadvantage=disadvantage,
@@ -718,7 +781,7 @@ def _self_test() -> None:
     rdod = resolve_combat_action("dodge", attacker4)
     assert rdod.success and attacker4.dodge_active is True
 
-    # 躲藏（R-CMB-009）— 固定 d20 让检定成功
+    # 躲藏（R-CMB-009）— 固定 d20 让检定成功；前置条件需重度遮蔽或3/4掩护
     orig_chk = check.ability_check
     check.ability_check = lambda **kw: type("R", (), {
         "success": True, "total": 15, "d20": 10, "rolls": [10],
@@ -726,8 +789,25 @@ def _self_test() -> None:
         "margin": 5, "modifier": 5})()
     attacker5 = Combatant(cid="a5", name="游荡者", speed=30)
     rh = resolve_combat_action("hide", attacker5, stealth_mod=5,
-                               stealth_prof=3, proficient=True)
+                               stealth_prof=3, proficient=True,
+                               heavily_obscured=True)
     assert rh.success and attacker5.hidden is True
+    # 无遮蔽/仅半身掩护 → 不可躲藏（AND 前置条件）
+    a5b = Combatant(cid="a5b", name="莽撞人", speed=30)
+    rh2 = resolve_combat_action("hide", a5b, stealth_mod=5,
+                                stealth_prof=3, proficient=True)
+    assert rh2.success is False and rh2.extra["reason"] == "no_obscurement"
+    a5c = Combatant(cid="a5c", name="半掩人", speed=30)
+    rh3 = resolve_combat_action("hide", a5c, stealth_mod=5,
+                                stealth_prof=3, proficient=True,
+                                cover=COVER_HALF)
+    assert rh3.success is False                       # 半身掩护不满足
+    # 在敌人视线内 → 不可躲藏
+    a5d = Combatant(cid="a5d", name="暴露人", speed=30)
+    rh4 = resolve_combat_action("hide", a5d, stealth_mod=5,
+                                stealth_prof=3, proficient=True,
+                                heavily_obscured=True, not_in_enemy_sight=False)
+    assert rh4.success is False and rh4.extra["reason"] == "in_enemy_sight"
     check.ability_check = orig_chk
 
     # 搜索（R-CMB-010 Search=WIS）
@@ -815,6 +895,15 @@ def _self_test() -> None:
     assert r2.extra["off_hand"]["attempted"] is False
     assert r2.extra["off_hand"]["reason"] == "not_light"
     assert a2.action_used and not a2.bonus_action_used
+
+    # 2b) 主手非轻型（长剑）→ 也不触发副手攻击（R-ITM-014 两把均须轻型）
+    a2b = Combatant(cid="tw2b", name="长剑手", side="player")
+    t2b = Combatant(cid="tw2bT", name="兽人2b", side="enemy")
+    r2b = action_two_weapon_attack(a2b, t2b, off_heavy, off_w, target_ac=10)
+    assert r2b.success and r2b.attack_result.hit      # 主手普通攻击仍执行
+    assert r2b.extra["off_hand"]["attempted"] is False
+    assert r2b.extra["off_hand"]["reason"] == "not_light"
+    assert a2b.action_used and not a2b.bonus_action_used
 
     # 3) 无可用附赠动作 → 仅主手
     a3 = Combatant(cid="tw3", name="战士2", side="player")

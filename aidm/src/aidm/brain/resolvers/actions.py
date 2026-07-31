@@ -114,7 +114,11 @@ def resolve_ability_check(ch, it) -> dict:
 
 
 def resolve_hide(ch, it) -> dict:
-    """躲藏：敏捷(潜行)检定 vs 对手被动察觉。R-GLS-009"""
+    """躲藏：敏捷(隐匿)检定 vs 固定 DC15（2024 规则）。
+
+    规则: 术语汇编/动作.htm「躲藏」— 2024 版为固定 DC15（非旧的被动
+          察觉 DC）；成功后检定总值成为他人察觉该生物的 DC。
+    """
     stealth_mod = ch.ability_mod("dex")
     prof = ch.prof()
     dc = int(it.get("dc") or 15)
@@ -139,31 +143,55 @@ def resolve_search(ch, it) -> dict:
 
 
 def resolve_grapple(ch, it) -> dict:
-    """擒抱：力量或敏捷竞技检定 vs 目标力量/敏捷竞技。R-CMB-017"""
-    ability = it.get("ability") or "str"
-    mod = ch.ability_mod(ability)
-    prof = ch.prof()
-    dc = int(it.get("dc") or 10)
-    exh_penalty = -conditions.d20_penalty(ch.to_condition_state())  # R-GLS-047
-    r = check.ability_check(mod=mod, prof=prof, proficient=True, dc=dc, circ=exh_penalty)
-    return {"kind": "grapple", "check_total": r.total, "d20": r.d20,
-            "success": r.success, "dc": dc, "ability": ability,
-            "effect": "擒抱成功" if r.success else "擒抱失败"}
+    """擒抱（2024）：目标投力量/敏捷豁免 vs DC=8+力调+熟练；失败则受擒。
+
+    规则: 术语汇编/武器与徒手打击.htm「擒抱」— 目标必须通过一次力量或
+          敏捷豁免检定（由目标选择），否则陷入受擒；豁免/逃脱 DC =
+          8 + 攻击者力量调整值 + 熟练加值。
+    说明: 2014 版对抗检定已废弃；攻击者不掷骰，改由目标豁免。
+    """
+    from ...engine import combat as _combat
+    save_choice = it.get("target_save_choice") or "strength"
+    r = _combat.attempt_grapple(
+        ch.ability_mod("str"), ch.prof(),
+        save_choice=save_choice,
+        target_save_mod=int(it.get("target_save_bonus") or 0),
+        target_save_prof=bool(it.get("target_save_prof")),
+        target_prof=int(it.get("target_prof") or 0),
+        attacker_size=it.get("attacker_size") or "medium",
+        target_size=it.get("target_size") or "medium",
+        has_free_hand=bool(it.get("has_free_hand", True)),
+    )
+    return {"kind": "grapple", "check_total": r["save_total"], "d20": r["save_d20"],
+            "success": r["grappled"], "dc": r["dc"], "escape_dc": r["escape_dc"],
+            "ability": save_choice, "reason": r["reason"],
+            "effect": "擒抱成功，目标陷入受擒" if r["grappled"] else "擒抱失败"}
 
 
 def resolve_shove(ch, it) -> dict:
-    """推撞：力量或敏捷竞技检定,让目标倒地或移开。R-CMB-017"""
-    ability = it.get("ability") or "str"
-    mod = ch.ability_mod(ability)
-    prof = ch.prof()
-    dc = int(it.get("dc") or 10)
-    exh_penalty = -conditions.d20_penalty(ch.to_condition_state())  # R-GLS-047
-    r = check.ability_check(mod=mod, prof=prof, proficient=True, dc=dc, circ=exh_penalty)
+    """推撞（2024）：目标投力量/敏捷豁免 vs DC=8+力调+熟练；失败则倒地或被推离5尺。
+
+    规则: 术语汇编/武器与徒手打击.htm「推撞」— 目标必须通过一次力量或
+          敏捷豁免检定（由目标选择），否则被推开5尺或陷入倒地（由你选择）。
+    说明: 2014 版对抗检定已废弃；攻击者不掷骰，改由目标豁免。
+    """
+    from ...engine import combat as _combat
+    save_choice = it.get("target_save_choice") or "strength"
     shove_type = it.get("shove_type", "prone")
-    return {"kind": "shove", "check_total": r.total, "d20": r.d20,
-            "success": r.success, "dc": dc, "ability": ability,
-            "shove_type": shove_type,
-            "effect": f"推撞成功({shove_type})" if r.success else "推撞失败"}
+    r = _combat.attempt_shove(
+        ch.ability_mod("str"), ch.prof(),
+        save_choice=save_choice,
+        target_save_mod=int(it.get("target_save_bonus") or 0),
+        target_save_prof=bool(it.get("target_save_prof")),
+        target_prof=int(it.get("target_prof") or 0),
+        attacker_size=it.get("attacker_size") or "medium",
+        target_size=it.get("target_size") or "medium",
+        shove_type=shove_type,
+    )
+    return {"kind": "shove", "check_total": r["save_total"], "d20": r["save_d20"],
+            "success": r["shoved"], "dc": r["dc"], "ability": save_choice,
+            "shove_type": shove_type, "reason": r["reason"],
+            "effect": f"推撞成功({shove_type})" if r["shoved"] else "推撞失败"}
 
 
 def resolve_study(ch, it) -> dict:

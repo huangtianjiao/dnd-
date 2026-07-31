@@ -53,6 +53,10 @@ class Spell:
     upcast: dict | None = None           # 升环效应 {per_level: dice_expr 或 count}
     description: str = ""
     class_list: tuple[str, ...] = ()        # 可施展职业列表 (R-SPL-036)
+    # —— 效应区域 (R-AOE-001~006) ——
+    aoe_shape: str = ""                     # sphere/cone/line/cube/cylinder/emanation
+    aoe_size_ft: int = 0                    # 主尺寸（半径/边长/高度/长度）
+    aoe_width_ft: int = 0                   # 线形宽度（仅线形用）
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -81,9 +85,9 @@ SPELL_SLOTS_BY_LEVEL: list[dict[int, int]] = [
     {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1}, # 15级
     {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1}, # 16级
     {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1}, # 17级
-    {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1}, # 18级
-    {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1}, # 19级
-    {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1}, # 20级
+    {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 1, 7: 1, 8: 1, 9: 1}, # 18级
+    {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 1, 8: 1, 9: 1}, # 19级
+    {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1}, # 20级
 ]
 
 
@@ -311,6 +315,7 @@ _SPELLS_LIST: list[Spell] = [
         upcast={"per_level_above_base": "+1d6"},
         description="明亮的闪光从你的指间飞驰向施法距离内你指定的一点，并迸成一片烈焰。目标点周围半径20尺球状区域内的每个生物必须进行一次敏捷豁免。豁免失败受到8d6火焰伤害，成功减半。",
         class_list=("术士", "法师"),
+        aoe_shape="sphere", aoe_size_ft=20,
     ),
     Spell(
         name="闪电束", en_name="Lightning Bolt",
@@ -325,6 +330,7 @@ _SPELLS_LIST: list[Spell] = [
         upcast={"per_level_above_base": "+1d6"},
         description="一束100尺长、5尺宽的线状闪电从你的位置向你指定的方向爆发迸出。在线状区域内的每个生物必须进行一次敏捷豁免，失败受到8d6闪电伤害，成功减半。",
         class_list=("术士", "法师"),
+        aoe_shape="line", aoe_size_ft=100, aoe_width_ft=5,
     ),
     Spell(
         name="群体治愈真言", en_name="Mass Healing Word",

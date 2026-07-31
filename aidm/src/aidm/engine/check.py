@@ -67,13 +67,20 @@ def resolve_advantage(adv_count: int, dis_count: int) -> tuple[bool, bool]:
     return (has_adv, has_dis)
 
 
-def passive_check(modifiers: Iterable[int]) -> int:
-    """被动检定值 = 10 + 所有适用调整值（被动察觉/被动洞悉/先攻定值）。
+def passive_check(modifiers: Iterable[int], *,
+                  advantage: bool = False, disadvantage: bool = False) -> int:
+    """被动检定值 = 10 + 所有适用调整值；优势 +5，劣势 −5。
 
     规则: R-DM-012 被动检定（=R-GLS-010 被动察觉=10+感知(察觉)加值,优+5/劣-5）
     出处: topics/城主指南2024/2.运作游戏/决定掷骰结果/属性检定.htm
+    说明: 优劣势同时存在时抵消（R-CHK-005），不加不减。
     """
-    return 10 + sum(modifiers)
+    base = 10 + sum(modifiers)
+    if advantage and not disadvantage:
+        return base + 5
+    if disadvantage and not advantage:
+        return base - 5
+    return base
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -222,6 +229,9 @@ def _self_test() -> None:
     assert resolve_advantage(0, 2) == (False, True)
     assert resolve_advantage(1, 1) == (False, False)   # 抵消
     assert passive_check([3, 2]) == 15
+    assert passive_check([3], advantage=True) == 18       # 优势 +5
+    assert passive_check([3], disadvantage=True) == 8     # 劣势 -5
+    assert passive_check([3], advantage=True, disadvantage=True) == 13  # 抵消
 
     # 属性检定：固定让 d20=15（猴子补丁）
     orig = dice.roll_d20
