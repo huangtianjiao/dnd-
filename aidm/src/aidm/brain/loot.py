@@ -396,7 +396,7 @@ def distribute_gold(total_gold: int,
 
 def attune_magic_item(character_id: int,
                       item_name: str,
-                      db_path: str = "sqlite:///D:/game/dnd/aidm/data/saves/save.db") -> dict:
+                      db_path: str = None) -> dict:
     """为角色同调一件魔法物品。
 
     规则: 玩家手册 同调Attunement
@@ -413,6 +413,7 @@ def attune_magic_item(character_id: int,
         {"success": bool, "message": str, "attuned_items": list}
     """
     from ..stats import store
+    db_path = db_path or store.DEFAULT_DB
 
     # 1. 验证物品存在且需要同调
     item = get_magic_item(item_name)
@@ -444,12 +445,81 @@ def attune_magic_item(character_id: int,
                 "message": f"已达同调上限({ch.MAX_ATTUNED_ITEMS}件)，需先解除一件",
                 "attuned_items": current}
 
+    # 3.5. ITEM-003: 同调前置条件校验（职业/等级/属性）
+    try:
+        import re as _re
+        from ..engine import attunement as attunement_engine
+        req_text = (item.attunement_req or "").strip()
+        # 从描述解析简单前置条件：如"需法师同调" → class=法师；"需5级" → level=5
+        item_requires: dict = {}
+        if req_text:
+            _class_match = _re.search(r"(法师|牧师|圣武士|游侠|德鲁伊|吟游诗人|术士|魔契师|战士|武僧|盗贼|野蛮人)", req_text)
+            if _class_match:
+                item_requires["class"] = [_class_match.group(1)]
+            _lvl_match = _re.search(r"(\d+)\s*级", req_text)
+            if _lvl_match:
+                item_requires["level"] = int(_lvl_match.group(1))
+        check = attunement_engine.can_attune(
+            current, item_name,
+            item_requires=item_requires or None,
+            char_class=ch.char_class,
+            char_level=ch.level,
+            char_abilities=ch.abilities,
+        )
+        if not check["can_attune"]:
+            return {"success": False,
+                    "message": f"无法同调{item_name}: {check['reason']}",
+                    "attuned_items": current}
+    except Exception as e:
+        _log = __import__("logging").getLogger(__name__)
+        _log.debug("同调前置条件校验失败（跳过）: %s", e)
+
     # 4. 检查是否已同调
     if item_name in current:
         return {"success": False, "message": f"已同调该物品: {item_name}",
                 "attuned_items": current}
 
-    # 5. 执行同调
+    # 3.6. ★ ITEM-004: 权威同调注册（engine.magic_item_def.AttunementService）
+    #      + 充能物品注册（engine.item_charges.ItemChargeRegistry）
+    try:
+        from ..engine.magic_item_def import AttunementService, MagicItemDefinition
+        from ..engine.item_charges import ItemChargeRegistry
+        _svc = AttunementService()
+        _charges = int(item.properties.get("charges", 0) or 0)
+        _def = MagicItemDefinition(
+            item_id=item.name,
+            name=item_name,
+            rarity=item.rarity.value,
+            requires_attunement=True,
+            max_charges=_charges,
+            recharge_on="dawn",
+        )
+        _ok = _svc.attune(str(character_id), item.name, _def,
+                          character_level=ch.level,
+                          character_class=ch.char_class)
+        if not _ok:
+            return {"success": False,
+                    "message": f"无法与{item_name}同调（engine.magic_item_def 拒绝）",
+                    "attuned_items": current}
+        # 充能物品：注册初始充能（engine.item_charges）
+        if _charges > 0:
+            _chg = ItemChargeRegistry()
+            _chg.register(item.name, _charges, _charges, recharge_spec=None)
+        # 权威路径同样落盘 attuned_items（与旧路径一致）
+        current = list(current) + [item_name]
+        ch.set_attuned_items(current)
+        store.save_character(ch, db_path)
+        return {"success": True,
+                "message": f"成功与{item_name}同调"
+                           + (f"（充能 {_charges}）" if _charges else ""),
+                "attuned_items": current,
+                "engine_attunement": "magic_item_def",
+                "charges": _charges}
+    except Exception as e:
+        _log = __import__("logging").getLogger(__name__)
+        _log.debug("engine.magic_item_def 同调注册失败（回退旧路径）: %s", e)
+
+    # 5. 执行同调（旧路径回退）
     current.append(item_name)
     ch.set_attuned_items(current)
     store.save_character(ch, db_path)
@@ -461,7 +531,7 @@ def attune_magic_item(character_id: int,
 
 def break_attunement(character_id: int,
                      item_name: str,
-                     db_path: str = "sqlite:///D:/game/dnd/aidm/data/saves/save.db") -> dict:
+                     db_path: str = None) -> dict:
     """解除角色的同调物品。
 
     规则: 玩家手册 同调Attunement — 解除同调需要一个短休
@@ -475,6 +545,7 @@ def break_attunement(character_id: int,
         {"success": bool, "message": str, "attuned_items": list}
     """
     from ..stats import store
+    db_path = db_path or store.DEFAULT_DB
 
     ch = store.get_character(character_id, db_path)
     if ch is None:
@@ -498,7 +569,7 @@ def break_attunement(character_id: int,
 def identify_magic_item(character_id: int,
                         item_name: str,
                         method: str = "short_rest",
-                        db_path: str = "sqlite:///D:/game/dnd/aidm/data/saves/save.db") -> dict:
+                        db_path: str = None) -> dict:
     """鉴定魔法物品。
 
     规则依据: 城主指南2024/7.宝藏/魔法物品详述/ — 鉴定魔法物品
@@ -522,6 +593,7 @@ def identify_magic_item(character_id: int,
         }
     """
     from ..stats import store
+    db_path = db_path or store.DEFAULT_DB
 
     # 1. 验证物品存在
     item = get_magic_item(item_name)

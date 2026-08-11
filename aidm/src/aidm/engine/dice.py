@@ -20,13 +20,40 @@ import math
 import re
 import secrets
 from dataclasses import dataclass, field
+from typing import Optional
+
+# TEST-003: 可注入的 RNG 上下文钩子。
+# 默认使用 secrets（密码学随机）；通过 set_active_rng() 注入 RngContext
+# 后可实现确定性回放（同一事件流重放得到完全相同状态）。
+_ACTIVE_RNG = None  # 持有 RngContext 实例
+
+
+def set_active_rng(rng: Optional["object"]) -> None:
+    """注入/清除全局 RNG 上下文（TEST-003）。
+
+    Args:
+        rng: RngContext 实例，或 None 恢复默认 secrets 随机源。
+    """
+    global _ACTIVE_RNG
+    _ACTIVE_RNG = rng
+
+
+def get_active_rng():
+    """获取当前 RNG 上下文（无则返回 None）。"""
+    return _ACTIVE_RNG
+
 
 # ──────────────────────────────────────────────────────────────────────────
 # 基础数值
 # ──────────────────────────────────────────────────────────────────────────
 
 def _randbelow(exclusive_upper: int) -> int:
-    """密码学随机数，返回 [0, exclusive_upper)。"""
+    """返回 [0, exclusive_upper)。
+
+    TEST-003: 若注入了 RngContext 则委托给它（确定性），否则用 secrets。
+    """
+    if _ACTIVE_RNG is not None:
+        return _ACTIVE_RNG.randbelow(exclusive_upper)
     return secrets.randbelow(exclusive_upper)
 
 

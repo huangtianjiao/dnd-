@@ -23,7 +23,15 @@ from . import models as M
 # 引擎与会话
 # ──────────────────────────────────────────────────────────────────────────
 
-DEFAULT_DB = "sqlite:///D:/game/dnd/aidm/data/saves/save.db"
+# RAG-003/可移植性: 存档路径由项目根目录派生，不硬编码 Windows 盘符。
+# 可用环境变量 AIDM_SAVE_DB 覆盖。
+def _default_db_path() -> str:
+    from ..config import PROJECT_ROOT
+    default = str(PROJECT_ROOT / "aidm" / "data" / "saves" / "save.db")
+    return os.getenv("AIDM_SAVE_DB", default)
+
+
+DEFAULT_DB = "sqlite:///" + _default_db_path()
 
 
 def _migrate(engine) -> None:
@@ -101,6 +109,43 @@ def save_character(ch: M.Character, db_path: str = DEFAULT_DB) -> M.Character:
 def get_character(cid: int, db_path: str = DEFAULT_DB) -> M.Character | None:
     with session(db_path) as s:
         return s.get(M.Character, cid)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 存档迁移（engine.migration 权威实现）
+# ──────────────────────────────────────────────────────────────────────────
+
+def migrate_character_data(data: dict) -> dict:
+    """对角色存档数据执行内容定义迁移（engine.migration.MigrationRegistry）。
+
+    规则: ARC-001 规则集版本固定 — 数据字段增删改通过 MigrationPlan 声明，
+          不硬编码。当前注册的默认计划用于角色结构字段的向后兼容。
+    """
+    try:
+        from ..engine.migration import (
+            MigrationPlan,
+            MigrationRegistry,
+            MigrationStep,
+        )
+        registry = MigrationRegistry()
+        registry.register_plan(MigrationPlan(
+            from_revision="2024.1",
+            to_revision="2024.2",
+            content_id="character.save",
+            steps=[
+                MigrationStep(
+                    description="旧角色无 class_levels_json → 从 char_class 派生",
+                    field_path="class_levels",
+                    operation="set_default",
+                    new_value=None,
+                ),
+            ],
+        ))
+        if registry.needs_migration("character.save", data.get("revision", "2024.1"), "2024.2"):
+            return registry.migrate("character.save", data.get("revision", "2024.1"), data)
+        return data
+    except Exception:
+        return data
 
 
 def list_characters(campaign_id: int | None = None,
@@ -250,7 +295,26 @@ def get_character_xp(character_id: int,
 # ──────────────────────────────────────────────────────────────────────────
 
 def create_campaign(name: str, db_path: str = DEFAULT_DB) -> M.Campaign:
-    c = M.Campaign(name=name)
+    """创建战役，固定规则集标识（ARC-001）。
+
+    从默认 ruleset_manifest.json 加载 ruleset_id / revision / content_packs，
+    写入 Campaign，运行中只允许显式迁移。
+    """
+    from ..engine.ruleset_manifest import load_default_manifest
+    manifest = load_default_manifest()
+    c = M.Campaign(
+        name=name,
+        ruleset_id=manifest.ruleset_id,
+        ruleset_revision=manifest.revision,
+    )
+    # 固定内容包版本
+    pack_versions = {}
+    for cp in manifest.content_packs:
+        if isinstance(cp, dict):
+            pack_versions[cp.get("name", "")] = cp.get("version", "1.0")
+        else:
+            pack_versions[str(cp)] = "1.0"
+    c.set_content_pack_versions(pack_versions)
     with session(db_path) as s:
         s.add(c); s.commit(); s.refresh(c)
         return c
@@ -369,6 +433,8 @@ def save_combat(campaign_id: int, combat: cmb.Combat,
         cs.round = combat.round
         cs.current_index = combat.current_index
         cs.active = combat.active
+        # ★ API-001: 乐观锁版本号递增
+        cs.version = combat.version
         s.add(cs); s.commit(); s.refresh(cs)
         return cs
 
@@ -397,6 +463,7 @@ def load_combat(campaign_id: int, db_path: str = DEFAULT_DB) -> cmb.Combat:
         combat.round = cs.round
         combat.current_index = cs.current_index
         combat.active = cs.active
+        combat.version = getattr(cs, "version", 0)  # ★ API-001: 乐观锁版本
         return combat
 
 

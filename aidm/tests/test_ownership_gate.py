@@ -149,16 +149,20 @@ def test_resolve_cast_rejects_unlearned_spell():
 
 
 def test_resolve_cast_legacy_fallback():
-    """历史角色 known_spells 为空 → 动态回退职业默认表：
-    本职业环阶可及的法术可施展；他职业法术仍被拒。"""
+    """SPL-003: 历史角色 known_spells 为空 → 不再回退职业默认表，
+    空 known_spells 意味着角色不会任何法术（如非施法职业或未初始化）。
+    所有法术均被拒绝。"""
     from aidm.brain.graph import _resolve_cast
 
     ch = _make_char("法师", 5, known=[])
-    ok = _resolve_cast(ch, {"spell_name": "火球术", "spell_level": 3})
-    assert "error" not in ok                     # 法师5级可施火球术
+    # SPL-003: 空 known_spells → 任何法术都被拒绝
+    bad = _resolve_cast(ch, {"spell_name": "火球术", "spell_level": 3})
+    assert "error" in bad
+    assert "尚未学会" in bad["error"]
 
-    bad = _resolve_cast(ch, {"spell_name": "治疗真言", "spell_level": 1})
-    assert "error" in bad                        # 牧师系法术，法师未学会
+    bad2 = _resolve_cast(ch, {"spell_name": "治疗真言", "spell_level": 1})
+    assert "error" in bad2
+    assert "尚未学会" in bad2["error"]
 
 
 def test_resolve_attack_substitutes_unowned_weapon():

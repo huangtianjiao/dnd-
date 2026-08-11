@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from . import check, concentration, conditions, dice
 
@@ -66,13 +67,18 @@ class Combatant:
     # ── 状态条件（R-GLS-043~058）──
     conditions: conditions.ConditionState = field(default_factory=conditions.ConditionState)
 
-    # ── 动作增益状态（持续至下回合开始或条件失效）──
+    # ── COM-014: 动作持续效果（EffectInstance，替代专用临时布尔捷径）──
+    # 每个元素为 dict: {"effect": "dodge"|"help_advantage"|"hidden"|"disengage",
+    #                    "target_cid": str|None, "expires_turn_start": bool}
+    active_effects: list[dict] = field(default_factory=list)
+
+    # ── 动作增益状态（兼容字段；新逻辑优先读 active_effects，见 COM-014）──
     disengage_active: bool = False     # R-CMB-007 撤离：本回合移动不引发借机攻击
-    dodge_active: bool = False         # R-CMB-008 回避：对你攻击具有劣势
+    dodge_active: bool = False         # R-CMB-008 回避：对你攻击具有劣势（兼容别名）
     hidden: bool = False               # R-CMB-009 躲藏成功 → 隐形状态
     ready_trigger: str | None = None  # R-CMB-014 准备动作触发条件
     ready_action_name: str | None = None  # 准备的动作名
-    help_advantage_target: str | None = None  # 协助：下次对该目标攻击有优势
+    help_advantage_target: str | None = None  # 协助：下次对该目标攻击有优势（兼容别名）
 
     # ── 传奇动作 / 传奇抗性 / 充能（R-LEG-001~003）──
     legendary_actions_max: int = 0
@@ -96,6 +102,8 @@ class Combat:
     current_index: int = 0
     active: bool = False
     seconds_elapsed: int = 0           # R-CMB-001 一轮6秒
+    # ★ API-001: 乐观锁版本号 — 每次 save_combat 递增，客户端提交时携带 expected_version
+    version: int = 0
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -189,9 +197,8 @@ def _reset_turn_economy(c: Combatant) -> None:
     c.free_interaction_used = 0
     # R-CMB-030 回合移动上限=速度，但需先扣除状态影响（力竭-等级×5尺 / 速度归0状态）
     c.speed_remaining = conditions.speed_after_conditions(c.speed, c.conditions)
-    # 持续到下回合开始的增益在此清除
-    c.disengage_active = False                        # R-CMB-007 仅本回合
-    c.dodge_active = False                            # R-CMB-008 至下回合开始
+    # 持续到下回合开始的增益在此清除（COM-014: 统一经 active_effects）
+    clear_turn_start_effects(c)
 
 
 def _cannot_act(c: Combatant) -> bool:
@@ -648,12 +655,64 @@ def dodge_benefits_active(c: Combatant) -> bool:
     出处: topics/玩家手册2024/进行游戏/动作.htm
     说明: 增益含「对你的攻击具劣势」与「你的敏捷豁免具优势」，
           调用方（攻击/豁免链路）应用本函数而非直读 dodge_active。
+    ★ COM-014: 优先从 active_effects 判定（无专用布尔捷径），
+      兼容读取 dodge_active 旧字段。
     """
-    if not c.dodge_active:
+    if not has_effect(c, "dodge") and not c.dodge_active:
         return False
     if c.conditions.is_incapacitated():
         return False
     return conditions.speed_after_conditions(c.speed, c.conditions) > 0
+
+
+# ── COM-014: 动作效果辅助 ──────────────────────────────────────
+
+def add_effect(c: Combatant, effect: str, target_cid: str | None = None) -> None:
+    """记录一个动作持续效果（EffectInstance 风格）。
+
+    规则: COM-014 — 所有动作产生 EffectInstance，不保留专用临时布尔捷径。
+    """
+    # 先移除同名单次效果（避免重复）
+    c.active_effects = [e for e in c.active_effects if e.get("effect") != effect]
+    c.active_effects.append({"effect": effect, "target_cid": target_cid})
+
+
+def remove_effect(c: Combatant, effect: str) -> None:
+    """移除一个动作持续效果。"""
+    c.active_effects = [e for e in c.active_effects if e.get("effect") != effect]
+
+
+def has_effect(c: Combatant, effect: str) -> bool:
+    """判断是否持有指定动作效果。"""
+    return any(e.get("effect") == effect for e in c.active_effects)
+
+
+def help_advantage_active(c: Combatant, target_cid: str) -> bool:
+    """协助增益是否对指定目标生效（COM-014）。
+
+    规则: 协助 — 盟友下次对该目标的攻击检定具有优势。
+    优先读 active_effects，兼容旧 help_advantage_target 字段。
+    """
+    for e in c.active_effects:
+        if e.get("effect") == "help_advantage":
+            if e.get("target_cid") is None or e.get("target_cid") == target_cid:
+                return True
+    return c.help_advantage_target == target_cid
+
+
+def clear_turn_start_effects(c: Combatant) -> None:
+    """回合开始清理持续至下回合开始的动作效果（COM-014）。
+
+    规则: 回避/协助/撤离等持续至持有者下回合开始。
+    """
+    # 移除 active_effects 中标记 expires_turn_start 的效果
+    c.active_effects = [
+        e for e in c.active_effects if not e.get("expires_turn_start", True)
+    ]
+    # 兼容清理旧布尔字段
+    c.dodge_active = False            # R-CMB-008 至下回合开始
+    c.help_advantage_target = None
+    c.disengage_active = False
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -957,6 +1016,137 @@ def concentration_save(con_mod: int, con_prof: bool, prof: int, damage_taken: in
     res = check.saving_throw(mod=con_mod, prof=prof, proficient=con_prof, dc=dc,
                              circ=circ)
     return res.success
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 移动路径结算（COM-012）
+# ──────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class MovementSegment:
+    """移动路径中的一段。"""
+
+    from_pos: tuple
+    to_pos: tuple
+    cost_ft: float
+    events: list[dict] = field(default_factory=list)
+
+
+@dataclass
+class MovementPlan:
+    """移动路径计划 — 逐段执行移动并触发反应窗口。
+
+    规则: R-CMB-030 回合移动上限 / R-CMB-031 困难地形
+          R-CMB-007 撤离不触发借机攻击
+    出处: topics/玩家手册2024/进行游戏/移动和位置.htm
+    """
+
+    entity_id: str
+    speed_ft: float
+    segments: list[MovementSegment] = field(default_factory=list)
+    total_cost_ft: float = 0
+    remaining_speed_ft: float = 0
+
+    def add_segment(
+        self,
+        from_pos: tuple,
+        to_pos: tuple,
+        terrain_cost: float = 1.0,
+    ) -> MovementSegment:
+        """添加一段移动，计算消耗。"""
+        # 计算距离（切比雪夫距离 × 5尺）
+        dx = abs(to_pos[0] - from_pos[0])
+        dy = abs(to_pos[1] - from_pos[1])
+        grid_dist = max(dx, dy)
+        base_ft = grid_dist * FT_PER_SQUARE
+        cost_ft = base_ft * terrain_cost
+        seg = MovementSegment(from_pos=from_pos, to_pos=to_pos, cost_ft=cost_ft)
+        self.segments.append(seg)
+        return seg
+
+    def validate(self, battle_map: Any = None) -> list[str]:
+        """验证移动路径合法性，返回错误列表（空=合法）。"""
+        errors: list[str] = []
+        total = sum(seg.cost_ft for seg in self.segments)
+        if total > self.speed_ft:
+            errors.append(
+                f"移动消耗 {total}尺 超过速度 {self.speed_ft}尺"
+            )
+        if battle_map is not None:
+            for seg in self.segments:
+                if not battle_map.is_valid_position(*seg.to_pos):
+                    errors.append(
+                        f"目标位置 {seg.to_pos} 超出地图范围"
+                    )
+        return errors
+
+    def execute(
+        self,
+        battle_map: Any = None,
+        reaction_controller: Any = None,
+    ) -> list[dict]:
+        """逐段执行移动，触发反应窗口，返回事件列表。"""
+        events: list[dict] = []
+        self.remaining_speed_ft = self.speed_ft
+        self.total_cost_ft = 0
+
+        for seg in self.segments:
+            if seg.cost_ft > self.remaining_speed_ft:
+                events.append({
+                    "type": "movement_stopped",
+                    "entity_id": self.entity_id,
+                    "reason": "insufficient_speed",
+                    "at_pos": seg.from_pos,
+                    "remaining_speed": self.remaining_speed_ft,
+                })
+                break
+
+            # 检查是否离开敌人触及范围（触发借机攻击）
+            if reaction_controller is not None and battle_map is not None:
+                enemies_in_reach = battle_map.get_creatures_in_reach(
+                    self.entity_id, reach_ft=5
+                )
+                if enemies_in_reach:
+                    seg.events.append({
+                        "type": "leave_reach",
+                        "entity_id": self.entity_id,
+                        "from_pos": seg.from_pos,
+                        "to_pos": seg.to_pos,
+                        "enemies": enemies_in_reach,
+                    })
+
+            # 更新地图位置
+            if battle_map is not None:
+                moved = battle_map.move_entity(
+                    self.entity_id, seg.from_pos, seg.to_pos
+                )
+                if not moved:
+                    seg.events.append({
+                        "type": "movement_blocked",
+                        "entity_id": self.entity_id,
+                        "to_pos": seg.to_pos,
+                    })
+                    break
+
+            self.remaining_speed_ft -= seg.cost_ft
+            self.total_cost_ft += seg.cost_ft
+            events.append({
+                "type": "movement_segment",
+                "entity_id": self.entity_id,
+                "from": seg.from_pos,
+                "to": seg.to_pos,
+                "cost_ft": seg.cost_ft,
+                "remaining_speed": self.remaining_speed_ft,
+            })
+            events.extend(seg.events)
+
+        events.append({
+            "type": "movement_complete",
+            "entity_id": self.entity_id,
+            "total_cost_ft": self.total_cost_ft,
+            "remaining_speed_ft": self.remaining_speed_ft,
+        })
+        return events
 
 
 # ──────────────────────────────────────────────────────────────────────────

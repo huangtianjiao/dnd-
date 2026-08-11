@@ -1,0 +1,1292 @@
+{
+  "package": "DND5E 2024 complete implementation",
+  "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+  "generated": "2026-07-31",
+  "severity_counts": {
+    "P0": 29,
+    "P1": 44,
+    "P2": 7
+  },
+  "tasks": [
+    {
+      "id": "STATE-003",
+      "priority": "P0",
+      "domain": "一致性",
+      "title": "结算缺少原子事务与幂等键",
+      "current_problem": "动作消耗、法术位、HP、物品和战斗状态分散写入；API/WS重试可能重复应用。",
+      "risk": "断线重发、LLM重试、并发请求会双扣资源或双伤害。",
+      "implementation": "Command携带idempotency_key与expected_version；单个Unit of Work原子写入事件和投影；采用乐观锁。",
+      "acceptance_criteria": [
+        "重复提交相同key只返回原结果；中途异常后数据库不出现半完成动作。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "REST-001",
+      "priority": "P0",
+      "domain": "休息",
+      "title": "生命骰为0时会回退成角色等级",
+      "current_problem": "_derive_for_character只在hit_dice_current>0时返回，0会被当作未初始化并回退level。",
+      "risk": "生命骰用尽后短休可无限恢复。",
+      "implementation": "以None区分未迁移与合法0；迁移时初始化一次，运行时永不回退。",
+      "acceptance_criteria": [
+        "hit_dice_current=0时请求花费1枚必定失败。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "CHR-006",
+      "priority": "P0",
+      "domain": "兼职",
+      "title": "兼职规则不完整",
+      "current_problem": "升级接口允许new_class，但未统一处理先决条件、熟练授予、职业等级、法术位、特性叠加。",
+      "risk": "兼职角色的HP、PB、额外攻击、施法和资源均可能错误。",
+      "implementation": "Character保存class_levels；MulticlassService处理进入条件、初始熟练差异、施法者等级与重复特性。",
+      "acceptance_criteria": [
+        "官方典型兼职组合的法术位、HP和特性逐项一致。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "MON-001",
+      "priority": "P0",
+      "domain": "怪物",
+      "title": "怪物回合只会一次基础攻击",
+      "current_problem": "combat_flow.run_monster_turn使用attack_bonus和damage_dice攻击随机站立玩家。",
+      "risk": "多重攻击、特殊动作、豁免能力、法术、移动、目标规则、抗性与状态全部缺失。",
+      "implementation": "怪物使用与玩家相同的ActionDefinition/Effect系统；StatBlock编译为可执行动作列表；AI只选择合法动作。",
+      "acceptance_criteria": [
+        "任意怪物动作都经过同一验证与事件管线；基础攻击不再有专用捷径。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-001",
+      "priority": "P0",
+      "domain": "战斗",
+      "title": "目标AC和防御状态来自LLM",
+      "current_problem": "resolve_attack读取intent.target_ac、resistances、immunities、target_dodging等。",
+      "risk": "命中、伤害和抗性可被模型猜错或绕过。",
+      "implementation": "TargetRef解析到EntityState后读取AC、效果和伤害修正；intent中的同名字段必须被schema拒绝。",
+      "acceptance_criteria": [
+        "篡改intent target_ac不会改变攻击结果。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-002",
+      "priority": "P0",
+      "domain": "战斗",
+      "title": "攻击使用属性可由LLM自由指定",
+      "current_problem": "resolve_attack使用intent.ability，未根据远程、灵巧、投掷、职业特性约束。",
+      "risk": "角色可为任何武器选择最高属性；True Strike等特殊替换也无法准确表达。",
+      "implementation": "WeaponAttackProfile根据武器属性和效果生成允许属性集合；玩家只能在允许集合中选择。",
+      "acceptance_criteria": [
+        "长剑默认力量；刺剑可力/敏；长弓只能敏捷；特定特性可添加替换选项。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-008",
+      "priority": "P0",
+      "domain": "战斗",
+      "title": "多次攻击/多目标伤害可能汇总到单一目标",
+      "current_problem": "multi_attack顶层damage使用total_damage；apply按顶层target_cid扣血。",
+      "risk": "对多个目标的攻击可能全部伤害同一生物。",
+      "implementation": "每次命中产生独立DamageApplied(target_id, amount, packet_id)事件；禁止顶层汇总承担写状态职责。",
+      "acceptance_criteria": [
+        "两次攻击分别命中A/B后，A/B只承受对应事件伤害。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-001",
+      "priority": "P0",
+      "domain": "施法",
+      "title": "生产施法与engine施法逻辑分叉",
+      "current_problem": "resolver自行实现施法，engine.cast_spell另有不同分支和错误。",
+      "risk": "同一法术在不同入口得到不同半伤、反应、法术位和专注结果。",
+      "implementation": "保留单一SpellService；API、resolver、怪物施法和测试都调用它。",
+      "acceptance_criteria": [
+        "删除重复公式后，所有施法入口产生相同ResolutionPlan。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-002",
+      "priority": "P0",
+      "domain": "施法",
+      "title": "未收录法术回退到LLM猜测",
+      "current_problem": "resolve_cast对get_spell失败时继续使用LLM给出的环阶、伤害骰、伤害类型与效果类型。",
+      "risk": "任何法术名都可能变成任意伤害，规则不可审计。",
+      "implementation": "完整模式下未知spell_id必须拒绝；开发模式允许明确标记HomebrewDefinition但必须由DM保存结构化定义。",
+      "acceptance_criteria": [
+        "输入不存在法术时返回UNKNOWN_CONTENT，不消耗动作/法术位，也不掷骰。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-003",
+      "priority": "P0",
+      "domain": "施法",
+      "title": "known_spells为空时默认掌握全部可及职业法术",
+      "current_problem": "default_known_spells明确标注MVP简化。",
+      "risk": "角色强度和职业准备机制完全失真。",
+      "implementation": "建立SpellGrant、PreparedSpell、SpellbookEntry与KnownSpell来源；按职业/专长/物品分别执行准备规则。",
+      "acceptance_criteria": [
+        "一级法师只能施展法术书中且已准备的非仪式法术；仪式按法师规则单独验证。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-004",
+      "priority": "P0",
+      "domain": "施法",
+      "title": "法术位进度只使用标准全施法者表",
+      "current_problem": "max_spell_slots(level)对所有施法职业复用同一表。",
+      "risk": "圣武士、游侠、魔契师、兼职角色法术位错误。",
+      "implementation": "实现ClassProgression与MulticlassCasterLevel；魔契术法位单独池；职业特性恢复各自资源。",
+      "acceptance_criteria": [
+        "1-20级每职业法术位与规则表逐格一致；兼职组合通过官方示例测试。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-005",
+      "priority": "P0",
+      "domain": "施法",
+      "title": "engine豁免型法术成功时一律半伤",
+      "current_problem": "engine.spellcasting saving_throw分支忽略half_on_save。",
+      "risk": "圣火术等成功应0伤却受到半伤。",
+      "implementation": "SaveOutcome由SpellEffect声明none/half/alternate；禁止通用分支猜测。",
+      "acceptance_criteria": [
+        "圣火术成功0伤、火球成功半伤、控制法术成功不施加状态。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-008",
+      "priority": "P0",
+      "domain": "施法",
+      "title": "法术效果模型只能表达少数类型",
+      "current_problem": "effect_type仅attack_roll/saving_throw/automatic/heal/shield，生成表通过文本正则推断。",
+      "risk": "绝大多数控制、移动、召唤、变形、侦测、创造、传送、持续区域法术无法执行。",
+      "implementation": "建立可组合Effect DSL：damage/heal/condition/move/summon/transform/modify_stat/create_zone/reveal/choice/repeat。",
+      "acceptance_criteria": [
+        "每个PHB2024法术编译后不存在generic “applied”占位；不支持项使覆盖门禁失败。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-010",
+      "priority": "P0",
+      "domain": "施法",
+      "title": "专注维持链路存在代码错误与状态漂移",
+      "current_problem": "apply.py调用未导入的conditions；专注来源读取临时state，失败时未统一清理持久化效果。",
+      "risk": "受伤时可能抛NameError，或专注失效但法术效果仍残留。",
+      "implementation": "ConcentrationLink关联施法者与全部效果；受伤事件逐个伤害源触发豁免；结束专注原子移除关联效果。",
+      "acceptance_criteria": [
+        "连续两次伤害分别检定；失败后所有关联效果与持久字段同时清理。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-013",
+      "priority": "P0",
+      "domain": "施法",
+      "title": "反应与法术位消耗顺序不安全",
+      "current_problem": "engine在验证法术位前可能先use_reaction；apply又对任何cast默认扣法术位。",
+      "risk": "施法失败仍丢反应/法术位；重试可能重复扣除。",
+      "implementation": "先构建并验证完整Plan，随后一次Commit同时消耗动作、反应、法术位和材料。",
+      "acceptance_criteria": [
+        "无槽护盾术不消耗反应；成分失败不消耗任何资源。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-014",
+      "priority": "P0",
+      "domain": "施法",
+      "title": "apply对失败、戏法和仪式施法也可能扣法术位",
+      "current_problem": "apply只检查kind=cast并默认spell_level=1，未检查success/slot_consumed。",
+      "risk": "常见失败路径会悄悄减少一环位。",
+      "implementation": "法术位只由ResourceSpent事件写入；apply不再从kind推断。",
+      "acceptance_criteria": [
+        "失败施法、戏法、仪式均不产生SpellSlotSpent。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "ARC-001",
+      "priority": "P0",
+      "domain": "架构",
+      "title": "缺少不可变的2024规则集标识",
+      "current_problem": "Campaign模型只有名称、设定、基调和世界标记，没有ruleset_id、规则版本、勘误版本或内容包清单。",
+      "risk": "存档无法证明使用哪套规则；未来数据更新后旧存档会悄悄改变语义；RAG与代码也无法做版本隔离。",
+      "implementation": "新增RulesetManifest、Campaign.ruleset_id、ruleset_revision、content_pack_versions；创建战役时固化，运行中只允许显式迁移。",
+      "acceptance_criteria": [
+        "加载任意存档均能输出唯一规则清单；同一事件日志在同一manifest下可重复回放。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "ARC-002",
+      "priority": "P0",
+      "domain": "架构",
+      "title": "同一规则存在多条生产实现",
+      "current_problem": "施法同时存在engine.spellcasting.cast_spell与brain.resolvers.cast.resolve_cast；战斗、专注、休息也有引擎函数、resolver适配和apply补丁。",
+      "risk": "修复其中一处不代表线上路径生效；不同入口得到不同结果；测试可能只覆盖孤立引擎。",
+      "implementation": "确立每个领域唯一Domain Service；resolver只能构建Command并调用服务，不得复制公式；删除或标记deprecated的重复路径。",
+      "acceptance_criteria": [
+        "同一规则ID只有一个可执行handler；静态检查禁止resolver出现伤害、DC、法术位公式。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "ARC-003",
+      "priority": "P0",
+      "domain": "架构",
+      "title": "LLM仍提供权威机械数值",
+      "current_problem": "Director要求LLM输出target_ac、dc、proficient、spell_level、spell_dice、target_save_bonus、敌人HP等。",
+      "risk": "模型幻觉或提示注入可直接改变命中率、伤害、资源与怪物数值，违背“叙事交给LLM，规则交给代码”。",
+      "implementation": "Intent schema只保留动作类型、自然语言目标引用和玩家选择；所有ID、数值、修正与合法性由状态和规则数据派生。",
+      "acceptance_criteria": [
+        "向LLM注入任意伪造AC/DC/伤害文本，最终ResolutionPlan仍使用数据库权威值。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "ARC-004",
+      "priority": "P0",
+      "domain": "架构",
+      "title": "叙事节点可通过state_changes修改权威状态",
+      "current_problem": "apply_node遍历narrate产生的state_changes并直接改变玩家HP、临时HP等字段。",
+      "risk": "LLM可重复扣血、治疗、改错目标；重试或格式漂移造成不可预测状态。",
+      "implementation": "叙事节点只消费已提交DomainEvent并生成文本；状态变化必须来自规则服务的事件，不接受Narrator写操作。",
+      "acceptance_criteria": [
+        "删掉Narrator到状态层的写通路；Narrator输出中出现state_changes时被忽略并记录安全告警。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "CHK-001",
+      "priority": "P0",
+      "domain": "检定",
+      "title": "技能熟练由LLM或硬编码决定",
+      "current_problem": "ability_check信任intent.proficient；Hide/Search/Study直接proficient=True。",
+      "risk": "所有角色可能凭空获得熟练，影响几乎全部探索和社交判定。",
+      "implementation": "检定服务从角色ProficiencyGrant集合、技能映射、专长与效果派生熟练/专精/半熟练。",
+      "acceptance_criteria": [
+        "未熟练角色的Search不会加PB；专精恰好加两次PB且不会叠加第三次。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "CHK-002",
+      "priority": "P0",
+      "domain": "检定",
+      "title": "DC由LLM直接给出且缺少裁定证据",
+      "current_problem": "大量非战斗检定使用intent.dc或默认10/15。",
+      "risk": "同一场景结果不稳定，玩家可提示注入降低DC。",
+      "implementation": "DC来源分为规则固定、实体属性、场景Challenge定义和DM显式裁定；每次记录source_rule_id与reason。",
+      "acceptance_criteria": [
+        "同一场景重复分类不改变DC；没有权威来源时进入DM裁定而非默认为10。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "TEST-001",
+      "priority": "P0",
+      "domain": "测试",
+      "title": "大量自检只证明函数存在，不证明生产链路正确",
+      "current_problem": "模块末尾_self_test和孤立单测不覆盖Director→resolve→apply→持久化。",
+      "risk": "文档可能标记“已完成”，线上却绕过正确函数。",
+      "implementation": "建立规则金丝雀E2E，所有关键规则从API/WS入口走完整生产链。",
+      "acceptance_criteria": [
+        "每个P0规则至少一个全链路测试，并对数据库最终状态断言。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "TEST-002",
+      "priority": "P0",
+      "domain": "测试",
+      "title": "没有内容覆盖清单与发布门禁",
+      "current_problem": "法术、职业特性、专长、怪物、物品可只有文本而仍被API暴露。",
+      "risk": "“完整实现”无法量化，用户遇到未实现内容才发现。",
+      "implementation": "生成CoverageManifest：content_id→handler_status→tests→source；complete模式只发布FULL。",
+      "acceptance_criteria": [
+        "CI中任何公开内容缺handler或验收测试即失败。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "ITEM-002",
+      "priority": "P0",
+      "domain": "物品",
+      "title": "持有盾牌被当作装备盾牌",
+      "current_problem": "Character.recompute_ac通过“盾牌是否在inventory”决定+2 AC。",
+      "risk": "背包里的盾牌永久加AC，且不占手。",
+      "implementation": "AC只读取EquipmentSlots.off_hand的已装备盾牌，并执行穿脱/操作动作。",
+      "acceptance_criteria": [
+        "将盾牌收进背包后AC立即减少2；重新装备需合法动作。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "STATE-001",
+      "priority": "P0",
+      "domain": "状态",
+      "title": "Character、Combatant与临时GameState形成多真相源",
+      "current_problem": "玩家HP、死亡、状态、专注同时出现在SQL Character、Combatant和LangGraph state；部分字段靠同步函数补齐。",
+      "risk": "状态漂移会导致角色卡显示、战斗判定和保存结果不一致。",
+      "implementation": "建立EntityState唯一权威模型；Combatant只保存战斗专属投影或引用实体ID；所有变更通过事件投影同步。",
+      "acceptance_criteria": [
+        "任意时点运行state_consistency_check均为零差异；重载存档不改变战斗结果。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "STATE-002",
+      "priority": "P0",
+      "domain": "状态",
+      "title": "没有通用效果生命周期模型",
+      "current_problem": "ConditionState只有状态集合和力竭等级，无法记录来源、持续时间、结束时点、重复豁免、叠加键、专注关联。",
+      "risk": "魅惑来源、恐慌来源、受擒者与擒抱者、法术持续时间、回合末豁免等无法正确执行。",
+      "implementation": "新增EffectInstance与DurationSpec、TriggerSpec、StackPolicy、SourceRef、SaveEndSpec；状态由效果投影而非裸字符串。",
+      "acceptance_criteria": [
+        "同名状态可由不同来源追踪；移除一个来源不误删其他仍有效来源。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "RAG-001",
+      "priority": "P0",
+      "domain": "知识库",
+      "title": "RAG缺少2024硬过滤",
+      "current_problem": "extract_rules递归处理任意源目录；索引payload只有tag/path/title；检索器没有edition或source_class过滤。",
+      "risk": "2014、2024、项目自写RULE_SPEC可混入同一次规则裁定。",
+      "implementation": "索引时写edition=2024、book、chapter、rule_id、authority_level、revision；查询必须绑定Campaign manifest并硬过滤。",
+      "acceptance_criteria": [
+        "注入2014同名规则后，2024战役检索结果中2014命中数始终为0。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "CHR-001",
+      "priority": "P0",
+      "domain": "职业",
+      "title": "职业特性表只有名称，缺少可执行机制",
+      "current_problem": "CLASS_FEATURES列出1-20级特性，但升级只记录调用方传入的new_features。",
+      "risk": "角色等级提升后大部分职业能力不存在。",
+      "implementation": "每个FeatureDefinition编译为Grant/Resource/Action/Reaction/Modifier/Choice/Trigger；升级自动实例化。",
+      "acceptance_criteria": [
+        "12职业1-20级所有表项都有handler或数据DSL，覆盖清单无空洞。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "CHR-003",
+      "priority": "P1",
+      "domain": "专长",
+      "title": "专长是文本目录，不是规则实现",
+      "current_problem": "feats.py包含描述，但幸运点、警戒换先攻、治疗重掷、战斗风格等未统一接线。",
+      "risk": "角色选择专长后常常没有实际效果。",
+      "implementation": "专长复用Feature DSL，包含先决条件、复选键、选择、资源池与触发。",
+      "acceptance_criteria": [
+        "所有专长通过“选择后至少一个可观察机械差异”的覆盖门禁。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "REST-002",
+      "priority": "P1",
+      "domain": "休息",
+      "title": "RestState未成为正常游戏流程的持久状态机",
+      "current_problem": "resolver直接调用short_rest/long_rest；休息活动、打断、延长和世界时间没有统一事件驱动。",
+      "risk": "战斗或受伤发生后仍可能获得完整休息收益。",
+      "implementation": "StartRest创建RestSession；时间推进和活动发布RestInterrupted/RestCompleted事件；完成时统一结算。",
+      "acceptance_criteria": [
+        "短休被伤害打断无收益；长休打断按2024规则延长/转化并可恢复。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "REST-003",
+      "priority": "P1",
+      "domain": "休息",
+      "title": "职业、专长与物品资源恢复不完整",
+      "current_problem": "仅有少量硬编码特性恢复；没有通用RechargeSpec。",
+      "risk": "同样写着“短休/长休恢复”的能力行为不一致。",
+      "implementation": "所有ResourcePool声明recharge_on与恢复量；RestCompleted按规则查询并生成事件。",
+      "acceptance_criteria": [
+        "资源覆盖清单中每个可消耗能力都有明确恢复规则测试。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "DMG-001",
+      "priority": "P1",
+      "domain": "伤害",
+      "title": "伤害附加骰和替代效果没有统一伤害包",
+      "current_problem": "攻击只用武器基础骰+属性；职业特性、专长、毒药、暴击额外骰、一次每回合能力缺少组合模型。",
+      "risk": "偷袭、神圣惩击、狂暴伤害、Hunter’s Mark等无法正确叠加和暴击。",
+      "implementation": "DamagePacket由多个DamageComponent组成，每项记录来源、骰、类型、是否暴击翻倍、是否可选。",
+      "acceptance_criteria": [
+        "暴击只翻倍合资格伤害骰；固定加值不翻倍；不同类型分别过抗性管线。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "DMG-002",
+      "priority": "P1",
+      "domain": "伤害",
+      "title": "0 HP、非致命击倒和目标死亡流程不完整",
+      "current_problem": "存在部分死亡豁免与knockout函数，但命中应用、怪物稳定、立即死亡、治疗和状态结束分散。",
+      "risk": "边界场景容易出现死而复生、重复失败或错误结束战斗。",
+      "implementation": "建立HealthStateMachine：damage→0HP→instant death/knockout/unconscious→death saves→stabilize/heal。",
+      "acceptance_criteria": [
+        "覆盖天然20、天然1、0HP受重击、巨量伤害、稳定后受伤、非致命攻击。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-009",
+      "priority": "P1",
+      "domain": "反应",
+      "title": "借机攻击的触发与反应消耗未形成原子窗口",
+      "current_problem": "opportunity_attack可被直接分类；移动、撤离、传送、强制移动与触及变化没有统一触发队列。",
+      "risk": "玩家可无触发发动OA，或合法OA被漏掉；多反应竞争无法处理。",
+      "implementation": "MovementStep发布LeavesReach事件，ReactionWindow收集候选反应，选择后原子消耗反应并结算。",
+      "acceptance_criteria": [
+        "撤离/传送/强制移动不触发；正常离开多个敌人触及时分别开放窗口。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-010",
+      "priority": "P1",
+      "domain": "反应",
+      "title": "准备动作不是完整的触发规则",
+      "current_problem": "Combatant只有ready_trigger和ready_action_name字符串。",
+      "risk": "无法验证可感知触发、动作预付、反应释放、准备法术专注、过期时点。",
+      "implementation": "ReadyEffect保存预备Command模板、TriggerPredicate、expiry、是否专注；触发时进入ReactionWindow。",
+      "acceptance_criteria": [
+        "准备法术立即消耗法术位并开始专注，未触发到下回合开始时正确失效。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "API-001",
+      "priority": "P1",
+      "domain": "多人",
+      "title": "动作权限与回合并发仍需统一乐观锁",
+      "current_problem": "已有多人回合状态机，但REST/WS、玩家行动和怪物自动推进依赖多处同步。",
+      "risk": "两名玩家同时提交可能越权行动或重复推进。",
+      "implementation": "所有战斗Command验证actor_id、turn_owner、expected_combat_version；单一CombatApplicationService提交。",
+      "acceptance_criteria": [
+        "并发提交时仅一个成功，另一个收到STALE_VERSION并刷新状态。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "CHR-002",
+      "priority": "P1",
+      "domain": "子职",
+      "title": "子职业只有列表和三级选择",
+      "current_problem": "没有完整子职特性、选择、资源与效果执行。",
+      "risk": "绝大部分构筑差异缺失。",
+      "implementation": "建立SubclassProgression与FeatureDefinition，按等级自动授予并支持选项。",
+      "acceptance_criteria": [
+        "每个已宣称支持的子职从3到20级特性均可触发测试。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SEC-001",
+      "priority": "P1",
+      "domain": "安全",
+      "title": "自由文本规则字段缺少白名单与边界校验",
+      "current_problem": "多个intent字段可携带任意骰式、伤害类型、目标状态和数组。",
+      "risk": "可能导致异常、超大掷骰、资源耗尽或规则注入。",
+      "implementation": "使用Pydantic严格模型、枚举、上限、长度限制；所有骰式由内容定义引用而非用户输入。",
+      "acceptance_criteria": [
+        "非法骰式和超界数值在进入领域层前被拒绝。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "MON-002",
+      "priority": "P1",
+      "domain": "怪物",
+      "title": "充能、传奇动作、传奇抗性和巢穴动作未完整接线",
+      "current_problem": "Combatant有字段，但没有通用时机、资源刷新、选择与事件实现。",
+      "risk": "高CR怪物无法按2024怪物设计运行。",
+      "implementation": "实现RechargeAtTurnStart、LegendaryWindowAfterTurn、LegendaryResistanceOnFailedSave、LairInitiative规则。",
+      "acceptance_criteria": [
+        "带传奇动作的测试怪物在正确窗口选择动作、扣次数、轮次开始恢复。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "INT-001",
+      "priority": "P1",
+      "domain": "意图层",
+      "title": "Director提示词与2024规则实现不一致",
+      "current_problem": "提示词仍描述“Hide对抗被动察觉”“Grapple运动检定”，而resolver按2024固定DC/豁免处理。",
+      "risk": "分类和参数抽取会产生矛盾字段，降低检索与审计质量。",
+      "implementation": "提示词不描述公式；动作语义来自版本化ActionDefinition；分类只输出枚举与玩家声明。",
+      "acceptance_criteria": [
+        "提示词不包含任何规则数值；规则升级无需改LLM提示即可生效。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "INT-002",
+      "priority": "P1",
+      "domain": "意图层",
+      "title": "自然语言目标解析不具备消歧与权限边界",
+      "current_problem": "target_name按字符串互含或唯一敌人回退；只匹配敌人；多目标、盟友、物件、区域缺少正式选择。",
+      "risk": "攻击错人、治疗自己、区域法术漏目标，且玩家可引用不可见目标。",
+      "implementation": "建立TargetQuery与CandidateTarget列表；需要玩家选择时返回ClarificationRequired，不得猜测。",
+      "acceptance_criteria": [
+        "两个同名敌人时系统要求选择；不可见/超距目标不会进入候选。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-005",
+      "priority": "P1",
+      "domain": "战斗",
+      "title": "距离、视线、掩护和位置没有接入攻击主链",
+      "current_problem": "engine有check_range、cover、vision等零散函数，但resolver主要读取intent.distance和target_ac。",
+      "risk": "可隔墙、超射程攻击；掩护与暗视觉结果不可靠。",
+      "implementation": "使用BattleMap/SpatialIndex生成LineOfEffect、LineOfSight、CoverLevel、Distance；攻击计划必须包含这些派生值。",
+      "acceptance_criteria": [
+        "全掩护目标不可选；半掩护正确加AC/敏捷豁免；超最大射程被拒绝。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-007",
+      "priority": "P1",
+      "domain": "战斗",
+      "title": "额外攻击被自动一次性执行",
+      "current_problem": "resolve_multi_attack按等级自动掷完所有攻击，默认复用同一目标与武器。",
+      "risk": "玩家无法在攻击之间移动、换目标、决定是否继续或插入可用特性。",
+      "implementation": "Attack动作生成AttackOpportunity数量；每次攻击作为子命令逐一选择并结算，保持动作尚未结束的状态。",
+      "acceptance_criteria": [
+        "战士可攻击一次、移动、攻击第二目标；未用攻击机会不会被强制消耗。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-014",
+      "priority": "P1",
+      "domain": "战斗",
+      "title": "回避、协助、躲藏等动作的持续与消耗不统一",
+      "current_problem": "部分使用Combatant布尔字段，部分只返回文本，部分在回合开始清理。",
+      "risk": "效果可能不生效或提前/延后结束。",
+      "implementation": "所有动作产生EffectInstance或ResourceEvent，不保留专用临时布尔捷径。",
+      "acceptance_criteria": [
+        "回避持续到下回合开始，协助只消费一次且目标/任务正确。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-015",
+      "priority": "P1",
+      "domain": "战斗",
+      "title": "躲藏前置条件未在生产resolver验证",
+      "current_problem": "resolve_hide允许intent覆盖DC且不检查重度遮蔽/掩护、敌人视线等。",
+      "risk": "角色可在敌人眼前无条件隐藏。",
+      "implementation": "HideCommand调用VisibilityService验证条件，DC固定来自ActionDefinition。",
+      "acceptance_criteria": [
+        "无遮挡且被可见敌人观察时返回ILLEGAL_HIDE且不消耗动作。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "EXP-002",
+      "priority": "P1",
+      "domain": "探索",
+      "title": "旅行、危害、视野和遭遇模块没有统一世界模拟",
+      "current_problem": "多个模块各自计算时间/检定/遭遇，场景environment仍是自由文本。",
+      "risk": "速度、光照、天气、补给、被动察觉和遭遇触发互相脱节。",
+      "implementation": "建立ExplorationClock、EnvironmentState、TravelPlan、SupplyLedger和EncounterClock；动作统一推进时间。",
+      "acceptance_criteria": [
+        "一次8小时旅行的距离、补给、休息、随机遭遇和力竭可从事件日志核对。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "DATA-001",
+      "priority": "P1",
+      "domain": "数据",
+      "title": "自动解析法术字段缺少置信度与人工审校门禁",
+      "current_problem": "spells_full明确说明effect_type/save/damage由文本规则匹配推断。",
+      "risk": "错误解析会被当权威机械执行。",
+      "implementation": "每个字段保存confidence与reviewed；低置信度内容不得进入FULL覆盖。",
+      "acceptance_criteria": [
+        "构建报告列出所有低置信度字段，complete发布为0。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "DATA-003",
+      "priority": "P1",
+      "domain": "数据",
+      "title": "规则勘误与内容修订无迁移机制",
+      "current_problem": "数据表更新会直接覆盖旧含义。",
+      "risk": "存档和测试在版本升级后静默变化。",
+      "implementation": "每个Definition有revision；RulesetManifest固定版本；提供显式MigrationPlan。",
+      "acceptance_criteria": [
+        "旧存档加载后仍用旧revision，除非用户执行迁移。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-006",
+      "priority": "P1",
+      "domain": "施法",
+      "title": "多射线与多目标分配未实现",
+      "current_problem": "resolve_upcast计算num_attacks，但engine循环目标而非射线；resolver只结算一次。",
+      "risk": "魔能爆、灼热射线、魔法飞弹分配与专注检定次数错误。",
+      "implementation": "SpellPlan包含EffectInstance列表；每枚射线/飞弹独立target_id、攻击/伤害事件。",
+      "acceptance_criteria": [
+        "玩家可把三道射线分给三个目标；每次伤害分别触发专注。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-007",
+      "priority": "P1",
+      "domain": "施法",
+      "title": "目标、范围、区域与视线合法性缺失",
+      "current_problem": "法术range多为字符串，AoE字段有限，生产结算依赖intent目标。",
+      "risk": "可超距、穿墙、选择不可见目标，区域包含对象不准确。",
+      "implementation": "将RangeSpec、TargetSpec、AreaSpec编译为几何查询；支持球/锥/线/立方/柱/光环及自选目标。",
+      "acceptance_criteria": [
+        "每种区域形状都有边界格测试；法术按原文决定是否需要看见/无遮挡路径。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-009",
+      "priority": "P1",
+      "domain": "施法",
+      "title": "持续时间和结束条件没有时间调度",
+      "current_problem": "法术duration主要是文本；效果没有到期事件、重复伤害、回合末豁免和进入区域触发。",
+      "risk": "持续法术永久存在或根本不生效。",
+      "implementation": "DurationSpec支持instant/rounds/minutes/hours/until_rest/permanent；Scheduler在TimingPoint触发tick与expire。",
+      "acceptance_criteria": [
+        "持续1分钟效果在10轮后自动结束；离开区域/回合开始伤害按定义执行。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-011",
+      "priority": "P1",
+      "domain": "施法",
+      "title": "姿势/材料/法器判断依赖名称猜测",
+      "current_problem": "空闲手靠武器关键词；盾牌在inventory即占手；法器只按字符串匹配。",
+      "risk": "合法施法被拒或非法施法通过。",
+      "implementation": "从EquipmentSlots和ItemDefinition判断手、法器类型与施法来源；实现同一只手处理S+M的规则。",
+      "acceptance_criteria": [
+        "盾牌在背包不占手；持法器的手可完成对应材料与姿势；纯S法术按规则需要空手。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-012",
+      "priority": "P1",
+      "domain": "施法",
+      "title": "有价/消耗材料不会真实扣除",
+      "current_problem": "has_specific_material来自intent布尔值，成功后没有ItemConsumed事件。",
+      "risk": "可无限使用昂贵或消耗性材料。",
+      "implementation": "材料需求引用item/tag、最低价值、数量、是否消耗；验证与扣除在同一事务。",
+      "acceptance_criteria": [
+        "缺少材料时拒绝且不耗位；成功后数量准确减少。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-015",
+      "priority": "P1",
+      "domain": "施法",
+      "title": "法术反制、解除魔法、护盾等时机型法术缺少专用窗口",
+      "current_problem": "当前法术按普通cast分类，无法在触发发生后、结果应用前做反应。",
+      "risk": "关键反应法术无法合法使用。",
+      "implementation": "TriggerWindow支持spell_cast_started、attack_hit_before_damage等；法术定义声明响应窗口。",
+      "acceptance_criteria": [
+        "护盾在得知命中后伤害前选择；反制在目标法术完成前结算。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "SPL-016",
+      "priority": "P1",
+      "domain": "施法",
+      "title": "召唤、变形和创造物缺少实体生命周期",
+      "current_problem": "效果模型没有创建临时实体、替换属性块或控制权。",
+      "risk": "大量高环法术无法实现。",
+      "implementation": "实现EntitySpawned、FormOverride、ControlLink、DespawnAtEnd；绑定来源和持续时间。",
+      "acceptance_criteria": [
+        "召唤物有独立回合/HP，专注结束后全部正确消失。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-013",
+      "priority": "P1",
+      "domain": "时序",
+      "title": "同时效应和触发优先级没有统一规则",
+      "current_problem": "多个回合开始/结束效果、伤害触发、死亡、专注结束散落在函数顺序中。",
+      "risk": "复杂交互结果取决于代码偶然调用顺序。",
+      "implementation": "定义TimingPoint枚举和ActiveControllerChoice；相同时点事件进入可排序队列，记录选择。",
+      "acceptance_criteria": [
+        "两个同时回合开始效果可由当前回合控制者选择顺序并写入事件日志。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-003",
+      "priority": "P1",
+      "domain": "武器",
+      "title": "武器词条大多只是文本",
+      "current_problem": "装备表记录弹药、装填、轻型、重型、触及、投掷、双手、多用，但生产攻击未统一执行。",
+      "risk": "射程、持手、装填、重型劣势、双武器攻击与弹药消耗不完整。",
+      "implementation": "为每个property实现WeaponRule handler，在BuildAttackPlan阶段统一校验并产生修正/资源事件。",
+      "acceptance_criteria": [
+        "38种武器逐项通过属性矩阵测试；非法持握或无弹药攻击被拒绝。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-004",
+      "priority": "P1",
+      "domain": "武器",
+      "title": "武器精通仅有说明字符串",
+      "current_problem": "MASTERY字典有8项描述，但resolve_attack没有精通选择、触发、每回合次数和效果事件。",
+      "risk": "2024战士、野蛮人等核心能力缺失，战斗平衡严重偏离。",
+      "implementation": "实现MasteryGrant、MasteryTrigger和8个handler：Cleave/Graze/Nick/Push/Sap/Slow/Topple/Vex；跟踪每回合限制。",
+      "acceptance_criteria": [
+        "每种精通至少覆盖命中、失手、免疫/体型、重复触发与回合重置场景。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "TEST-003",
+      "priority": "P1",
+      "domain": "测试",
+      "title": "随机结算不可稳定回放",
+      "current_problem": "骰子与random.choice直接调用全局随机源，事件没有RNG序列信息。",
+      "risk": "线上争议、存档恢复和回归测试无法复现。",
+      "implementation": "每个Command使用注入的RngContext；事件记录seed/roll_id/results；回放不重新掷骰。",
+      "acceptance_criteria": [
+        "同一事件流在不同机器重放得到完全相同状态。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "ITEM-001",
+      "priority": "P1",
+      "domain": "物品",
+      "title": "物品栏只有不重复字符串列表",
+      "current_problem": "add_to_inventory会避免重复，无法表示箭矢20、药水3、金币容器、耐久或唯一实例。",
+      "risk": "消耗品、弹药、堆叠和魔法物品实例不可正确追踪。",
+      "implementation": "ItemInstance/ItemStack分离定义与实例，支持quantity、charges、attunement、container、equipped。",
+      "acceptance_criteria": [
+        "同类物品可有多个实例；消耗与转移保持总量守恒。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "ITEM-004",
+      "priority": "P1",
+      "domain": "物品",
+      "title": "魔法物品充能、每日恢复和激活动作未统一",
+      "current_problem": "物品目录与同调存在，但没有通用Charges/Activation模型。",
+      "risk": "可无限使用或完全不能使用魔法物品能力。",
+      "implementation": "ItemFeature复用ResourcePool与ActionDefinition，按黎明/长休等RechargeSpec恢复。",
+      "acceptance_criteria": [
+        "魔杖耗尽、重充与破坏检查按定义执行。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "CHR-004",
+      "priority": "P1",
+      "domain": "物种",
+      "title": "物种特质缺少统一可执行定义",
+      "current_problem": "角色模型只存race字符串，部分特质可能在创角特判。",
+      "risk": "速度、体型、感官、抗性、法术、休息特性不一致。",
+      "implementation": "SpeciesDefinition授予Sense/Movement/DamageAffinity/Feature/Choice；全部进入统一效果系统。",
+      "acceptance_criteria": [
+        "每个支持物种的所有特质在角色创建后可由状态查询并有测试。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-011",
+      "priority": "P1",
+      "domain": "状态",
+      "title": "状态规则只实现部分数值效果",
+      "current_problem": "缺少魅惑不能伤害来源、恐慌不能接近、耳聋/目盲相关自动失败、昏迷掉落物、石化重量与来源关系。",
+      "risk": "大量控制与互动法术只显示标签而不改变合法动作。",
+      "implementation": "为每种ConditionDefinition配置action_constraints、roll_modifiers、movement_constraints、on_apply/on_remove事件。",
+      "acceptance_criteria": [
+        "15种状态都有规则级测试，且来源相关条件使用source_id判定。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "ENV-001",
+      "priority": "P1",
+      "domain": "环境",
+      "title": "光照、感官和隐形没有统一可见性判定",
+      "current_problem": "conditions.attack_modifiers接受可见性布尔，但调用方通常不提供权威结果。",
+      "risk": "隐形、黑暗、盲视、真实视觉与隐藏交互错误。",
+      "implementation": "VisibilityService综合光照、遮蔽、感官、距离和效果，输出ObserverTargetVisibility。",
+      "acceptance_criteria": [
+        "黑暗视觉范围外不可见；盲视范围内忽略隐形的相应惩罚。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "RAG-002",
+      "priority": "P1",
+      "domain": "知识库",
+      "title": "结构化规则与原文没有可验证溯源链",
+      "current_problem": "RULE_SPEC作为高信号语料，但规则点未强制关联原文段落哈希、解析器版本与人工审核状态。",
+      "risk": "错误摘要会压过正确原文，且无法定位变更影响。",
+      "implementation": "每条RuleDefinition保存source_path、anchor、source_hash、extractor_version、review_status；构建时做引用完整性校验。",
+      "acceptance_criteria": [
+        "所有可执行规则ID都能跳转到唯一原文片段；原文变化会使构建失败而非静默更新。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "EXP-001",
+      "priority": "P1",
+      "domain": "社交",
+      "title": "社交态度阈值与DC±5是项目自定义而非2024 RAW",
+      "current_problem": "social模块使用连续成功/失败和固定修正改变态度。",
+      "risk": "若宣称完整2024实现，会把房规误当官方规则。",
+      "implementation": "将RAW态度、影响动作与房规拆成可配置Policy；默认2024_RAW不启用自定义阈值。",
+      "acceptance_criteria": [
+        "规则模式切换后事件明确标注policy_id，RAW模式不出现自定义计数。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-012",
+      "priority": "P1",
+      "domain": "移动",
+      "title": "地图与移动函数未形成完整路径结算",
+      "current_problem": "有move/crawl/climb/swim/jump等函数，但缺少占格、路径、拐角、机会攻击、不同速度池与碰撞的统一执行器。",
+      "risk": "移动距离和触发结果与地图实际不一致。",
+      "implementation": "MovementPlan逐格/逐段执行，计算地形、占据、挤过、生物空间、速度模式和触发事件。",
+      "acceptance_criteria": [
+        "路径中每5尺的成本、触发与最终位置可重放验证。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "CHR-005",
+      "priority": "P1",
+      "domain": "背景",
+      "title": "背景选择与起源专长没有完整约束",
+      "current_problem": "存在背景数据和属性加值，但工具、装备、语言、专长选择与自定义背景流程未完全结构化。",
+      "risk": "可生成不合法角色或漏发资源。",
+      "implementation": "BackgroundDefinition包含属性选项、技能、工具、装备包、起源专长；CharacterBuilder执行约束求解。",
+      "acceptance_criteria": [
+        "所有背景预设与自定义流程均满足数量和互斥规则。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "COM-006",
+      "priority": "P1",
+      "domain": "装备",
+      "title": "没有可靠的手、持握、弹药和数量状态",
+      "current_problem": "inventory是字符串列表；空闲手靠武器名称关键词估算；盾牌只要在背包里就可能算装备。",
+      "risk": "姿势成分、盾牌AC、双手武器、换武器与弹药均会误判。",
+      "implementation": "ItemStack含item_id/quantity；EquipmentSlots含main_hand/off_hand/armor/focus；动作中显式处理draw/stow/reload。",
+      "acceptance_criteria": [
+        "背包中的盾牌不加AC；双手武器占两手；箭矢数量逐次减少且可回收。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "CHAR-008",
+      "priority": "P1",
+      "domain": "角色",
+      "title": "角色创建缺少选择来源和验证轨迹",
+      "current_problem": "最终模型只存结果字符串/列表，不记录技能、属性、语言、装备来自何处。",
+      "risk": "后续重算、迁移和撤销效果困难。",
+      "implementation": "保存Grant记录与ChoiceRecord；派生字段从grant重建。",
+      "acceptance_criteria": [
+        "角色可输出完整来源清单，重新构建后数值一致。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "CHR-007",
+      "priority": "P1",
+      "domain": "角色",
+      "title": "升级流程依赖调用方传入新特性",
+      "current_problem": "level_up的new_features为外部参数，未从职业进度权威派生。",
+      "risk": "调用者漏传或伪造即可改变角色能力。",
+      "implementation": "LevelUpPlan根据class_levels和Definition自动计算授予/选择；客户端只能提交合法选择。",
+      "acceptance_criteria": [
+        "漏传特性不会丢失，伪造不在候选中的特性被拒绝。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "ITEM-003",
+      "priority": "P1",
+      "domain": "魔法物品",
+      "title": "同调只有名称上限，没有效果与先决条件",
+      "current_problem": "attuned_items_json保存最多3个名称，但未统一应用属性、动作、法术、诅咒和职业限制。",
+      "risk": "同调物品看似支持但机械无效。",
+      "implementation": "MagicItemDefinition复用Feature DSL；AttunementService验证条件、占用槽并授予/撤销效果。",
+      "acceptance_criteria": [
+        "同调/解除后效果即时一致；第四件同调被拒绝。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "EXP-003",
+      "priority": "P2",
+      "domain": "停工期",
+      "title": "制作和停工期只覆盖少量简化公式",
+      "current_problem": "downtime/crafting缺少完整项目、工具、原料、进度、中断与失败规则。",
+      "risk": "长期玩法无法称为完整DMG实现。",
+      "implementation": "将DMG模块定义为独立里程碑；使用ProjectDefinition与ProgressEvent实现。",
+      "acceptance_criteria": [
+        "每个宣称支持的停工期活动具有完整输入、进度、成本和结算测试。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "RAG-003",
+      "priority": "P2",
+      "domain": "可移植性",
+      "title": "Qdrant路径硬编码到Windows盘符",
+      "current_problem": "knowledge/indexer.py使用D:\\game\\dnd\\aidm\\data\\rules.db。",
+      "risk": "容器、Linux和其他开发机无法可靠构建或加载规则库。",
+      "implementation": "路径全部由配置与项目根目录派生；启动时校验可写性和manifest一致性。",
+      "acceptance_criteria": [
+        "Windows/Linux/Docker三环境运行同一索引测试通过。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "OBS-001",
+      "priority": "P2",
+      "domain": "可观测性",
+      "title": "结算结果缺少完整修正来源解释",
+      "current_problem": "结果通常只有total、d20、bonus，无法显示每个优势/加值来源。",
+      "risk": "难以排错，也无法让玩家信任AI DM裁定。",
+      "implementation": "ResolutionTrace记录公式树、规则ID、来源实体和被抵消修正。",
+      "acceptance_criteria": [
+        "UI可展开显示“d20 + 属性 + 熟练 - 力竭 + 掩护”等完整轨迹。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "PERF-001",
+      "priority": "P2",
+      "domain": "性能",
+      "title": "每次结算可能重复加载/解析JSON与规则数据",
+      "current_problem": "SQLModel多字段JSON字符串，resolver多次json.loads并动态导入。",
+      "risk": "多人和大规模遭遇下延迟与锁争用增加。",
+      "implementation": "命令开始加载聚合快照，结算内使用内存对象，提交一次；规则定义缓存按manifest版本。",
+      "acceptance_criteria": [
+        "50参战者场景的回合结算达到设定性能预算且无N+1查询。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "DATA-002",
+      "priority": "P2",
+      "domain": "数据",
+      "title": "核心标识依赖中文显示名",
+      "current_problem": "职业、武器、法术、状态和物品大量用中文字符串作主键。",
+      "risk": "译名变更、同名与多语言会破坏存档和规则引用。",
+      "implementation": "引入稳定canonical_id，显示名作为locale资源；迁移旧字符串。",
+      "acceptance_criteria": [
+        "切换语言或修订译名不改变存档引用。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "DOC-001",
+      "priority": "P2",
+      "domain": "文档",
+      "title": "现有审计和流程文档存在过度“已对齐”表述",
+      "current_problem": "GAME_FLOW与RULEBOOK_AUDIT把存在函数或数据表视为完成，未区分生产接线和完整内容覆盖。",
+      "risk": "后续AI会基于错误完成度继续施工或跳过关键模块。",
+      "implementation": "文档状态统一为DATA_ONLY/PARTIAL/WIRED/FULL/VERIFIED，并由CoverageManifest自动生成。",
+      "acceptance_criteria": [
+        "文档中的完成度由CI产物生成，不允许手工宣称未验证的FULL。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    },
+    {
+      "id": "ENV-002",
+      "priority": "P2",
+      "domain": "环境",
+      "title": "物件与地形仍是自由文本",
+      "current_problem": "Scene.environment是字符串，物件AC/HP与障碍不形成实体。",
+      "risk": "无法可靠破坏门、点燃物件、计算掩护或路径。",
+      "implementation": "ObjectEntity和TerrainFeature结构化，支持材质、AC、HP、阈值、可燃与遮挡。",
+      "acceptance_criteria": [
+        "破门攻击、火焰易伤、墙体掩护均由同一实体数据驱动。"
+      ],
+      "dependencies": [],
+      "ruleset": "dnd5e_2024_core",
+      "audit_sha": "99f4c3499da168a2f447771cfd623916b9666620",
+      "status": "TODO"
+    }
+  ]
+}

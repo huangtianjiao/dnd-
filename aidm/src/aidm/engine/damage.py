@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from typing import Any
 
 from . import dice
 
@@ -81,6 +82,11 @@ def apply_damage_pipeline(
 ) -> DamageResult:
     """按固定顺序结算伤害：免疫→数值修正→一项抗性→一项易伤→下限0。
 
+    ★ ARC-002: 本函数为伤害管线结算的唯一权威入口。所有需要处理抗性/易伤/免疫
+      的调用方必须通过此函数，不得自行实现伤害修正逻辑。
+      调用方: engine/spellcasting.cast_spell, resolvers/attack.resolve_attack,
+              resolvers/cast.resolve_cast, engine/combat
+
     规则: R-QCK-002 顺序（=R-DMG-005）+ R-DMG-006免疫 + R-DMG-003抗性易伤 +
           R-DMG-004 抗性易伤不叠加（各只一项）+ R-DMG-002 下限0
     出处: topics/玩家手册2024/进行游戏/抗性和易伤.htm ; topics/速查/DM速查/抗性与易伤.htm
@@ -125,6 +131,11 @@ def roll_damage(
     immunities: Iterable[str] = (),
 ) -> DamageResult:
     """掷伤害骰并跑管线。
+
+    ★ ARC-002: 本函数为伤害掷骰+管线的唯一权威入口。调用方不得直接调用
+      dice.roll_dice 替代本函数进行伤害结算。
+      调用方: engine/spellcasting.cast_spell, resolvers/attack.resolve_attack,
+              resolvers/cast.resolve_cast
 
     规则: R-DMG-001 伤害掷骰构成（武器=sum(dice)+属性调整值；法术按说明；定值不加属性）
           R-CMB-029 重击骰数翻倍（常数不加倍，由 dice.roll_dice 的 crit 处理）
@@ -298,6 +309,133 @@ def reset_death_counts_on_recovery(tracker: DeathTracker) -> None:
     tracker.reset()
     tracker.stable = False
     tracker.dead = False
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# DMG-001: 多组件伤害包
+# ──────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class DamageComponent:
+    """单个伤害组件。
+
+    每个组件代表一个独立的伤害来源（武器基础伤害、猎人印记额外伤害、
+    元素武器附加伤害等），各自掷骰并独立过抗性/免疫/易伤管线。
+    """
+
+    source_id: str           # 来源标识（武器/法术/特性）
+    dice_expr: str           # 如 "1d8", "2d6"
+    damage_type: str         # "slashing", "fire" 等
+    flat_modifier: int = 0   # 固定加值
+    crit_dice: str = ""      # 暴击时的额外骰（如 "1d8"）
+
+
+@dataclass
+class DamagePacket:
+    """多组件伤害包。
+
+    逐组件掷骰，分别过免疫/抗性/易伤管线，合并同类型伤害。
+    规则: DMG-001 多组件伤害包
+    """
+
+    components: list[DamageComponent] = field(default_factory=list)
+
+    def add_component(
+        self,
+        source_id: str,
+        dice_expr: str,
+        damage_type: str,
+        flat_mod: int = 0,
+        crit_dice: str = "",
+    ) -> None:
+        """添加一个伤害组件。"""
+        self.components.append(DamageComponent(
+            source_id=source_id,
+            dice_expr=dice_expr,
+            damage_type=damage_type,
+            flat_modifier=flat_mod,
+            crit_dice=crit_dice,
+        ))
+
+    def resolve(
+        self,
+        target_affinities: dict,
+        rng: Any = None,
+        crit: bool = False,
+    ) -> dict:
+        """逐组件掷骰，分别过抗性管线，合并同类型。
+
+        Args:
+            target_affinities: {"resistances": [...], "vulnerabilities": [...], "immunities": [...]}
+            rng: 可选随机源（当前未使用，保留扩展）
+            crit: 是否暴击（骰数翻倍）
+
+        Returns:
+            {
+                "total_damage": int,
+                "breakdown": [{"source": str, "type": str, "rolled": int, "after_affinity": int}],
+                "events": [...],
+            }
+        """
+        resistances = target_affinities.get("resistances", [])
+        vulnerabilities = target_affinities.get("vulnerabilities", [])
+        immunities = target_affinities.get("immunities", [])
+
+        breakdown: list[dict] = []
+        events: list[dict] = []
+        type_totals: dict[str, int] = {}  # 合并同类型
+
+        for comp in self.components:
+            # 掷骰
+            roll_result = dice.roll_dice(comp.dice_expr, crit=crit)
+            rolled = roll_result.total + comp.flat_modifier
+            rolled = max(0, rolled)
+
+            # 过管线
+            pipeline_result = apply_damage_pipeline(
+                rolled,
+                comp.damage_type,
+                flat_modifiers=[],
+                resistances=resistances,
+                vulnerabilities=vulnerabilities,
+                immunities=immunities,
+            )
+
+            after = pipeline_result.final
+            dtype = pipeline_result.damage_type
+
+            breakdown.append({
+                "source": comp.source_id,
+                "type": dtype,
+                "rolled": rolled,
+                "after_affinity": after,
+            })
+
+            events.append({
+                "type": "component_damage",
+                "source": comp.source_id,
+                "damage_type": dtype,
+                "dice_expr": comp.dice_expr,
+                "dice_rolls": roll_result.dice_rolls,
+                "flat_mod": comp.flat_modifier,
+                "before_affinity": rolled,
+                "after_affinity": after,
+                "immune": pipeline_result.immune,
+                "resisted": pipeline_result.resisted,
+                "vulnerable": pipeline_result.vulnerable,
+            })
+
+            # 合并同类型
+            type_totals[dtype] = type_totals.get(dtype, 0) + after
+
+        total_damage = sum(type_totals.values())
+
+        return {
+            "total_damage": total_damage,
+            "breakdown": breakdown,
+            "events": events,
+            "type_totals": type_totals,
+        }
 
 
 # ──────────────────────────────────────────────────────────────────────────

@@ -6,9 +6,17 @@
 
 from __future__ import annotations
 
+import os
 import re
 
-SPEC_PATH = r"D:\game\dnd\aidm\docs\RULE_SPEC.md"
+# RAG-003/可移植性: 路径由项目根目录派生，不硬编码 Windows 盘符。
+# 可用环境变量 AIDM_RULE_SPEC 覆盖。
+def _default_spec_path() -> str:
+    from ..config import PROJECT_ROOT
+    return os.getenv("AIDM_RULE_SPEC", str(PROJECT_ROOT / "aidm" / "docs" / "RULE_SPEC.md"))
+
+
+SPEC_PATH = _default_spec_path()
 
 
 def parse_rulespec(path: str = SPEC_PATH) -> list[dict]:

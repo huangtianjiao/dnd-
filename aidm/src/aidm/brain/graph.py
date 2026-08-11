@@ -68,6 +68,7 @@ from .resolvers import (
     resolve_social as _resolve_social,
     resolve_levelup as _resolve_levelup,
     resolve_travel as _resolve_travel,
+    resolve_downtime as _resolve_downtime,
     resolve_start_combat as _resolve_start_combat,
     with_target_outcome as _with_target_outcome,
     with_encounter as _with_encounter,
@@ -114,30 +115,34 @@ def classify(state: GameState) -> dict:
         "action_type ∈ attack|cast|ability_check|explore|start_combat|end_combat|rest|"
         "social|levelup|travel|hide|search|grapple|shove|dash|dodge|disengage|help|"
         "ready|use_item|study|opportunity_attack|other\n"
-        "通用字段: target_name, target_ac(整数,未知0), ability(str/dex/con/int/wis/cha), "
+        "通用字段: target_name, ability(str/dex/con/int/wis/cha), "
         "needs_check(true/false,DMG:仅结果不确定且失败有实质后果才掷骰;琐碎/无风险/友好NPC合理请求→false), "
         "retrieval_query(用规则原词构造的检索串:动作规范名+检定类型+DC关键词,如'徒手打击 推撞 豁免DC 8 力量 熟练')\n"
         "attack/opportunity_attack专有: weapon(武器中文名)\n"
         "cast专有: spell_name, spell_level(整数), spell_dice(如8d6), damage_type(火焰/力场/...), "
         "spell_attack(true=攻击检定型/false=豁免型), save_ability(con/dex/...目标豁免属性), "
         "target_save_bonus(目标该豁免加值,未知0), casting_ability(int/wis/cha 施法属性)\n"
-        "ability_check/explore/hide/search/study专有: skill(技能名), "
-        "dc(整数,DMG锚点:很容易5/容易10/中等15/困难20/极难25), proficient(true/false)\n"
-        "grapple/shove专有: ability(str/dex), dc, shove_type(prone/push,仅shove)\n"
+        "ability_check/explore/hide/search/study专有: skill(技能名)\n"
+        "grapple/shove专有: shove_type(prone/push,仅shove)\n"
         "help专有: target_name(协助对象); ready专有: trigger_condition, readied_action\n"
         "use_item专有: item_name, item_effect; start_combat专有: enemies(数组[{name,dex_mod,side='enemy',hp_max(整数,怪物HP上限,如哥布林7,未知给7)}])\n"
+        "注意: 不要输出 target_ac/dc/damage/proficient 等机械数值,这些由系统自动计算。\n"
         "只输出JSON。"
     )
     raw = llm.chat(prompt, state["player_input"], temperature=0.1)
     intent = _extract_json(raw)
     intent.setdefault("action_type", "other")
+    # ARC-003: 剥离 LLM 可能输出的机械数值字段
+    from ..agents.director import _strip_llm_mechanical_fields
+    _strip_llm_mechanical_fields(intent)
     return {"intent": intent, "error": "" if intent else "意图解析失败"}
 
 
 def retrieve(state: GameState) -> dict:
     """hybrid 检索相关规则（校验与叙事用）。"""
     q = state["intent"].get("retrieval_query") or state["player_input"]
-    return {"evidence": hybrid.search_spec_hybrid(q, limit=6)}
+    # RAG-001: 硬过滤 2024 版规则
+    return {"evidence": hybrid.search_spec_hybrid(q, limit=6, edition_filter="2024")}
 
 
 def retrieve_retry(state: GameState) -> dict:
@@ -145,7 +150,8 @@ def retrieve_retry(state: GameState) -> dict:
     issues = state.get("verification", {}).get("issues", [])
     base = state["intent"].get("retrieval_query") or state["player_input"]
     q = base + " " + " ".join(issues) + " 检定方式 DC来源 豁免"
-    return {"evidence": hybrid.search_spec_hybrid(q[:80], limit=6)}
+    # RAG-001: 硬过滤 2024 版规则
+    return {"evidence": hybrid.search_spec_hybrid(q[:80], limit=6, edition_filter="2024")}
 
 
 def verify(state: GameState) -> dict:
@@ -155,7 +161,7 @@ def verify(state: GameState) -> dict:
         return {"verification": {"ok": True, "issues": []}}
     v = verifier.verify(it.get("retrieval_query", state["player_input"]),
                         proposed_check_type=it.get("ability"),
-                        proposed_dc=it.get("target_ac") or it.get("dc"),
+                        proposed_dc=None,  # ARC-003: DC 不再从 LLM 获取
                         limit=6)
     return {"verification": {"ok": v.ok, "issues": v.issues}}
 
@@ -208,7 +214,7 @@ def resolve(state: GameState) -> dict:
         return _with_encounter(state, ch, auto)
 
     if at == "attack":
-        return _with_target_outcome(state, _resolve_multi_attack(ch, it))
+        return _with_target_outcome(state, _resolve_multi_attack(ch, it, state=state))
     if at == "cast":
         return _with_target_outcome(state, _resolve_cast(ch, it))
     if at in ("ability_check", "explore"):
@@ -234,6 +240,8 @@ def resolve(state: GameState) -> dict:
         return {"dice": _resolve_levelup(ch, it)}
     if at == "travel":
         return _with_encounter(state, ch, _resolve_travel(state, ch, it))
+    if at == "downtime":
+        return {"dice": _resolve_downtime(ch, it)}
     # —— 战术动作（不掷骰，仅标记状态）——
     if at == "dash":
         return {"dice": {"kind": "dash", "extra_movement_ft": ch.speed}}
@@ -279,7 +287,7 @@ def resolve(state: GameState) -> dict:
     if at == "study":
         return _with_encounter(state, ch, _resolve_study(ch, it))
     if at == "opportunity_attack":
-        return _with_target_outcome(state, _resolve_opportunity_attack(ch, it))
+        return _with_target_outcome(state, _resolve_opportunity_attack(ch, it, state=state))
     return {"dice": {}}  # other → 仅叙事
 
 
@@ -351,12 +359,11 @@ def narrate(state: GameState) -> dict:
         f"战斗: {json.dumps(combat_ctx, ensure_ascii=False)}\n"
         f"{scene_ctx}\n"
         f"规则摘要:\n{dig}\n玩家输入: {state['player_input']}\n"
-        "然后输出结构化状态变更 + 更新后的场景叙事。只输出JSON: "
-        '{"narration":"...", "state_changes":[{"target":"怪物名或character_id","field":"hp","delta":-N,"reason":"..."}], '
-        '"scene_update":"行动后场景的新状态叙事(1-2句,更新场景)", '
+        "然后输出场景叙事。只输出JSON: "
+        '{"narration":"...", "scene_update":"行动后场景的新状态叙事(1-2句,更新场景)", '
         '"location_change":"玩家实际移动到的新地点短名(仅当本次行动使地点发生改变,如从镇上进入矿坑/森林/洞穴;原地行动则为空串)"}\n'
         "然后给出3个玩家下一步可做的行动选项(区分细节,如DMG区分选项)。\n"
-        "只输出JSON: {\"narration\":\"叙事\",\"state_changes\":[],\"scene_update\":\"\",\"location_change\":\"\",\"action_options\":[\"选项1\",\"选项2\",\"选项3\"]}\n"
+        "只输出JSON: {\"narration\":\"叙事\",\"scene_update\":\"\",\"location_change\":\"\",\"action_options\":[\"选项1\",\"选项2\",\"选项3\"]}\n"
     )
     # 遭遇前移 + 战斗开场叙述
     _enc = dice.get("encounter", {})
@@ -404,8 +411,12 @@ def narrate(state: GameState) -> dict:
     raw = llm.chat("你是D&D DM,严格依据掷骰结果叙述,不改动数值。只输出JSON。", prompt, temperature=0.4)
     obj = _extract_json(raw)
     narration = obj.get("narration") or _strip_to_text(raw)
+    # ARC-004: Narrator 只读——剥离 state_changes，LLM 不应修改游戏状态
+    if obj.get("state_changes"):
+        _log.warning("ARC-004: graph.narrate state_changes 已被丢弃 (len=%d)",
+                     len(obj["state_changes"]))
     return {"narration": narration,
-            "state_changes": obj.get("state_changes", []),
+            "state_changes": [],  # ARC-004: 始终返回空列表
             "scene_update": obj.get("scene_update", ""),
             "location_change": obj.get("location_change", ""),
             "action_options": obj.get("action_options", [])}

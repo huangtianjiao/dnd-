@@ -289,6 +289,167 @@ def ability_check_disadvantage(state: ConditionState) -> bool:
 
 
 # ──────────────────────────────────────────────────────────────────────────
+# 15种状态完整数值效果定义（COM-011）
+# ──────────────────────────────────────────────────────────────────────────
+
+CONDITION_DEFINITIONS: dict[str, dict] = {
+    "目盲": {
+        "action_constraints": [],
+        "roll_modifiers": {
+            "attack_roll": "auto_miss",
+            "ability_check_see": "auto_fail",
+        },
+        "movement_constraints": {},
+        "on_apply": [],
+        "on_remove": [],
+    },
+    "魅惑": {
+        "action_constraints": {"cannot_attack_source": True},
+        "roll_modifiers": {},
+        "movement_constraints": {},
+        "source_id_required": True,
+        "on_apply": [],
+        "on_remove": [],
+    },
+    "耳聋": {
+        "action_constraints": {},
+        "roll_modifiers": {"ability_check_hear": "auto_fail"},
+        "movement_constraints": {},
+    },
+    "恐慌": {
+        "action_constraints": {},
+        "roll_modifiers": {
+            "attack_roll": "disadvantage_if_source_visible",
+            "ability_check": "disadvantage_if_source_visible",
+        },
+        "movement_constraints": {"cannot_move_closer_to_source": True},
+        "source_id_required": True,
+    },
+    "受擒": {
+        "action_constraints": {},
+        "roll_modifiers": {},
+        "movement_constraints": {"speed": 0},
+    },
+    "失能": {
+        "action_constraints": {
+            "no_actions": True,
+            "no_bonus_actions": True,
+            "no_reactions": True,
+        },
+        "roll_modifiers": {},
+        "movement_constraints": {},
+    },
+    "隐形": {
+        "action_constraints": {},
+        "roll_modifiers": {"attack_roll_again": "advantage"},
+        "movement_constraints": {},
+    },
+    "麻痹": {
+        "action_constraints": {
+            "no_actions": True,
+            "no_bonus_actions": True,
+            "no_reactions": True,
+        },
+        "roll_modifiers": {
+            "dex_save": "auto_fail",
+            "attack_roll_again": "advantage_and_crit",
+        },
+        "movement_constraints": {"speed": 0},
+    },
+    "石化": {
+        "action_constraints": {"no_actions": True},
+        "roll_modifiers": {"dex_save": "auto_fail"},
+        "movement_constraints": {"speed": 0},
+        "special": {"weight_changes": True, "stops_aging": True},
+    },
+    "力竭": {
+        "levels": {
+            1: {"disadvantage_ability_checks": True},
+            2: {"speed_halved": True},
+            3: {"disadvantage_attack_and_save": True},
+            4: {"hp_max_halved": True},
+            5: {"speed_zero": True},
+            6: {"dead": True},
+        }
+    },
+    "中毒": {
+        "action_constraints": {},
+        "roll_modifiers": {
+            "attack_roll": "disadvantage",
+            "ability_check": "disadvantage",
+        },
+        "movement_constraints": {},
+    },
+    "倒地": {
+        "action_constraints": {},
+        "roll_modifiers": {"attack_roll_self": "disadvantage"},
+        "movement_constraints": {"crawl_cost": "extra_half_speed"},
+        "attack_again_modifiers": {
+            "melee_within_5ft": "advantage",
+            "ranged_or_far": "disadvantage",
+        },
+    },
+    "束缚": {
+        "action_constraints": {},
+        "roll_modifiers": {
+            "attack_roll": "disadvantage",
+            "dex_save": "disadvantage",
+        },
+        "movement_constraints": {"speed": 0},
+        "attack_again_modifiers": {"advantage": True},
+    },
+    "震慑": {
+        "action_constraints": {
+            "no_actions": True,
+            "no_bonus_actions": True,
+            "no_reactions": True,
+        },
+        "roll_modifiers": {
+            "attack_roll": "disadvantage",
+            "dex_save": "auto_fail",
+        },
+        "movement_constraints": {},
+    },
+    "昏迷": {
+        "action_constraints": {
+            "no_actions": True,
+            "no_bonus_actions": True,
+            "no_reactions": True,
+        },
+        "roll_modifiers": {
+            "dex_save": "auto_fail",
+            "attack_roll_again": "advantage_and_crit",
+        },
+        "movement_constraints": {"speed": 0},
+        "special": {"drops_items": True, "unaware": True},
+    },
+}
+
+
+def get_condition_effects(condition_name: str) -> dict:
+    """返回指定状态的完整效果定义。
+
+    规则: R-GLS-044~058 各状态效果
+    出处: topics/玩家手册2024/术语汇编/状态.htm
+    参数:
+      condition_name: 中文名（如 "目盲"、"魅惑"、"力竭"）
+    返回:
+      该状态的完整效果规格字典；未知状态返回空字典。
+    """
+    return CONDITION_DEFINITIONS.get(condition_name, {})
+
+
+def get_exhaustion_effects(level: int) -> dict:
+    """返回指定力竭等级的效果定义。
+
+    规则: R-GLS-047 力竭累加效果
+    出处: topics/玩家手册2024/术语汇编/状态.htm
+    """
+    levels = CONDITION_DEFINITIONS.get("力竭", {}).get("levels", {})
+    return levels.get(level, {})
+
+
+# ──────────────────────────────────────────────────────────────────────────
 # 自检
 # ──────────────────────────────────────────────────────────────────────────
 

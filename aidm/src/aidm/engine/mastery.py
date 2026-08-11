@@ -10,7 +10,176 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
+
 from . import check, dice
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# COM-004: MasteryGrant — 角色精通授权追踪
+# ──────────────────────────────────────────────────────────────────────────
+
+# 精通名称（中文）→ 英文名映射
+MASTERY_NAME_MAP = {
+    "削弱": "sap",
+    "缓速": "slow",
+    "横扫": "cleave",
+    "擦掠": "graze",
+    "迅击": "nick",
+    "推离": "push",
+    "失衡": "topple",
+    "侵扰": "vex",
+}
+
+# 每回合使用次数限制
+MASTERY_PER_TURN_LIMITS: Dict[str, int] = {
+    "削弱": 99,   # 无显式限制，每命中都可触发
+    "缓速": 99,
+    "横扫": 1,    # 每回合 1 次
+    "擦掠": 99,
+    "迅击": 1,    # 每回合 1 次
+    "推离": 99,
+    "失衡": 99,
+    "侵扰": 99,
+}
+
+
+@dataclass
+class MasteryGrant:
+    """追踪角色是否获得特定武器精通及其每回合使用状态。
+
+    规则: COM-004 武器精通完整接线
+    """
+
+    entity_id: str
+    granted_masteries: List[str] = field(default_factory=list)  # 中文精通名列表
+    per_turn_usage: Dict[str, int] = field(default_factory=dict)
+
+    def has_mastery(self, mastery_name: str) -> bool:
+        """是否拥有指定精通。"""
+        return mastery_name in self.granted_masteries
+
+    def grant(self, mastery_name: str) -> None:
+        """授予精通。"""
+        if mastery_name not in self.granted_masteries:
+            self.granted_masteries.append(mastery_name)
+
+    def revoke(self, mastery_name: str) -> None:
+        """撤销精通。"""
+        if mastery_name in self.granted_masteries:
+            self.granted_masteries.remove(mastery_name)
+
+    def can_use(self, mastery_name: str) -> bool:
+        """本回合是否还能使用该精通。"""
+        if not self.has_mastery(mastery_name):
+            return False
+        limit = MASTERY_PER_TURN_LIMITS.get(mastery_name, 99)
+        current = self.per_turn_usage.get(mastery_name, 0)
+        return current < limit
+
+    def record_use(self, mastery_name: str) -> bool:
+        """记录一次使用，返回是否成功（未超限）。"""
+        if not self.can_use(mastery_name):
+            return False
+        current = self.per_turn_usage.get(mastery_name, 0)
+        self.per_turn_usage[mastery_name] = current + 1
+        return True
+
+    def reset_turn(self) -> None:
+        """回合开始重置使用计数。"""
+        self.per_turn_usage.clear()
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# COM-004: 精通效应与 AttackSequence 集成
+# ──────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class MasteryEffect:
+    """精通效应结果，用于与 AttackSequence 联动。"""
+
+    mastery_name: str
+    applied: bool
+    effect_type: str = ""           # 效应类型标识
+    extra_attack_available: bool = False   # Cleave: 额外攻击可用
+    graze_damage: int = 0                  # Graze: 失手伤害
+    push_distance_ft: int = 0              # Push: 推离距离
+    target_prone: bool = False             # Topple: 倒地
+    speed_reduction_ft: int = 0            # Slow: 速度减少
+    attacker_advantage: bool = False       # Vex: 攻击者优势
+    target_disadvantage: bool = False      # Sap: 目标劣势
+    nick_active: bool = False              # Nick: 迅击激活
+    dc: int = 0                            # 豁免 DC
+    save_result: Optional[dict] = None     # 豁免掷骰结果
+    events: List[dict] = field(default_factory=list)
+
+
+def resolve_mastery_with_grant(
+    mastery_name: str,
+    grant: MasteryGrant,
+    *,
+    hit: bool,
+    attacker_ability_mod: int = 0,
+    attacker_prof: int = 0,
+    target_size: str = "medium",
+    target_con_mod: int = 0,
+    target_con_prof: bool = False,
+    target_prof: int = 0,
+) -> MasteryEffect:
+    """带 MasteryGrant 追踪的精通效应解析。
+
+    与 resolve_mastery 互补：本函数额外检查每回合使用限制并记录使用。
+    """
+    if not grant.can_use(mastery_name):
+        return MasteryEffect(
+            mastery_name=mastery_name,
+            applied=False,
+            effect_type="not_available",
+        )
+
+    # 调用原始 resolve_mastery
+    raw = resolve_mastery(
+        mastery_name,
+        hit=hit,
+        attacker_ability_mod=attacker_ability_mod,
+        attacker_prof=attacker_prof,
+        target_size=target_size,
+        target_con_mod=target_con_mod,
+        target_con_prof=target_con_prof,
+        target_prof=target_prof,
+    )
+
+    effect = MasteryEffect(
+        mastery_name=mastery_name,
+        applied=raw.get("applied", False),
+        effect_type=raw.get("target_effect", ""),
+    )
+
+    if raw.get("applied"):
+        grant.record_use(mastery_name)
+
+        # 填充具体效应字段
+        if mastery_name == "横扫":
+            effect.extra_attack_available = True
+        elif mastery_name == "擦掠":
+            effect.graze_damage = raw.get("damage", 0)
+        elif mastery_name == "推离":
+            effect.push_distance_ft = raw.get("push_distance_ft", 0)
+        elif mastery_name == "失衡":
+            effect.dc = raw.get("dc", 0)
+            effect.target_prone = raw.get("target_prone", False)
+            effect.save_result = {"total": raw.get("save_total", 0), "d20": raw.get("save_d20", 0)}
+        elif mastery_name == "缓速":
+            effect.speed_reduction_ft = raw.get("speed_reduction_ft", 0)
+        elif mastery_name == "侵扰":
+            effect.attacker_advantage = True
+        elif mastery_name == "削弱":
+            effect.target_disadvantage = True
+        elif mastery_name == "迅击":
+            effect.nick_active = True
+
+    return effect
 
 
 # ──────────────────────────────────────────────────────────────────────────

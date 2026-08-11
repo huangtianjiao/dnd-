@@ -110,6 +110,143 @@ def multiclass_spell_slots(classes: dict[str, int]) -> dict[int, int]:
 
 
 # ──────────────────────────────────────────────────────────────────────────
+# 兼职熟练授予规则
+# ──────────────────────────────────────────────────────────────────────────
+
+MULTICLASS_PROFICIENCIES: dict[str, dict[str, list[str]]] = {
+    "野蛮人": {"armor": [], "weapons": ["simple", "martial"], "tools": [], "saves": ["str", "con"]},
+    "吟游诗人": {"armor": ["light"], "weapons": ["simple", "hand_crossbow", "longsword", "rapier", "shortsword"], "tools": ["musical_instrument_choice_3"], "saves": ["dex", "cha"]},
+    "牧师": {"armor": ["light", "medium", "shields"], "weapons": ["simple"], "tools": [], "saves": ["wis", "cha"]},
+    "德鲁伊": {"armor": ["light", "medium", "shields"], "weapons": ["club", "dagger", "dart", "javelin", "mace", "quarterstaff", "scimitar", "sickle", "spear"], "tools": ["herbalism_kit"], "saves": ["int", "wis"]},
+    "战士": {"armor": ["light", "medium", "shields"], "weapons": ["simple", "martial"], "tools": [], "saves": ["str", "con"]},  # 或 dex 代替 str
+    "武僧": {"armor": ["light"], "weapons": ["simple", "shortsword"], "tools": ["artisan_tools_choice_1"], "saves": ["str", "dex"]},
+    "圣武士": {"armor": ["light", "medium", "shields"], "weapons": ["simple", "martial"], "tools": [], "saves": ["str", "cha"]},
+    "游侠": {"armor": ["light", "medium", "shields"], "weapons": ["simple", "martial"], "tools": [], "saves": ["str", "dex"]},
+    "游荡者": {"armor": ["light"], "weapons": ["simple", "hand_crossbow", "longsword", "rapier", "shortsword"], "tools": ["thieves_tools"], "saves": ["dex", "int"]},
+    "术士": {"armor": [], "weapons": ["dagger", "dart", "sling", "quarterstaff", "light_crossbow"], "tools": [], "saves": ["con", "cha"]},
+    "魔契师": {"armor": ["light"], "weapons": ["simple"], "tools": [], "saves": ["wis", "cha"]},
+    "法师": {"armor": [], "weapons": ["dagger", "dart", "sling", "quarterstaff", "light_crossbow"], "tools": [], "saves": ["int", "wis"]},
+}
+
+# Extra Attack 来源列表（同名不叠加）
+EXTRA_ATTACK_FEATURES = frozenset({
+    "barbarian_extra_attack",
+    "bard_extra_attack",
+    "fighter_extra_attack",
+    "monk_extra_attack",
+    "paladin_extra_attack",
+    "ranger_extra_attack",
+})
+
+
+class MulticlassService:
+    """兼职服务 — 完整校验兼职合法性、熟练授予、Extra Attack 去重、施法位合并。"""
+
+    def __init__(self) -> None:
+        pass
+
+    def validate_multiclass(
+        self,
+        current_classes: dict[str, int],
+        new_class: str,
+        abilities: dict[str, int],
+    ) -> dict:
+        """校验能否兼职到新职业。
+
+        规则: R-MC-001 兼职前置属性值
+        返回: {"valid": bool, "reason": str|None}
+        """
+        result = can_multiclass(current_classes, new_class, abilities)
+        return {"valid": result["can_multiclass"], "reason": result.get("reason")}
+
+    def get_proficiencies_granted(
+        self,
+        new_class: str,
+        existing_proficiencies: set[str],
+    ) -> dict:
+        """计算兼职新职业获得的熟练项（去重后）。
+
+        规则: R-MC-003 兼职获得的熟练
+        返回: {"armor": [...], "weapons": [...], "tools": [...], "saves": [...]}
+        """
+        profs = MULTICLASS_PROFICIENCIES.get(new_class, {})
+        result = {"armor": [], "weapons": [], "tools": [], "saves": []}
+
+        # 护甲熟练
+        for armor in profs.get("armor", []):
+            if armor not in existing_proficiencies:
+                result["armor"].append(armor)
+
+        # 武器熟练
+        for weapon in profs.get("weapons", []):
+            if weapon not in existing_proficiencies:
+                result["weapons"].append(weapon)
+
+        # 工具熟练
+        for tool in profs.get("tools", []):
+            if tool not in existing_proficiencies:
+                result["tools"].append(tool)
+
+        # 豁免熟练（兼职不给新豁免）
+        # 规则: 兼职时不获得新的豁免熟练
+
+        return result
+
+    def calculate_extra_attacks(self, features: list[str],
+                                class_levels: dict[str, int] | None = None) -> int:
+        """计算额外攻击次数（Extra Attack 同名不叠加）。
+
+        规则: Extra Attack 特性不叠加
+        战士特殊: 11级获得第2次额外攻击，20级获得第3次。
+        其他职业: 有 Extra Attack 特性就 +1 次。
+        返回: 额外攻击次数（0、1、2 或 3）
+        """
+        has_extra_attack = any(
+            feat in EXTRA_ATTACK_FEATURES for feat in features
+        )
+        if not has_extra_attack:
+            return 0
+
+        # 基础: 1 次额外攻击
+        extra = 1
+
+        # 战士多重攻击: 11级 +1, 20级 +1
+        if class_levels:
+            fighter_lvl = class_levels.get("战士", 0)
+            if fighter_lvl >= 20:
+                extra += 2  # 11级+1, 20级+1
+            elif fighter_lvl >= 11:
+                extra += 1  # 11级+1
+
+        return extra
+
+    def get_spell_slots(self, classes: dict[str, int]) -> dict[int, int]:
+        """计算兼职合并法术位。
+
+        规则: R-MC-002 兼职法术位合并
+        说明: 魔契师独立计算，不参与合并。
+        """
+        return multiclass_spell_slots(classes)
+
+    def get_pact_slots(self, warlock_level: int) -> dict[int, int]:
+        """获取魔契师独立法术位。
+
+        规则: 魔契师法术位独立于多职业合并
+        返回: {环阶: 法术位数量}
+        """
+        if warlock_level <= 0:
+            return {}
+        # 魔契师法术位表
+        pact_slots = {
+            1: {1: 1}, 2: {1: 2}, 3: {2: 2}, 4: {2: 2}, 5: {3: 2},
+            6: {3: 2}, 7: {4: 2}, 8: {4: 2}, 9: {5: 2}, 10: {5: 2},
+            11: {5: 3}, 12: {5: 3}, 13: {5: 3}, 14: {5: 3}, 15: {5: 3},
+            16: {5: 3}, 17: {5: 4}, 18: {5: 4}, 19: {5: 4}, 20: {5: 4},
+        }
+        return dict(pact_slots.get(warlock_level, {}))
+
+
+# ──────────────────────────────────────────────────────────────────────────
 # 自检
 # ──────────────────────────────────────────────────────────────────────────
 

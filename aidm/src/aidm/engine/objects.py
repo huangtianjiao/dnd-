@@ -1,14 +1,17 @@
-"""物件属性引擎 — 物件 AC / HP / 破坏 DC。
+"""物件属性引擎 — 物件 AC / HP / 破坏 DC / 地形特征。
 
 规则依据:
   - R-OBJ-001 物件 AC（按材质）
   - R-OBJ-002 物件 HP（按材质与厚度）
   - R-OBJ-003 破坏物件（力量检定 DC）
   - R-OBJ-004 物件免疫（毒素/心灵伤害免疫）
+  - ENV-002 物件与地形结构化
 出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm ; 进行游戏/与物件交互.htm
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass, field
 
 # ──────────────────────────────────────────────────────────────────────────
 # 物件材质属性表
@@ -100,6 +103,115 @@ def object_damage_immunities() -> frozenset[str]:
     出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
     """
     return OBJECT_IMMUNITIES
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# ENV-002: 物件与地形结构化
+# ──────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class ObjectEntity:
+    """结构化物件实体。
+
+    规则: ENV-002 物件与地形结构化
+    出处: topics/玩家手册2024/进行游戏/与物件交互.htm
+
+    属性:
+        object_id: 物件唯一 ID
+        name: 物件名称
+        material: 材质 (wood/stone/metal/cloth 等)
+        ac: 护甲等级
+        hp: 生命值
+        damage_threshold: 伤害阈值（低于此值不受伤）
+        is_flammable: 是否可燃
+        provides_cover: 是否提供掩护
+        size: 尺寸 (Tiny/Small/Medium/Large/Huge/Gargantuan)
+    """
+    object_id: str = ""
+    name: str = ""
+    material: str = ""
+    ac: int = 10
+    hp: int = 10
+    damage_threshold: int = 0
+    is_flammable: bool = False
+    provides_cover: bool = False
+    size: str = "Medium"
+
+    def take_damage(self, damage: int) -> dict:
+        """物件受伤。
+
+        规则: ENV-002 伤害阈值
+        返回: dict {damage_dealt, hp_remaining, destroyed}
+        """
+        if damage <= self.damage_threshold:
+            return {"damage_dealt": 0, "hp_remaining": self.hp, "destroyed": False}
+        actual = damage
+        self.hp = max(0, self.hp - actual)
+        return {
+            "damage_dealt": actual,
+            "hp_remaining": self.hp,
+            "destroyed": self.hp <= 0,
+        }
+
+    @classmethod
+    def from_material(cls, object_id: str, name: str, material: str,
+                      thickness_inches: float = 1.0,
+                      size: str = "Medium") -> "ObjectEntity":
+        """从材质创建物件（自动计算 AC/HP）。"""
+        ac_val = object_ac(material)
+        hp_val = object_hp(material, thickness_inches)
+        flammable = material.lower() in ("wood", "cloth", "paper", "rope", "bone")
+        provides = size.lower() in ("medium", "large", "huge", "gargantuan")
+        return cls(
+            object_id=object_id,
+            name=name,
+            material=material,
+            ac=ac_val,
+            hp=hp_val,
+            damage_threshold=0,
+            is_flammable=flammable,
+            provides_cover=provides,
+            size=size,
+        )
+
+
+@dataclass
+class TerrainFeature:
+    """地形特征。
+
+    规则: ENV-002 物件与地形结构化
+    出处: topics/城主指南2024/2.运作游戏/运作交涉/旅行.htm
+
+    属性:
+        terrain_id: 地形唯一 ID
+        terrain_type: 地形类型 (difficult/hazardous/water/elevation)
+        cost_multiplier: 移动消耗倍率（difficult terrain = 2.0）
+        hazard_damage: 危害伤害（如 "1d6 fire"）
+        description: 描述文本
+    """
+    terrain_id: str = ""
+    terrain_type: str = "difficult"
+    cost_multiplier: float = 2.0
+    hazard_damage: str = ""
+    description: str = ""
+
+    def movement_cost(self, base_cost: float = 5.0) -> float:
+        """计算通过此地形的实际移动消耗。
+
+        参数:
+            base_cost: 基础移动消耗（默认 5ft）
+        返回:
+            实际移动消耗
+        """
+        return base_cost * self.cost_multiplier
+
+    def is_difficult(self) -> bool:
+        """是否为困难地形。"""
+        return self.terrain_type in ("difficult", "hazardous")
+
+    def has_hazard(self) -> bool:
+        """是否有危害伤害。"""
+        return bool(self.hazard_damage)
 
 
 # ──────────────────────────────────────────────────────────────────────────

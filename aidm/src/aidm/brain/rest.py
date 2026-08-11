@@ -18,8 +18,10 @@ R-ADD-016(长休恢复HP上限)、R-ADD-017(短休特性恢复钩子)。
 
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass, field
-from typing import Any
+from enum import Enum
+from typing import Any, List
 
 from ..engine import dice
 
@@ -69,7 +71,69 @@ LONG_REST_INTERRUPTS = frozenset({
 
 
 # ──────────────────────────────────────────────────────────────────────────
-# 休息状态
+# 休息阶段枚举（REST-002 持久状态机）
+# ──────────────────────────────────────────────────────────────────────────
+
+class RestPhase(str, Enum):
+    """休息状态机阶段。
+
+    规则: REST-002 休息持久状态机
+    出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
+    """
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    INTERRUPTED = "interrupted"
+    COMPLETED = "completed"
+
+
+@dataclass
+class RestSession:
+    """一次休息的持久会话记录。
+
+    规则: REST-002 休息持久状态机
+    出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
+
+    属性:
+        session_id: 唯一会话 ID
+        character_id: 角色 ID
+        rest_type: 休息类型 "short" | "long"
+        phase: 当前休息阶段
+        started_round: 开始休息的回合编号
+        interrupted_by: 打断原因列表
+        resource_changes: 资源变更记录列表
+        events: 休息期间发生的事件列表
+    """
+    session_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
+    character_id: str = ""
+    rest_type: str = "short"
+    phase: RestPhase = RestPhase.NOT_STARTED
+    started_round: int = 0
+    interrupted_by: List[str] = field(default_factory=list)
+    resource_changes: List[dict] = field(default_factory=list)
+    events: List[dict] = field(default_factory=list)
+
+    def transition_to(self, new_phase: RestPhase) -> None:
+        """状态转换并记录事件。"""
+        old = self.phase
+        self.phase = new_phase
+        self.events.append({
+            "type": "phase_transition",
+            "from": old.value,
+            "to": new_phase.value,
+        })
+
+    def record_interrupt(self, cause: str) -> None:
+        """记录一次打断。"""
+        self.interrupted_by.append(cause)
+        self.transition_to(RestPhase.INTERRUPTED)
+
+    def record_resource_change(self, change: dict) -> None:
+        """记录一次资源变更。"""
+        self.resource_changes.append(change)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 休息状态（兼容旧接口）
 # ──────────────────────────────────────────────────────────────────────────
 
 @dataclass
@@ -161,12 +225,14 @@ def _derive_for_character(character: Any, attr: str, default: Any) -> Any:
             return get_class(cls_name)["hit_die"]
         except Exception:
             return default
-    # hit_dice → 可用生命骰数量（Character.hit_dice_current，默认回退到等级）
+    # hit_dice → 可用生命骰数量（Character.hit_dice_current）
+    # REST-001 修复: hit_dice_current=0 意味着已用完所有生命骰，必须返回 0，
+    # 不得回退到角色等级。仅当 hit_dice_current 为 None（未迁移的旧数据）时才回退。
     if attr == "hit_dice":
         hd = getattr(character, "hit_dice_current", None)
-        if hd is not None and hd > 0:
+        if hd is not None:
             return hd
-        # 回退：未初始化时按等级处理
+        # 回退：仅未初始化（None）的旧数据按等级处理
         return getattr(character, "level", default)
     # max_hit_dice → 生命骰上限（=等级）
     if attr == "max_hit_dice":
@@ -286,6 +352,7 @@ def short_rest(
         "con_mod": con_mod,
         "features_recharged": features_recharged,
         "feature_recharge_amounts": feature_recharge_amounts,
+        "resource_pools_recharged": _recharge_resource_pools(character, "short_rest"),
         "errors": [],
     }
 
@@ -435,6 +502,7 @@ def long_rest(character: Any) -> dict:
         "spell_slots_restored": spell_slots_restored,
         "ability_scores_restored": ability_scores_restored,
         "features_recharged": features_recharged,
+        "resource_pools_recharged": _recharge_resource_pools(character, "long_rest"),
         "temp_hp_cleared": temp_hp_cleared,  # 长休清空临时生命值（仅原有值>0时）
         "temp_hp_before": temp_hp_before,    # 长休前的临时生命值（信息性）
         "temp_hp": 0,                        # 长休后临时生命值归零
@@ -573,6 +641,78 @@ def _fail_interrupt(errors: list[str], cause: str) -> dict:
         "can_continue": False,
         "errors": errors,
     }
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# REST-003: 资源池恢复（集成 ResourceManager.recharge_all）
+# ──────────────────────────────────────────────────────────────────────────
+
+def _recharge_resource_pools(character: Any, recharge_type: str) -> list[str]:
+    """通过 ResourceManager.recharge_all() 恢复角色匹配的资源池。
+
+    规则: REST-003 资源恢复完整
+    出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
+
+    ★ 接线: 使用 engine.recharge_spec.ResourceManager 作为权威实现——
+      将角色的 rules.resource.ResourcePool 转换为 RechargeSpec 池后执行
+      recharge_all，产生含 old→new 数值的事件（rules.resource 仅返回池名）。
+    兼容: 若角色无 resource_manager，回退到旧逻辑返回 []。
+
+    参数:
+        character: 角色对象，需有 resource_manager 和 entity_id 属性
+        recharge_type: "short_rest" 或 "long_rest"
+
+    返回:
+        被回复的资源池名列表
+    """
+    rm = _get(character, "resource_manager", None)
+    entity_id = _get(character, "entity_id", None)
+    if rm is None or entity_id is None:
+        return []
+
+    # ★ 通过 engine.recharge_spec 权威执行（含数值变化事件）
+    try:
+        from ..engine.recharge_spec import (
+            RechargeSpec as EngineRechargeSpec,
+            RechargeTrigger as EngineTrigger,
+            ResourceManager as EngineResourceManager,
+            ResourcePool as EngineResourcePool,
+        )
+        eng_mgr = EngineResourceManager()
+        pools = rm.get_pools(entity_id) if hasattr(rm, "get_pools") else {}
+        for name, pool in pools.items():
+            eng_mgr.register_pool(entity_id, EngineResourcePool(
+                name=name,
+                current=int(getattr(pool, "current_value", 0) or 0),
+                max_value=int(getattr(pool, "max_value", 0) or 0),
+                recharge_spec=EngineRechargeSpec(
+                    recharge_on=EngineTrigger(
+                        getattr(pool, "recharge_on", "") or "never"),
+                    restore_amount=0,  # 恢复全部
+                    max_value=int(getattr(pool, "max_value", 0) or 0),
+                ),
+            ))
+        trigger = EngineTrigger(recharge_type)
+        events = eng_mgr.recharge_all(trigger)
+        recharged = [e["pool"] for e in events if e.get("type") == "resource_restored"]
+        # 将数值变更写回原池（生产一致性）
+        for e in events:
+            if e.get("type") == "resource_restored":
+                orig = pools.get(e["pool"])
+                if orig is not None:
+                    try:
+                        orig.reset()
+                    except Exception:
+                        pass
+        # 兼容：若 engine 未命中（事件为空），回退到旧规则资源管理器
+        if not recharged:
+            return rm.recharge_all(entity_id, recharge_type)
+        return recharged
+    except Exception:
+        try:
+            return rm.recharge_all(entity_id, recharge_type)
+        except Exception:
+            return []
 
 
 # ──────────────────────────────────────────────────────────────────────────

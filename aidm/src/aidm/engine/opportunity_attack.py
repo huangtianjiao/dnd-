@@ -57,6 +57,10 @@ def can_make_opportunity_attack(attacker: Combatant,
     # R-CMB-026: 撤离/传送/免费移动不引发借机攻击
     if movement_type in ("teleport", "free"):
         return False
+    # COM-014: 撤离经 active_effects 判定（兼容旧布尔字段）
+    from .combat import has_effect
+    if has_effect(target, "disengage"):
+        return False
     return not getattr(target, "disengage_active", False)
 
 

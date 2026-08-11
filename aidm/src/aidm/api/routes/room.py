@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from ...brain import room as room_mod
 from ...stats import models, store
-from .dependencies import init_loadout
+from .dependencies import init_loadout, _NAME_INJECT_RE, _HP_MIN, _HP_MAX, _AC_MIN, _AC_MAX, _SPEED_MIN, _SPEED_MAX, _LEVEL_MIN, _LEVEL_MAX, _ABILITY_MIN, _ABILITY_MAX
 
 router = APIRouter(tags=["room"])
 
@@ -70,6 +70,49 @@ class RoomJoinIn(BaseModel):
     speed: int = 30
     equipped_weapon: str = ""
     is_host: bool = False
+
+    # SEC-001: 输入校验（与 CharIn 同口径）
+    @field_validator("name")
+    @classmethod
+    def _validate_name(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("名称不能为空")
+        if len(v) > 50:
+            raise ValueError("名称不能超过50字符")
+        if _NAME_INJECT_RE.search(v):
+            raise ValueError("名称包含非法字符")
+        return v.strip()
+
+    @field_validator("hp_max")
+    @classmethod
+    def _validate_hp(cls, v: int) -> int:
+        if not (_HP_MIN < v <= _HP_MAX):
+            raise ValueError(f"HP上限须在 {_HP_MIN+1}-{_HP_MAX} 范围内")
+        return v
+
+    @field_validator("ac")
+    @classmethod
+    def _validate_ac(cls, v: int) -> int:
+        if not (_AC_MIN <= v <= _AC_MAX):
+            raise ValueError(f"AC须在 {_AC_MIN}-{_AC_MAX} 范围内")
+        return v
+
+    @field_validator("level")
+    @classmethod
+    def _validate_level(cls, v: int) -> int:
+        if not (_LEVEL_MIN <= v <= _LEVEL_MAX):
+            raise ValueError(f"等级须在 {_LEVEL_MIN}-{_LEVEL_MAX} 范围内")
+        return v
+
+    @field_validator("abilities")
+    @classmethod
+    def _validate_abilities(cls, v: dict) -> dict:
+        for k, val in v.items():
+            if k not in ("str", "dex", "con", "int", "wis", "cha"):
+                raise ValueError(f"未知属性 {k}")
+            if not (_ABILITY_MIN <= int(val) <= _ABILITY_MAX):
+                raise ValueError(f"属性值须在 {_ABILITY_MIN}-{_ABILITY_MAX} 范围内")
+        return v
 
 
 class KickIn(BaseModel):

@@ -18,7 +18,8 @@ from ..knowledge import hybrid, verifier
 def retrieve(state: GameState) -> dict:
     """Rule Judge: hybrid 检索相关规则（校验与叙事用）。"""
     q = state["intent"].get("retrieval_query") or state["player_input"]
-    return {"evidence": hybrid.search_spec_hybrid(q, limit=6)}
+    # RAG-001: 硬过滤 2024 版规则
+    return {"evidence": hybrid.search_spec_hybrid(q, limit=6, edition_filter="2024")}
 
 
 def retrieve_retry(state: GameState) -> dict:
@@ -26,7 +27,8 @@ def retrieve_retry(state: GameState) -> dict:
     issues = state.get("verification", {}).get("issues", [])
     base = state["intent"].get("retrieval_query") or state["player_input"]
     q = base + " " + " ".join(issues) + " 检定方式 DC来源 豁免"
-    return {"evidence": hybrid.search_spec_hybrid(q[:80], limit=6)}
+    # RAG-001: 硬过滤 2024 版规则
+    return {"evidence": hybrid.search_spec_hybrid(q[:80], limit=6, edition_filter="2024")}
 
 
 def verify(state: GameState) -> dict:

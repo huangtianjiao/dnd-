@@ -37,6 +37,25 @@ def create_character(c: CharIn):
     validate_abilities(c.abilities, c.ability_method)
     ch.set_abilities(c.abilities)
     ch.hp_max = c.hp_max; ch.hp_current = c.hp_max; ch.ac = c.ac; ch.speed = c.speed
+    # ★ DATA-002: 注册职业 canonical_id（稳定标识，显示名作为 locale 资源）
+    try:
+        from ...engine.canonical_id import register_canonical
+        # canonical_id 格式: namespace.slug（class.<英文slug>）
+        _slug_map = {
+            "野蛮人": "barbarian", "吟游诗人": "bard", "牧师": "cleric",
+            "德鲁伊": "druid", "战士": "fighter", "武僧": "monk",
+            "圣武士": "paladin", "游侠": "ranger", "盗贼": "rogue",
+            "术士": "sorcerer", "魔契师": "warlock", "法师": "wizard",
+        }
+        _class_slug = _slug_map.get(c.char_class, c.char_class.lower())
+        register_canonical(
+            canonical_id=f"class.{_class_slug}",
+            display_names={"zh": c.char_class},
+            category="class",
+        )
+        ch.class_canonical_id = f"class.{_class_slug}"
+    except Exception:
+        pass  # canonical_id 为增强元数据，失败不阻断
     # 统一初始化拥有物：法术位 + 已学法术 + 起始武器入包（拥有性门控）
     init_loadout(ch, c.equipped_weapon)
     ch = store.save_character(ch)

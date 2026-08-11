@@ -15,9 +15,13 @@ import contextlib
 import json
 import re
 
+import logging
+
 from ..brain import llm, world
 from ..brain.state import GameState
 from ..stats import store
+
+_log = logging.getLogger(__name__)
 
 
 def _extract_json(text: str) -> dict:
@@ -44,6 +48,8 @@ _NARRATOR_PROMPT = """\
 你是D&D 5E DM。依据【掷骰结果(硬性,已由代码算出,不可更改)】与规则,在当前场景中以第二人称简洁叙述(2-4句)。
 遵循叙事技巧:简洁、多感官氛围、区分选项、不臆测角色行动。
 
+重要: 你只负责叙事描述,不能修改任何游戏状态(HP/AC/条件等)。所有数值已由代码计算完毕。
+
 前情提要:
 {recap_text}
 
@@ -61,8 +67,8 @@ _NARRATOR_PROMPT = """\
 规则摘要:
 {dig}
 玩家输入: {player_input}
-然后输出结构化状态变更 + 更新后的场景叙事。只输出JSON:
-{{"narration":"叙事","state_changes":[],"scene_update":"","action_options":["选项1","选项2","选项3"]}}
+然后输出场景叙事。只输出JSON:
+{{"narration":"叙事","scene_update":"","action_options":["选项1","选项2","选项3"]}}
 """
 
 
@@ -128,9 +134,13 @@ def narrate(state: GameState) -> dict:
 
     raw = llm.chat(_NARRATOR_SYSTEM, prompt, temperature=0.4)
     obj = _extract_json(raw)
+    # ARC-004: Narrator 只读——剥离 state_changes，LLM 不应修改游戏状态
+    if obj.get("state_changes"):
+        _log.warning("ARC-004: Narrator 返回 state_changes 已被丢弃 (len=%d)",
+                     len(obj["state_changes"]))
     return {
         "narration": obj.get("narration", raw[:200]),
-        "state_changes": obj.get("state_changes", []),
+        "state_changes": [],  # ARC-004: 始终返回空列表，Narrator 不能修改状态
         "scene_update": obj.get("scene_update", ""),
         "action_options": obj.get("action_options", []),
     }

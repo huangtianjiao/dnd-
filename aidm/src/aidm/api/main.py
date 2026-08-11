@@ -114,6 +114,43 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/coverage")
+def coverage_manifest():
+    """TEST-002: 实时生成 CoverageManifest 覆盖度报告（engine.coverage 权威实现）。
+
+    返回 engine 模块的覆盖度状态汇总与明细，供 CI/门禁消费。
+    同时注入 engine.performance_cache 的规则定义缓存统计（PERF-001）。
+    """
+    try:
+        from ..engine.coverage import CoverageManifest
+        m = CoverageManifest(ruleset_revision="2024.1").apply_wired_status()
+        summary = m.summary()
+        entries = {
+            cid: {
+                "status": e.status.value,
+                "handlers": e.handlers,
+                "unit_tests": e.unit_tests,
+            }
+            for cid, e in sorted(m.entries.items())
+            if cid.startswith("engine.")
+        }
+        cache_stats = {}
+        try:
+            from ..engine.performance_cache import get_rule_cache
+            cache_stats = get_rule_cache().stats() if hasattr(
+                get_rule_cache(), "stats") else {"size": len(str(get_rule_cache()))}
+        except Exception:
+            cache_stats = {}
+        return {
+            "ruleset_revision": "2024.1",
+            "summary": summary,
+            "engine_entries": entries,
+            "rule_cache": cache_stats,
+        }
+    except Exception as e:
+        return {"error": f"CoverageManifest 生成失败: {e}"}
+
+
 # ── Socket.IO ASGI 挂载 ────────────────────────────────────────────────────────
 # 将 python-socketio 的 AsyncServer 包裹为 ASGI 应用，
 # 与 FastAPI 应用组合，使 /ws/* 由 Socket.IO 处理，其余路由由 FastAPI 处理。

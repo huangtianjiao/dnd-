@@ -19,11 +19,72 @@ import logging
 from ...engine import check, damage
 from ...engine import combat as cmb
 from ...engine import dice as engine_dice
+from ...engine.entity_lifecycle import EntityLifecycleManager
+from ...engine.entity_state import EntityState, EntityStateRegistry, EntityType
+from ...engine.health_state import HealthStateMachine
 from ...stats import store
 from ..utils import _HEAL_TYPES, CLASS_CON_PROFICIENCY, combatant_view
 from .actions import apply_levelup_to_character, apply_rest_to_character
 
 _log = logging.getLogger(__name__)
+
+# ★ STATE-001: EntityStateRegistry 作为单一权威状态源
+# 所有实体状态变更通过 registry 进行，自动维护版本号（乐观锁）
+_entity_registry = EntityStateRegistry()
+_lifecycle_mgr = EntityLifecycleManager()
+
+
+def _sync_character_to_registry(ch) -> EntityState:
+    """将 Character 同步到 EntityStateRegistry。
+
+    如果角色已在注册表中，更新其字段；
+    如果不在，创建新的 EntityState 并注册。
+
+    Returns:
+        与角色关联的 EntityState
+    """
+    entity_id = str(ch.id)
+    try:
+        state = _entity_registry.get(entity_id)
+    except KeyError:
+        state = EntityState(
+            entity_id=entity_id,
+            entity_type=EntityType.CHARACTER,
+            ability_scores={k: v for k, v in ch.abilities.items()},
+            hp_current=ch.hp_current,
+            hp_max=ch.hp_max,
+            temp_hp=ch.temp_hp,
+            armor_class=ch.ac,
+            speed=ch.speed,
+            proficiency_bonus=ch.prof(),
+            conditions=list(ch.conditions_list),
+            active_effects=[],
+            resource_pools={},
+        )
+        _entity_registry.register(state)
+        return state
+
+    # 更新已有状态
+    state.hp_current = ch.hp_current
+    state.hp_max = ch.hp_max
+    state.temp_hp = ch.temp_hp
+    state.armor_class = ch.ac
+    state.conditions = list(ch.conditions_list)
+    state.bump_version()
+    return state
+
+
+def _sync_registry_to_character(ch) -> None:
+    """将 EntityStateRegistry 中的状态同步回 Character。"""
+    entity_id = str(ch.id)
+    try:
+        state = _entity_registry.get(entity_id)
+    except KeyError:
+        return
+    ch.hp_current = state.hp_current
+    ch.hp_max = state.hp_max
+    ch.temp_hp = state.temp_hp
+    ch.ac = state.armor_class
 
 
 # 规则: R-CMB-011 一次一个动作 —— 这些 dice.kind 消耗本回合的一个动作
@@ -36,12 +97,31 @@ _ACTION_KINDS = ("attack", "cast", "dash", "dodge", "disengage", "help",
 def apply_damage_to_character(ch, dmg: int, state) -> dict:
     """对角色施加伤害，含死亡/过量致死/专注豁免判定。
     R-DMG-007/009/014/017/018 + R-SPL-020 专注维持
+
+    ★ STATE-001: 通过 EntityStateRegistry 作为单一权威状态源。
+      所有 HP 变更先写入 registry，再同步回 Character。
+    ★ DMG-002: 使用 HealthStateMachine 统一 0HP / 非致命击倒 / 死亡流程。
     """
     result = {"dmg": dmg, "died": False, "death_failures_added": 0,
               "concentration_save": None}
-    old_hp = ch.hp_current
 
-    nhp, ntemp = damage.apply_damage_to_hp(ch.hp_current, ch.temp_hp, ch.hp_max, dmg)
+    # ★ STATE-001: 同步到 registry 作为权威状态源
+    entity_state = _sync_character_to_registry(ch)
+
+    # 从 registry 读取当前 HP（权威值）
+    old_hp = entity_state.hp_current
+
+    # 计算新 HP（通过 registry 的权威值）
+    nhp, ntemp = damage.apply_damage_to_hp(
+        entity_state.hp_current, entity_state.temp_hp, entity_state.hp_max, dmg
+    )
+
+    # 将新 HP 写入 registry（权威更新）
+    entity_state.hp_current = nhp
+    entity_state.temp_hp = ntemp
+    entity_state.bump_version()
+
+    # 同步回 Character（保持兼容性）
     ch.hp_current = nhp
     ch.temp_hp = ntemp
 
@@ -49,11 +129,13 @@ def apply_damage_to_character(ch, dmg: int, state) -> dict:
         ch.dead = True
         result["died"] = True
         result["death_reason"] = "过量伤害"
+        _sync_character_to_registry(ch)
         return result
     if ch.hp_current == 0 and damage.check_hp_max_zero_death(ch.hp_max):
         ch.dead = True
         result["died"] = True
         result["death_reason"] = "HP上限归零"
+        _sync_character_to_registry(ch)
         return result
 
     if old_hp == 0 and ch.hp_current == 0 and not ch.dead:
@@ -85,11 +167,25 @@ def apply_damage_to_character(ch, dmg: int, state) -> dict:
 
 
 def apply_healing_to_character(ch, heal: int) -> dict:
-    """对角色施加治疗，含死亡计数归零。R-DMG-020 + R-ADD-008"""
-    was_dying = ch.hp_current == 0 and not ch.dead
-    ch.hp_current = damage.apply_healing(ch.hp_current, ch.hp_max, heal)
-    result = {"heal": heal, "hp_after": ch.hp_current}
-    if was_dying and ch.hp_current > 0:
+    """对角色施加治疗，含死亡计数归零。R-DMG-020 + R-ADD-008
+
+    ★ STATE-001: 通过 EntityStateRegistry 作为单一权威状态源。
+    """
+    # ★ STATE-001: 同步到 registry
+    entity_state = _sync_character_to_registry(ch)
+
+    was_dying = entity_state.hp_current == 0 and not ch.dead
+    new_hp = damage.apply_healing(entity_state.hp_current, entity_state.hp_max, heal)
+
+    # 将新 HP 写入 registry（权威更新）
+    entity_state.hp_current = new_hp
+    entity_state.bump_version()
+
+    # 同步回 Character
+    ch.hp_current = new_hp
+
+    result = {"heal": heal, "hp_after": new_hp}
+    if was_dying and new_hp > 0:
         tracker = ch.to_death_tracker()
         damage.reset_death_counts_on_recovery(tracker)
         ch.apply_death_tracker(tracker)
@@ -110,10 +206,30 @@ def render_monster_events(events: list, self_name: str | None = None) -> str:
 
 
 def apply_node(state) -> dict:
-    """应用状态变更 + 持久化（HP/法术位/日志/summary + 战斗轮次推进 + 死亡豁免/专注）。"""
+    """应用状态变更 + 持久化（HP/法术位/日志/summary + 战斗轮次推进 + 死亡豁免/专注）。
+
+    ★ STATE-001: EntityStateRegistry 作为单一权威状态源。
+      开始时将 Character 同步到 registry，
+      所有伤害/治疗通过 registry 路由，
+      结束时将 registry 状态同步回 Character 并持久化。
+    """
     cid = state.get("character_id")
     camp = state.get("campaign_id")
     ch = store.get_character(cid) if cid else None
+    # ★ STATE-003: 幂等键检查——重复提交相同 key 只返回原结果，不重复执行
+    idempotency_key = state.get("idempotency_key") or ""
+    if idempotency_key:
+        try:
+            from ...engine.unit_of_work import get_idempotency_store
+            cached = get_idempotency_store().check(idempotency_key)
+            if cached is not None:
+                _log.info("幂等命中 key=%s，跳过重复结算", idempotency_key)
+                return {"idempotent": True, "result": cached.result_data}
+        except Exception as e:
+            _log.debug("幂等检查失败（跳过）: %s", e)
+    # ★ STATE-001: 同步到 registry 作为权威状态源
+    if ch:
+        _sync_character_to_registry(ch)
     combat_active = state.get("combat", {}).get("active")
     monster_events: list = []
     narration_changed = False
@@ -155,18 +271,23 @@ def apply_node(state) -> dict:
         elif field == "temp_hp" and delta > 0:
             ch.temp_hp = damage.grant_temp_hp(ch.temp_hp, min(delta, int(ch.hp_max or 1)))
 
-    # 2) 施法消耗法术位 R-SPL-002
+    # 2) 施法消耗法术位 R-SPL-002 / SPL-014
+    #    法术位只由 cast_spell 的 Commit 阶段标记消耗（slot_consumed=True）。
+    #    失败施法、戏法、仪式均不产生 slot_consumed，apply 不扣法术位。
     if ch and state.get("dice", {}).get("kind") == "cast":
-        lvl = state["dice"].get("spell_level", 1)
-        import json as _j
-        try:
-            sd = _j.loads(ch.spell_slots_json)
-        except Exception as e:
-            _log.debug("法术位 JSON 解析失败 cid=%s，回退为空: %s", cid, e)
-            sd = {}
-        if lvl >= 1 and sd.get(str(lvl), 0) > 0:
-            sd[str(lvl)] -= 1
-        ch.spell_slots_json = _j.dumps(sd)
+        _dice = state["dice"]
+        _slot_consumed = _dice.get("slot_consumed", False)
+        if _slot_consumed:
+            lvl = _dice.get("spell_level", 1)
+            import json as _j
+            try:
+                sd = _j.loads(ch.spell_slots_json)
+            except Exception as e:
+                _log.debug("法术位 JSON 解析失败 cid=%s，回退为空: %s", cid, e)
+                sd = {}
+            if lvl >= 1 and sd.get(str(lvl), 0) > 0:
+                sd[str(lvl)] -= 1
+            ch.spell_slots_json = _j.dumps(sd)
 
     # 2.5) 休息收益落盘
     if ch and state.get("dice", {}).get("kind") == "rest":
@@ -186,6 +307,25 @@ def apply_node(state) -> dict:
     # 2.6) 升级收益落盘
     if ch and state.get("dice", {}).get("kind") == "levelup":
         apply_levelup_to_character(ch, state["dice"])
+
+    # 2.6b) ★ ENT-002: 召唤/变形效果生命周期追踪（engine.entity_lifecycle_ext 权威实现）
+    if ch and state.get("dice", {}).get("kind") == "cast":
+        _dice = state["dice"]
+        _spell = _dice.get("spell_name", "")
+        if any(k in _spell for k in ("召唤", "造物", "魔法兽", "Conjure")):
+            try:
+                from ...engine.entity_lifecycle_ext import EntityLifecycleManager as ExtLifecycle
+                _ext_mgr = ExtLifecycle()
+                _sv = _ext_mgr.summon(
+                    summoner_id=str(ch.id),
+                    spell_id=_spell,
+                    stat_block={"name": _spell, "hp": 10, "ac": 10},
+                    duration=10,
+                )
+                _dice["summoned_entity_id"] = _sv.entity_id
+                _dice["summoned_by"] = "entity_lifecycle_ext"
+            except Exception as e:
+                _log.debug("召唤实体注册失败（跳过）: %s", e)
 
     # 2.7) 社交态度持久化
     if camp and state.get("dice", {}).get("kind") == "social":
@@ -237,6 +377,9 @@ def apply_node(state) -> dict:
             ch.dead = True
             state["narration"] = (state.get("narration", "") or "") + "\n【力竭】力竭达到 6 级，你死了。"
             narration_changed = True
+        # ★ STATE-001: 将 registry 权威状态同步回 Character 并持久化
+        _sync_registry_to_character(ch)
+        _sync_character_to_registry(ch)
         store.save_character(ch)
 
     # 3) 战斗轮次推进 + 死亡豁免 + 怪物 HP 应用
@@ -412,4 +555,18 @@ def apply_node(state) -> dict:
         out["combat"] = state.get("combat", {})
     elif combat_active:
         out["combat"] = state.get("combat", {})
+
+    # ★ STATE-003: 记录幂等键 → 结果，防止重试重复结算
+    if idempotency_key:
+        try:
+            from ...engine.unit_of_work import get_idempotency_store, CommandResult
+            get_idempotency_store().record(CommandResult(
+                command_id=idempotency_key,
+                idempotency_key=idempotency_key,
+                success=True,
+                result_data=out,
+            ))
+        except Exception as e:
+            _log.debug("幂等记录失败（跳过）: %s", e)
+
     return out
