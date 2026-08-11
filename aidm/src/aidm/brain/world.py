@@ -91,13 +91,18 @@ def scene_context(campaign_id: int) -> str:
 
 
 def get_scene(campaign_id: int) -> dict:
-    """取当前场景（给前端场景面板）。"""
+    """取当前场景（给前端场景面板）。
+
+    ★ ENV-002: 返回结构化物件/地形列表（ObjectEntity/TerrainFeature）。
+    """
     sc = store.get_scene(campaign_id)
     if not sc:
         return {}
     camp = store.get_campaign(campaign_id)
     return {"location": sc.location, "time": sc.time, "atmosphere": sc.atmosphere,
             "environment": sc.environment, "npcs": sc.npcs, "exits": sc.exits,
+            "objects": getattr(sc, "objects", []),   # ★ ENV-002
+            "terrain": getattr(sc, "terrain", []),   # ★ ENV-002
             "situation": sc.situation, "story_log": sc.story_log,
             "world_background": (camp.world_background if camp else ""),
             "campaign_name": (camp.name if camp else "")}

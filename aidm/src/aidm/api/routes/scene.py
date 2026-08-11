@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, Dict
+
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -12,6 +14,88 @@ router = APIRouter(tags=["scene"])
 
 class GenSettingIn(BaseModel):
     theme: str = ""
+
+
+class AddObjectIn(BaseModel):
+    """添加结构化物件（ENV-002）。
+
+    使用 engine.objects.ObjectEntity.from_material 计算 AC/HP。
+    """
+    campaign_id: int
+    object_id: str = ""
+    name: str = ""
+    material: str = "wood"
+    thickness_inches: float = 1.0
+    size: str = "Medium"
+    hp: int | None = None          # 覆盖默认 HP（可选）
+    ac: int | None = None          # 覆盖默认 AC（可选）
+    damage_threshold: int = 0
+    is_flammable: bool | None = None
+    provides_cover: bool | None = None
+
+
+class AddTerrainIn(BaseModel):
+    """添加结构化地形（ENV-002）。"""
+    campaign_id: int
+    terrain_id: str = ""
+    terrain_type: str = "difficult"
+    cost_multiplier: float = 2.0
+    hazard_damage: str = ""
+    description: str = ""
+
+
+@router.post("/scene/object")
+def add_object(req: AddObjectIn):
+    """添加结构化物件到场景（ENV-002）。"""
+    from ...engine.objects import ObjectEntity
+    from ...stats import store
+
+    obj = ObjectEntity.from_material(
+        object_id=req.object_id or f"obj_{req.campaign_id}_{req.name}",
+        name=req.name, material=req.material,
+        thickness_inches=req.thickness_inches, size=req.size,
+    )
+    if req.hp is not None:
+        obj.hp = req.hp
+    if req.ac is not None:
+        obj.ac = req.ac
+    obj.damage_threshold = req.damage_threshold
+    if req.is_flammable is not None:
+        obj.is_flammable = req.is_flammable
+    if req.provides_cover is not None:
+        obj.provides_cover = req.provides_cover
+
+    sc = store.get_scene(req.campaign_id)
+    if sc is None:
+        from ...stats.models import Scene
+        sc = Scene(campaign_id=req.campaign_id)
+    sc.add_object(obj.__dict__)
+    store.save_scene(sc)
+    return {"success": True, "object": obj.__dict__,
+            "objects_count": len(sc.objects)}
+
+
+@router.post("/scene/terrain")
+def add_terrain(req: AddTerrainIn):
+    """添加结构化地形到场景（ENV-002）。"""
+    from ...engine.objects import TerrainFeature
+    from ...stats import store
+
+    terr = TerrainFeature(
+        terrain_id=req.terrain_id or f"terr_{req.campaign_id}_{req.terrain_type}",
+        terrain_type=req.terrain_type,
+        cost_multiplier=req.cost_multiplier,
+        hazard_damage=req.hazard_damage,
+        description=req.description,
+    )
+    sc = store.get_scene(req.campaign_id)
+    if sc is None:
+        from ...stats.models import Scene
+        sc = Scene(campaign_id=req.campaign_id)
+    sc.add_terrain(terr.__dict__)
+    store.save_scene(sc)
+    return {"success": True, "terrain": terr.__dict__,
+            "terrain_count": len(sc.terrain)}
 
 
 @router.post("/open")

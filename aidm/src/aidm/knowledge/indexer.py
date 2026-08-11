@@ -7,7 +7,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
+import os
+from dataclasses import dataclass, field
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
@@ -17,7 +20,106 @@ from . import embedding, parse_datajs
 
 logger = logging.getLogger(__name__)
 
-_DB_PATH = r"D:\game\dnd\aidm\data\rules.db"
+
+# ──────────────────────────────────────────────────────────────────────────
+# RAG-002: 规则溯源链
+# ──────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class SourceSpan:
+    """规则溯源信息。
+
+    规则: RAG-002 规则溯源链
+    出处: 为每条索引规则添加来源文档/书名/页码/锚点/内容hash/权威级别。
+
+    属性:
+        source_id: 来源文档 ID（路径 hash）
+        book: 书名
+        page: 页码/章节
+        anchor: 锚点
+        content_hash: 内容 hash（用于检测变更）
+        authority_level: core / supplement
+    """
+    source_id: str = ""
+    book: str = ""
+    page: str = ""
+    anchor: str = ""
+    content_hash: str = ""
+    authority_level: str = "core"
+
+    def to_payload(self) -> dict:
+        """转换为索引 payload 字典。"""
+        return {
+            "source_id": self.source_id,
+            "book": self.book,
+            "page": self.page,
+            "anchor": self.anchor,
+            "content_hash": self.content_hash,
+            "authority_level": self.authority_level,
+        }
+
+    @classmethod
+    def from_entry(cls, body: str, source: str) -> "SourceSpan":
+        """从条目内容和来源路径构建 SourceSpan。"""
+        book = derive_book(source)
+        edition = derive_edition(source)
+        authority = derive_authority_level(book)
+        # 生成内容 hash（前 16 位）
+        content_hash = hashlib.sha256(body.encode("utf-8", errors="replace")).hexdigest()[:16]
+        # source_id = 路径 hash
+        source_id = hashlib.md5(source.encode("utf-8", errors="replace")).hexdigest()[:12]
+        return cls(
+            source_id=source_id,
+            book=book,
+            page="",
+            anchor="",
+            content_hash=content_hash,
+            authority_level=authority,
+        )
+
+# ── 版本推断辅助 ────────────────────────────────────────────────────────
+# 2024 版核心规则书目录名（路径中包含这些子串即判定为 2024 edition）
+_EDITION_2024_MARKERS = ("2024", "2025")
+
+
+def derive_edition(path: str) -> str:
+    """从来源路径推断 edition（'2024' 或 '2014'）。"""
+    norm = path.replace("\\", "/")
+    for marker in _EDITION_2024_MARKERS:
+        if marker in norm:
+            return "2024"
+    return "2014"
+
+
+def derive_book(path: str) -> str:
+    """从来源路径提取书名（topics/<book>/... → book）。"""
+    norm = path.replace("\\", "/")
+    parts = norm.split("/")
+    # 期望格式: topics/<book>/...
+    if len(parts) >= 2 and parts[0].lower() == "topics":
+        return parts[1]
+    return parts[0] if parts else ""
+
+
+def derive_authority_level(book: str) -> str:
+    """根据书名判断权威级别: core / supplement。"""
+    core_books = {
+        "玩家手册", "城主指南", "怪物图鉴",
+        "玩家手册2024", "城主指南2024", "怪物图鉴2025",
+        "玩家手册2024（试读版）",
+    }
+    return "core" if book in core_books else "supplement"
+
+
+def derive_source_class(edition: str) -> str:
+    """根据版本推断来源分类。"""
+    return f"rule_{edition}"
+
+# RAG-003: 路径由配置与项目根目录派生，不硬编码到 Windows 盘符
+_DB_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "data", "rules.db",
+)
 _client: QdrantClient | None = None
 
 
@@ -64,7 +166,14 @@ def build_index(batch_size: int = 64, limit: int | None = None,
         points = [
             PointStruct(
                 id=i + j, vector=vecs[j],
-                payload={"body": e.body, "tag": e.tag, "path": e.source, "title": e.title},
+                payload={
+                    "body": e.body, "tag": e.tag, "path": e.source, "title": e.title,
+                    "edition": derive_edition(e.source),
+                    "book": derive_book(e.source),
+                    "authority_level": derive_authority_level(derive_book(e.source)),
+                    "source_class": derive_source_class(derive_edition(e.source)),
+                    **SourceSpan.from_entry(e.body, e.source).to_payload(),
+                },
             )
             for j, e in enumerate(batch)
         ]
@@ -77,18 +186,17 @@ def build_index(batch_size: int = 64, limit: int | None = None,
 
 
 def search(query: str, limit: int = 5,
-           tag_filter: str | None = None) -> list[dict]:
+           tag_filter: str | None = None,
+           edition_filter: str | None = None) -> list[dict]:
     """语义检索规则：查询文本 → top-k 相关条目（数据语料 data.js 集合）。
 
     规则: RAG 检索（top-k + 可选标签过滤）
+    edition_filter: 版本硬过滤（'2024'/'2014'/None）。指定时仅返回对应版本结果。
     """
     s = get_settings()
     q = get_qdrant()
     vec = embedding.embed_query(query)
-    flt = None
-    if tag_filter:
-        from qdrant_client.models import FieldCondition, MatchValue
-        flt = FieldCondition(key="tag", match=MatchValue(value=tag_filter))
+    flt = _build_filter(tag_filter=tag_filter, edition_filter=edition_filter)
     res = q.query_points(
         s.qdrant_collection, query=vec, limit=limit,
         query_filter=flt,
@@ -99,6 +207,20 @@ def search(query: str, limit: int = 5,
             "score": p.score, **p.payload,
         })
     return out
+
+
+def _build_filter(*, tag_filter: str | None = None,
+                  edition_filter: str | None = None):
+    """构建 Qdrant 复合过滤器（所有条件取交集）。"""
+    from qdrant_client.models import FieldCondition, MatchValue, Filter
+    conditions = []
+    if tag_filter:
+        conditions.append(FieldCondition(key="tag", match=MatchValue(value=tag_filter)))
+    if edition_filter:
+        conditions.append(FieldCondition(key="edition", match=MatchValue(value=edition_filter)))
+    if not conditions:
+        return None
+    return Filter(must=conditions)
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -140,8 +262,16 @@ def index_text_files(directory: str, collection: str, batch_size: int = 32,
                 continue
             texts.append(body)
             rel = os.path.relpath(fp, directory).replace("\\", "/")
-            metas.append({"body": body, "tag": rel, "path": rel,
-                          "title": os.path.splitext(os.path.basename(fp))[0]})
+            book = derive_book(rel)
+            edition = derive_edition(rel)
+            metas.append({
+                "body": body, "tag": rel, "path": rel,
+                "title": os.path.splitext(os.path.basename(fp))[0],
+                "edition": edition,
+                "book": book,
+                "authority_level": derive_authority_level(book),
+                "source_class": derive_source_class(edition),
+            })
         if not texts:
             continue
         vecs = embedding.embed_texts(texts, batch_size=batch_size, show_progress=False)
@@ -212,6 +342,11 @@ def _index_chunks_llamaindex(items: list[dict], collection: str,
                 "tag": item.get("tag", ""),
                 "path": item.get("path", ""),
                 "title": item.get("title", ""),
+                "edition": item.get("edition", derive_edition(item.get("path", ""))),
+                "book": item.get("book", derive_book(item.get("path", ""))),
+                "authority_level": item.get("authority_level", "supplement"),
+                "source_class": item.get("source_class", derive_source_class(
+                    derive_edition(item.get("path", "")))),
             },
             doc_id=f"{collection}_{i}",
         )
@@ -261,13 +396,18 @@ def _index_chunks_direct(items: list[dict], collection: str,
     return total
 
 
-def search_spec(query: str, limit: int = 5) -> list[dict]:
-    """语义检索 RULE_SPEC 结构化规则点（校验判定参数用，最高信号）。"""
+def search_spec(query: str, limit: int = 5,
+                edition_filter: str | None = None) -> list[dict]:
+    """语义检索 RULE_SPEC 结构化规则点（校验判定参数用，最高信号）。
+
+    RAG-001: edition_filter 硬过滤——指定 '2024' 时仅返回 2024 版规则。
+    """
     s = get_settings()
     q = get_qdrant()
     vec = embedding.embed_query(query)
     col = getattr(s, "qdrant_spec_collection", "dnd_rule_spec")
-    res = q.query_points(col, query=vec, limit=limit)
+    flt = _build_filter(edition_filter=edition_filter)
+    res = q.query_points(col, query=vec, limit=limit, query_filter=flt)
     return [{"score": p.score, **p.payload} for p in res.points]
 
 

@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import List
 
 from . import check, dice
 
@@ -26,9 +27,13 @@ class ConcentrationSlot:
 
     规则: R-SPL-019 专注维持与打断（max 1 concurrent）
     出处: topics/玩家手册2024/第七章/施法.htm
+
+    ★ SPL-010: 增加 effect_ids 字段，关联所有通过该专注法术创建的效果实例 ID。
+      专注失败时，遍历 effect_ids 并原子移除所有关联效果（通过 EffectManager）。
     """
     spell_id: str | None = None     # 当前集中的法术标识（None=无集中）
     caster_id: str = ""                # 施法者标识（便于审计）
+    effect_ids: List[str] = field(default_factory=list)  # SPL-010: 关联的效果实例 ID 列表
 
     @property
     def is_concentrating(self) -> bool:
@@ -72,29 +77,68 @@ class ConcentrationManager:
             self.slots[caster_id] = ConcentrationSlot(caster_id=caster_id)
         return self.slots[caster_id]
 
-    def set_concentration(self, caster_id: str, spell_id: str) -> bool:
+    def set_concentration(
+        self,
+        caster_id: str,
+        spell_id: str,
+        *,
+        effect_ids: List[str] | None = None,
+        effect_manager: object | None = None,
+    ) -> bool:
         """设置集中：旧的自动结束，新的占据集中槽。
 
         规则: R-SPL-019 castConcentrationSpell→lose previous(max 1 concurrent)
         出处: topics/玩家手册2024/第七章/施法.htm
+
+        ★ SPL-010: 切换专注时，原子移除旧专注关联的所有效果。
+          新专注可传入 effect_ids 关联效果实例，专注失败时原子移除。
+
+        参数:
+            caster_id: 施法者 ID
+            spell_id: 法术标识
+            effect_ids: SPL-010 关联的效果实例 ID 列表
+            effect_manager: SPL-010 EffectManager 实例，用于原子移除旧效果
+
         返回: True（总是成功设置，旧专注被覆盖）
         """
         slot = self._get_slot(caster_id)
+        # ★ SPL-010: 旧专注自动结束时，原子移除所有关联效果
+        if slot.spell_id is not None and slot.effect_ids and effect_manager is not None:
+            for eid in slot.effect_ids:
+                effect_manager.remove(eid)  # type: ignore[attr-defined]
         # 旧专注自动结束（R-SPL-019）
         slot.spell_id = spell_id
+        slot.effect_ids = list(effect_ids) if effect_ids else []
         return True
 
-    def break_concentration(self, caster_id: str) -> bool:
+    def break_concentration(
+        self,
+        caster_id: str,
+        *,
+        effect_manager: object | None = None,
+    ) -> bool:
         """中断集中：失能/死亡/主动放弃时调用。
 
         规则: R-SPL-019 if incapacitated||dead: lost; voluntaryEnd: actionCost=0
         出处: topics/玩家手册2024/第七章/施法.htm
+
+        ★ SPL-010: 专注失败时，遍历 effect_ids 并原子移除所有关联效果。
+
+        参数:
+            caster_id: 施法者 ID
+            effect_manager: SPL-010 EffectManager 实例，用于原子移除关联效果
+
         返回: 是否确实中断了正在维持的集中
         """
         slot = self._get_slot(caster_id)
         if slot.spell_id is None:
             return False
+        # ★ SPL-010: 专注失败时原子移除所有关联效果
+        if slot.effect_ids and effect_manager is not None:
+            for eid in slot.effect_ids:
+                effect_manager.remove(eid)  # type: ignore[attr-defined]
         slot.spell_id = None
+        slot.effect_ids = []
         return True
 
     def get_active_concentration(self, caster_id: str) -> str | None:
@@ -117,23 +161,26 @@ class ConcentrationManager:
         advantage: bool = False,
         disadvantage: bool = False,
         circ: int = 0,
+        effect_manager: object | None = None,
     ) -> dict:
         """集中者受伤时进行体质豁免维持集中。
 
         规则: R-SPL-020 专注伤害豁免
               - DC = max(10, floor(damage/2))，至高30
               - 豁免失败 → 失去集中
-              - 多来源伤害分别投（此处处理单次伤害）
+              - ★ SPL-010: 每次独立伤害源触发一次专注豁免（不是合并伤害）
+              - ★ SPL-010: 专注失败时原子移除所有关联效果
         出处: topics/玩家手册2024/术语汇编/常见规则词汇.htm
 
         参数:
-            damage_taken: 本次受到的伤害值
+            damage_taken: 本次独立伤害源的伤害值（SPL-010: 每次独立伤害源单独调用）
             con_mod: 体质调整值
             con_proficient: 是否熟练体质豁免
             prof_bonus: 熟练加值
             advantage/disadvantage: 豁免优劣势（如战争施法者专长→优势）
             circ: 临时 d20 修正（如力竭每级 −2，传
                   -conditions.d20_penalty(state)；R-GLS-047 适用于所有 d20 检定）
+            effect_manager: SPL-010 EffectManager 实例，专注失败时原子移除关联效果
 
         返回 dict:
             success: bool — 是否维持集中
@@ -142,6 +189,7 @@ class ConcentrationManager:
             total: int — d20+调整值
             broken: bool — 是否失去集中（=not success 且原本在集中）
             was_concentrating: bool — 受伤时是否在集中
+            effects_removed: list[str] — SPL-010: 专注失败时被移除的效果 ID 列表
         """
         slot = self._get_slot(caster_id)
         was_concentrating = slot.is_concentrating
@@ -155,6 +203,7 @@ class ConcentrationManager:
                 "total": 0,
                 "broken": False,
                 "was_concentrating": False,
+                "effects_removed": [],
             }
 
         # 0 伤害不触发检定（但 DC 下限 10 已涵盖正常情况）
@@ -166,6 +215,7 @@ class ConcentrationManager:
                 "total": 0,
                 "broken": False,
                 "was_concentrating": True,
+                "effects_removed": [],
             }
 
         dc = concentration_save_dc(damage_taken)
@@ -180,8 +230,15 @@ class ConcentrationManager:
         )
 
         if not res.success:
-            # 失去集中（R-SPL-020）
+            # ★ SPL-010: 失去集中时原子移除所有关联效果
+            removed_ids = list(slot.effect_ids)
+            if slot.effect_ids and effect_manager is not None:
+                for eid in slot.effect_ids:
+                    effect_manager.remove(eid)  # type: ignore[attr-defined]
             slot.spell_id = None
+            slot.effect_ids = []
+        else:
+            removed_ids = []
 
         return {
             "success": res.success,
@@ -190,6 +247,7 @@ class ConcentrationManager:
             "total": res.total,
             "broken": not res.success,
             "was_concentrating": True,
+            "effects_removed": removed_ids,
         }
 
 

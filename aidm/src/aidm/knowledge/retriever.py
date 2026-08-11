@@ -40,25 +40,31 @@ def _get_li_index():
     return _li_index if _li_index is not False else None
 
 
-def query_rules(query: str, limit: int = 5, tag_filter: str | None = None) -> list[dict]:
-    """语义检索规则条目（top-k，可选标签过滤）。
+def query_rules(query: str, limit: int = 5, tag_filter: str | None = None,
+                edition_filter: str | None = None) -> list[dict]:
+    """语义检索规则条目（top-k，可选标签过滤 / 版本硬过滤）。
 
     优先使用直接 Qdrant 检索（稳定可靠）；
     如需 LlamaIndex 增强检索（如节点后处理），可调用 query_rules_llamaindex()。
+    edition_filter: 版本硬过滤（'2024'/'2014'/None）。指定时仅返回对应版本结果。
     """
-    return indexer.search(query, limit=limit, tag_filter=tag_filter)
+    return indexer.search(query, limit=limit, tag_filter=tag_filter,
+                          edition_filter=edition_filter)
 
 
 def query_rules_llamaindex(query: str, limit: int = 5,
-                           tag_filter: str | None = None) -> list[dict]:
+                           tag_filter: str | None = None,
+                           edition_filter: str | None = None) -> list[dict]:
     """使用 LlamaIndex VectorStoreIndex 检索规则条目（增强路径）。
 
     支持 LlamaIndex 的节点后处理（如关键词过滤、相似度阈值）。
     如果 LlamaIndex 不可用，自动回退到 query_rules()。
+    edition_filter: 版本硬过滤（'2024'/'2014'/None）。
     """
     idx = _get_li_index()
     if idx is None:
-        return query_rules(query, limit=limit, tag_filter=tag_filter)
+        return query_rules(query, limit=limit, tag_filter=tag_filter,
+                           edition_filter=edition_filter)
 
     try:
         retriever = idx.as_retriever(similarity_top_k=limit)
@@ -70,17 +76,25 @@ def query_rules_llamaindex(query: str, limit: int = 5,
             # 标签过滤
             if tag_filter and tag != tag_filter:
                 continue
+            # 版本硬过滤
+            if edition_filter and meta.get("edition") != edition_filter:
+                continue
             results.append({
                 "score": nws.score or 0.0,
                 "body": nws.node.get_content(),
                 "tag": tag,
                 "path": meta.get("path", ""),
                 "title": meta.get("title", ""),
+                "edition": meta.get("edition", ""),
+                "book": meta.get("book", ""),
+                "authority_level": meta.get("authority_level", ""),
+                "source_class": meta.get("source_class", ""),
             })
         return results[:limit]
     except Exception as e:
         logger.warning(f"[retriever] LlamaIndex 检索失败，回退直接检索: {e}")
-        return query_rules(query, limit=limit, tag_filter=tag_filter)
+        return query_rules(query, limit=limit, tag_filter=tag_filter,
+                           edition_filter=edition_filter)
 
 
 def format_for_llm(results: list[dict], body_limit: int = 600) -> str:
@@ -96,9 +110,12 @@ def format_for_llm(results: list[dict], body_limit: int = 600) -> str:
     return "\n".join(lines)
 
 
-def query_formatted(query: str, limit: int = 5, body_limit: int = 600) -> str:
+def query_formatted(query: str, limit: int = 5, body_limit: int = 600,
+                    edition_filter: str | None = None) -> str:
     """一步：检索 + 格式化。"""
-    return format_for_llm(query_rules(query, limit=limit), body_limit=body_limit)
+    return format_for_llm(query_rules(query, limit=limit,
+                                      edition_filter=edition_filter),
+                          body_limit=body_limit)
 
 
 if __name__ == "__main__":

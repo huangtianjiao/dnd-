@@ -9,7 +9,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from enum import Enum
+from typing import Any, List
 
 from ..data.spells import Spell, get_casting_ability, get_spell, is_cantrip
 from . import check, combat, damage, dice
@@ -346,6 +347,156 @@ def can_cast_by_components(spell: Spell, caster: CasterState,
 
 
 # ──────────────────────────────────────────────────────────────────────────
+# SPL-011: 成分校验（装备槽版）— 使用 EquipmentSlotsManager 真实持握判断
+# ──────────────────────────────────────────────────────────────────────────
+
+def can_cast_with_equipment_slots(
+    spell: Spell,
+    equipment_slots: Any,
+    *,
+    muted: bool = False,
+    silenced: bool = False,
+    has_material_pouch: bool = False,
+    has_specific_material: bool = False,
+) -> bool:
+    """使用 EquipmentSlotsManager 真实持握判断成分是否满足 (SPL-011)。
+
+    规则: R-SPL-010~013 法术成分
+    出处: topics/玩家手册2024/法术/法术成分.htm
+
+    S(姿势) 判断：检查 EquipmentSlots 是否有空闲手
+      - main_hand 和 off_hand 都空 → 2 只空闲手
+      - 持有法器的手可同时处理 S+M
+      - 装备盾牌(off_hand)且无空闲手 → 无法完成 S
+    M(材料) 判断：检查 focus 槽位是否有法器，或物品栏有材料包
+
+    Args:
+        spell: 法术数据
+        equipment_slots: EquipmentSlotsManager 实例
+        muted/silenced: 不能说话/沉默 → V 失败
+        has_material_pouch: 物品栏中有材料包
+        has_specific_material: 持有法术指定的有价/消耗材料
+
+    Returns:
+        是否满足全部成分需求
+    """
+    comps = spell.components
+
+    # R-SPL-011 言语成分限制
+    if "V" in comps and (muted or silenced):
+        return False
+
+    # 从 EquipmentSlotsManager 获取空闲手数量和法器状态
+    free_hands = equipment_slots.get_free_hands()
+    has_focus = equipment_slots.has_focus_available()
+
+    # R-SPL-012 姿势成分限制：至少空出一只手
+    # 同一只手可以同时处理 S+M（如果持有法器）
+    if "S" in comps:
+        if free_hands < 1 and not has_focus:
+            # 无空闲手且无法器 → S 失败
+            return False
+
+    # R-SPL-013 材料成分限制与替代
+    if "M" in comps:
+        needs_specific = spell.material_cost_gp > 0 or spell.material_consumed
+        if needs_specific:
+            # 有价/消耗材料必须实际持有，不可由材料包或法器替代
+            if not has_specific_material:
+                return False
+        else:
+            # 无价不消耗材料：法器或材料包均可替代
+            if not (has_focus or has_material_pouch):
+                return False
+        # 材料成分需要一只手（可与 S 共用持法器的手）
+        if free_hands < 1 and not has_focus:
+            return False
+
+    return True
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# SPL-012: 材料消耗管理 — 有价/消耗材料真实扣除
+# ──────────────────────────────────────────────────────────────────────────
+
+def check_material_availability(
+    spell: Spell,
+    has_material_pouch: bool,
+    has_focus: bool,
+    has_specific_material: bool,
+) -> dict:
+    """检查法术所需材料是否齐备 (SPL-012)。
+
+    规则: R-SPL-013 材料成分限制与替代
+    出处: topics/玩家手册2024/法术/法术成分.htm
+
+    Returns:
+        {
+            "can_provide": bool,       # 是否能提供材料
+            "needs_specific": bool,    # 是否需要特定材料（有价/消耗）
+            "will_consume": bool,      # 施法后是否消耗材料
+            "material_desc": str,      # 材料描述
+            "material_cost_gp": float, # 材料价值
+            "substituted_by": str,     # 由什么替代 ("focus"/"pouch"/"specific"/"")
+        }
+    """
+    if "M" not in spell.components:
+        return {
+            "can_provide": True,
+            "needs_specific": False,
+            "will_consume": False,
+            "material_desc": "",
+            "material_cost_gp": 0.0,
+            "substituted_by": "",
+        }
+
+    needs_specific = spell.material_cost_gp > 0 or spell.material_consumed
+    will_consume = spell.material_consumed
+
+    if needs_specific:
+        can_provide = has_specific_material
+        substituted_by = "specific" if can_provide else ""
+    else:
+        if has_focus:
+            can_provide = True
+            substituted_by = "focus"
+        elif has_material_pouch:
+            can_provide = True
+            substituted_by = "pouch"
+        else:
+            can_provide = False
+            substituted_by = ""
+
+    return {
+        "can_provide": can_provide,
+        "needs_specific": needs_specific,
+        "will_consume": will_consume,
+        "material_desc": spell.material_desc,
+        "material_cost_gp": spell.material_cost_gp,
+        "substituted_by": substituted_by,
+    }
+
+
+def create_material_consumed_event(
+    spell_name: str,
+    material_desc: str,
+    material_cost_gp: float,
+) -> dict:
+    """创建材料消耗事件 (SPL-012)。
+
+    Returns:
+        ItemConsumed 事件字典
+    """
+    return {
+        "type": "ItemConsumed",
+        "spell_name": spell_name,
+        "material_desc": material_desc,
+        "material_cost_gp": material_cost_gp,
+        "quantity": 1,
+    }
+
+
+# ──────────────────────────────────────────────────────────────────────────
 # 升环效应解析
 # ──────────────────────────────────────────────────────────────────────────
 
@@ -446,6 +597,57 @@ def resolve_upcast(spell: Spell, slot_level: int, caster_level: int) -> dict:
 
 
 # ──────────────────────────────────────────────────────────────────────────
+def _build_effect_definition(spell: Spell, slot_level: int,
+                             upcast_info: dict) -> EffectDefinition | None:
+    """根据法术数据构建 EffectDefinition。
+
+    SPL-008: 将法术的 effect_type 和 damage_dice/heal_dice 等字段
+    转换为可组合的 Effect DSL 操作序列。
+
+    Returns:
+        EffectDefinition 或 None（无法构建时）
+    """
+    from .effect_dsl import EffectDefinition, EffectOperation, EffectOpType
+
+    ops: list[EffectOperation] = []
+    dmg_expr = upcast_info.get("damage_dice", spell.damage_dice)
+    heal_expr = upcast_info.get("heal_dice", spell.heal_dice)
+
+    if spell.effect_type in ("attack_roll", "saving_throw", "automatic"):
+        # 伤害型法术
+        if dmg_expr:
+            ops.append(EffectOperation(
+                op=EffectOpType.DEAL_DAMAGE,
+                params={
+                    "dice_expr": dmg_expr,
+                    "damage_type": spell.damage_type or "unspecified",
+                },
+            ))
+    elif spell.effect_type == "heal":
+        # 治疗型法术
+        if heal_expr:
+            ops.append(EffectOperation(
+                op=EffectOpType.HEAL,
+                params={"dice_expr": heal_expr},
+            ))
+    elif spell.effect_type == "shield":
+        # 护盾型法术
+        ops.append(EffectOperation(
+            op=EffectOpType.ADD_MODIFIER,
+            params={"stat": "ac", "value": spell.ac_bonus},
+        ))
+
+    if not ops:
+        return None
+
+    return EffectDefinition(
+        name=f"{spell.name}_effect",
+        operations=ops,
+        target_spec={"type": "target"},
+        duration_spec={"type": spell.duration or "instant"},
+    )
+
+
 # cast_spell 主函数
 # ──────────────────────────────────────────────────────────────────────────
 
@@ -461,8 +663,41 @@ def cast_spell(
     combatant: Any | None = None,
     has_reaction_available: bool = True,
     turn_key: str | None = None,
+    lifecycle_mgr: Any | None = None,
+    material_tracker: Any | None = None,
+    duration_scheduler: Any | None = None,
+    trigger_window_registry: Any | None = None,
 ) -> dict:
     """施展一道法术，返回完整结果字典。
+
+    ★ SPL-001: 本函数为施法结算的【唯一权威入口】。所有需要执行施法的调用方
+      必须通过此函数，不得自行实现施法逻辑。
+      调用方:
+        - brain/resolvers/cast.py  — 成分校验委托 check_casting_components()
+        - engine/spellcasting.advance_long_spell — 完成时调用
+        - 任何新增调用方均须通过此函数
+      禁止: 在 resolver / brain / ui 层直接做施法计算或法术位消耗。
+
+    ★ SPL-013: 本函数实现 Plan/Commit 两阶段施法：
+      ── Plan 阶段（不消耗任何资源）──
+        1. 法术存在性校验 (SPL-002)
+        2. 仪式/戏法/环阶校验
+        3. 成分校验 (R-SPL-010~013)
+        4. 反应可用性校验 (R-SPL-006)
+        5. 法术位可用性校验 (R-SPL-002)
+        6. 每回合一法术位法术校验 (R-SPL-007)
+        → 任何校验失败均在此阶段返回，不消耗资源
+      ── Commit 阶段（原子消耗资源）──
+        7. 消耗法术位 (R-SPL-002) — 仅非戏法、非仪式、校验通过时
+        8. 消耗反应 (R-SPL-006) — 反应法术
+        9. 结算法术效应
+       10. 设置专注 (R-SPL-019)
+
+    ★ SPL-014: 法术位安全保证：
+      - 戏法 (level=0) 不消耗法术位
+      - 施法失败（任何 Plan 阶段校验失败）不消耗法术位
+      - 仪式施法 (ritual=True) 不消耗法术位
+      - 法术位消耗仅在 Commit 阶段发生，且只产生 slot_consumed=True 记录
 
     规则: R-SPL-001~036 施法全流程
     出处: topics/玩家手册2024/第七章/施法.htm ; 法术详述/{0..3}环.htm
@@ -500,17 +735,42 @@ def cast_spell(
         concentration_set: bool — 是否设置了集中
         errors: list — 失败原因列表
     """
-    spell = get_spell(spell_name)
+    # ══════════════════════════════════════════════════════════════════════
+    # SPL-013 Phase 1: PLAN 阶段 — 校验所有前置条件，不消耗任何资源
+    # 任何校验失败均直接返回 _fail()，保证不消耗法术位/材料/反应
+    # ══════════════════════════════════════════════════════════════════════
+
+    # —— SPL-002: 未知法术拒绝（Plan: 法术存在性校验）——
+    # 法术必须在 SPELLS 或 SPELLS_FULL 数据表中存在，否则直接拒绝，不回退 LLM 猜测
+    try:
+        spell = get_spell(spell_name)
+    except KeyError:
+        return {
+            "success": False,
+            "spell": spell_name,
+            "level": 0,
+            "slot_level": 0,
+            "slot_consumed": False,
+            "ritual": False,
+            "ritual_time_extra": 0,
+            "effect_type": "",
+            "save_dc": 0,
+            "attack_bonus": 0,
+            "effective_level": 0,
+            "results": [],
+            "concentration_set": False,
+            "errors": [f"UNKNOWN_CONTENT: 未知法术「{spell_name}」，不在法术数据表中"],
+        }
     targets = targets or []
     comp_kw = component_kwargs or {}
 
     errors: list[str] = []
 
-    # —— 戏法处理 ——
+    # —— Plan: 戏法处理 (SPL-014: 戏法不消耗法术位) ——
     if is_cantrip(spell):
         slot_level = 0
 
-    # —— 仪式施法 (R-SPL-005) ——
+    # —— Plan: 仪式施法校验 (R-SPL-005, SPL-014: 仪式不消耗法术位) ——
     # 可仪式施展的法术：施法时间+10分钟、不消耗法术位（亦不计入每回合计数）
     ritual_cast = False
     ritual_time_extra = 0  # 仪式额外施法时间（秒），10分钟=600秒
@@ -530,24 +790,92 @@ def cast_spell(
             errors.append(f"法术位环阶 {slot_level} 低于法术环阶 {spell.level}")
             return _fail(spell, slot_level, errors)
 
-    # —— 成分校验 (R-SPL-010~013) ——
-    if not can_cast_by_components(spell, caster, **comp_kw):
+    # —— Plan: 成分校验 (R-SPL-010~013) ——
+    # Only pass component-related kwargs to can_cast_by_components
+    _component_check_kwargs = {
+        k: v for k, v in comp_kw.items()
+        if k in ("muted", "silenced", "free_hands", "has_material_pouch",
+                 "has_focus", "has_specific_material")
+    }
+    # SPL-012: 若提供了 material_tracker，则从其真实库存派生 has_specific_material
+    if material_tracker is not None and (spell.material_cost_gp > 0 or spell.material_consumed):
+        try:
+            from .material_cost import MaterialRequirement
+            _req = MaterialRequirement(
+                item_tag=spell.material_desc or "",
+                min_value_gp=spell.material_cost_gp,
+                quantity=1,
+                consumed=spell.material_consumed,
+            )
+            _component_check_kwargs["has_specific_material"] = (
+                material_tracker.has_material(_req)
+                if material_tracker.has_material(_req) else bool(comp_kw.get("has_specific_material"))
+            )
+        except Exception:
+            _component_check_kwargs["has_specific_material"] = bool(
+                comp_kw.get("has_specific_material", False))
+    if not can_cast_by_components(spell, caster, **_component_check_kwargs):
         errors.append("成分不满足（V/S/M）")
         return _fail(spell, slot_level, errors, ritual=ritual_cast)
 
-    # —— 反应施法 (R-SPL-006) ——
-    # 施法时间为反应的法术须消耗一个反应
-    if spell.casting_time_type == "REACTION":
+    # —— Plan: 有价/消耗材料可用性校验 (SPL-012) ——
+    # 材料需求引用 item/tag、最低价值、数量、是否消耗；验证与扣除在同一事务。
+    material_consumed_event = None
+    if material_tracker is not None and (spell.material_cost_gp > 0 or spell.material_consumed):
+        from .material_cost import MaterialRequirement
+        req = MaterialRequirement(
+            item_tag=spell.material_desc or "",
+            min_value_gp=spell.material_cost_gp,
+            quantity=1,
+            consumed=spell.material_consumed,
+        )
+        if not material_tracker.has_material(req):
+            errors.append(f"缺少施法材料「{spell.material_desc or '指定材料'}」（价值≥{spell.material_cost_gp}GP）")
+            return _fail(spell, slot_level, errors, ritual=ritual_cast)
+        if spell.material_consumed:
+            # 记录待消耗事件——Commit 阶段才真正扣除（SPL-012 验证与扣除同事务）
+            material_consumed_event = {"item_tag": req.item_tag, "quantity": req.quantity}
+
+    # —— Plan: 反应施法校验 (R-SPL-006, SPL-013: 仅校验不消耗) ——
+    # 施法时间为反应的法术须有可用反应（此处仅校验可用性，实际消耗在 Commit 阶段）
+    _reaction_required = spell.casting_time_type == "REACTION"
+    if _reaction_required:
         if combatant is not None:
-            # 真正扣减反应（combat.use_reaction）
-            if not combat.use_reaction(combatant):
+            if not combat.can_take_reaction(combatant):
                 errors.append("反应已消耗，不可施展反应法术")
                 return _fail(spell, slot_level, errors, ritual=ritual_cast)
         elif not has_reaction_available:
             errors.append("反应不可用，不可施展反应法术")
             return _fail(spell, slot_level, errors, ritual=ritual_cast)
 
-    # —— 法术位消耗 (R-SPL-002) + 每回合一法术位法术 (R-SPL-007) ——
+    # ══════════════════════════════════════════════════════════════════════
+    # SPL-013 Phase 2: COMMIT 阶段 — 所有校验已通过，原子消耗资源
+    # 从此处开始的所有操作都在前置条件全部满足后执行
+    # ══════════════════════════════════════════════════════════════════════
+
+    # —— Commit: 反应消耗 (R-SPL-006) ——
+    if _reaction_required:
+        if combatant is not None:
+            combat.use_reaction(combatant)  # 原子扣减反应
+
+    # —— Commit: 有价/消耗材料扣除 (SPL-012) ——
+    # SPL-012: 验证与扣除在同一事务；只有消耗型材料才真实扣减。
+    if material_consumed_event and material_tracker is not None:
+        from .material_cost import MaterialRequirement
+        consumed_ok = material_tracker.consume_material(MaterialRequirement(
+            item_tag=material_consumed_event["item_tag"],
+            quantity=material_consumed_event["quantity"],
+            consumed=True,
+        ))
+        if not consumed_ok:
+            errors.append("材料扣除失败（数量不足）")
+            return _fail(spell, slot_level, errors, ritual=ritual_cast)
+
+    # —— Commit: 法术位消耗 (R-SPL-002, SPL-014) + 每回合一法术位法术 (R-SPL-007) ——
+    # ★ SPL-014: 法术位仅在 Commit 阶段消耗，且仅当：
+    #   - 非仪式施法 (ritual_cast=False)
+    #   - 非戏法 (is_cantrip=False)
+    #   - 所有 Plan 阶段校验已通过
     slot_consumed = False
     if not ritual_cast and not is_cantrip(spell):
         # R-SPL-007 回合切换自动重置：turn_key 变更说明已进入新回合
@@ -575,10 +903,70 @@ def cast_spell(
     attack_bonus = compute_spell_attack_bonus(caster) if spell.effect_type == "attack_roll" else 0
 
     # —— 结算法术效应 ——
+    # ★ COM-008: 每个目标独立产生伤害事件，不汇总到单一目标
+    # 每个目标独立掷骰（攻击检定/豁免）、独立计算伤害、独立应用抗性
     results: list[dict] = []
 
-    if spell.effect_type == "attack_roll":
-        # 攻击检定型法术（火焰箭、灼热射线）
+    # ★ SPL-006: 多射线法术通过 resolve_multi_ray_spell 产生独立的每目标伤害事件
+    # 检测条件：法术有多射线属性（beam_scaling 或 base_rays）或名称匹配
+    _MULTI_RAY_SPELLS = {"灼热射线", "魔能爆"}
+    _has_beam_scaling = (
+        isinstance(spell.upcast, dict)
+        and ("beam_scaling" in spell.upcast or "base_rays" in spell.upcast)
+    )
+    _is_multi_ray = (
+        spell.effect_type == "attack_roll"
+        and (
+            spell.name in _MULTI_RAY_SPELLS
+            or _has_beam_scaling
+            or upcast_info.get("num_attacks", 1) > 1
+        )
+    )
+
+    if _is_multi_ray:
+        # 构建 resolve_multi_ray_spell 所需的目标 ID 列表
+        target_ids = [tgt.get("entity_id", f"target_{i}") for i, tgt in enumerate(targets)]
+        # 如果只有一个目标但有多道射线，复制目标 ID
+        num_rays = upcast_info.get("num_attacks", 1)
+        while len(target_ids) < num_rays:
+            target_ids = target_ids + target_ids
+        target_ids = target_ids[:num_rays]
+
+        multi_result = resolve_multi_ray_spell(
+            spell_id=spell_name,
+            caster=caster,
+            target_ids=target_ids,
+            context={
+                "slot_level": slot_level or 0,
+                "targets_data": [
+                    {
+                        "ac": tgt.get("ac", 10),
+                        "resistances": tgt.get("resistances", []),
+                        "vulnerabilities": tgt.get("vulnerabilities", []),
+                        "immunities": tgt.get("immunities", []),
+                    }
+                    for tgt in targets
+                ],
+            },
+        )
+        # 将 MultiTargetSpellResult 转换为 results 列表格式
+        for st in multi_result.targets:
+            tgt_result = {
+                "target_id": st.target_id,
+                "attack_roll": st.attack_roll,
+                "attack_total": st.attack_total,
+                "hit": st.is_hit,
+                "crit": st.is_crit,
+                "damage": st.damage if st.is_hit else None,
+                "damage_type": st.damage_type,
+                "resisted": st.resisted,
+                "vulnerable": st.vulnerable,
+                "immune": st.immune,
+            }
+            results.append(tgt_result)
+
+    elif spell.effect_type == "attack_roll":
+        # 单射线攻击检定型法术（火焰箭）
         num_attacks = upcast_info.get("num_attacks", 1)
         dmg_expr = upcast_info.get("damage_dice", spell.damage_dice)
         for tgt in targets:
@@ -641,7 +1029,16 @@ def cast_spell(
                 vulnerabilities=tgt.get("vulnerabilities", []),
                 immunities=tgt.get("immunities", []),
             )
-            applied = dice.round_down(piped.final / 2) if sv.success else piped.final
+            # 根据 SaveOutcome (SPL-005) 决定豁免成功时的伤害
+            save_outcome = resolve_save_outcome(spell)
+            if save_outcome == SaveOutcome.HALF:
+                applied = dice.round_down(piped.final / 2) if sv.success else piped.final
+            elif save_outcome == SaveOutcome.NONE:
+                applied = 0 if sv.success else piped.final
+            elif save_outcome == SaveOutcome.NEGATE:
+                applied = 0 if sv.success else piped.final
+            else:  # ALTERNATE — 由调用方处理，此处按半伤
+                applied = dice.round_down(piped.final / 2) if sv.success else piped.final
 
             tgt_result = {
                 "target_index": targets.index(tgt),
@@ -721,6 +1118,124 @@ def cast_spell(
             caster.concentrating_on = f"{spell.name}_{caster.caster_id}"
             concentration_set = True
 
+    # ★ SPL-009: 持续效果调度 — 非立即法术通过 DurationScheduler 追踪到期时间
+    scheduled_effect_id = None
+    if duration_scheduler is not None and spell.duration not in ("", "立即"):
+        from .spell_duration import (
+            DurationSpec as DSDurationSpec,
+            DurationType as DSDurationType,
+            ScheduledEffect,
+        )
+        dur_type = DSDurationType.ROUNDS
+        dur_value = 10  # 默认按 1 分钟=10 轮（战斗内换算）
+        if "分钟" in spell.duration:
+            import re as _re
+            m = _re.search(r"(\d+)", spell.duration)
+            dur_value = (int(m.group(1)) if m else 1) * 10  # 分钟→轮
+        elif "小时" in spell.duration:
+            import re as _re
+            m = _re.search(r"(\d+)", spell.duration)
+            dur_value = (int(m.group(1)) if m else 1) * 60 * 10
+        elif "轮" in spell.duration:
+            import re as _re
+            m = _re.search(r"(\d+)", spell.duration)
+            dur_value = int(m.group(1)) if m else 10
+        elif "短休" in spell.duration or "长休" in spell.duration:
+            dur_type = DSDurationType.UNTIL_REST
+            dur_value = 0
+        elif "永久" in spell.duration:
+            dur_type = DSDurationType.PERMANENT
+            dur_value = 0
+
+        target_id = targets[0].get("entity_id", "") if targets else caster.caster_id
+        se = ScheduledEffect(
+            effect_id=f"{spell.name}_{caster.caster_id}",
+            spell_id=spell.name,
+            target_entity_id=target_id,
+            duration=DSDurationSpec(duration_type=dur_type, value=dur_value,
+                                    remaining=dur_value),
+        )
+        scheduled_effect_id = duration_scheduler.schedule(se)
+
+    # ★ SPL-015: 时机型法术触发窗口注册
+    trigger_window_registered = False
+    if trigger_window_registry is not None and spell.casting_time_type == "REACTION":
+        from .spell_trigger_window import TriggerPoint, TriggerWindow
+        # 反应法术（护盾术等）在"命中后伤害前"触发
+        window = TriggerWindow(
+            spell_id=spell.name,
+            trigger_point=TriggerPoint.ATTACK_HIT_BEFORE_DAMAGE,
+        )
+        trigger_window_registry.register(window)
+        trigger_window_registered = True
+
+    # ★ SPL-016: 召唤/变形/创造物实体生命周期
+    lifecycle_events: list[dict] = []
+    spawned_entity_ids: list[str] = []
+    # 召唤类法术（effect_type 含 'summon' 或法术名含 '召唤'）
+    _is_summon = (
+        "summon" in spell.effect_type.lower()
+        or "召唤" in spell.name
+    )
+    # 变形类法术（effect_type 含 'transform' 或法术名含 '变形'）
+    _is_transform = (
+        "transform" in spell.effect_type.lower()
+        or "debuff" in spell.effect_type.lower()
+        or "变形" in spell.name
+    )
+
+    if _is_summon and lifecycle_mgr is not None:
+        stat_block = component_kwargs.get("summon_stat_block", {})
+        duration = component_kwargs.get("summon_duration", -1)
+        conc_link = component_kwargs.get("summon_concentration_link")
+        entity = lifecycle_mgr.summon(
+            summoner_id=caster.caster_id,
+            spell_id=spell.name,
+            stat_block=stat_block,
+            duration=duration,
+            concentration_id=conc_link,
+        )
+        spawned_entity_ids.append(entity.entity_id)
+        lifecycle_events.append({
+            "type": "entity_spawned",
+            "entity_id": entity.entity_id,
+            "summoner_id": caster.caster_id,
+            "spell_id": spell.name,
+        })
+    elif _is_transform and lifecycle_mgr is not None:
+        target_id = targets[0].get("entity_id", "") if targets else ""
+        new_stats = component_kwargs.get("transform_stats", {})
+        duration = component_kwargs.get("transform_duration", -1)
+        conc_link = component_kwargs.get("transform_concentration_link")
+        original_stats = component_kwargs.get("transform_original_stats")
+        override = lifecycle_mgr.apply_form_override(
+            target_id=target_id,
+            new_stats=new_stats,
+            spell_id=spell.name,
+            duration=duration,
+            concentration_id=conc_link,
+            original_stats=original_stats,
+        )
+        lifecycle_events.append({
+            "type": "form_override_applied",
+            "target_id": target_id,
+            "spell_id": spell.name,
+        })
+
+    # ★ SPL-008: 通过 EffectExecutor 生成可审计的效果事件
+    effect_events: list[dict] = []
+    from .effect_dsl import EffectDefinition, EffectOperation, EffectOpType, EffectExecutor
+    eff_def = _build_effect_definition(spell, slot_level or 0, upcast_info)
+    if eff_def is not None:
+        executor = EffectExecutor()
+        ctx = {
+            "caster_id": caster.caster_id,
+            "spell_name": spell.name,
+            "slot_level": slot_level or 0,
+            "targets": targets,
+        }
+        effect_events = executor.execute(eff_def, ctx)
+
     return {
         "success": True,
         "spell": spell.name,
@@ -735,6 +1250,12 @@ def cast_spell(
         "effective_level": upcast_info.get("effective_level", spell.level),
         "results": results,
         "concentration_set": concentration_set,
+        "lifecycle_events": lifecycle_events,  # ★ SPL-016
+        "spawned_entity_ids": spawned_entity_ids,  # ★ SPL-016
+        "effect_events": effect_events,  # ★ SPL-008: Effect DSL 产出的事件列表
+        "scheduled_effect_id": scheduled_effect_id,  # ★ SPL-009
+        "trigger_window_registered": trigger_window_registered,  # ★ SPL-015
+        "material_consumed": bool(material_consumed_event),  # ★ SPL-012
         "errors": [],
     }
 
@@ -758,6 +1279,197 @@ def _fail(spell: Spell, slot_level: int | None, errors: list[str],
         "concentration_set": False,
         "errors": errors,
     }
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# SPL-005: 豁免结果声明制
+# ──────────────────────────────────────────────────────────────────────────
+
+class SaveOutcome(str, Enum):
+    """豁免成功时的结果类型（SPL-005）。
+
+    规则: 不同法术在豁免成功时有不同效果：
+      - NONE: 成功无伤（如圣火术 Sacred Flame）
+      - HALF: 成功半伤（如火球术 Fireball）
+      - ALTERNATE: 成功替代效果（如控制法术减轻效果）
+      - NEGATE: 成功完全无效（如多数控制法术）
+    出处: topics/玩家手册2024/法术详述/{0..9}环.htm
+    """
+    NONE = "none"               # 成功无伤
+    HALF = "half"               # 成功半伤
+    ALTERNATE = "alternate"     # 成功替代效果
+    NEGATE = "negate"           # 成功完全无效
+
+
+def resolve_save_outcome(spell: Spell) -> SaveOutcome:
+    """根据法术数据推断豁免成功时的结果类型（SPL-005）。
+
+    规则: 从法术的 half_on_save 字段和 effect_type 推断：
+      - half_on_save=True → HALF（火球术等伤害法术）
+      - half_on_save=False + 有伤害 → NONE（圣火术等）
+      - 无伤害 + 有豁免 → NEGATE（控制法术）
+    """
+    if spell.half_on_save:
+        return SaveOutcome.HALF
+    if spell.damage_dice:
+        return SaveOutcome.NONE
+    # 无伤害的豁免法术（控制类）→ 豁免成功完全无效
+    return SaveOutcome.NEGATE
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# SPL-006: 多射线/多目标分配
+# ──────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class SpellTarget:
+    """单个目标的法术效应结果（SPL-006）。
+
+    规则: R-SPL-006 多射线法术 — 每枚射线独立攻击/伤害
+    出处: topics/玩家手册2024/法术详述/2环.htm（灼热射线）
+    """
+    target_id: str
+    attack_roll: int = 0
+    attack_total: int = 0
+    is_hit: bool = False
+    is_crit: bool = False
+    damage: int = 0
+    damage_type: str = ""
+    resisted: bool = False
+    vulnerable: bool = False
+    immune: bool = False
+
+
+@dataclass
+class MultiTargetSpellResult:
+    """多射线/多目标法术的完整结算结果（SPL-006）。
+
+    规则: COM-008 每个目标独立产生伤害事件
+    出处: topics/玩家手册2024/法术详述/2环.htm
+    """
+    spell_id: str
+    spell_name: str = ""
+    effective_level: int = 0
+    targets: List[SpellTarget] = field(default_factory=list)
+    events: List[dict] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        """转换为兼容 dict 格式（供 cast_spell 返回结构复用）。"""
+        return {
+            "spell": self.spell_name,
+            "effective_level": self.effective_level,
+            "targets": [
+                {
+                    "target_id": t.target_id,
+                    "attack_roll": t.attack_roll,
+                    "attack_total": t.attack_total,
+                    "hit": t.is_hit,
+                    "crit": t.is_crit,
+                    "damage": {
+                        "total": t.damage,
+                        "type": t.damage_type,
+                        "resisted": t.resisted,
+                        "vulnerable": t.vulnerable,
+                        "immune": t.immune,
+                    } if t.is_hit else None,
+                }
+                for t in self.targets
+            ],
+            "events": self.events,
+        }
+
+
+def resolve_multi_ray_spell(
+    spell_id: str,
+    caster: CasterState,
+    target_ids: list[str],
+    context: dict | None = None,
+) -> MultiTargetSpellResult:
+    """多射线法术（如灼热射线）— 每枚射线独立攻击/伤害。
+
+    规则: R-SPL-004 升环施法（灼热射线每升一环多一道射线）
+          COM-008 每个目标独立产生伤害事件
+    出处: topics/玩家手册2024/法术详述/2环.htm（灼热射线）
+
+    参数:
+        spell_id: 法术中文名
+        caster: 施法者状态
+        target_ids: 目标 ID 列表（可重复，允许多射线指向同一目标）
+        context: 可选上下文
+            - slot_level: 法术位环阶（默认=法术环阶）
+            - targets_data: 各目标的 {ac, resistances, vulnerabilities, immunities}
+
+    返回: MultiTargetSpellResult
+    """
+    ctx = context or {}
+    spell = get_spell(spell_id)
+    slot_level = ctx.get("slot_level", spell.level)
+    targets_data = ctx.get("targets_data", [])
+
+    upcast_info = resolve_upcast(spell, slot_level, caster.level)
+    num_rays = upcast_info.get("num_attacks", 1)
+    dmg_expr = upcast_info.get("damage_dice", spell.damage_dice)
+    attack_bonus = compute_spell_attack_bonus(caster)
+
+    result = MultiTargetSpellResult(
+        spell_id=spell_id,
+        spell_name=spell.name,
+        effective_level=upcast_info.get("effective_level", spell.level),
+    )
+
+    # 确保 target_ids 长度至少与射线数一致（不足则循环复用）
+    if not target_ids:
+        return result
+    while len(target_ids) < num_rays:
+        target_ids = target_ids + target_ids
+    target_ids = target_ids[:num_rays]
+
+    for ray_idx, tid in enumerate(target_ids):
+        tgt_data = targets_data[ray_idx] if ray_idx < len(targets_data) else {}
+        ac = tgt_data.get("ac", 10)
+        atk = check.attack_roll(bonus=attack_bonus, ac=ac)
+
+        st = SpellTarget(
+            target_id=tid,
+            attack_roll=atk.d20,
+            attack_total=atk.total,
+            is_hit=atk.hit,
+            is_crit=atk.crit,
+        )
+
+        if atk.hit:
+            dr = damage.roll_damage(
+                damage.DamageRequest(
+                    dice_expr=dmg_expr,
+                    damage_type=spell.damage_type or "",
+                    ability_mod=0,
+                    add_mod=False,
+                    crit=atk.crit,
+                ),
+                resistances=tgt_data.get("resistances", []),
+                vulnerabilities=tgt_data.get("vulnerabilities", []),
+                immunities=tgt_data.get("immunities", []),
+            )
+            st.damage = dr.final
+            st.damage_type = spell.damage_type or ""
+            st.resisted = dr.resisted
+            st.vulnerable = dr.vulnerable
+            st.immune = dr.immune
+
+        result.targets.append(st)
+        result.events.append({
+            "type": "ray_attack",
+            "ray_index": ray_idx,
+            "target_id": tid,
+            "attack_roll": atk.d20,
+            "attack_total": atk.total,
+            "hit": atk.hit,
+            "crit": atk.crit,
+            "damage": st.damage if atk.hit else 0,
+            "damage_type": st.damage_type,
+        })
+
+    return result
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -861,7 +1573,12 @@ def cast_long_spell(
     说明: 本函数仅开始施法并设置专注；法术位在完成时（advance_long_spell）
           才消耗。每回合的魔法动作消耗应由调用方在动作经济中扣减。
     """
-    spell = get_spell(spell_name)
+    # —— SPL-002: 未知法术拒绝 ——
+    try:
+        spell = get_spell(spell_name)
+    except KeyError:
+        return {"success": False, "spell": spell_name, "progress": None,
+                "errors": [f"UNKNOWN_CONTENT: 未知法术「{spell_name}」，不在法术数据表中"]}
     comp_kw = component_kwargs or {}
     errors: list[str] = []
 

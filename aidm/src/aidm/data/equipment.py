@@ -54,6 +54,10 @@ def get_armor_entry(name: str) -> dict:
 def compute_ac(armor_entry: dict, dex_mod: int, has_shield: bool = False) -> int:
     """根据护甲类别计算基础 AC（无甲=10+敏捷，见 R-CMB-021/R-GLS-006）。
 
+    ★ ARC-002: 本函数为 AC 计算的唯一权威入口。所有需要计算 AC 的调用方
+      必须通过此函数，不得自行实现 AC 计算逻辑。
+      调用方: stats/models.Character.recalculate_ac
+
     规则: R-ITM-004 AC计算公式  出处: topics/玩家手册2024/装备/护甲.htm
     """
     m = armor_entry["dex_mode"]

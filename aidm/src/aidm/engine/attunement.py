@@ -104,6 +104,87 @@ def end_attunement(current_attuned: list[str], item_name: str) -> list[str]:
 
 
 # ──────────────────────────────────────────────────────────────────────────
+# 同调服务 (ITEM-003) — 与 GrantManager 集成
+# ──────────────────────────────────────────────────────────────────────────
+
+
+class AttunementService:
+    """同调服务 — 同调时授予物品效果，解除同调时撤销所有关联 Grant。"""
+
+    def __init__(self, grant_manager=None) -> None:
+        self._grant_manager = grant_manager
+
+    def attune_with_effects(
+        self,
+        entity_id: str,
+        current_attuned: list[str],
+        item_name: str,
+        item_effects: dict | None = None,
+        *,
+        item_requires: dict | None = None,
+        char_class: str = "",
+        char_level: int = 1,
+        char_abilities: dict | None = None,
+    ) -> dict:
+        """与物品同调并授予效果。
+
+        规则: R-ITM-020/021/022
+        返回: {"success": bool, "reason": str|None, "new_attuned": list, "grants": list}
+        """
+        # 1. 校验同调合法性
+        check = can_attune(
+            current_attuned, item_name,
+            item_requires=item_requires,
+            char_class=char_class,
+            char_level=char_level,
+            char_abilities=char_abilities,
+        )
+        if not check["can_attune"]:
+            return {"success": False, "reason": check["reason"], "new_attuned": current_attuned, "grants": []}
+
+        # 2. 执行同调
+        new_attuned = attune(current_attuned, item_name)
+
+        # 3. 授予物品效果
+        granted = []
+        if self._grant_manager and item_effects:
+            for effect_type, effect_data in item_effects.items():
+                grant_id = f"attune_{item_name}_{effect_type}"
+                from ..rules.grant import Grant
+                g = Grant(
+                    grant_id=grant_id,
+                    source_feature_id=f"item.{item_name}",
+                    grant_type=effect_type,
+                    target=effect_data.get("target", ""),
+                    value=effect_data.get("value"),
+                )
+                self._grant_manager.add_grant(entity_id, g)
+                granted.append(grant_id)
+
+        return {"success": True, "reason": None, "new_attuned": new_attuned, "grants": granted}
+
+    def end_attunement_with_effects(
+        self,
+        entity_id: str,
+        current_attuned: list[str],
+        item_name: str,
+    ) -> dict:
+        """结束同调并撤销所有关联 Grant。
+
+        规则: R-ITM-023
+        返回: {"success": bool, "new_attuned": list, "removed_grants": int}
+        """
+        new_attuned = end_attunement(current_attuned, item_name)
+
+        # 撤销所有来自该物品的授予
+        removed = 0
+        if self._grant_manager:
+            removed = self._grant_manager.remove_by_source(entity_id, f"item.{item_name}")
+
+        return {"success": True, "new_attuned": new_attuned, "removed_grants": removed}
+
+
+# ──────────────────────────────────────────────────────────────────────────
 # 自检
 # ──────────────────────────────────────────────────────────────────────────
 

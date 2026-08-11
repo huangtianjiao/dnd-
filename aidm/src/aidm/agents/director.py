@@ -33,6 +33,24 @@ def _extract_json(text: str) -> dict:
             return {}
 
 
+# ARC-003: LLM 不应输出的机械数值字段——即使输出也静默丢弃
+_LLM_FORBIDDEN_FIELDS = frozenset({
+    "target_ac", "dc", "damage", "attack_bonus",
+    "saving_throw_result", "proficient", "resistance", "immunity",
+})
+
+
+def _strip_llm_mechanical_fields(intent: dict) -> dict:
+    """移除 LLM 可能输出的机械数值字段（ARC-003）。
+
+    所有机械数值（AC/DC/伤害/熟练等）只能由代码从状态数据计算，
+    LLM 无权提供或覆盖这些值。
+    """
+    for key in _LLM_FORBIDDEN_FIELDS:
+        intent.pop(key, None)
+    return intent
+
+
 # Director 的 system prompt — 意图分类器
 _DIRECTOR_PROMPT = """\
 你是D&D 5E意图分类器。把玩家输入分类为动作意图,只输出JSON(不要markdown)。
@@ -48,17 +66,18 @@ action_type 取值:
   social        社交互动(说服/欺瞒/威吓)
   levelup       升级
   travel        旅行移动
+  downtime      停工期活动(制作/研究/训练; 字段: downtime_action=start/advance/interrupt/resume, activity, days, item_value_gp)
   dash          加速(本回合额外移动)
   dodge         回避(对本角色的攻击具有劣势)
   disengage     撤离(本回合移动不引发借机攻击)
   help          协助(使盟友的下次检定具有优势)
   ready         准备动作(设定触发条件,条件满足时执行)
-  hide          躲藏(敏捷(潜行)检定 vs 被动察觉)
+  hide          躲藏(固定DC15敏捷(隐匿)检定,2024版非被动察觉)
   search        搜索(感知(察觉)或智力(调查)检定)
   study         研究(智力检定:奥秘/历史/调查/自然/宗教)
   use_item      使用物品(药水/卷轴/工具)
-  grapple       擒抱(力量竞技检定)
-  shove         推撞(力量竞技检定,让目标倒地或移开)
+  grapple       擒抱(目标力量或敏捷豁免vs DC=8+力调+熟练)
+  shove         推撞(目标力量或敏捷豁免vs DC=8+力调+熟练,让目标倒地或移开)
   opportunity_attack 借机攻击(反应:目标离开触及范围时发动近战攻击)
   other         其他(纯叙事,不掷骰)
 
@@ -69,8 +88,7 @@ action_type 取值:
   忽略该场景设定,只提取玩家角色动作;若整句都是设定场景无角色动作,分类为 other。
 
 通用字段:
-  target_name   目标名称
-  target_ac     目标AC(整数,未知0)
+  target_name   目标名称(自由文本,系统自动匹配到战斗参战者)
   ability       str/dex/con/int/wis/cha
   needs_check   本次行动是否需要掷骰检定(true/false),判定标准见【检定门槛】
   retrieval_query 用规则原词构造的检索串(动作规范名+检定类型+DC关键词)
@@ -81,17 +99,16 @@ action_type 取值:
     - 失败无实质后果且可反复尝试(无时间压力、无风险的搜索/研究)
     - 社交对象态度友好(friendly)且请求合理、不损其利益(问路/闲聊/正常买卖)
     - 沿已知道路或有向导旅行(无迷路风险,免导航检定)
-  needs_check=true 时按DMG标准DC锚点给dc:
-    很容易5 / 容易10 / 中等15 / 困难20 / 极难25 / 几乎不可能30
   attack/cast/start_combat/hide/grapple/shove/opportunity_attack 总是掷骰,不受此字段影响。
 
 attack专有: weapon(武器中文名)
 cast专有: spell_name, spell_level(整数), spell_dice(如8d6), damage_type(火焰/力场/...), \
 spell_attack(true=攻击检定型/false=豁免型), save_ability(con/dex/...目标豁免属性), \
 target_save_bonus(目标该豁免加值,未知0), casting_ability(int/wis/cha 施法属性)
-ability_check/explore/search/study/social专有: skill(技能名), dc(整数,按上方DC锚点), proficient(true/false)
+ability_check/explore/search/study/social专有: skill(技能名)
 start_combat专有: enemies(数组[{name,dex_mod,side='enemy',hp_max(整数,该怪物HP上限,如哥布林7,兽人15,未知给7)}])
 
+注意: 不要输出 target_ac/dc/damage/proficient 等机械数值,这些由系统自动计算。
 只输出JSON。"""
 
 
@@ -246,6 +263,8 @@ def classify_intent(state: GameState) -> dict:
                            "请只输出一个JSON对象，不要markdown代码块或多余文字。" % attempts)
         intent = _extract_json(llm.chat(_DIRECTOR_PROMPT, feedback, temperature=0.1))
     intent.setdefault("action_type", "other")
+    # ARC-003: 剥离 LLM 可能输出的机械数值字段（AC/DC/伤害/熟练等）
+    _strip_llm_mechanical_fields(intent)
     with contextlib.suppress(Exception):
         _resolve_target_cid(intent, state)   # BUG#5/B2：确定性目标匹配
     return {"intent": intent, "error": "" if intent else "意图解析失败"}

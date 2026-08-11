@@ -20,6 +20,7 @@ from .actions import (
     resolve_social,
     resolve_levelup,
     resolve_travel,
+    resolve_downtime,
     resolve_start_combat,
     with_target_outcome,
     with_encounter,
@@ -34,6 +35,12 @@ from .apply import (
     run_monster_turn,
     render_monster_events,
 )
+from .target_resolver import (
+    TargetCandidate,
+    TargetResolutionResult,
+    resolve_target,
+    resolve_target_by_id,
+)
 
 __all__ = [
     "resolve_attack", "resolve_opportunity_attack",
@@ -41,9 +48,12 @@ __all__ = [
     "resolve_ability_check", "resolve_hide", "resolve_search",
     "resolve_grapple", "resolve_shove", "resolve_study",
     "resolve_rest", "resolve_social", "resolve_levelup", "resolve_travel",
+    "resolve_downtime",
     "resolve_start_combat",
     "with_target_outcome", "with_encounter", "advance_game_time",
     "apply_rest_to_character", "apply_levelup_to_character",
     "apply_node", "apply_damage_to_character", "apply_healing_to_character",
     "run_monster_turn", "render_monster_events",
+    "TargetCandidate", "TargetResolutionResult",
+    "resolve_target", "resolve_target_by_id",
 ]

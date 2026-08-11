@@ -34,6 +34,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 from ..engine import check as check_engine
 from . import llm
@@ -49,6 +51,54 @@ ATTITUDE_INDIFFERENT = "indifferent"  # 冷漠：中立态度，需要说服才�
 ATTITUDE_HOSTILE = "hostile"          # 敌对：会试图妨碍、攻击或拒绝合作
 
 ALL_ATTITUDES = (ATTITUDE_FRIENDLY, ATTITUDE_INDIFFERENT, ATTITUDE_HOSTILE)
+
+# ──────────────────────────────────────────────────────────────────────────
+# 社交系统 Policy 配置（EXP-001）
+# ──────────────────────────────────────────────────────────────────────────
+
+class SocialPolicy(str, Enum):
+    """社交系统规则策略。
+
+    规则: EXP-001 社交态度RAW Policy
+    出处: topics/城主指南2024/2.运作游戏/运作交涉/态度.htm
+    """
+    CUSTOM = "custom"              # 自定义规则（项目报告§7，DC±5 + 阈值）
+    RULE_2024_RAW = "2024_raw"     # 2024 RAW（优势/劣势机制）
+
+
+# 全局默认 policy
+SOCIAL_POLICY_CONFIG: dict[str, Any] = {"social_system": "custom"}
+
+
+def set_social_policy(policy: str) -> None:
+    """设置社交系统策略。"""
+    if policy not in (SocialPolicy.CUSTOM, SocialPolicy.RULE_2024_RAW):
+        raise ValueError(f"未知社交策略 {policy!r}，可选: {[p.value for p in SocialPolicy]}")
+    SOCIAL_POLICY_CONFIG["social_system"] = policy
+
+
+def get_social_policy() -> str:
+    """获取当前社交系统策略。"""
+    return SOCIAL_POLICY_CONFIG["social_system"]
+
+
+# 2024 RAW 态度效果（优势/劣势而非 DC ±5）
+# 规则出处: topics/玩家手册2024/术语汇编/态度.txt
+_2024_RAW_ATTITUDE_EFFECTS: dict[str, str] = {
+    ATTITUDE_FRIENDLY: "advantage",      # 友好 → 优势
+    ATTITUDE_INDIFFERENT: "none",         # 冷漠 → 无
+    ATTITUDE_HOSTILE: "disadvantage",     # 敌对 → 劣势
+}
+
+# 2024 RAW 态度转换阈值（基于成功/失败次数，与 custom 相同结构但数值可不同）
+# 规则出处: topics/城主指南2024/2.运作游戏/运作交涉/态度.htm
+# 2024 RAW 未给出具体数值阈值，此处采用与 custom 相同的默认值
+_2024_RAW_ATTITUDE_THRESHOLDS: dict[tuple[str, str], int] = {
+    ("friendly", "degrade"): 10,
+    ("indifferent", "degrade"): 5,
+    ("hostile", "improve"): 15,
+    ("indifferent", "improve"): 10,
+}
 
 # 社交 DC 修正表 —— 【设计决策，非规则书原文】
 # ⚠ 规则书原文（术语汇编/态度.txt）对态度的影响采用 *优势/劣势* 机制，而非 DC ±5：
@@ -161,16 +211,14 @@ class SocialState:
 # ──────────────────────────────────────────────────────────────────────────
 
 def check_social_dc(npc_attitude: str) -> int:
-    """计算社交 DC 修正值（按 NPC 态度）。
+    """计算社交 DC 修正值（按 NPC 态度与当前策略）。
 
-    【设计决策，非规则书原文】
-    规则书（术语汇编/态度.txt）对态度的影响采用 *优势/劣势*：
-      友好 → 影响检定具有优势；敌对 → 影响检定具有劣势；冷漠 → 无。
-    本函数返回 *DC ±5 修正* 作为该机制的数值近似（项目报告§7，非规则书）：
-      友好 → -5
-      冷漠 →  0
-      敌对 → +5
-    理想实现应在检定时按态度传入 advantage/disadvantage；此处保留 ±5 简化。
+    规则: EXP-001 社交态度RAW Policy
+    出处: topics/城主指南2024/2.运作游戏/运作交涉/态度.htm
+          topics/玩家手册2024/术语汇编/态度.txt
+
+    当 policy="custom" 时返回 DC ±5 修正（项目报告§7）。
+    当 policy="2024_raw" 时返回 0（RAW 用优势/劣势而非 DC 修正）。
 
     Args:
         npc_attitude: NPC 当前态度 friendly|indifferent|hostile
@@ -186,7 +234,30 @@ def check_social_dc(npc_attitude: str) -> int:
             f"npc_attitude 必须为 {list(_SOCIAL_DC_MODIFIER)} 之一，"
             f"得到 {npc_attitude!r}"
         )
+    # 2024 RAW 策略: 用优势/劣势而非 DC 修正，返回 0
+    if get_social_policy() == SocialPolicy.RULE_2024_RAW:
+        return 0
     return _SOCIAL_DC_MODIFIER[npc_attitude]
+
+
+def get_attitude_effect(npc_attitude: str) -> str:
+    """获取态度对检定的影响（按当前策略）。
+
+    规则: EXP-001 社交态度RAW Policy
+    出处: topics/玩家手册2024/术语汇编/态度.txt
+
+    Returns:
+        "advantage" / "disadvantage" / "none"
+    """
+    if get_social_policy() == SocialPolicy.RULE_2024_RAW:
+        return _2024_RAW_ATTITUDE_EFFECTS.get(npc_attitude, "none")
+    # custom 策略: 映射 DC 修正到 adv/disadv
+    mod = _SOCIAL_DC_MODIFIER.get(npc_attitude, 0)
+    if mod < 0:
+        return "advantage"
+    elif mod > 0:
+        return "disadvantage"
+    return "none"
 
 
 def update_attitude(npc: NPC, success_count: int, failure_count: int) -> str | None:

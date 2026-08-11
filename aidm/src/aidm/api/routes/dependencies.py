@@ -2,8 +2,26 @@
 
 from __future__ import annotations
 
+import re
+
 from fastapi import HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+
+
+# ── SEC-001: 输入校验常量 ────────────────────────────────────────────────
+
+# 骰式表达式白名单: NdM+K / NdM-K / NdM 格式
+_DICE_EXPR_RE = re.compile(r'^\d+d\d+([+-]\d+)?$')
+
+# 名称字段禁止的特殊字符（防注入）
+_NAME_INJECT_RE = re.compile(r'[<>{}\[\]|\\;`$()\'"]')
+
+# 数值合理范围
+_HP_MIN, _HP_MAX = 0, 999
+_AC_MIN, _AC_MAX = 1, 50
+_SPEED_MIN, _SPEED_MAX = 5, 200
+_LEVEL_MIN, _LEVEL_MAX = 1, 20
+_ABILITY_MIN, _ABILITY_MAX = 1, 30
 
 
 # ── Pydantic 请求体模型 ──────────────────────────────────────────────────────
@@ -28,6 +46,65 @@ class CharIn(BaseModel):
     campaign_id: int | None = None
     ability_method: str = "free"
 
+    # SEC-001: 输入校验
+    @field_validator("name")
+    @classmethod
+    def _validate_name(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("名称不能为空")
+        if len(v) > 50:
+            raise ValueError("名称不能超过50字符")
+        if _NAME_INJECT_RE.search(v):
+            raise ValueError("名称包含非法字符")
+        return v.strip()
+
+    @field_validator("hp_max")
+    @classmethod
+    def _validate_hp(cls, v: int) -> int:
+        if not (_HP_MIN < v <= _HP_MAX):
+            raise ValueError(f"HP上限须在 {_HP_MIN+1}-{_HP_MAX} 范围内")
+        return v
+
+    @field_validator("ac")
+    @classmethod
+    def _validate_ac(cls, v: int) -> int:
+        if not (_AC_MIN <= v <= _AC_MAX):
+            raise ValueError(f"AC须在 {_AC_MIN}-{_AC_MAX} 范围内")
+        return v
+
+    @field_validator("speed")
+    @classmethod
+    def _validate_speed(cls, v: int) -> int:
+        if not (_SPEED_MIN <= v <= _SPEED_MAX):
+            raise ValueError(f"速度须在 {_SPEED_MIN}-{_SPEED_MAX} 范围内")
+        return v
+
+    @field_validator("level")
+    @classmethod
+    def _validate_level(cls, v: int) -> int:
+        if not (_LEVEL_MIN <= v <= _LEVEL_MAX):
+            raise ValueError(f"等级须在 {_LEVEL_MIN}-{_LEVEL_MAX} 范围内")
+        return v
+
+    @field_validator("abilities")
+    @classmethod
+    def _validate_abilities(cls, v: dict) -> dict:
+        for k, val in v.items():
+            if k not in ("str", "dex", "con", "int", "wis", "cha"):
+                raise ValueError(f"未知属性 {k}")
+            if not (_ABILITY_MIN <= int(val) <= _ABILITY_MAX):
+                raise ValueError(f"属性值须在 {_ABILITY_MIN}-{_ABILITY_MAX} 范围内")
+        return v
+
+    @field_validator("race", "char_class", "subclass", "background", "alignment", "equipped_weapon")
+    @classmethod
+    def _validate_text_fields(cls, v: str) -> str:
+        if len(v) > 100:
+            raise ValueError("字段长度不能超过100字符")
+        if _NAME_INJECT_RE.search(v):
+            raise ValueError("字段包含非法字符")
+        return v
+
 
 class ChatIn(BaseModel):
     player_input: str
@@ -35,6 +112,25 @@ class ChatIn(BaseModel):
     character_id: int
     thread_id: str = "default"
     hitl: bool = False
+
+    # SEC-001: 输入校验
+    @field_validator("player_input")
+    @classmethod
+    def _validate_player_input(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("玩家输入不能为空")
+        if len(v) > 2000:
+            raise ValueError("玩家输入不能超过2000字符")
+        return v.strip()
+
+    @field_validator("thread_id")
+    @classmethod
+    def _validate_thread_id(cls, v: str) -> str:
+        if len(v) > 200:
+            raise ValueError("thread_id 过长")
+        if _NAME_INJECT_RE.search(v):
+            raise ValueError("thread_id 包含非法字符")
+        return v
 
 
 class ResumeIn(BaseModel):
@@ -57,6 +153,65 @@ class JoinIn(BaseModel):
     speed: int = 30
     equipped_weapon: str = ""
     campaign_id: int
+
+    # SEC-001: 输入校验（与 CharIn 同口径）
+    @field_validator("name")
+    @classmethod
+    def _validate_name(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("名称不能为空")
+        if len(v) > 50:
+            raise ValueError("名称不能超过50字符")
+        if _NAME_INJECT_RE.search(v):
+            raise ValueError("名称包含非法字符")
+        return v.strip()
+
+    @field_validator("hp_max")
+    @classmethod
+    def _validate_hp(cls, v: int) -> int:
+        if not (_HP_MIN < v <= _HP_MAX):
+            raise ValueError(f"HP上限须在 {_HP_MIN+1}-{_HP_MAX} 范围内")
+        return v
+
+    @field_validator("ac")
+    @classmethod
+    def _validate_ac(cls, v: int) -> int:
+        if not (_AC_MIN <= v <= _AC_MAX):
+            raise ValueError(f"AC须在 {_AC_MIN}-{_AC_MAX} 范围内")
+        return v
+
+    @field_validator("speed")
+    @classmethod
+    def _validate_speed(cls, v: int) -> int:
+        if not (_SPEED_MIN <= v <= _SPEED_MAX):
+            raise ValueError(f"速度须在 {_SPEED_MIN}-{_SPEED_MAX} 范围内")
+        return v
+
+    @field_validator("level")
+    @classmethod
+    def _validate_level(cls, v: int) -> int:
+        if not (_LEVEL_MIN <= v <= _LEVEL_MAX):
+            raise ValueError(f"等级须在 {_LEVEL_MIN}-{_LEVEL_MAX} 范围内")
+        return v
+
+    @field_validator("abilities")
+    @classmethod
+    def _validate_abilities(cls, v: dict) -> dict:
+        for k, val in v.items():
+            if k not in ("str", "dex", "con", "int", "wis", "cha"):
+                raise ValueError(f"未知属性 {k}")
+            if not (_ABILITY_MIN <= int(val) <= _ABILITY_MAX):
+                raise ValueError(f"属性值须在 {_ABILITY_MIN}-{_ABILITY_MAX} 范围内")
+        return v
+
+    @field_validator("race", "char_class", "subclass", "background", "alignment", "equipped_weapon")
+    @classmethod
+    def _validate_text_fields(cls, v: str) -> str:
+        if len(v) > 100:
+            raise ValueError("字段长度不能超过100字符")
+        if _NAME_INJECT_RE.search(v):
+            raise ValueError("字段包含非法字符")
+        return v
 
 
 class OpenIn(BaseModel):

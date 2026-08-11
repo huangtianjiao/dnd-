@@ -1,0 +1,11 @@
+{
+  "ruleset_id": "dnd5e_2024_core",
+  "revision": "2024.1",
+  "source_books": [
+    {"book_id": "PHB2024", "edition": "2024", "title": "Player's Handbook 2024", "content_hash": "", "authority_level": "core"},
+    {"book_id": "DMG2024", "edition": "2024", "title": "Dungeon Master's Guide 2024", "content_hash": "", "authority_level": "core"},
+    {"book_id": "MM2025", "edition": "2024", "title": "Monster Manual 2025", "content_hash": "", "authority_level": "core"}
+  ],
+  "content_packs": [],
+  "policies": {"allow_homebrew": false, "allow_2014": false}
+}

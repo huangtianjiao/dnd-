@@ -156,10 +156,12 @@ def _manual_rrf_search(query: str, limit: int = 5, dense_n: int = 20,
 # ──────────────────────────────────────────────────────────────────────────
 
 def search_spec_hybrid(query: str, limit: int = 5, dense_n: int = 20,
-                       bm25_n: int = 20, rrf_k: int = 60) -> list[dict]:
+                       bm25_n: int = 20, rrf_k: int = 60,
+                       edition_filter: str | None = None) -> list[dict]:
     """Hybrid 检索 RULE_SPEC 规则点：LlamaIndex QueryFusionRetriever (BM25 + 向量 RRF) → top-k。
 
     优先使用 LlamaIndex QueryFusionRetriever；若初始化失败则回退到手动 RRF。
+    RAG-001: edition_filter 硬过滤——指定 '2024' 时仅返回 2024 版规则。
     """
     _ensure()
 
@@ -168,8 +170,13 @@ def search_spec_hybrid(query: str, limit: int = 5, dense_n: int = 20,
         try:
             nodes_with_scores = _fusion_retriever.retrieve(query)
             results: list[dict] = []
-            for nws in nodes_with_scores[:limit]:
+            for nws in nodes_with_scores:
                 meta = nws.node.metadata or {}
+                # RAG-001: edition 硬过滤
+                if edition_filter:
+                    node_ed = meta.get("edition", "")
+                    if node_ed and node_ed != edition_filter:
+                        continue
                 results.append({
                     "body": nws.node.get_content(),
                     "tag": meta.get("tag", ""),
@@ -177,12 +184,18 @@ def search_spec_hybrid(query: str, limit: int = 5, dense_n: int = 20,
                     "title": meta.get("title", ""),
                     "score": nws.score or 0.0,
                 })
+                if len(results) >= limit:
+                    break
             return results
         except Exception as e:
             logger.warning(f"[hybrid] QueryFusionRetriever 检索失败，回退手动 RRF: {e}")
 
     # 回退：手动 RRF
-    return _manual_rrf_search(query, limit=limit, dense_n=dense_n, bm25_n=bm25_n, rrf_k=rrf_k)
+    out = _manual_rrf_search(query, limit=limit, dense_n=dense_n, bm25_n=bm25_n, rrf_k=rrf_k)
+    if edition_filter:
+        out = [r for r in out if r.get("edition", "") == edition_filter
+               or indexer.derive_edition(r.get("path", "")) == edition_filter]
+    return out
 
 
 if __name__ == "__main__":

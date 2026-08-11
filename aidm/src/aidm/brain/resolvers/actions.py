@@ -21,10 +21,25 @@ from ...brain import social as social_mod
 from ...engine import check, conditions
 from ...engine import combat as cmb
 from ...engine import dice as engine_dice
+from ...engine.visibility import VisibilityService
+from ...rules.grant import GrantManager
+from ...rules.choice import ChoiceManager
+from ...rules.resource import ResourceManager
+from ...build.level_up_service import LevelUpService
 from ...stats import models, store
 from ..utils import CLASS_CAST_ABILITY
 
 _log = logging.getLogger(__name__)
+
+# ★ CHR-007: 实例化规则管理器与升级服务，接入生产升级路径
+_grant_mgr = GrantManager()
+_choice_mgr = ChoiceManager()
+_resource_mgr = ResourceManager()
+_level_up_service = LevelUpService(
+    grant_manager=_grant_mgr,
+    choice_manager=_choice_mgr,
+    resource_manager=_resource_mgr,
+)
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -77,6 +92,78 @@ def award_combat_xp(campaign_id: int, character_id: int,
 # 属性/技能检定
 # ──────────────────────────────────────────────────────────────────────────
 
+# CHK-001: 熟练查询只能从角色数据派生
+
+def _build_check_service(ch):
+    """CHK-001: 构建 CheckService，从 ProficiencyGrant 集合派生熟练。"""
+    from ...engine.proficiency_service import (
+        build_registry_from_character, CheckService,
+    )
+    registry = build_registry_from_character(ch)
+    return CheckService(registry=registry, proficiency_bonus=ch.prof())
+
+
+def _check_skill_proficient(ch, skill_name: str) -> bool:
+    """CHK-001: 从 Character 的 skill_proficiencies 查询技能熟练状态。
+
+    熟练只能从角色数据获取，不能从 LLM 输出或硬编码中获取。
+    未熟练不加 PB；专精（Expertise）恰好加两次 PB。
+
+    优先使用 ProficiencyRegistry + CheckService（统一熟练度来源），
+    回退到旧版 skill_proficiencies 列表查询。
+    """
+    if not skill_name or not ch:
+        return False
+    # CHK-001: 使用 CheckService 从 ProficiencyGrant 集合派生熟练
+    try:
+        from ...engine.proficiency_service import (
+            build_registry_from_character, CheckService,
+        )
+        registry = build_registry_from_character(ch)
+        service = CheckService(registry=registry, proficiency_bonus=ch.prof())
+        if service.is_skill_proficient(skill_name):
+            return True
+    except Exception:
+        pass
+    # 回退：Character.skill_proficiencies 从 skill_prof_json 加载
+    profs = getattr(ch, "skill_proficiencies", []) or []
+    # 支持精确匹配和子串匹配（如 "感知(察觉)" 匹配 "察觉"）
+    for p in profs:
+        if p == skill_name or skill_name in p or p in skill_name:
+            return True
+    return False
+
+
+# CHK-002: DC 来源分类
+
+# 规则书标准 DC 锚点（PHB 2024）——权威查表见 engine.core_loop.dc_by_difficulty
+
+
+def _resolve_ability_check_dc(it: dict) -> int:
+    """CHK-002: 属性检定 DC 解析，不允许 LLM 直接提供 DC 值。
+
+    DC 来源优先级:
+      1. 规则书标准难度等级标签（如"中等"→ 15）——权威实现 engine.core_loop
+      2. 场景/旅行模块预设的 DC
+      3. 默认 10（无明确规则场景）
+    """
+    # 1) 难度等级标签 → 查表（★ 权威实现: engine.core_loop.dc_by_difficulty）
+    difficulty = (it.get("difficulty") or "").strip()
+    if difficulty:
+        try:
+            from ...engine.core_loop import dc_by_difficulty
+            _alias = {"很容易": "非常容易"}  # 词汇别名→引擎标准键
+            return dc_by_difficulty(_alias.get(difficulty, difficulty))
+        except ValueError:
+            pass
+    # 2) 旅行/探索模块预设 DC
+    nav_dc = it.get("nav_dc")
+    if nav_dc is not None:
+        return int(nav_dc)
+    # 3) 默认 DC 10（PHB 标准）
+    return 10
+
+
 # 技能名→属性映射（LLM 未给 ability 时按 skill 推断，避免察觉/调查误用力量的 +3）
 _SKILL_ABILITY = {
     "察觉": "wis", "求生": "wis", "医药": "wis", "洞悉": "wis", "驯兽": "wis", "感知": "wis",
@@ -103,14 +190,95 @@ def _infer_ability(skill, action_type: str) -> str:
 def resolve_ability_check(ch, it) -> dict:
     ability = it.get("ability") or _infer_ability(it.get("skill"),
                                                   it.get("action_type", "ability_check"))
-    dc = int(it.get("dc") or 10)
-    proficient = bool(it.get("proficient"))
+    # CHK-001: 熟练只能从 Character 的 skill_proficiencies 查询，不能从 LLM 获取
+    skill_name = it.get("skill", "")
+    proficient = _check_skill_proficient(ch, skill_name)
+    # CHK-002: DC 来源分类——属性检定 DC 从规则书标准或场景数据获取
+    dc = _resolve_ability_check_dc(it)
     # R-GLS-047 力竭 d20 惩罚（等级×2）
     exh_penalty = -conditions.d20_penalty(ch.to_condition_state())
     r = check.ability_check(mod=ch.ability_mod(ability), prof=ch.prof(),
                             proficient=proficient, dc=dc, circ=exh_penalty)    # R-CHK-010
-    return {"kind": "ability_check", "check_total": r.total, "d20": r.d20,
-            "success": r.success, "dc": dc, "margin": r.margin, "ability": ability}
+    out = {"kind": "ability_check", "check_total": r.total, "d20": r.d20,
+           "success": r.success, "dc": dc, "margin": r.margin, "ability": ability,
+           "proficient": proficient, "dc_source": "ability_check"}
+    # ★ OBS-001: 透传修正来源解释（engine.resolution_trace 权威结构）
+    if getattr(r, "modifier_breakdown", None):
+        out["resolution_trace"] = _build_resolution_trace(
+            "ability_check", ability, r.d20, r.modifier_breakdown, r.total, dc)
+    return out
+
+
+def _build_resolution_trace(action: str, ability: str, d20: int,
+                            breakdown: list, total: int, target: int) -> dict:
+    """OBS-001: 用 engine.resolution_trace / resolution_trace_ext 构建完整轨迹。
+
+    返回可直接 JSON 化的 dict（含 UI 可展开的公式树）。
+    """
+    try:
+        from ...engine.resolution_trace import (
+            ModifierSource,
+            ResolutionTrace,
+            RollTrace,
+        )
+        from ...engine.resolution_trace_ext import FormulaNode
+        trace = ResolutionTrace(
+            trace_id=f"{action}_{ability}_{d20}",
+            action_type=action,
+            actor_id=ability,
+            final_result={"total": total, "target": target,
+                          "success": total >= target},
+        )
+        roll = RollTrace(
+            dice_expr=f"d20+{sum(m.get('value', 0) for m in breakdown)}",
+            dice_rolls=[d20],
+            modifiers=[
+                ModifierSource(
+                    source_type="circumstance",
+                    source_name=m.get("source", ""),
+                    value=m.get("value", 0),
+                ) for m in breakdown
+            ],
+            total=total,
+        )
+        trace.add_roll(roll)
+        root = FormulaNode(node_type="result", label=action, value=total)
+        root.children.append(FormulaNode(node_type="roll", label="d20", value=d20))
+        for m in breakdown:
+            root.children.append(FormulaNode(
+                node_type="modifier", label=m.get("source", ""),
+                value=m.get("value", 0)))
+        root.children.append(FormulaNode(
+            node_type="total", label="vs target", value=target))
+        return {
+            "action": action,
+            "d20": d20,
+            "modifiers": [m for m in breakdown],
+            "total": total,
+            "target": target,
+            "display": trace.to_display_string(),
+            "formula_tree": _formula_node_to_dict(root),
+        }
+    except Exception:
+        # 引擎不可用时回退为扁平 dict（保持输出兼容）
+        return {
+            "action": action,
+            "d20": d20,
+            "modifiers": [{"source": m.get("source", ""), "value": m.get("value", 0)}
+                          for m in breakdown],
+            "total": total,
+            "target": target,
+        }
+
+
+def _formula_node_to_dict(node) -> dict:
+    """递归序列化 FormulaNode（供 UI 渲染）。"""
+    return {
+        "node_type": getattr(node, "node_type", ""),
+        "label": getattr(node, "label", ""),
+        "value": getattr(node, "value", 0),
+        "children": [_formula_node_to_dict(c) for c in getattr(node, "children", [])],
+    }
 
 
 def resolve_hide(ch, it) -> dict:
@@ -118,15 +286,30 @@ def resolve_hide(ch, it) -> dict:
 
     规则: 术语汇编/动作.htm「躲藏」— 2024 版为固定 DC15（非旧的被动
           察觉 DC）；成功后检定总值成为他人察觉该生物的 DC。
+
+    ★ COM-015/ENV-001: 躲藏前置条件由 VisibilityService 验证。
+      无遮挡且被可见敌人观察时返回 ILLEGAL_HIDE 且不消耗动作。
     """
+    # COM-015: 检查躲藏前置条件——需要遮蔽/掩护
+    has_cover = bool(it.get("has_cover", False))
+    is_heavily_obscured = bool(it.get("is_heavily_obscured", False))
+    is_visible_to_enemy = bool(it.get("is_visible_to_enemy", False))
+
+    # 如果没有遮蔽且没有掩护，且被敌人可见，则不能躲藏
+    if not has_cover and not is_heavily_obscured and is_visible_to_enemy:
+        return {"kind": "hide", "error": "ILLEGAL_HIDE",
+                "reason": "无遮挡且被敌人观察，无法躲藏"}
+
     stealth_mod = ch.ability_mod("dex")
     prof = ch.prof()
     dc = int(it.get("dc") or 15)
     exh_penalty = -conditions.d20_penalty(ch.to_condition_state())  # R-GLS-047
+    # CHK-001: 熟练从角色数据派生（隐匿技能），不再硬编码 True
+    proficient = _check_skill_proficient(ch, "潜行") or _check_skill_proficient(ch, "隐匿")
     r = check.ability_check(mod=stealth_mod, prof=prof,
-                            proficient=True, dc=dc, circ=exh_penalty)
+                            proficient=proficient, dc=dc, circ=exh_penalty)
     return {"kind": "hide", "check_total": r.total, "d20": r.d20,
-            "success": r.success, "dc": dc,
+            "success": r.success, "dc": dc, "proficient": proficient,
             "effect": "隐蔽成功" if r.success else "被发现"}
 
 
@@ -137,9 +320,13 @@ def resolve_search(ch, it) -> dict:
     prof = ch.prof()
     dc = int(it.get("dc") or 15)
     exh_penalty = -conditions.d20_penalty(ch.to_condition_state())  # R-GLS-047
-    r = check.ability_check(mod=mod, prof=prof, proficient=True, dc=dc, circ=exh_penalty)
+    # CHK-001: 熟练从角色数据派生（察觉/调查技能），不再硬编码 True
+    skill_name = it.get("skill", "察觉" if ability == "wis" else "调查")
+    proficient = _check_skill_proficient(ch, skill_name)
+    r = check.ability_check(mod=mod, prof=prof, proficient=proficient, dc=dc, circ=exh_penalty)
     return {"kind": "search", "check_total": r.total, "d20": r.d20,
-            "success": r.success, "dc": dc, "ability": ability}
+            "success": r.success, "dc": dc, "ability": ability,
+            "proficient": proficient}
 
 
 def resolve_grapple(ch, it) -> dict:
@@ -201,9 +388,13 @@ def resolve_study(ch, it) -> dict:
     prof = ch.prof()
     dc = int(it.get("dc") or 15)
     exh_penalty = -conditions.d20_penalty(ch.to_condition_state())  # R-GLS-047
-    r = check.ability_check(mod=mod, prof=prof, proficient=True, dc=dc, circ=exh_penalty)
+    # CHK-001: 熟练从角色数据派生（研究技能），不再硬编码 True
+    skill_name = it.get("skill", "调查")
+    proficient = _check_skill_proficient(ch, skill_name)
+    r = check.ability_check(mod=mod, prof=prof, proficient=proficient, dc=dc, circ=exh_penalty)
     return {"kind": "study", "check_total": r.total, "d20": r.d20,
-            "success": r.success, "dc": dc, "ability": ability}
+            "success": r.success, "dc": dc, "ability": ability,
+            "proficient": proficient}
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -213,10 +404,24 @@ def resolve_study(ch, it) -> dict:
 def resolve_rest(state, ch, it) -> dict:
     """休息机制：短休消耗生命骰恢复HP+恢复职业特性；长休恢复全部HP+所有法术位+力竭-1。
     R-GLS-014/R-GLS-015
+    ★ REST-002: 通过 engine.rest_state.RestStateRegistry 追踪持久状态机
+      （StartRest → RestInterrupted/RestCompleted 事件语义）。
     """
     pi = state.get("player_input", "") or ""
     rest_type = it.get("rest_type") or (
         "long" if ("长休" in pi or "long rest" in pi.lower() or "long" in pi.lower() and "休" in pi) else "short")
+
+    # ★ REST-002: 开始休息会话（StartRest）
+    session = None
+    try:
+        from ...engine.rest_state import RestStateRegistry
+        _rest_registry = RestStateRegistry()
+        game_minutes = int(state.get("game_minutes", 0) or 0)
+        session = _rest_registry.start_rest(
+            str(getattr(ch, "id", "unknown")), rest_type, game_minutes)
+    except Exception as e:
+        _log.debug("休息会话创建失败（跳过）: %s", e)
+
     if rest_type == "short":
         hit_dice_to_spend = int(it.get("hit_dice_to_spend", 0))
         result = rest_mod.short_rest(ch, hit_dice_to_spend=hit_dice_to_spend)
@@ -238,6 +443,21 @@ def resolve_rest(state, ch, it) -> dict:
                 _log.debug("长休冷却检查失败 camp=%s: %s", camp_id, e)
         result = rest_mod.long_rest(ch)
     result["kind"] = "rest"
+
+    # ★ REST-002: 推进会话并标记完成/打断（RestCompleted / RestInterrupted）
+    if session is not None:
+        try:
+            if result.get("success"):
+                session.advance(session.target_duration)  # 完成
+                result["rest_session_id"] = session.character_id
+                result["rest_phase"] = session.phase.value
+            elif result.get("interrupted"):
+                session.interrupt(result.get("cause", "未知"))
+                result["rest_session_id"] = session.character_id
+                result["rest_phase"] = session.phase.value
+        except Exception as e:
+            _log.debug("休息会话状态更新失败（跳过）: %s", e)
+
     return result
 
 
@@ -330,8 +550,13 @@ def resolve_social(state, ch, it) -> dict:
     final_dc = max(1, dc + dc_modifier)
 
     ability = "cha" if skill in ("persuasion", "deception", "intimidation", "performance") else "wis"
+    # CHK-001: 社交技能熟练从角色数据派生，不再硬编码 True
+    skill_name = it.get("skill", "说服")
+    _skill_map = {"persuasion": "说服", "deception": "欺瞒",
+                  "intimidation": "威吓", "performance": "表演", "insight": "洞悉"}
+    proficient = _check_skill_proficient(ch, _skill_map.get(str(skill_name), str(skill_name)))
     r = check.ability_check(mod=ch.ability_mod(ability), prof=ch.prof(),
-                            proficient=True, dc=final_dc)
+                            proficient=proficient, dc=final_dc)
 
     if r.success:
         consec_success += 1
@@ -370,11 +595,33 @@ def _character_to_levelup_dict(ch) -> dict:
 
 
 def resolve_levelup(ch, it) -> dict:
-    """升级与成长。R-DM-041~045"""
+    """升级与成长。R-DM-041~045
+
+    ★ CHR-007: 升级流程不依赖调用方传入新特性。
+      使用 LevelUpService 自动计算授予/选择。
+    """
     current_level = ch.level
     new_level = current_level + 1
     if new_level > levelup_mod.MAX_LEVEL:
         return {"kind": "levelup", "error": "已达最高等级20"}
+
+    # ★ CHR-007: 使用 LevelUpService 规划升级
+    try:
+        plan = _level_up_service.plan_level_up(
+            entity_id=str(ch.id),
+            class_name=ch.char_class,
+            new_level=new_level,
+            character_data={
+                "level": ch.level,
+                "class_name": ch.char_class,
+                "subclass": ch.subclass,
+                "scores": {k.upper(): v for k, v in ch.abilities.items()},
+            },
+        )
+    except Exception as e:
+        _log.warning("LevelUpService.plan_level_up 失败: %s", e)
+        plan = None
+
     char_dict = _character_to_levelup_dict(ch)
     try:
         result = levelup_mod.level_up(
@@ -383,16 +630,28 @@ def resolve_levelup(ch, it) -> dict:
         )
     except ValueError as e:
         return {"kind": "levelup", "error": str(e)}
-    return {"kind": "levelup", "old_level": current_level,
-            "new_level": result.get("new_level", new_level),
-            "hp_gained": result.get("hp_gained", 0),
-            "pb_changed": result.get("pb_changed", False),
-            "new_pb": result.get("new_proficiency_bonus", 0),
-            "tier": result.get("tier", levelup_mod.get_tier(new_level))}
+
+    out = {"kind": "levelup", "old_level": current_level,
+           "new_level": result.get("new_level", new_level),
+           "hp_gained": result.get("hp_gained", 0),
+           "pb_changed": result.get("pb_changed", False),
+           "new_pb": result.get("new_proficiency_bonus", 0),
+           "tier": result.get("tier", levelup_mod.get_tier(new_level))}
+
+    # ★ CHR-007: 附加 LevelUpService 计算的特性和选择
+    if plan:
+        out["new_features"] = [f.name for f in plan.new_features]
+        out["choice_requests"] = [cr.to_dict() for cr in plan.choice_requests]
+        out["resource_updates"] = plan.resource_updates
+
+    return out
 
 
 def apply_levelup_to_character(ch, dice: dict) -> None:
-    """把升级结果落盘到 Character。R-DM-043"""
+    """把升级结果落盘到 Character。R-DM-043
+
+    ★ CHR-007: 持久化等级、HP、新特性、资源池和 ASI 变更。
+    """
     new_level = dice.get("new_level")
     if new_level:
         ch.level = new_level
@@ -400,6 +659,35 @@ def apply_levelup_to_character(ch, dice: dict) -> None:
     if gained:
         ch.hp_max += gained
         ch.hp_current += gained
+
+    # ★ CHR-007: 持久化新特性（如果有）
+    new_features = dice.get("new_features")
+    if new_features:
+        existing_feats = list(ch.feats)
+        for feat_name in new_features:
+            if feat_name not in existing_feats:
+                existing_feats.append(feat_name)
+        ch.set_feats(existing_feats)
+
+    # ★ CHR-007: 创建资源池（如果有）
+    resource_updates = dice.get("resource_updates")
+    if resource_updates:
+        for ru in resource_updates:
+            pool_name = ru.get("name", "")
+            max_val = ru.get("max_value", 0)
+            recharge_on = ru.get("recharge_on", "short_rest")
+            source_feat = ru.get("source_feature_id", "")
+            pool_type_str = ru.get("pool_type", "REGEN")
+            res_type_str = ru.get("resource_type", "GENERAL")
+            _resource_mgr.create_pool(
+                entity_id=str(ch.id),
+                name=pool_name,
+                max_value=max_val,
+                recharge_on=recharge_on,
+                source_feature_id=source_feat,
+                pool_type=pool_type_str,
+                resource_type=res_type_str,
+            )
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -452,8 +740,10 @@ def resolve_travel(state, ch, it) -> dict:
         nav_result = exploration_mod.NavigationResult(success=True, lost=False,
                                                       length_multiplier=1.0)
     else:
+        # CHK-001: 导航检定熟练从角色数据派生（求生技能），不再硬编码 True
+        nav_proficient = _check_skill_proficient(ch, "求生")
         nav_check = check.ability_check(mod=ch.ability_mod("wis"), prof=ch.prof(),
-                                        proficient=True, dc=nav_dc)
+                                        proficient=nav_proficient, dc=nav_dc)
         nav_result = exploration_mod.navigation(survival_total=nav_check.total, nav_dc=nav_dc)
 
     passive_perception = 10 + ch.ability_mod("wis")
@@ -461,6 +751,52 @@ def resolve_travel(state, ch, it) -> dict:
         party_passive_scores=[(ch.name, passive_perception)],
         dc=perception_dc,
     )
+
+    # ★ engine.travel: 权威每日/每小时行进距离（与 exploration_mod 互为校验）
+    travel_info = {}
+    try:
+        from ...engine.travel import travel_daily_distance as _eng_daily
+        from ...engine.travel import travel_distance as _eng_distance
+        _pace_en = {"快速": "fast", "中速": "normal", "慢速": "slow"}[pace]
+        travel_info = {
+            "engine_miles_per_hour": _eng_distance(_pace_en, 1.0),
+            "engine_miles_per_day": _eng_daily(_pace_en),
+            "engine_pace": _pace_en,
+        }
+    except Exception as e:
+        _log.debug("engine.travel 距离计算失败（跳过）: %s", e)
+
+    # ★ engine.exploration_clock: 8小时旅行日时钟 + 地形速度系数
+    clock_info = {}
+    try:
+        from ...engine.exploration_clock import ExplorationClock
+        _clock = ExplorationClock()
+        _day_dist = travel_info.get("engine_miles_per_day", pace_info.per_day_miles)
+        clock_info = {"exploration_clock": _clock.travel_day(_day_dist, terrain=terrain)}
+    except Exception as e:
+        _log.debug("exploration_clock 旅行日计算失败（跳过）: %s", e)
+
+    # ★ engine.encumbrance: 负重状态（STR 负重上限 vs 物品估算重量）
+    enc_info = {}
+    try:
+        from ...engine.encumbrance import encumbrance_status
+        _inv = getattr(ch, "inventory", []) or []
+        _est_weight = min(300.0, len(_inv) * 2.0)  # 简化：每件物品估重 2 磅
+        enc_info = {"encumbrance": encumbrance_status(
+            _est_weight, int(ch.ability_score("str") or 10))}
+    except Exception as e:
+        _log.debug("encumbrance 负重计算失败（跳过）: %s", e)
+
+    # ★ engine.hazards: 危险地形危害判定（悬崖坠落/荒漠灼烧等）
+    hazard_info = {}
+    try:
+        from ...engine.hazards import burning_damage, fall_damage
+        if terrain in ("峭壁", "悬崖", "山地"):
+            hazard_info = {"hazard": "fall", "fall_damage": fall_damage(30)}
+        elif terrain in ("荒漠", "沙漠", "火山"):
+            hazard_info = {"hazard": "burn", "burning_damage": burning_damage()}
+    except Exception as e:
+        _log.debug("hazards 危害计算失败（跳过）: %s", e)
 
     return {"kind": "travel", "pace": pace,
             "per_minute_ft": pace_info.per_minute_ft,
@@ -476,7 +812,132 @@ def resolve_travel(state, ch, it) -> dict:
             "perception_result": dataclasses.asdict(perception_result),
             "nav_dc": nav_dc,
             "perception_dc": perception_dc,
-            "terrain": terrain}
+            "terrain": terrain,
+            **travel_info, **clock_info, **enc_info, **hazard_info}
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 停工期 (EXP-003)
+# ──────────────────────────────────────────────────────────────────────────
+
+def resolve_downtime(ch, it) -> dict:
+    """停工期活动：开始/推进停工期项目（制作/研究/训练等）。
+
+    规则: EXP-003 制作和停工期完整规则
+    出处: topics/城主指南2024/2.运作游戏/运作交涉/停工期活动.htm
+
+    intent 字段:
+        downtime_action: "start"|"advance"|"interrupt"|"resume"
+        activity: 活动类型（如 "crafting"）
+        days: 推进天数
+        item_value_gp: 制作物品价值（GP）
+
+    ★ engine.downtime_craft: DowntimeManager 权威执行项目状态机
+      （start_project/advance_project → ProgressEvent）。
+    """
+    from ...engine.downtime import (
+        DOWNTIME_ACTIVITIES, DowntimeProject,
+        crafting_cost, crafting_time_days,
+    )
+
+    action = it.get("downtime_action", "start")
+    activity = it.get("activity", "crafting")
+    days = int(it.get("days", 1) or 1)
+    item_value_gp = float(it.get("item_value_gp", 0) or 0)
+
+    if activity not in DOWNTIME_ACTIVITIES and activity != "crafting":
+        return {"kind": "downtime", "error": f"未知停工期活动: {activity}",
+                "available": list(DOWNTIME_ACTIVITIES.keys())}
+
+    # ★ engine.downtime_craft: 权威项目状态机（含进度/事件）
+    try:
+        from ...engine.downtime_craft import (
+            CraftingRequirement,
+            DowntimeManager,
+            ProjectDefinition,
+        )
+        _mgr = _downtime_manager()
+        project_id = f"downtime_{ch.id}_{activity}"
+        if action == "start":
+            if activity == "crafting":
+                total_days = crafting_time_days(item_value_gp)
+                total_cost = crafting_cost(item_value_gp)
+            else:
+                entry = DOWNTIME_ACTIVITIES.get(activity, {})
+                total_days = int(entry.get("time_days", 7))
+                total_cost = float(entry.get("cost_gp", 0))
+            project = ProjectDefinition(
+                project_id=project_id,
+                name=activity,
+                project_type=activity,
+                total_work_days=max(1.0, float(total_days)),
+                cost_gp=float(total_cost),
+                requirements=[CraftingRequirement(item_tag=activity, quantity=1)],
+                check_ability="int",
+                check_dc=max(5, int(it.get("check_dc", 15) or 15)),
+            )
+            _mgr.start_project(project)
+            return {"kind": "downtime", "action": "started",
+                    "project": project.snapshot() if hasattr(project, "snapshot")
+                    else {"project_id": project_id, "name": activity,
+                          "total_work_days": total_days, "cost_gp": total_cost,
+                          "progress": project.progress_percent()},
+                    "activity": activity, "days_required": total_days,
+                    "cost_gp": total_cost,
+                    "engine_downtime": "downtime_craft"}
+        # advance/interrupt/resume → 推进项目
+        ev = _mgr.advance_project(project_id, float(days))
+        existing = _mgr.get_project(project_id)
+        return {"kind": "downtime", "action": action,
+                "activity": activity, "days": days,
+                "progress_percent": existing.progress_percent() if existing else 0.0,
+                "project_complete": existing.is_complete() if existing else False,
+                "event": getattr(ev, "event_type", "") if ev else "",
+                "note": f"停工期项目推进/中断规则已计算（EXP-003）",
+                "crafting_time_days": crafting_time_days(item_value_gp) if activity == "crafting" else None,
+                "crafting_cost_gp": crafting_cost(item_value_gp) if activity == "crafting" else None}
+    except Exception as e:
+        _log.debug("downtime_craft 状态机失败（回退公式）: %s", e)
+
+    # 回退：旧公式路径
+    project_id = f"downtime_{ch.id}_{activity}"
+
+    if action == "start":
+        if activity == "crafting":
+            total_days = crafting_time_days(item_value_gp)
+            total_cost = crafting_cost(item_value_gp)
+        else:
+            entry = DOWNTIME_ACTIVITIES.get(activity, {})
+            total_days = int(entry.get("time_days", 7))
+            total_cost = float(entry.get("cost_gp", 0))
+        project = DowntimeProject(
+            project_id=project_id, activity=activity,
+            total_days=max(1, total_days), total_cost_gp=total_cost,
+        )
+        return {"kind": "downtime", "action": "started",
+                "project": project.snapshot(),
+                "activity": activity, "days_required": total_days,
+                "cost_gp": total_cost}
+
+    # advance/interrupt/resume 需先有项目（此处简化：返回公式说明）
+    return {"kind": "downtime", "action": action,
+            "activity": activity, "days": days,
+            "note": f"停工期项目推进/中断规则已计算（EXP-003）",
+            "crafting_time_days": crafting_time_days(item_value_gp) if activity == "crafting" else None,
+            "crafting_cost_gp": crafting_cost(item_value_gp) if activity == "crafting" else None}
+
+
+# ★ EXP-003: 停工期项目内存注册表（engine.downtime_craft.DowntimeManager）
+_DOWNTIME_MANAGER = None
+
+
+def _downtime_manager():
+    """惰性单例 DowntimeManager。"""
+    global _DOWNTIME_MANAGER
+    if _DOWNTIME_MANAGER is None:
+        from ...engine.downtime_craft import DowntimeManager
+        _DOWNTIME_MANAGER = DowntimeManager()
+    return _DOWNTIME_MANAGER
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -668,7 +1129,11 @@ def _encounter_type(roll: int) -> str:
 
 
 def advance_game_time(camp: int, minutes: int) -> dict:
-    """推进战役游戏内时间（矩阵#8）。"""
+    """推进战役游戏内时间（矩阵#8）。
+
+    ★ engine.exploration_clock: 用 ExplorationClock.advance_hours 权威计算
+      日/时刻（含昼夜/时段时间），替代手写换算。
+    """
     info: dict = {"advanced": minutes}
     try:
         c = store.get_campaign(camp)
@@ -680,11 +1145,26 @@ def advance_game_time(camp: int, minutes: int) -> dict:
         flags["game_minutes"] = after
         c.set_world_flags(flags)
         store.save_campaign(c)
-        day = after // 1440 + 1
-        hour = (after % 1440) // 60
-        clock = ("凌晨" if hour < 6 else "早晨" if hour < 9 else
-                 "上午" if hour < 12 else "午后" if hour < 14 else
-                 "下午" if hour < 17 else "黄昏" if hour < 20 else "夜晚")
+        # 权威时钟计算（engine.exploration_clock）
+        try:
+            from ...engine.exploration_clock import ExplorationClock
+            _clock = ExplorationClock()
+            _b = before
+            _clock.current_time = f"{(_b % 1440) // 60:02d}:{(_b % 60):02d}"
+            _clock.current_day = _b // 1440 + 1
+            _adv = _clock.advance_hours(max(1, minutes // 60))
+            day = _clock.current_day
+            _h, _m = map(int, _clock.current_time.split(":"))
+            hour = _h
+            clock = ("凌晨" if hour < 6 else "早晨" if hour < 9 else
+                     "上午" if hour < 12 else "午后" if hour < 14 else
+                     "下午" if hour < 17 else "黄昏" if hour < 20 else "夜晚")
+        except Exception:
+            day = after // 1440 + 1
+            hour = (after % 1440) // 60
+            clock = ("凌晨" if hour < 6 else "早晨" if hour < 9 else
+                     "上午" if hour < 12 else "午后" if hour < 14 else
+                     "下午" if hour < 17 else "黄昏" if hour < 20 else "夜晚")
         info.update({"minutes_before": before, "minutes_after": after,
                      "day": day, "clock": clock})
     except Exception as e:

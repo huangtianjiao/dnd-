@@ -337,7 +337,10 @@ def action_disengage(attacker: Combatant) -> ActionResult:
     """
     if not use_action(attacker):
         return ActionResult("disengage", success=False, message="无可用动作")
-    attacker.disengage_active = True                     # R-CMB-007
+    # ★ COM-014: 使用 EffectInstance 记录，而非专用临时布尔捷径
+    from .combat import add_effect
+    add_effect(attacker, "disengage")
+    attacker.disengage_active = True                     # R-CMB-007 兼容别名同步
     return ActionResult("disengage", success=True,
                         message=f"{attacker.name} 撤离，本回合移动不引发借机攻击")
 
@@ -357,7 +360,10 @@ def action_dodge(attacker: Combatant) -> ActionResult:
     """
     if not use_action(attacker):
         return ActionResult("dodge", success=False, message="无可用动作")
-    attacker.dodge_active = True                         # R-CMB-008
+    # ★ COM-014: 使用 EffectInstance 记录，而非专用临时布尔捷径
+    from .combat import add_effect
+    add_effect(attacker, "dodge")
+    attacker.dodge_active = True                         # 兼容别名同步
     effective = dodge_benefits_active(attacker)
     return ActionResult("dodge", success=True,
                         message=(f"{attacker.name} 回避，对其攻击具劣势、敏捷豁免具优势"
@@ -392,8 +398,11 @@ def action_help(attacker: Combatant, ally: Combatant,
                             extra={"mode": "first_aid", "check_total": r.total,
                                    "dc": 10, "stabilized": r.success})
     # 攻击协助：标记 ally 下次对该 target 攻击有优势
+    # ★ COM-014: 使用 EffectInstance 记录，而非专用临时布尔捷径
     if target:
-        ally.help_advantage_target = target.cid
+        from .combat import add_effect
+        add_effect(ally, "help_advantage", target_cid=target.cid)
+        ally.help_advantage_target = target.cid           # 兼容别名同步
     return ActionResult("help", success=True,
                         message=f"{attacker.name} 协助 {ally.name}"
                                 + (f" 对抗 {target.name}" if target else ""),

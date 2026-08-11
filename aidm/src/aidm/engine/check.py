@@ -3,7 +3,7 @@
 依赖 engine.dice（骰子）。本模块负责"掷 d20 → 加调整值 → 比 DC/AC"的判定，
 不含伤害结算（见 damage.py）。天然 20/1 的特殊效果仅对攻击检定（本模块）
 和死亡豁免（damage.py）生效；属性检定与豁免检定的天然 20/1 无特殊效果
-（R-DM-010）。
+（R-DMG-010）。
 
 标注约定：每条规则实现处标注 RULE_SPEC.md 规则点 ID + 原文出处路径。
 """
@@ -11,9 +11,56 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import Enum
 
 from . import dice
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# CHK-002: DCSource 分类体系与溯源
+# ──────────────────────────────────────────────────────────────────────────
+
+class DCSource(Enum):
+    """DC 来源分类。
+
+    CHK-002: 同一场景重复分类不改变 DC；
+    没有权威来源时进入 DM 裁定而非默认为 10。
+
+    分类:
+      RULE_FIXED    - 规则固定的 DC（如推撞 DC=8+力调+熟练）
+      ENTITY_ATTR   - 实体属性派生的 DC（如怪物 AC）
+      SCENE_CHALLENGE - 场景 Challenge 定义的 DC
+      DM_RULING     - DM 显式裁定的 DC
+      FORMULA       - 公式计算的 DC（如法术豁免 DC = 8+属调+熟练）
+    """
+
+    RULE_FIXED = "rule_fixed"
+    ENTITY_ATTR = "entity_attr"
+    SCENE_CHALLENGE = "scene_challenge"
+    DM_RULING = "dm_ruling"
+    FORMULA = "formula"
+
+
+@dataclass
+class DCDetermination:
+    """DC 判定记录 — 包含 DC 值、来源分类、规则 ID 和原因。
+
+    CHK-002: 每次 DC 判定都应生成此记录，
+    用于审计追踪和争议解决。
+
+    属性:
+        dc: 最终 DC 值
+        source: DC 来源分类
+        source_rule_id: 关联的规则 ID（如有）
+        reason: 人类可读的判定原因
+    """
+
+    dc: int
+    source: DCSource = DCSource.DM_RULING
+    source_rule_id: str = ""
+    reason: str = ""
+
 
 # ──────────────────────────────────────────────────────────────────────────
 # DC 设定
@@ -27,23 +74,58 @@ _DC_BY_LABEL = {
 }
 
 
-def dc_by_label(label: str) -> int:
+def dc_by_label(label: str, *, source_rule_id: str = "") -> int:
     """按难度描述返回范例 DC。
 
     规则: R-CHK-009 范例难度等级DC表
     出处: topics/玩家手册2024/进行游戏/属性检定.htm
+
+    CHK-002: source_rule_id 记录 DC 来源规则 ID，便于溯源审计。
+    不允许 LLM 直接提供 DC 值。
     """
     if label not in _DC_BY_LABEL:
         raise ValueError(f"未知难度描述 {label!r}，可选: {list(_DC_BY_LABEL)}")
     return _DC_BY_LABEL[label]
 
 
-def calc_save_dc(ability_mod: int, prof: int) -> int:
+def determine_dc(label_or_value: str | int, *,
+                  source: DCSource = DCSource.RULE_FIXED,
+                  source_rule_id: str = "",
+                  reason: str = "") -> DCDetermination:
+    """确定 DC 并生成溯源记录。
+
+    CHK-002: 统一入口，所有 DC 判定都通过此函数生成记录。
+
+    Args:
+        label_or_value: 难度标签（如"中等"）或直接数值
+        source: DC 来源分类
+        source_rule_id: 关联的规则 ID
+        reason: 判定原因
+
+    Returns:
+        DCDetermination 记录
+    """
+    if isinstance(label_or_value, int):
+        dc_val = label_or_value
+    else:
+        dc_val = dc_by_label(label_or_value)
+
+    return DCDetermination(
+        dc=dc_val,
+        source=source,
+        source_rule_id=source_rule_id,
+        reason=reason or f"DC={dc_val} ({source.value})",
+    )
+
+
+def calc_save_dc(ability_mod: int, prof: int, *, source_rule_id: str = "") -> int:
     """施法/特殊能力的豁免 DC = 8 + 属性调整值 + 熟练加值。
 
     规则: R-DM-002 计算DC公式（=R-CHK-012/R-SPL-021 法术豁免DC）
     出处: topics/城主指南2024/2.运作游戏/决定掷骰结果/难度等级.htm
     说明: 此为公式算出的 DC，不受 R-DM-003 的 clamp(10,20) 约束（该 clamp 仅限 DM 即兴 DC）。
+
+    CHK-002: source_rule_id 记录 DC 来源规则 ID。
     """
     return 8 + ability_mod + prof
 
@@ -89,7 +171,12 @@ def passive_check(modifiers: Iterable[int], *,
 
 @dataclass
 class CheckResult:
-    """一次 D20 检定的完整结果。"""
+    """一次 D20 检定的完整结果。
+
+    ★ OBS-001: 包含修正来源解释。
+      modifier_breakdown 记录每个加值/惩罚的来源和数值，
+      UI 可展开显示 "d20 + STR(3) + PROF(2) - exhaustion(2)" 等完整轨迹。
+    """
     success: bool               # 是否成功
     total: int                  # d20 + 调整值的总计
     d20: int                    # 实际采用的天然 d20
@@ -98,6 +185,8 @@ class CheckResult:
     target: int                 # 目标数值（DC 或 AC）
     margin: int                 # total - target（成功为正/0，失败为负）
     modifier: int               # 调整值合计（total - d20）
+    modifier_breakdown: list[dict] = field(default_factory=list)
+    # modifier_breakdown 格式: [{"source": "STR", "value": 3}, {"source": "PROF", "value": 2}, ...]
 
 
 def _d20_check_core(mod, prof, proficient, target, advantage, disadvantage, circ=0,
@@ -106,13 +195,22 @@ def _d20_check_core(mod, prof, proficient, target, advantage, disadvantage, circ
     """R-CHK-001 D20 检定三步流程的内部实现。
 
     2024 PHB 规则: 天然 20/1 仅对攻击检定和死亡豁免有自动成功/失败效果，
-    普通属性检定与豁免检定的天然 20/1 无特殊效果（R-DM-010）。
+    普通属性检定与豁免检定的天然 20/1 无特殊效果（R-DMG-010）。
     通过 auto_success_on_nat20 / auto_fail_on_nat1 参数控制是否启用。
     """
     r = dice.roll_d20(advantage, disadvantage)        # R-CHK-004/005 优劣势
     prof_add = prof if proficient else 0              # R-CHK-016 熟练只加一次
     mod_total = mod + prof_add + circ                 # 属性调整值 + 熟练加值 + 临时加值
     total = r.used + mod_total                        # R-CHK-001 step2: 加调整值
+
+    # ★ OBS-001: 构建修正来源解释
+    breakdown: list[dict] = []
+    if mod != 0:
+        breakdown.append({"source": "ABILITY", "value": mod})
+    if prof_add != 0:
+        breakdown.append({"source": "PROFICIENCY", "value": prof_add})
+    if circ != 0:
+        breakdown.append({"source": "CIRCUMSTANCE", "value": circ})
 
     # 天然 20/1 自动成功/失败：仅攻击检定与死亡豁免启用
     if auto_success_on_nat20 and r.used == 20:
@@ -126,6 +224,7 @@ def _d20_check_core(mod, prof, proficient, target, advantage, disadvantage, circ
         success=success, total=total, d20=r.used,
         rolls=list(r.rolls), mode=r.mode,
         target=target, margin=total - target, modifier=mod_total,
+        modifier_breakdown=breakdown,
     )
 
 
@@ -175,6 +274,11 @@ def attack_roll(bonus: int, ac: int,
                 circ: int = 0) -> AttackResult:
     """攻击检定：d20 + 命中加值 vs AC；天然 20 必出且重击，天然 1 必失手。
 
+    ★ ARC-002: 本函数为攻击检定的唯一权威入口。所有 resolver / engine 调用方
+      必须通过此函数执行攻击检定，不得自行实现攻击判定逻辑。
+      调用方: engine/spellcasting.cast_spell, resolvers/attack.resolve_attack,
+              engine/combat, engine/opportunity_attack
+
     规则:
       - R-CMB-017 攻击检定命中判定（≥AC则命中）
       - R-CMB-022 天然20必命中与重击（无论AC/调整值）
@@ -189,21 +293,31 @@ def attack_roll(bonus: int, ac: int,
     mod_total = bonus + circ
     total = nat + mod_total
 
+    # ★ OBS-001: 攻击检定的修正来源解释（d20 + 命中加值 - 力竭 完整轨迹）
+    breakdown: list[dict] = []
+    if bonus != 0:
+        breakdown.append({"source": "BONUS", "value": bonus})
+    if circ != 0:
+        breakdown.append({"source": "CIRCUMSTANCE", "value": circ})
+
     # R-CMB-022 天然 20：必命中 + 重击（忽略 AC/调整值）
     if nat == 20:
         return AttackResult(success=True, total=total, d20=nat, rolls=list(r.rolls),
                              mode=r.mode, target=ac, margin=total - ac,
-                             modifier=mod_total, hit=True, crit=True)
+                             modifier=mod_total, modifier_breakdown=breakdown,
+                             hit=True, crit=True)
     # R-CMB-023 天然 1：必失手（忽略 AC/调整值）
     if nat == 1:
         return AttackResult(success=False, total=total, d20=nat, rolls=list(r.rolls),
                             mode=r.mode, target=ac, margin=total - ac,
-                            modifier=mod_total, hit=False, crit=False)
+                            modifier=mod_total, modifier_breakdown=breakdown,
+                            hit=False, crit=False)
     # R-CMB-017 普通：total ≥ AC 则命中
     hit = total >= ac
     return AttackResult(success=hit, total=total, d20=nat, rolls=list(r.rolls),
                         mode=r.mode, target=ac, margin=total - ac,
-                        modifier=mod_total, hit=hit, crit=False)
+                        modifier=mod_total, modifier_breakdown=breakdown,
+                        hit=hit, crit=False)
 
 
 def is_natural_20(d20: int) -> bool:
