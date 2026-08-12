@@ -36,7 +36,9 @@ def create_character(c: CharIn):
                           campaign_id=c.campaign_id)
     validate_abilities(c.abilities, c.ability_method)
     ch.set_abilities(c.abilities)
-    ch.hp_max = c.hp_max; ch.hp_current = c.hp_max; ch.ac = c.ac; ch.speed = c.speed
+    # ★ P1-01: 机械属性由服务器权威计算（HP/AC/速度），客户端提交值被忽略
+    from ...build.derive_stats import apply_server_stats
+    apply_server_stats(ch, c.char_class, c.race, c.level, c.abilities)
     # ★ DATA-002: 注册职业 canonical_id（稳定标识，显示名作为 locale 资源）
     try:
         from ...engine.canonical_id import register_canonical
@@ -308,7 +310,9 @@ def join_campaign(req: JoinIn):
                           alignment=req.alignment, level=req.level,
                           campaign_id=req.campaign_id)
     ch.set_abilities(req.abilities)
-    ch.hp_max = req.hp_max; ch.hp_current = req.hp_max; ch.ac = req.ac; ch.speed = req.speed
+    # ★ P1-01: 机械属性由服务器权威计算，客户端提交值被忽略
+    from ...build.derive_stats import apply_server_stats
+    apply_server_stats(ch, req.char_class, req.race, req.level, req.abilities)
     # 统一初始化拥有物（与 /character 一致）：法术位 + 已学法术 + 起始武器入包
     init_loadout(ch, req.equipped_weapon)
     ch = store.save_character(ch)

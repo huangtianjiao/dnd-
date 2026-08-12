@@ -92,6 +92,11 @@ class _MockChar:
 
 # ── travel / exploration_clock / encumbrance / hazards / core_loop → actions ──
 
+@pytest.mark.rule("engine.travel")
+@pytest.mark.rule("engine.exploration_clock")
+@pytest.mark.rule("engine.encumbrance")
+@pytest.mark.rule("engine.hazards")
+@pytest.mark.rule("engine.core_loop")
 class TestTravelWiring:
     def test_resolve_travel_engine_distance(self):
         """engine.travel 权威距离注入 resolve_travel 输出。"""
@@ -167,15 +172,32 @@ class TestTravelWiring:
 
 # ── mastery / resolution_trace / resolution_trace_ext → attack ──
 
+@pytest.mark.rule("engine.mastery")
+@pytest.mark.rule("engine.resolution_trace")
+@pytest.mark.rule("engine.resolution_trace_ext")
 class TestAttackWiring:
     def test_attack_mastery_weapon(self):
-        """engine.mastery 权威精通结算（匕首=迅击）。"""
+        """engine.mastery 权威精通结算（匕首=迅击）——P1-09 固定 RNG 保证命中。"""
         from aidm.brain.resolvers.attack import resolve_attack
-        ch = _MockChar(inventory=["匕首"], equipped_weapon="匕首")
-        r = resolve_attack(ch, {"weapon": "匕首"}, None)
-        assert r["kind"] == "attack"
-        if r.get("hit") and r.get("mastery"):
+        from aidm.engine import dice as engine_dice
+
+        class _FixedRng:
+            """固定 d20=20 → 必然命中（确定性断言，不依赖随机）。"""
+            def randbelow(self, exclusive_upper):
+                return 19  # d20 20 → hit
+
+        orig = engine_dice.get_active_rng()
+        engine_dice.set_active_rng(_FixedRng())
+        try:
+            ch = _MockChar(inventory=["匕首"], equipped_weapon="匕首")
+            # 目标 AC=10，攻击加值 = 属性2 + 熟练2 = 4 → 20+4=24 ≥ 10 必中
+            r = resolve_attack(ch, {"weapon": "匕首", "target_ac": 10}, None)
+            assert r["kind"] == "attack"
+            assert r["hit"] is True, "固定 d20=20 必须命中"
+            assert r["mastery"] is not None, "匕首(迅击)命中必须产生精通效果"
             assert r["mastery"]["mastery"] == "迅击"
+        finally:
+            engine_dice.set_active_rng(orig)
 
     def test_attack_resolution_trace_formula_tree(self):
         """engine.resolution_trace + resolution_trace_ext 构建公式树。"""
@@ -198,6 +220,8 @@ class TestAttackWiring:
 
 # ── opportunity_attack / triggers → attack ──
 
+@pytest.mark.rule("engine.opportunity_attack")
+@pytest.mark.rule("engine.triggers")
 class TestOpportunityAttackWiring:
     def test_opportunity_attack_trigger_check(self):
         """engine.opportunity_attack 触发条件判定进入 resolve_opportunity_attack。"""
@@ -206,16 +230,25 @@ class TestOpportunityAttackWiring:
             _MockChar(), {"weapon": "长剑", "target_leaving_reach": True},
             state=None)
         assert r["kind"] == "opportunity_attack"
-        # 目标隐藏 → 条件不满足
+        # 目标隐藏 → 条件不满足（engine.opportunity_attack 判定拒绝）
         r2 = resolve_opportunity_attack(
             _MockChar(), {"weapon": "长剑", "target_leaving_reach": True,
                           "target_hidden": True}, state=None)
-        assert r2.get("error") or r2["kind"] == "opportunity_attack"
+        assert r2.get("error") is not None, \
+            "目标隐藏时借机攻击必须被拒绝（engine.opportunity_attack 判定）"
 
 
 # ── effects / scheduler / rng / battle_map / aggregate_cache / performance_cache
 #    → combat_flow ──
 
+@pytest.mark.rule("engine.rng_context")
+@pytest.mark.rule("engine.rng")
+@pytest.mark.rule("engine.effects")
+@pytest.mark.rule("engine.scheduler")
+@pytest.mark.rule("engine.vision")
+@pytest.mark.rule("engine.battle_map")
+@pytest.mark.rule("engine.aggregate_cache")
+@pytest.mark.rule("engine.performance_cache")
 class TestCombatFlowWiring:
     def test_battle_rng_deterministic(self):
         """engine.rng_context 确定性 RNG（同种子同结果）。"""
@@ -257,6 +290,14 @@ class TestCombatFlowWiring:
 # ── spell_slots / multiclass / component_check / spell_targeting /
 #    spell_targeting_ext / aoe / multiray_spell → cast ──
 
+@pytest.mark.rule("engine.spell_slots")
+@pytest.mark.rule("engine.multiclass")
+@pytest.mark.rule("engine.component_check")
+@pytest.mark.rule("engine.spell_targeting")
+@pytest.mark.rule("engine.spell_targeting_ext")
+@pytest.mark.rule("engine.aoe")
+@pytest.mark.rule("engine.multiray_spell")
+@pytest.mark.rule("engine.equipment_slots")
 class TestCastWiring:
     def test_resolve_cast_max_slots_authoritative(self):
         """engine.spell_slots + multiclass 权威法术位上注入 CasterState。"""
@@ -311,6 +352,8 @@ class TestCastWiring:
 
 # ── magic_item_def / item_charges → loot.attune_magic_item ──
 
+@pytest.mark.rule("engine.magic_item_def")
+@pytest.mark.rule("engine.item_charges")
 class TestAttuneEngineWiring:
     def test_attune_persists_db_attuned_items(self):
         """engine.magic_item_def 权威同调 → DB attuned_items 最终状态。"""
@@ -329,6 +372,7 @@ class TestAttuneEngineWiring:
 
 # ── levelup_plan → level_up_service ──
 
+@pytest.mark.rule("engine.levelup_plan")
 class TestLevelUpPlanWiring:
     def test_plan_level_up_hp_from_engine(self):
         """engine.levelup_plan 权威 HP 增量（1级取满骰+CON）。"""
@@ -351,6 +395,7 @@ class TestLevelUpPlanWiring:
 
 # ── entity_lifecycle_ext → resolvers.apply ──
 
+@pytest.mark.rule("engine.entity_lifecycle_ext")
 class TestEntityLifecycleExtWiring:
     def test_summon_tracked_in_apply(self):
         """召唤法术在 apply_node 中经 engine.entity_lifecycle_ext 注册。"""
@@ -369,11 +414,15 @@ class TestEntityLifecycleExtWiring:
             "combat": {"active": False},
         }
         out = apply_mod.apply_node(state)
-        assert out.get("dice", {}).get("summoned_entity_id") or True
+        # P1-09: 确定性断言——召唤法术必须注册实体（不再 `or True` 恒真）
+        assert state["dice"].get("summoned_entity_id"), \
+            "召唤法术必须在 apply_node 中注册 entity_lifecycle_ext 实体"
+        assert state["dice"]["summoned_by"] == "entity_lifecycle_ext"
 
 
 # ── migration → stats.store ──
 
+@pytest.mark.rule("engine.migration")
 class TestMigrationWiring:
     def test_migrate_character_data(self):
         """engine.migration 存档迁移（旧 revision → 新 revision）。"""
@@ -386,6 +435,7 @@ class TestMigrationWiring:
 
 # ── downtime_craft → resolvers.actions.resolve_downtime ──
 
+@pytest.mark.rule("engine.downtime_craft")
 class TestDowntimeCraftWiring:
     def test_resolve_downtime_engine_manager(self):
         """engine.downtime_craft 状态机执行（start → advance 进度）。"""
@@ -406,6 +456,7 @@ class TestDowntimeCraftWiring:
 
 # ── coverage / performance_cache → api.main.coverage_manifest ──
 
+@pytest.mark.rule("engine.coverage")
 class TestCoverageEndpointWiring:
     def test_coverage_manifest_endpoint(self):
         """engine.coverage 实时生成清单（生产入口 api.main.coverage_manifest）。"""
@@ -413,21 +464,31 @@ class TestCoverageEndpointWiring:
         resp = coverage_manifest()
         assert "error" not in resp
         assert resp["summary"].get("MISSING", 0) == 0
-        assert resp["summary"].get("FULL", 0) == 0
-        assert resp["summary"].get("VERIFIED", 0) >= 70
+        # P1-08: VERIFIED（显式规则映射）+ FULL（已实现且有测试）覆盖全部引擎
+        assert resp["summary"].get("VERIFIED", 0) >= 20
+        assert (resp["summary"].get("VERIFIED", 0)
+                + resp["summary"].get("FULL", 0)) >= 70
         assert "rule_cache" in resp  # engine.performance_cache
 
 
-# ── 全量门禁：engine 模块全部 VERIFIED ──
+# ── 全量门禁：engine 模块全部 ≥ FULL（P1-08 强化后 VERIFIED 需显式规则映射）──
 
+@pytest.mark.rule("engine.coverage")
 class TestEngineAllVerified:
-    def test_no_engine_module_below_verified(self):
-        """CoverageManifest 门禁：engine 模块全部 VERIFIED（生产+测试双覆盖）。"""
+    def test_no_engine_module_below_full(self):
+        """CoverageManifest 门禁：engine 模块全部 ≥ FULL（已实现且有测试）。
+
+        P1-08: VERIFIED 还需显式 @pytest.mark.rule 映射（本文件已为各接线类
+        声明），门禁保证没有任何模块低于 FULL。
+        """
         from aidm.engine.coverage import CoverageManifest, CoverageStatus
         m = CoverageManifest(ruleset_revision="2024.1").apply_wired_status()
         below = [
             cid for cid, e in m.entries.items()
             if cid.startswith("engine.")
-            and e.status != CoverageStatus.VERIFIED
+            and e.status not in (CoverageStatus.VERIFIED, CoverageStatus.FULL)
         ]
-        assert below == [], f"仍有未 VERIFIED 的 engine 模块: {below}"
+        assert below == [], f"仍有低于 FULL 的 engine 模块: {below}"
+        # P1-08: 显式规则映射的 VERIFIED 模块必须存在（不再是 import 扫描即算）
+        counts = m.summary()
+        assert counts.get("VERIFIED", 0) >= 20

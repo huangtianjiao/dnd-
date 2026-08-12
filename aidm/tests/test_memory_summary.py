@@ -17,10 +17,6 @@ import os
 import sys
 
 # 确保 src 在路径中
-_SRC = os.path.join(os.path.dirname(__file__), "..", "src")
-if _SRC not in sys.path:
-    sys.path.insert(0, _SRC)
-
 from aidm.brain import memory
 from aidm.stats import store
 

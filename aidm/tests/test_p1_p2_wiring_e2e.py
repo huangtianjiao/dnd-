@@ -346,15 +346,17 @@ class TestCoverageReleaseGate:
         """CoverageManifest 发布门禁：全部公开内容达 FULL 及以上。
 
         规则: TEST-002 — 任何公开内容缺 handler 或验收测试即失败。
-        门禁状态语义:
-          - VERIFIED = 生产链路 import + 测试引用（生产入口真实调用）
+        门禁状态语义（P1-08 强化）:
+          - VERIFIED = 生产 import + 测试引用 + 显式 @pytest.mark.rule 映射
+          - WIRED = 生产 import + 测试引用（未显式声明规则映射）
           - FULL = 测试通过（≥FULL 即满足门禁）
         """
         from aidm.engine.coverage import CoverageManifest, CoverageStatus
         m = CoverageManifest(ruleset_revision="2024.1")
         m.assert_release_gate(CoverageStatus.FULL)
-        # 所有引擎模块 ≥ FULL（VERIFIED+FULL 覆盖全部引擎模块）
+        # 所有引擎模块 ≥ FULL（VERIFIED+WIRED+FULL 覆盖全部引擎模块）
         counts = m.summary()
         assert counts.get("MISSING", 0) == 0
-        assert counts.get("VERIFIED", 0) >= 20  # 生产+测试双覆盖
-        assert counts.get("FULL", 0) + counts.get("VERIFIED", 0) >= 70
+        assert counts.get("VERIFIED", 0) >= 20  # 显式规则映射的已验证模块
+        assert (counts.get("FULL", 0) + counts.get("WIRED", 0)
+                + counts.get("VERIFIED", 0)) >= 70

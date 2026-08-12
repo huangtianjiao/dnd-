@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { apiGet, apiPost, errMsg } from "../lib/api";
+import { apiGet, apiPost, apiPostAuth, errMsg } from "../lib/api";
+import { getHostToken, setHostToken } from "../hooks/useSocket";
 import type { RoomInfo, RoomJoinResult } from "../lib/types";
 
 interface RoomPanelProps {
@@ -49,7 +50,7 @@ export function RoomPanel({ view, defaultName, buildCharacter, onEntered, onBack
     if (view === "list") loadRooms();
   }, [view, loadRooms]);
 
-  // ── 创建房间：成功后房主自动以 is_host=true 加入；带世界设定则由页面生成开场 ──
+  // ── 创建房间：成功后房主凭 /room/create 签发的 host_token 加入（P0-01）──
   const createRoom = useCallback(async () => {
     const nm = name.trim() || "冒险者";
     setBusy(true);
@@ -59,11 +60,13 @@ export function RoomPanel({ view, defaultName, buildCharacter, onEntered, onBack
         password: createPassword || undefined,
         max_players: maxPlayers,
       });
+      // ★ P0-01: 房主身份只能由服务器签发的 host_token 换取，客户端不再提交 is_host
+      setHostToken(room.host_token || "");
       const joined: RoomJoinResult = await apiPost("/room/join", {
         room_id: room.room_id,
         password: createPassword || undefined,
         name: nm,
-        is_host: true,
+        host_token: room.host_token,
         ...buildCharacter(nm),
       });
       toast(`房间 ${room.room_id} 创建成功`, "success");
@@ -218,16 +221,20 @@ export function RoomPanel({ view, defaultName, buildCharacter, onEntered, onBack
 
 interface HostControlsProps {
   roomId: string;
-  /** 当前玩家名（服务端房主校验用 requester_name） */
-  myName: string;
+  /** 按 character_id 定位目标（来自队伍条 PartyMember） */
+  players: { characterId: number; name: string }[];
   toast: (msg: string, type?: string) => void;
   /** 转让成功后回调（自己不再是房主） */
   onTransferred?: () => void;
 }
 
-export function HostControls({ roomId, myName, toast, onTransferred }: HostControlsProps) {
+export function HostControls({ roomId, players, toast, onTransferred }: HostControlsProps) {
   const [target, setTarget] = useState("");
   const [busy, setBusy] = useState(false);
+  // ★ P0-01/P0-02: 房主令牌模块级持有（/room/create 签发），Bearer 鉴权
+  const hostToken = getHostToken();
+
+  const targetCharId = (nm: string) => players.find((p) => p.name.trim() === nm.trim())?.characterId;
 
   const kick = useCallback(async () => {
     const t = target.trim();
@@ -235,9 +242,15 @@ export function HostControls({ roomId, myName, toast, onTransferred }: HostContr
       toast("请填写目标玩家名", "warn");
       return;
     }
+    const cid = targetCharId(t);
+    if (!cid) {
+      toast("目标玩家不在房间内", "warn");
+      return;
+    }
     setBusy(true);
     try {
-      await apiPost(`/room/${roomId}/kick`, { target_name: t, requester_name: myName });
+      // ★ P0-02: 房主身份来自 Bearer 令牌，目标按 character_id 定位（防名字冒充）
+      await apiPostAuth(`/room/${roomId}/kick`, { target_character_id: cid }, hostToken);
       toast(`已将 ${t} 移出房间`, "success");
       setTarget("");
     } catch (e) {
@@ -245,7 +258,7 @@ export function HostControls({ roomId, myName, toast, onTransferred }: HostContr
     } finally {
       setBusy(false);
     }
-  }, [roomId, target, myName, toast]);
+  }, [roomId, target, hostToken, players, toast]);
 
   const transfer = useCallback(async () => {
     const t = target.trim();
@@ -253,9 +266,14 @@ export function HostControls({ roomId, myName, toast, onTransferred }: HostContr
       toast("请填写目标玩家名", "warn");
       return;
     }
+    const cid = targetCharId(t);
+    if (!cid) {
+      toast("目标玩家不在房间内", "warn");
+      return;
+    }
     setBusy(true);
     try {
-      await apiPost(`/room/${roomId}/transfer`, { target_name: t, requester_name: myName });
+      await apiPostAuth(`/room/${roomId}/transfer`, { target_character_id: cid }, hostToken);
       toast(`已将房主转让给 ${t}`, "success");
       setTarget("");
       onTransferred?.();
@@ -264,7 +282,7 @@ export function HostControls({ roomId, myName, toast, onTransferred }: HostContr
     } finally {
       setBusy(false);
     }
-  }, [roomId, target, myName, toast, onTransferred]);
+  }, [roomId, target, hostToken, players, toast, onTransferred]);
 
   return (
     <div className="flex-col" style={{ gap: 6, borderTop: "0.5px solid var(--border)", paddingTop: 8, marginTop: 4 }}>

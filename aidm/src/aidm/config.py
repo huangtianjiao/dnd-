@@ -12,12 +12,18 @@ import sys
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # ── 项目根路径（去硬编码） ──────────────────────────────────────────────
 # 默认 D:/game/dnd，可通过环境变量 AIDM_PROJECT_ROOT 覆盖
 PROJECT_ROOT = Path(os.getenv("AIDM_PROJECT_ROOT", "D:/game/dnd"))
+
+# ── 运行时数据目录（P0-09）──────────────────────────────────────────────
+# 统一 SQLite/checkpoint/Qdrant/缓存/日志 的落盘根目录。
+# Docker Compose 挂载 aidm-data:/data 并设置 AIDM_DATA_DIR=/data。
+# 未设置时回退到 {PROJECT_ROOT}/aidm/data。
+DATA_DIR = Path(os.getenv("AIDM_DATA_DIR", str(PROJECT_ROOT / "aidm" / "data")))
 
 # .env 位置（项目上级目录）。可被环境变量 AIDM_ENV_FILE 覆盖。
 DEFAULT_ENV = str(PROJECT_ROOT / ".env")
@@ -32,10 +38,17 @@ class Settings(BaseSettings):
     )
 
     # —— LLM ——
-    llm_api_key: str = Field("", validation_alias="key")     # .env 中字段名为 key
-    llm_fallback_key: str = Field("", validation_alias="fallback_key")  # 灾备 key
-    llm_base_url: str = "https://api.senseaudio.cn/v1"
-    llm_model: str = "deepseek-v4-flash"
+    # P0-10: 统一命名 AIDM_LLM_API_KEY / AIDM_LLM_BASE_URL / AIDM_LLM_MODEL；
+    # 兼容旧名 key / fallback_key（不再鼓励 OPENAI_API_KEY 等多套名字）
+    llm_api_key: str = Field("", validation_alias=AliasChoices(
+        "AIDM_LLM_API_KEY", "key"))
+    llm_fallback_key: str = Field("", validation_alias=AliasChoices(
+        "AIDM_LLM_FALLBACK_KEY", "fallback_key"))
+    llm_base_url: str = Field("https://api.senseaudio.cn/v1",
+                              validation_alias=AliasChoices(
+                                  "AIDM_LLM_BASE_URL", "LLM_BASE_URL"))
+    llm_model: str = Field("deepseek-v4-flash", validation_alias=AliasChoices(
+        "AIDM_LLM_MODEL", "LLM_MODEL"))
 
     # —— 嵌入（本地 bge 系列）——
     # 默认 bge-small-zh-v1.5（~95MB/512维，中文检索够用，下载快）；
@@ -77,11 +90,48 @@ class Settings(BaseSettings):
     aidm_api_key: str = ""
     # CORS 允许的来源，逗号分隔，默认 *（允许所有）
     aidm_allowed_origins: str = "*"
+    # 运行环境: development | production（production 下未配置安全项时 fail closed）
+    aidm_env: str = "development"
+    # 会话令牌签名密钥（P0-03）。未配置时：development 用进程内随机密钥，
+    # production 拒绝启动（fail closed）。
+    aidm_session_secret: str = ""
+    # 会话令牌有效期（秒），默认 8 小时
+    aidm_session_ttl: int = 28800
+    # DM 口令（P0-04）：设置后 /auth/session 需持正确口令才能换取 dm 角色令牌
+    aidm_dm_token: str = ""
+    # Redis 地址（P0-10）：统一 AIDM_REDIS_URL，用于离线消息队列/缓存
+    aidm_redis_url: str = ""
+    # 运行时路径/开关（P2-01: 全部经 Settings 读取，禁止散落 os.getenv）
+    aidm_save_db: str = ""                  # 存档库覆盖路径（AIDM_SAVE_DB）
+    aidm_rule_spec: str = ""                # RULE_SPEC 文档路径（AIDM_RULE_SPEC）
+    aidm_morale: bool = False               # 士气系统开关（AIDM_MORALE）
+    aidm_llm_cache: bool = True             # LLM 缓存开关（AIDM_LLM_CACHE）
+    room_dispose_delay: float = 120.0       # 空房销毁延迟（ROOM_DISPOSE_DELAY）
 
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def is_production() -> bool:
+    """是否生产模式（AIDM_ENV=production）。"""
+    return get_settings().aidm_env.strip().lower() == "production"
+
+
+def resolve_allowed_origins() -> list[str]:
+    """统一解析 CORS 允许来源（HTTP 与 Socket.IO 共用，P0-06）。
+
+    - AIDM_ALLOWED_ORIGINS 逗号分隔；默认 "*"
+    - production 模式禁止 "*"（fail closed → 仅同源 localhost 默认）
+    """
+    raw = get_settings().aidm_allowed_origins.strip()
+    if raw == "*":
+        if is_production():
+            # 生产模式未显式配置来源 → 仅允许本机同源，禁止通配
+            return ["http://localhost:8080", "http://127.0.0.1:8080"]
+        return ["*"]
+    return [o.strip() for o in raw.split(",") if o.strip()]
 
 
 # ── Loguru 结构化日志 ─────────────────────────────────────────────────

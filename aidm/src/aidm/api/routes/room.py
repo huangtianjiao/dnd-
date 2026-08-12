@@ -3,11 +3,18 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, field_validator
+from fastapi import Header
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from ...brain import room as room_mod
 from ...stats import models, store
 from .dependencies import init_loadout, _NAME_INJECT_RE, _HP_MIN, _HP_MAX, _AC_MIN, _AC_MAX, _SPEED_MIN, _SPEED_MAX, _LEVEL_MIN, _LEVEL_MAX, _ABILITY_MIN, _ABILITY_MAX
+from ..session_tokens import (
+    ROLE_HOST,
+    create_session_token,
+    new_session_sub,
+    parse_session_token,
+)
 
 router = APIRouter(tags=["room"])
 
@@ -52,7 +59,11 @@ class RoomCreateIn(BaseModel):
 
 
 class RoomJoinIn(BaseModel):
-    """玩家加入房间：输入房间号+密码+角色信息。"""
+    """玩家加入房间：输入房间号+密码+角色信息。
+
+    ★ P0-01: 不再接受 is_host —— 房主身份只能由 /room/create 返回的
+      host_token 换取（服务器签名），客户端无法自封房主。
+    """
     room_id: str
     password: str = ""
     name: str
@@ -69,7 +80,12 @@ class RoomJoinIn(BaseModel):
     ac: int = 10
     speed: int = 30
     equipped_weapon: str = ""
-    is_host: bool = False
+    # 房主令牌：由 /room/create 签发（role=host、绑定 room_id），
+    # 服务器验签通过才创建 host 成员身份
+    host_token: str = ""
+
+    # ★ P0-01: 拒绝未知字段（如旧版 is_host），客户端无法通过任何字段自封房主
+    model_config = ConfigDict(extra="forbid")
 
     # SEC-001: 输入校验（与 CharIn 同口径）
     @field_validator("name")
@@ -116,20 +132,36 @@ class RoomJoinIn(BaseModel):
 
 
 class KickIn(BaseModel):
-    """房主踢出玩家。"""
-    target_name: str
-    requester_name: str
+    """房主踢出玩家（P0-02：身份来自 Authorization: Bearer 令牌，非名字）。"""
+    target_character_id: int
 
 
 class TransferIn(BaseModel):
-    """房主转让权限。"""
-    target_name: str
-    requester_name: str
+    """房主转让权限（P0-02：身份来自 Authorization: Bearer 令牌，非名字）。"""
+    target_character_id: int
+
+
+def _require_host_token(room_id: str, authorization: str | None) -> dict:
+    """从 Bearer 令牌解析房主身份（P0-02）。
+
+    校验: 令牌有效、role=host、room_id 与目标房间一致。
+    失败抛 403（fail closed）。
+    """
+    claims = None
+    if authorization and authorization.lower().startswith("bearer "):
+        claims = parse_session_token(authorization[7:].strip())
+    if claims is None or not claims.is_host or claims.room_id != room_id:
+        raise _room_http_error("not_host")
+    return claims.raw
 
 
 @router.post("/room/create")
 def create_room(req: RoomCreateIn):
-    """房主创建房间。"""
+    """房主创建房间。
+
+    ★ P0-01: 创建即由服务器签发 host 身份令牌（绑定 room_id/campaign_id），
+      房主凭令牌加入；客户端不提交任何 is_host 声明。
+    """
     camp = store.create_campaign(req.campaign_name)
     room = room_manager.create_room(
         campaign_id=camp.id,
@@ -137,21 +169,43 @@ def create_room(req: RoomCreateIn):
         max_players=req.max_players,
         campaign_name=camp.name,
     )
+    host_token, exp = create_session_token(
+        sub=new_session_sub(),
+        campaign_id=camp.id,
+        role=ROLE_HOST,
+        room_id=room.room_id,
+    )
     return {
         "room_id": room.room_id,
         "campaign_id": camp.id,
         "campaign_name": camp.name,
         "has_password": bool(room.password),
         "max_players": room.max_players,
+        "host_token": host_token,
+        "host_token_expires_at": exp,
     }
 
 
 @router.post("/room/join")
 def join_room(req: RoomJoinIn):
-    """玩家加入房间：创建角色卡并加入房间。"""
+    """玩家加入房间：创建角色卡并加入房间。
+
+    ★ P0-01: 只有携带 /room/create 签发的有效 host_token 才会成为房主；
+      否则一律创建普通成员（走密码/人数/重名校验）。
+    """
     room = room_manager.get_room(req.room_id)
     if room is None:
         raise _room_http_error("room_not_found")
+
+    # 解析 host 身份：令牌验签 + role=host + room_id 匹配
+    is_host = False
+    if req.host_token:
+        claims = parse_session_token(req.host_token)
+        is_host = bool(claims and claims.is_host
+                       and claims.room_id == req.room_id)
+        if not is_host:
+            # 令牌无效/不匹配 → 拒绝加入（不降级为普通成员静默通过）
+            raise _room_http_error("not_host")
 
     # 先创建角色卡（关联到房间对应的战役；与 /character 同口径校验属性）
     from .dependencies import validate_abilities
@@ -162,8 +216,9 @@ def join_room(req: RoomJoinIn):
                           alignment=req.alignment,
                           campaign_id=room.campaign_id)
     ch.set_abilities(req.abilities)
-    ch.hp_max = req.hp_max; ch.hp_current = req.hp_max
-    ch.ac = req.ac; ch.speed = req.speed
+    # ★ P1-01: 机械属性由服务器权威计算（HP/AC/速度），客户端提交值被忽略
+    from ...build.derive_stats import apply_server_stats
+    apply_server_stats(ch, req.char_class, req.race, req.level, req.abilities)
     # 统一初始化拥有物（与 /character 一致）：法术位 + 已学法术 + 起始武器入包
     init_loadout(ch, req.equipped_weapon)
     ch = store.save_character(ch)
@@ -171,7 +226,7 @@ def join_room(req: RoomJoinIn):
     # 加入房间（用假 ws 占位；真实连接由 WebSocket 端点建立）
     fake_ws = type("FakeWS", (), {})()
 
-    if req.is_host:
+    if is_host:
         room_manager.add_host(req.room_id, req.name, ch.id, fake_ws)
     else:
         result = room_manager.join_room(
@@ -186,6 +241,7 @@ def join_room(req: RoomJoinIn):
         "campaign_id": room.campaign_id,
         "character_id": ch.id,
         "name": ch.name,
+        "is_host": is_host,
         "ws_url": f"ws://<host>/ws/{room.campaign_id}"
                   f"?character_id={ch.id}&name={req.name}",
     }
@@ -219,36 +275,34 @@ def list_rooms():
 
 
 @router.post("/room/{room_id}/kick")
-def kick_player(room_id: str, req: KickIn):
-    """房主踢出指定玩家。"""
+def kick_player(room_id: str, req: KickIn,
+                authorization: str | None = Header(default=None)):
+    """房主踢出指定玩家（P0-02：Authorization Bearer 令牌鉴权，禁止名字冒充）。"""
     room = room_manager.get_room(room_id)
     if room is None:
         raise _room_http_error("room_not_found")
-    host = room.get_host()
-    if host is None or host["name"] != req.requester_name:
-        raise _room_http_error("not_host")
-    target = room.find_player_by_name(req.target_name)
+    _require_host_token(room_id, authorization)
+    target = room.find_player_by_character(req.target_character_id)
     if target is None:
         raise _room_http_error("player_not_found")
     if target["is_host"]:
         raise _room_http_error("cannot_kick_host")
     room.players = [p for p in room.players
-                    if p["name"] != req.target_name]
-    return {"kicked": req.target_name, "room": room.to_dict()}
+                    if p["character_id"] != req.target_character_id]
+    return {"kicked": target["name"], "room": room.to_dict()}
 
 
 @router.post("/room/{room_id}/transfer")
-def transfer_host(room_id: str, req: TransferIn):
-    """房主将房主权限转让给另一玩家。"""
+def transfer_host(room_id: str, req: TransferIn,
+                  authorization: str | None = Header(default=None)):
+    """房主将房主权限转让给另一玩家（P0-02：Bearer 令牌鉴权）。"""
     room = room_manager.get_room(room_id)
     if room is None:
         raise _room_http_error("room_not_found")
-    host = room.get_host()
-    if host is None or host["name"] != req.requester_name:
-        raise _room_http_error("not_host")
-    target = room.find_player_by_name(req.target_name)
+    _require_host_token(room_id, authorization)
+    target = room.find_player_by_character(req.target_character_id)
     if target is None:
         raise _room_http_error("player_not_found")
     for p in room.players:
-        p["is_host"] = (p["name"] == req.target_name)
-    return {"new_host": req.target_name, "room": room.to_dict()}
+        p["is_host"] = (p["character_id"] == req.target_character_id)
+    return {"new_host": target["name"], "room": room.to_dict()}

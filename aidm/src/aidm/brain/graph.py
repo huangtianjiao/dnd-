@@ -81,14 +81,20 @@ from .resolvers import (
 _log = logging.getLogger(__name__)
 
 # ── SQLite Checkpointer（持久化，替代 MemorySaver）──────────────────────
-_CHECKPOINT_DB = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "saves", "checkpoints.db")
+# P0-09: 统一数据目录 AIDM_DATA_DIR（Docker 挂载 /data）
+def _checkpoint_db_path() -> str:
+    from ..config import DATA_DIR
+    return str(DATA_DIR / "saves" / "checkpoints.db")
+
+
+_CHECKPOINT_DB = _checkpoint_db_path()
 
 
 def _make_checkpointer() -> SqliteSaver:
     """创建持久化 SQLite checkpointer。
 
-    使用 data/saves/checkpoints.db 存储 HITL 中断状态与图执行快照，
-    进程重启后可恢复中断会话。
+    使用 data/saves/checkpoints.db（AIDM_DATA_DIR 可覆盖）存储 HITL
+    中断状态与图执行快照，进程重启后可恢复中断会话。
     """
     os.makedirs(os.path.dirname(_CHECKPOINT_DB), exist_ok=True)
     conn = sqlite3.connect(_CHECKPOINT_DB, check_same_thread=False)
@@ -499,6 +505,39 @@ def build_graph():
 _GRAPH = None
 
 
+# ──────────────────────────────────────────────────────────────────────────
+# HITL Thread Identity（P1-02）
+# ──────────────────────────────────────────────────────────────────────────
+# 线程 ID 由服务器生成并绑定 campaign/character/session；
+# 客户端不得自行指定任意 thread_id（防跨战役/跨角色状态串扰）。
+
+def make_thread_id(campaign_id: int, character_id: int,
+                   session_id: str = "") -> str:
+    """生成服务器权威线程 ID:
+        campaign:{cid}:character:{charid}:session:{uuid}
+    checkpoint 按 thread_id 隔离状态，绑定能防止跨战役/跨角色误用。
+    """
+    import uuid
+    sid = session_id or uuid.uuid4().hex[:12]
+    return f"campaign:{int(campaign_id)}:character:{int(character_id)}:session:{sid}"
+
+
+def parse_thread_id(thread_id: str) -> dict | None:
+    """解析标准线程 ID → {campaign_id, character_id, session_id}。
+
+    非标准/旧格式（如 "default" 或 "campaign_1"）返回 None（拒绝使用）。
+    """
+    import re
+    m = re.fullmatch(r"campaign:(\d+):character:(\d+):session:([\w-]+)", thread_id or "")
+    if not m:
+        return None
+    return {
+        "campaign_id": int(m.group(1)),
+        "character_id": int(m.group(2)),
+        "session_id": m.group(3),
+    }
+
+
 def get_graph():
     global _GRAPH
     if _GRAPH is None:
@@ -507,25 +546,31 @@ def get_graph():
 
 
 def run(player_input: str, campaign_id: int, character_id: int,
-        thread_id: str = "default", hitl: bool = False) -> GameState:
-    """跑一轮硬性判定链。HITL 启用时可能 interrupt，调用方需用 Command(resume=) 恢复。"""
+        thread_id: str = "default", hitl: bool = False, **extra) -> GameState:
+    """跑一轮硬性判定链。HITL 启用时可能 interrupt，调用方需用 Command(resume=) 恢复。
+
+    ★ P1-04: extra 可携带 idempotency_key（幂等键），注入初始 GameState，
+      apply_node 重复提交时返回缓存结果。
+    """
     import uuid
     cfg = {"configurable": {"thread_id": thread_id or str(uuid.uuid4())}}
     init = GameState(
         player_input=player_input, campaign_id=campaign_id,
         character_id=character_id, hitl=hitl,
         combat=_load_combat(campaign_id),
+        **extra,
     ).model_dump()
     return get_graph().invoke(init, config=cfg)
 
 
 def run_turn(player_input: str, campaign_id: int, character_id: int,
              thread_id: str = "default", hitl: bool = False,
-             responder=None) -> GameState:
+             responder=None, **extra) -> GameState:
     """HITL 感知的一轮：invoke，若 interrupt 则调 responder(q)->ans 恢复，循环至完成。
 
     responder: 可调用对象，接收 interrupt 的 question dict，返回 'y'/'n'。
                为 None 时遇到 interrupt 直接返回中断态（由调用方处理，如 API）。
+    ★ P1-04: extra 可携带 idempotency_key。
     """
     from langgraph.types import Command
     cfg = {"configurable": {"thread_id": thread_id or "default"}}
@@ -533,6 +578,7 @@ def run_turn(player_input: str, campaign_id: int, character_id: int,
         player_input=player_input, campaign_id=campaign_id,
         character_id=character_id, hitl=hitl,
         combat=_load_combat(campaign_id),
+        **extra,
     ).model_dump()
     r = get_graph().invoke(init, config=cfg)
     guard = 0

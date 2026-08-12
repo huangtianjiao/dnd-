@@ -1,0 +1,30 @@
+# Aidm 依赖锁（P2-04）— by pip freeze, pinned 供可复现构建
+# 用法: pip install -r requirements.lock
+
+langchain==0.3.27
+langgraph==0.2.76
+langgraph-checkpoint-sqlite==3.1.0
+langchain-openai==0.3.35
+openai==2.38.0
+qdrant-client==1.18.0
+sentence-transformers==5.1.0
+llama-index==0.14.23
+llama-index-core==0.14.23
+llama-index-vector-stores-qdrant==0.10.2
+llama-index-embeddings-huggingface==0.7.0
+llama-index-retrievers-bm25==0.7.1
+sqlmodel==0.0.39
+pydantic==2.13.4
+pydantic-settings==2.14.1
+fastapi==0.125.0
+uvicorn==0.42.0
+python-socketio==5.16.2
+beautifulsoup4==4.14.3
+lxml==5.3.0
+loguru==0.7.3
+langfuse==4.14.1
+pytest-cov==7.1.0
+pytest-xdist==3.8.0
+hypothesis==6.163.0
+redis==7.3.0
+

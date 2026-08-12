@@ -110,8 +110,12 @@ class ChatIn(BaseModel):
     player_input: str
     campaign_id: int
     character_id: int
-    thread_id: str = "default"
+    thread_id: str = "default"   # P1-02: 服务器忽略客户端值，改用权威线程 ID
     hitl: bool = False
+    # P1-04: 幂等键（可选；同 command_id 重复提交不重复执行）
+    command_id: str = ""
+    # P1-05: 战役乐观锁版本（可选；不匹配返回 409 STALE_VERSION）
+    expected_version: int | None = None
 
     # SEC-001: 输入校验
     @field_validator("player_input")
@@ -132,10 +136,18 @@ class ChatIn(BaseModel):
             raise ValueError("thread_id 包含非法字符")
         return v
 
+    @field_validator("command_id")
+    @classmethod
+    def _validate_command_id(cls, v: str) -> str:
+        if len(v) > 100:
+            raise ValueError("command_id 过长")
+        return v
+
 
 class ResumeIn(BaseModel):
     thread_id: str
     answer: str = "y"
+    character_id: int = 0   # P1-03: 恢复者的角色身份（ownership 校验）
 
 
 class JoinIn(BaseModel):

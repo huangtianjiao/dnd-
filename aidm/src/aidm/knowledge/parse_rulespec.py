@@ -13,7 +13,8 @@ import re
 # 可用环境变量 AIDM_RULE_SPEC 覆盖。
 def _default_spec_path() -> str:
     from ..config import PROJECT_ROOT
-    return os.getenv("AIDM_RULE_SPEC", str(PROJECT_ROOT / "aidm" / "docs" / "RULE_SPEC.md"))
+    from ..config import get_settings
+    return get_settings().aidm_rule_spec or str(PROJECT_ROOT / "aidm" / "docs" / "RULE_SPEC.md")
 
 
 SPEC_PATH = _default_spec_path()

@@ -26,16 +26,19 @@ import socketio
 
 from ..brain import combat_flow, graph, world
 from ..brain.room import CampaignRoom, ConnectionManager, manager
+from ..config import resolve_allowed_origins
 from ..stats import store
 from .memory_bg import _async_memory_process
+from .session_tokens import parse_session_token
 
 # ──────────────────────────────────────────────────────────────────────────
 # Socket.IO 服务器（ASGI 模式）
 # ──────────────────────────────────────────────────────────────────────────
 
+# ★ P0-06: CORS 与 HTTP 统一从配置读取（AIDM_ALLOWED_ORIGINS），不再硬编码 "*"
 sio = socketio.AsyncServer(
     async_mode="asgi",
-    cors_allowed_origins="*",
+    cors_allowed_origins=resolve_allowed_origins(),
     # 启用心跳检测，快速发现断线
     ping_interval=25,
     ping_timeout=20,
@@ -88,18 +91,29 @@ def _combatant_payload(x) -> dict:
 async def connect(sid, environ, auth=None):
     """玩家连接时自动加入战役房间。
 
-    连接参数通过 query string 传递:
-      campaign_id=123&character_id=456&name=阿拉贡&role=player|dm
-      可选: api_key=...（AIDM_API_KEY 启用时必填）、dm_token=...（AIDM_DM_TOKEN 启用时 DM 必填）
+    ★ P0-05: 凭据经 Socket.IO auth 载荷传递（auth={"token": <session-token>}），
+      不再放入 query string（避免出现在代理 access log / 监控 / tracing）。
+    ★ P0-04: DM/房主身份取自服务器签名令牌的 role 声明（auth token），
+      query 中的 role=dm 一律忽略，客户端无法自封 DM。
+
+    连接参数（query，仅公开信息）:
+      campaign_id=123&character_id=456&name=阿拉贡
 
     握手校验（与 REST 层同口径，否则可绕过 /room/join 密码直连）:
-      1. API Key（若启用）
-      2. 战役存在、角色存在且属于该战役（DM 无角色卡时 character_id=0 豁免）
+      1. 会话令牌（若提供）：验签解析 → 决定 DM/房主权限
+      2. 战役存在、角色存在且属于该战役
       3. 若该战役存在带密码的 REST 房间 → 连接者必须已通过 /room/join 注册
-      4. DM 身份：若配置 AIDM_DM_TOKEN，role=dm 需持正确口令，否则降级为普通玩家
     """
     import os
     import urllib.parse
+
+    # —— P0-05: 只从 auth 载荷读取令牌（Socket.IO 客户端 auth 字段）——
+    token = ""
+    if isinstance(auth, dict):
+        token = auth.get("token", "") or ""
+    claims = parse_session_token(token) if token else None
+    is_dm = bool(claims and claims.is_dm)
+
     qs = environ.get("QUERY_STRING", "")
     # unquote：socket.io-client 会把中文 name 做 URL 编码，
     # 否则 join/leave/result 等事件里显示为 %E9... 乱码
@@ -111,11 +125,6 @@ async def connect(sid, environ, auth=None):
         """拒连：ConnectionRefusedError 的 message 会随 connect_error 送达客户端。"""
         raise socketio.exceptions.ConnectionRefusedError(message)
 
-    # 1) API Key（与 HTTP 全局门同源：AIDM_API_KEY 存在时强制）
-    expected_key = os.getenv("AIDM_API_KEY", "")
-    if expected_key and params.get("api_key", "") != expected_key:
-        return await _reject("API Key 无效或缺失")
-
     try:
         campaign_id = int(params.get("campaign_id", "0"))
         character_id = int(params.get("character_id", "0"))
@@ -123,7 +132,6 @@ async def connect(sid, environ, auth=None):
         return await _reject("连接参数非法")
 
     name = params.get("name", "玩家")
-    is_dm = params.get("role", "player") == "dm"
 
     # 2) 战役/角色存在性
     if store.get_campaign(campaign_id) is None:
@@ -143,22 +151,21 @@ async def connect(sid, environ, auth=None):
         if not member:
             return await _reject("该房间需要密码，请通过房间列表加入")
 
-    # 4) DM 口令（可选：未配置时保持向后兼容，任何人可自称 DM）
-    dm_token = os.getenv("AIDM_DM_TOKEN", "")
-    if is_dm and dm_token and params.get("dm_token", "") != dm_token:
-        await sio.emit("error", {"message": "DM 口令错误，已以普通玩家身份加入"}, to=sid)
-        is_dm = False
+    # 4) DM/房主身份：仅来自验签后的令牌声明（P0-04）
+    #    query 中的 role=dm / api_key / dm_token 不再参与权限判定
 
     # 加入 Socket.IO 房间
     room = f"campaign_{campaign_id}"
     await sio.enter_room(sid, room)
 
     # 保存会话（支持断线重连恢复）
+    role = claims.role if claims else "player"
     await sio.save_session(sid, {
         "campaign_id": campaign_id,
         "character_id": character_id,
         "name": name,
         "is_dm": is_dm,
+        "role": role,
         "sid": sid,
     })
 
@@ -239,7 +246,11 @@ async def on_action(sid, data):
 
     # 序列化执行 graph.run（per-campaign 锁，不同战役可并行）
     # 回合检查在锁内二次确认：两玩家并发时后排队者在前者推进回合后不应再执行
-    thread_id = f"campaign_{campaign_id}"
+    # ★ P1-02: 线程 ID 由服务器生成（绑定 campaign+character），客户端不可指定
+    thread_id = graph.make_thread_id(campaign_id, character_id)
+    # ★ P1-04: 客户端可携带 command_id 作为幂等键（WS 重连/前端重复点击不重复执行）
+    command_id = (data.get("command_id") or "").strip()
+    state_extra = {"idempotency_key": command_id} if command_id else {}
     try:
         async with get_campaign_lock(campaign_id):
             camp_room = CampaignRoom.get(campaign_id)
@@ -253,7 +264,7 @@ async def on_action(sid, data):
             result = await loop.run_in_executor(
                 None,
                 functools.partial(graph.run, player_input, campaign_id,
-                                  character_id, thread_id, False),
+                                  character_id, thread_id, False, **state_extra),
             )
     except Exception as e:
         # 管线异常兑底：必须仍发 result，否则前端 busy 永久卡死（D4 实测发现）

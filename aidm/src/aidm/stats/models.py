@@ -416,6 +416,8 @@ class Campaign(SQLModel, table=True):
     ruleset_id: str = Field(default="dnd5e_2024_core")
     ruleset_revision: str = Field(default="2024.1")
     content_pack_versions_json: str = Field(default="{}")  # {pack_name: version}
+    # P1-05: 乐观锁版本（与 CombatState.version 同构）— 防并发丢失更新
+    version: int = Field(default=0)
 
     @property
     def world_flags(self) -> dict:

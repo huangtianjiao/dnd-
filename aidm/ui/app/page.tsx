@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { apiGet, apiPost, errMsg } from "./lib/api";
 import type { OpeningData, RoomJoinResult, GameMode } from "./lib/types";
-import { useSocket } from "./hooks/useSocket";
+import { useSocket, setSessionToken } from "./hooks/useSocket";
 import { useCharacter, useCombat, useGameState } from "./hooks/useGameState";
 import { RoomPanel, HostControls } from "./components/RoomPanel";
 import { OpeningConfirm } from "./components/OpeningConfirm";
@@ -151,6 +151,25 @@ export default function Page() {
     onMonsterActionEvent: gs.onMonsterAction,
   });
 
+  // ── ★ P0-04/P0-05: 连接前先经 /auth/session 换取服务器签名会话令牌 ──
+  // DM 身份由后端校验 dm_token 后签发 role=dm 令牌决定；WS 凭据走 auth 载荷。
+  const connectWithSession = useCallback(
+    async (cid: number, chId: number, name: string) => {
+      try {
+        const r = await apiPost("/auth/session", {
+          campaign_id: cid,
+          character_id: chId,
+          ...(isDm ? { dm_token: dmToken } : {}),
+        });
+        setSessionToken(r.token);
+      } catch {
+        setSessionToken("");
+      }
+      connectWS(cid, chId, name);
+    },
+    [connectWS, isDm, dmToken]
+  );
+
   // ── 开始新游戏 ──
   const startNewGame = useCallback(async () => {
     if (starting) return;
@@ -240,7 +259,7 @@ export default function Page() {
     if (opening?.action_options) gs.setChoices(opening.action_options);
     if (opening?.scene) gs.setScene(opening.scene);
     setScreen("game");
-    connectWS(campId, charId, name, isDm ? "dm" : undefined, dmToken || undefined);
+    connectWithSession(campId, charId, name);
     refreshChar();
     setInp("");
     createdRef.current = null; // 正式开局，下次新游戏从零创建
@@ -316,7 +335,7 @@ export default function Page() {
       setIsHost(host);
       gs.reset([{ type: "event", text: `加入房间 ${r.room_id}${host ? "（房主）" : ""}`, eventCls: "" }]);
       setScreen("game");
-      connectWS(r.campaign_id, r.character_id, name, isDm ? "dm" : undefined, dmToken || undefined);
+      connectWithSession(r.campaign_id, r.character_id, name);
       setTimeout(() => {
         apiGet(`/scene/${r.campaign_id}`).then(gs.setScene).catch(() => {});
         loadCombat(r.campaign_id);
@@ -383,7 +402,7 @@ export default function Page() {
       gs.setChoices(exits.length ? exits : ["观察四周", "回忆当前处境", "检查随身装备"]);
       setCombat(st.combat ?? null);
       setScreen("game");
-      connectWS(cid, ch.id, ch.name, isDm ? "dm" : undefined, dmToken || undefined);
+      connectWithSession(cid, ch.id, ch.name);
       // 房间上下文恢复（房间为内存对象，重启后 404 属正常 → 静默忽略）
       apiGet(`/room/by-campaign/${cid}`)
         .then((room: any) => {
@@ -430,7 +449,7 @@ export default function Page() {
       setMyName(name);
       gs.reset([{ type: "event", text: `加入战役 #${cid}`, eventCls: "" }]);
       setScreen("game");
-      connectWS(cid, ch.character_id || ch.id, name, isDm ? "dm" : undefined, dmToken || undefined);
+      connectWithSession(cid, ch.character_id || ch.id, name);
       setInp("");
       // 同步当前场景/战斗（晚于 WS 连接，作为兼容兑底）
       setTimeout(() => {
@@ -495,7 +514,12 @@ export default function Page() {
     if (!hitlData) return;
     setHitlLoading(true);
     try {
-      const r = await apiPost("/chat/resume", { thread_id: hitlData.threadId, answer: "y" });
+      // ★ P1-03: resume 需携带角色身份（ownership 校验）
+      const r = await apiPost("/chat/resume", {
+        thread_id: hitlData.threadId,
+        answer: "y",
+        character_id: charId,
+      });
       if (r.interrupted) {
         setHitlData({ threadId: r.thread_id || hitlData.threadId, question: r.question || hitlData.question });
       } else {
@@ -508,7 +532,7 @@ export default function Page() {
     } finally {
       setHitlLoading(false);
     }
-  }, [hitlData, applyChatResult, toast]);
+  }, [hitlData, charId, applyChatResult, toast]);
 
   const handleHITLCancel = useCallback(() => {
     setHitlData(null);
@@ -963,7 +987,7 @@ export default function Page() {
                 </>
               )}
               {isHost && roomId && (
-                <HostControls roomId={roomId} myName={myName} toast={toast} onTransferred={() => setIsHost(false)} />
+                <HostControls roomId={roomId} players={gs.party} toast={toast} onTransferred={() => setIsHost(false)} />
               )}
               <button className="btn btn-amber w-full" onClick={() => { disconnect(); setScreen("menu"); }}>
                 🚪 退出到主菜单

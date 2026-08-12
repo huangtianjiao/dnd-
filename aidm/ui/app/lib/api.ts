@@ -80,6 +80,20 @@ export async function apiPost<T = any>(path: string, body: any): Promise<T> {
   return handleResponse<T>(res);
 }
 
+/** 带 Bearer 会话令牌的 POST（P0-02：房主管理操作按令牌鉴权，不再传名字）。 */
+export async function apiPostAuth<T = any>(path: string, body: any, token: string): Promise<T> {
+  const res = await fetch(`${API}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+  return handleResponse<T>(res);
+}
+
 export async function apiGet<T = any>(path: string): Promise<T> {
   const res = await fetch(`${API}${path}`, { headers: authHeaders() });
   return handleResponse<T>(res);

@@ -23,10 +23,6 @@ import os
 import sys
 import tempfile
 
-_SRC = os.path.join(os.path.dirname(__file__), "..", "src")
-if _SRC not in sys.path:
-    sys.path.insert(0, _SRC)
-
 
 def _setup_test_db():
     """创建临时数据库并 patch store 模块（与 test_api_endpoints.py 一致）。"""
