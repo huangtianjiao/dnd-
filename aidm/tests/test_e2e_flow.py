@@ -281,14 +281,17 @@ def test_api_create_campaign_and_character():
         assert ch["name"] == "阿拉贡"
         assert isinstance(ch["id"], int)
 
-        # 验证角色卡
-        r = client.get(f"/character/{ch['id']}")
+        # 验证角色卡（★ P0-4: 先换会话令牌）
+        tok = client.post("/auth/session", json={
+            "campaign_id": camp["id"], "character_id": ch["id"]}).json()["token"]
+        _H = {"Authorization": f"Bearer {tok}"}
+        r = client.get(f"/character/{ch['id']}", headers=_H)
         assert r.status_code == 200
         c = r.json()
         assert c["abilities"]["str"]["mod"] == 3   # STR16 → +3
         assert c["proficiency"] == 2               # 3级 → +2
 
-        return camp, ch
+        return camp, ch, _H
     finally:
         _teardown_test_db(orig_default, orig_engines, store)
 
@@ -338,8 +341,11 @@ def test_api_campaign_state():
             "campaign_id": camp["id"],
         }).json()
 
-        # 获取战役状态
-        r = client.get(f"/campaign/{camp['id']}/state")
+        # 获取战役状态（★ P0-4: 先换会话令牌）
+        tok = client.post("/auth/session", json={
+            "campaign_id": camp["id"], "character_id": ch["id"]}).json()["token"]
+        _H = {"Authorization": f"Bearer {tok}"}
+        r = client.get(f"/campaign/{camp['id']}/state", headers=_H)
         assert r.status_code == 200
         state = r.json()
         assert "campaign" in state or "characters" in state

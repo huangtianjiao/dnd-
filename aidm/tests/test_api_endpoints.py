@@ -118,8 +118,14 @@ def test_get_character_returns_full_sheet():
             "campaign_id": camp["id"],
         }).json()
 
+        # ★ P0-4: 先换会话令牌（Bearer），再访问受保护的角色卡接口
+        tok = client.post("/auth/session", json={
+            "campaign_id": camp["id"],
+            "character_id": ch["id"]}).json()["token"]
+        _H = {"Authorization": f"Bearer {tok}"}
+
         # 获取角色卡
-        r = client.get(f"/character/{ch['id']}")
+        r = client.get(f"/character/{ch['id']}", headers=_H)
         assert r.status_code == 200
         c = r.json()
 

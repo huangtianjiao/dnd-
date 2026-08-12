@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 from fastapi import Header
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ...brain import room as room_mod
 from ...stats import models, store
@@ -76,9 +76,10 @@ class RoomJoinIn(BaseModel):
     abilities: dict = {"str": 10, "dex": 10, "con": 10,
                        "int": 10, "wis": 10, "cha": 10}
     ability_method: str = "free"
-    hp_max: int = 10
-    ac: int = 10
-    speed: int = 30
+    # ★ P1-01/审查#13: 客户端提交值被服务器忽略（deprecated）
+    hp_max: int = Field(10, deprecated=True)
+    ac: int = Field(10, deprecated=True)
+    speed: int = Field(30, deprecated=True)
     equipped_weapon: str = ""
     # 房主令牌：由 /room/create 签发（role=host、绑定 room_id），
     # 服务器验签通过才创建 host 成员身份

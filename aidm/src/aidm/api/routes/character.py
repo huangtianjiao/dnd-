@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ...data import magic_items as mi_db
 from ...stats import models, store
-from .dependencies import CharIn, JoinIn, validate_abilities, init_loadout
+from .dependencies import (
+    CharIn,
+    JoinIn,
+    init_loadout,
+    require_character_owner,
+    require_session,
+    validate_abilities,
+)
 
 router = APIRouter(tags=["character"])
 
@@ -65,8 +72,12 @@ def create_character(c: CharIn):
 
 
 @router.get("/character/{cid}")
-def get_character(cid: int):
-    """角色卡全数据（前端角色面板用）。"""
+def get_character(cid: int, claims: dict = Depends(require_session)):
+    """角色卡全数据（前端角色面板用）。
+
+    ★ P0-4: 会话归属校验——只能读自己的角色（或 DM/房主）。
+    """
+    require_character_owner(cid, claims)
     from ...engine import dice
     ch = store.get_character(cid)
     if ch is None:
@@ -92,8 +103,12 @@ def get_character(cid: int):
 
 
 @router.get("/character/{cid}/inventory")
-def get_inventory(cid: int):
-    """获取角色完整物品栏。"""
+def get_inventory(cid: int, claims: dict = Depends(require_session)):
+    """获取角色完整物品栏。
+
+    ★ P0-4: 归属校验。
+    """
+    require_character_owner(cid, claims)
     ch = store.get_character(cid)
     if ch is None:
         raise HTTPException(status_code=404, detail={"error": "not found", "message": f"角色 {cid} 不存在"})
@@ -137,21 +152,30 @@ def get_inventory(cid: int):
 
 
 @router.post("/character/{cid}/attune")
-def attune_item(cid: int, req: AttuneIn):
+def attune_item(cid: int, req: AttuneIn,
+                       claims: dict = Depends(require_session)):
+    """★ P0-4: 归属校验。"""
+    require_character_owner(cid, claims)
     """同调魔法物品。"""
     from ...brain import loot
     return loot.attune_magic_item(cid, req.item_name)
 
 
 @router.post("/character/{cid}/break-attunement")
-def break_attunement(cid: int, req: BreakAttuneIn):
+def break_attunement(cid: int, req: BreakAttuneIn,
+                             claims: dict = Depends(require_session)):
+    """★ P0-4: 归属校验。"""
+    require_character_owner(cid, claims)
     """解除魔法物品同调。"""
     from ...brain import loot
     return loot.break_attunement(cid, req.item_name)
 
 
 @router.post("/character/{cid}/equip-weapon")
-def equip_weapon(cid: int, req: EquipWeaponIn):
+def equip_weapon(cid: int, req: EquipWeaponIn,
+                       claims: dict = Depends(require_session)):
+    """★ P0-4: 归属校验。"""
+    require_character_owner(cid, claims)
     """装备/更换当前手持武器。"""
     from ...data import equipment as equip_db
     ch = store.get_character(cid)
@@ -189,7 +213,10 @@ def list_weapons():
 
 
 @router.post("/character/{cid}/rest")
-def rest_character(cid: int, req: RestIn):
+def rest_character(cid: int, req: RestIn,
+                       claims: dict = Depends(require_session)):
+    """★ P0-4: 归属校验。"""
+    require_character_owner(cid, claims)
     """执行短休/长休，应用结果到角色卡。"""
     from ...brain import rest as rest_mod
     ch = store.get_character(cid)

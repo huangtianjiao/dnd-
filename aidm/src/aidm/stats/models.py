@@ -236,6 +236,34 @@ class Character(SQLModel, table=True):
             migrated += 1
         return migrated
 
+    def sync_inventory_views(self) -> None:
+        """★ P1-10（review#11）: 收敛双权威——以 inventory（字符串列表）
+        为唯一权威，items_structured 作为派生视图。
+
+        每次保存前调用：删除 inventory 中已不存在的结构化条目，
+        补上 inventory 中有而结构化缺失的条目，杜绝状态漂移。
+        """
+        inv = set(self.inventory)
+        structured = self.items_structured
+        kept = [
+            i for i in structured
+            if i.get("name") in inv or i.get("item_id") in inv
+        ]
+        names = {i.get("name") for i in kept}
+        for name in self.inventory:
+            if name in names:
+                continue
+            kept.append({
+                "item_id": f"item.{name.lower().replace(' ', '_')}",
+                "name": name,
+                "quantity": 1,
+                "charges": -1,
+                "attuned": False,
+                "properties": {},
+            })
+            names.add(name)
+        self.items_structured_json = json.dumps(kept)
+
     # —— ITEM-001: InventoryManager 桥接 ——
     # 使用 engine.item_instance.InventoryManager 统一操作结构化物品栏
     def get_inventory_manager(self):

@@ -110,7 +110,8 @@ _MIGRATIONS: dict[int, object] = {
 _engines: dict[str, object] = {}
 
 
-def get_engine(db_path: str = DEFAULT_DB):
+def get_engine(db_path: str | None = None):
+    db_path = db_path or DEFAULT_DB
     if db_path not in _engines:
         # 自动建父目录（绝对路径）
         if db_path.startswith("sqlite:///") and ":memory:" not in db_path:
@@ -125,7 +126,8 @@ def get_engine(db_path: str = DEFAULT_DB):
 
 
 @contextmanager
-def session(db_path: str = DEFAULT_DB):
+def session(db_path: str | None = None):
+    db_path = db_path or DEFAULT_DB
     """事务会话上下文。"""
     eng = get_engine(db_path)
     s = Session(eng, expire_on_commit=False)   # 提交后对象仍可用（非 detached）
@@ -143,7 +145,13 @@ def session(db_path: str = DEFAULT_DB):
 # 角色卡
 # ──────────────────────────────────────────────────────────────────────────
 
-def save_character(ch: M.Character, db_path: str = DEFAULT_DB) -> M.Character:
+def save_character(ch: M.Character, db_path: str | None = None) -> M.Character:
+    db_path = db_path or DEFAULT_DB
+    # ★ P1-10: 保存前收敛 inventory 双权威（inventory 权威，items_structured 派生）
+    try:
+        ch.sync_inventory_views()
+    except Exception:  # noqa: BLE001  结构性视图同步失败不阻断主保存
+        pass
     with session(db_path) as s:
         s.add(ch)
         s.commit()
@@ -151,7 +159,8 @@ def save_character(ch: M.Character, db_path: str = DEFAULT_DB) -> M.Character:
         return ch
 
 
-def get_character(cid: int, db_path: str = DEFAULT_DB) -> M.Character | None:
+def get_character(cid: int, db_path: str | None = None) -> M.Character | None:
+    db_path = db_path or DEFAULT_DB
     with session(db_path) as s:
         return s.get(M.Character, cid)
 
@@ -165,36 +174,50 @@ def migrate_character_data(data: dict) -> dict:
 
     规则: ARC-001 规则集版本固定 — 数据字段增删改通过 MigrationPlan 声明，
           不硬编码。当前注册的默认计划用于角色结构字段的向后兼容。
+
+    ★ review#12: fail-closed——迁移失败必须抛错（SaveMigrationError），
+      绝不静默继续使用旧数据（对游戏存档静默回退比报错更危险）。
     """
-    try:
-        from ..engine.migration import (
-            MigrationPlan,
-            MigrationRegistry,
-            MigrationStep,
-        )
-        registry = MigrationRegistry()
-        registry.register_plan(MigrationPlan(
-            from_revision="2024.1",
-            to_revision="2024.2",
-            content_id="character.save",
-            steps=[
-                MigrationStep(
-                    description="旧角色无 class_levels_json → 从 char_class 派生",
-                    field_path="class_levels",
-                    operation="set_default",
-                    new_value=None,
-                ),
-            ],
-        ))
-        if registry.needs_migration("character.save", data.get("revision", "2024.1"), "2024.2"):
-            return registry.migrate("character.save", data.get("revision", "2024.1"), data)
-        return data
-    except Exception:
-        return data
+    from ..engine.migration import (
+        MigrationPlan,
+        MigrationRegistry,
+        MigrationStep,
+    )
+    registry = MigrationRegistry()
+    registry.register_plan(MigrationPlan(
+        from_revision="2024.1",
+        to_revision="2024.2",
+        content_id="character.save",
+        steps=[
+            MigrationStep(
+                description="旧角色无 class_levels_json → 从 char_class 派生",
+                field_path="class_levels",
+                operation="set_default",
+                new_value=None,
+            ),
+        ],
+    ))
+    save_rev = data.get("revision", "2024.1")
+    if registry.needs_migration("character.save", save_rev, "2024.2"):
+        # ★ review#12: 未知 revision（不在任何计划的 from_revision 中）
+        #   → 显式报错，绝不静默按旧数据继续
+        if registry.get_plan("character.save", save_rev) is None:
+            from ..errors import SaveMigrationError
+            raise SaveMigrationError(
+                f"未知存档 revision={save_rev!r}，无法迁移（需人工处理）",
+                operation="migrate_character_data")
+        try:
+            return registry.migrate("character.save", save_rev, data)
+        except Exception as e:  # noqa: BLE001
+            from ..errors import SaveMigrationError
+            raise SaveMigrationError(
+                f"角色存档迁移失败（revision={save_rev}）: {e}",
+                operation="migrate_character_data") from e
+    return data
 
 
 def list_characters(campaign_id: int | None = None,
-                    db_path: str = DEFAULT_DB) -> list[M.Character]:
+                    db_path: str | None = None) -> list[M.Character]:
     with session(db_path) as s:
         stmt = select(M.Character)
         if campaign_id is not None:
@@ -203,7 +226,7 @@ def list_characters(campaign_id: int | None = None,
 
 
 def get_character_by_name(name: str, campaign_id: int | None = None,
-                          db_path: str = DEFAULT_DB) -> M.Character | None:
+                          db_path: str | None = None) -> M.Character | None:
     """按名字查找角色（用于战利品分配等按名字操作的场景）。
 
     campaign_id 为 None 时全局搜索（返回第一个匹配）。
@@ -215,7 +238,8 @@ def get_character_by_name(name: str, campaign_id: int | None = None,
         return s.exec(stmt).first()
 
 
-def delete_character(cid: int, db_path: str = DEFAULT_DB) -> bool:
+def delete_character(cid: int, db_path: str | None = None) -> bool:
+    db_path = db_path or DEFAULT_DB
     """删除角色卡。返回是否实际删除了一行（cid 不存在则 False）。
 
     用于房间加入失败时回滚刚创建的临时角色卡，避免脏数据残留。
@@ -228,7 +252,8 @@ def delete_character(cid: int, db_path: str = DEFAULT_DB) -> bool:
         return True
 
 
-def add_character_gold(cid: int, amount: int, db_path: str = DEFAULT_DB) -> int:
+def add_character_gold(cid: int, amount: int, db_path: str | None = None) -> int:
+    db_path = db_path or DEFAULT_DB
     """为角色增加/扣除金币，返回更新后的余额。
 
     amount 可为负数（购买/消费时扣除）。
@@ -242,7 +267,8 @@ def add_character_gold(cid: int, amount: int, db_path: str = DEFAULT_DB) -> int:
         return ch.gold
 
 
-def set_character_gold(cid: int, amount: int, db_path: str = DEFAULT_DB) -> int:
+def set_character_gold(cid: int, amount: int, db_path: str | None = None) -> int:
+    db_path = db_path or DEFAULT_DB
     """直接设置角色金币数量，返回更新后的余额。"""
     with session(db_path) as s:
         ch = s.get(M.Character, cid)
@@ -258,7 +284,7 @@ def set_character_gold(cid: int, amount: int, db_path: str = DEFAULT_DB) -> int:
 # ──────────────────────────────────────────────────────────────────────────
 
 def set_character_skills(character_id: int, skills: list[str],
-                         db_path: str = DEFAULT_DB) -> list[str]:
+                         db_path: str | None = None) -> list[str]:
     """保存角色技能熟练列表，返回更新后的列表。"""
     import json as _json
     with session(db_path) as s:
@@ -271,7 +297,7 @@ def set_character_skills(character_id: int, skills: list[str],
 
 
 def get_character_skills(character_id: int,
-                         db_path: str = DEFAULT_DB) -> list[str]:
+                         db_path: str | None = None) -> list[str]:
     """读取角色技能熟练列表。"""
     with session(db_path) as s:
         ch = s.get(M.Character, character_id)
@@ -285,7 +311,7 @@ def get_character_skills(character_id: int,
 # ──────────────────────────────────────────────────────────────────────────
 
 def set_concentration(character_id: int, spell_name: str, dc: int = 10,
-                      db_path: str = DEFAULT_DB) -> dict:
+                      db_path: str | None = None) -> dict:
     """设置角色专注状态（开始/结束专注）。返回当前专注信息。"""
     with session(db_path) as s:
         ch = s.get(M.Character, character_id)
@@ -300,7 +326,7 @@ def set_concentration(character_id: int, spell_name: str, dc: int = 10,
 
 
 def get_concentration(character_id: int,
-                      db_path: str = DEFAULT_DB) -> dict:
+                      db_path: str | None = None) -> dict:
     """读取角色专注状态。"""
     with session(db_path) as s:
         ch = s.get(M.Character, character_id)
@@ -314,7 +340,7 @@ def get_concentration(character_id: int,
 # ──────────────────────────────────────────────────────────────────────────
 
 def add_character_xp(character_id: int, amount: int,
-                     db_path: str = DEFAULT_DB) -> int:
+                     db_path: str | None = None) -> int:
     """为角色增加 XP，返回更新后的总 XP。"""
     with session(db_path) as s:
         ch = s.get(M.Character, character_id)
@@ -326,7 +352,7 @@ def add_character_xp(character_id: int, amount: int,
 
 
 def get_character_xp(character_id: int,
-                     db_path: str = DEFAULT_DB) -> int:
+                     db_path: str | None = None) -> int:
     """读取角色当前 XP。"""
     with session(db_path) as s:
         ch = s.get(M.Character, character_id)
@@ -339,7 +365,8 @@ def get_character_xp(character_id: int,
 # 战役 / rolling summary
 # ──────────────────────────────────────────────────────────────────────────
 
-def create_campaign(name: str, db_path: str = DEFAULT_DB) -> M.Campaign:
+def create_campaign(name: str, db_path: str | None = None) -> M.Campaign:
+    db_path = db_path or DEFAULT_DB
     """创建战役，固定规则集标识（ARC-001）。
 
     从默认 ruleset_manifest.json 加载 ruleset_id / revision / content_packs，
@@ -365,7 +392,7 @@ def create_campaign(name: str, db_path: str = DEFAULT_DB) -> M.Campaign:
         return c
 
 
-def save_campaign(c: M.Campaign, db_path: str = DEFAULT_DB,
+def save_campaign(c: M.Campaign, db_path: str | None = None,
                   expected_version: int | None = None) -> M.Campaign:
     """保存战役（★ P1-05: 乐观锁）。
 
@@ -406,18 +433,21 @@ class StaleVersionError(InvariantViolation):
     """P1-05: 乐观锁版本冲突（P2-05: 归类为状态不变量破坏 → 409）。"""
 
 
-def get_campaign(campaign_id: int, db_path: str = DEFAULT_DB) -> M.Campaign | None:
+def get_campaign(campaign_id: int, db_path: str | None = None) -> M.Campaign | None:
+    db_path = db_path or DEFAULT_DB
     with session(db_path) as s:
         return s.get(M.Campaign, campaign_id)
 
 
-def list_campaigns(db_path: str = DEFAULT_DB) -> list[M.Campaign]:
+def list_campaigns(db_path: str | None = None) -> list[M.Campaign]:
+    db_path = db_path or DEFAULT_DB
     """列出所有已保存战役（继续游戏用）。"""
     with session(db_path) as s:
         return list(s.exec(select(M.Campaign)))
 
 
-def append_summary(campaign_id: int, text: str, db_path: str = DEFAULT_DB) -> str:
+def append_summary(campaign_id: int, text: str, db_path: str | None = None) -> str:
+    db_path = db_path or DEFAULT_DB
     """追加剧情摘要到 rolling summary（P3 由 LLM 压缩旧剧情；P1 提供存储钩子）。
 
     规则: 数据模型 rolling_summary（防上下文爆炸）
@@ -432,13 +462,14 @@ def append_summary(campaign_id: int, text: str, db_path: str = DEFAULT_DB) -> st
         return c.rolling_summary
 
 
-def get_summary(campaign_id: int, db_path: str = DEFAULT_DB) -> str:
+def get_summary(campaign_id: int, db_path: str | None = None) -> str:
+    db_path = db_path or DEFAULT_DB
     c = get_campaign(campaign_id, db_path)
     return c.rolling_summary if c else ""
 
 
 def set_campaign_setting(campaign_id: int, setting: str, tone: str = "",
-                         db_path: str = DEFAULT_DB) -> M.Campaign | None:
+                         db_path: str | None = None) -> M.Campaign | None:
     """设置战役世界背景/基调。"""
     with session(db_path) as s:
         c = s.get(M.Campaign, campaign_id)
@@ -449,14 +480,16 @@ def set_campaign_setting(campaign_id: int, setting: str, tone: str = "",
         return c
 
 
-def save_scene(scene: M.Scene, db_path: str = DEFAULT_DB) -> M.Scene:
+def save_scene(scene: M.Scene, db_path: str | None = None) -> M.Scene:
+    db_path = db_path or DEFAULT_DB
     """保存/更新当前场景。"""
     with session(db_path) as s:
         s.add(scene); s.commit(); s.refresh(scene)
         return scene
 
 
-def get_scene(campaign_id: int, db_path: str = DEFAULT_DB) -> M.Scene | None:
+def get_scene(campaign_id: int, db_path: str | None = None) -> M.Scene | None:
+    db_path = db_path or DEFAULT_DB
     """取战役当前场景（最新一条）。"""
     with session(db_path) as s:
         stmt = select(M.Scene).where(M.Scene.campaign_id == campaign_id)
@@ -496,7 +529,7 @@ def _dict_to_combatant(d: dict) -> cmb.Combatant:
 
 
 def save_combat(campaign_id: int, combat: cmb.Combat,
-               db_path: str = DEFAULT_DB) -> M.CombatState:
+               db_path: str | None = None) -> M.CombatState:
     """把 engine.Combat 序列化为 CombatState 行（覆盖该战役的战斗行）。
 
     participants_json 升级为包裹格式 {"combatants": [...], "seconds_elapsed": n}，
@@ -519,7 +552,8 @@ def save_combat(campaign_id: int, combat: cmb.Combat,
         return cs
 
 
-def load_combat(campaign_id: int, db_path: str = DEFAULT_DB) -> cmb.Combat:
+def load_combat(campaign_id: int, db_path: str | None = None) -> cmb.Combat:
+    db_path = db_path or DEFAULT_DB
     """从 CombatState 行重建 engine.Combat。
 
     participants 与 initiative_order 按 cid 共享同一批对象（D5 修复：
@@ -553,7 +587,7 @@ def load_combat(campaign_id: int, db_path: str = DEFAULT_DB) -> cmb.Combat:
 
 def append_log(campaign_id: int, *, player_input: str = "", dm_output: str = "",
                dice_rolls: list = None, state_changes: list = None, rag_refs: list = None,
-               db_path: str = DEFAULT_DB) -> M.Log:
+               db_path: str | None = None) -> M.Log:
     log = M.Log(
         campaign_id=campaign_id, player_input=player_input, dm_output=dm_output,
         dice_rolls_json=json.dumps(dice_rolls or []),
@@ -566,7 +600,7 @@ def append_log(campaign_id: int, *, player_input: str = "", dm_output: str = "",
 
 
 def get_recent_logs(campaign_id: int, n: int = 6,
-                    db_path: str = DEFAULT_DB) -> list[M.Log]:
+                    db_path: str | None = None) -> list[M.Log]:
     """获取最近 n 条跑团日志（工作记忆数据源）。
 
     按时间正序返回（最旧的在前），用于注入 narrate prompt。
@@ -581,7 +615,8 @@ def get_recent_logs(campaign_id: int, n: int = 6,
         return list(reversed(logs))  # 时间正序
 
 
-def count_logs(campaign_id: int, db_path: str = DEFAULT_DB) -> int:
+def count_logs(campaign_id: int, db_path: str | None = None) -> int:
+    db_path = db_path or DEFAULT_DB
     """统计战役的日志总数（回合数，摘要折叠周期触发用）。"""
     from sqlalchemy import func
     with session(db_path) as s:

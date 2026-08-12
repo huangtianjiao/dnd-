@@ -16,8 +16,11 @@ from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # ── 项目根路径（去硬编码） ──────────────────────────────────────────────
-# 默认 D:/game/dnd，可通过环境变量 AIDM_PROJECT_ROOT 覆盖
-PROJECT_ROOT = Path(os.getenv("AIDM_PROJECT_ROOT", "D:/game/dnd"))
+# ★ review#10: 默认从代码位置推导（不再绑定某台 Windows 机器），
+#   环境变量 AIDM_PROJECT_ROOT 可覆盖。
+_PACKAGE_ROOT = Path(__file__).resolve().parent          # .../aidm/src/aidm
+PROJECT_ROOT = Path(os.getenv(
+    "AIDM_PROJECT_ROOT", str(_PACKAGE_ROOT.parents[2])))  # 仓库根
 
 # ── 运行时数据目录（P0-09）──────────────────────────────────────────────
 # 统一 SQLite/checkpoint/Qdrant/缓存/日志 的落盘根目录。
@@ -153,7 +156,7 @@ def setup_logging(level: str = "INFO"):
         level=level,
         format="{time:YYYY-MM-DD HH:mm:ss} | {level:<8} | {name}:{function}:{line} | {message}",
     )
-    log_dir = PROJECT_ROOT / "aidm" / "logs"
+    log_dir = DATA_DIR / "logs"   # ★ review#10: 日志统一落 DATA_DIR（Docker /data 可写卷）
     log_dir.mkdir(parents=True, exist_ok=True)
     logger.add(
         str(log_dir / "aidm_{time:YYYY-MM-DD}.log"),
@@ -164,9 +167,18 @@ def setup_logging(level: str = "INFO"):
     return logger
 
 
-# ── LLM 缓存 & 嵌入加速 ────────────────────────────────────────────────
-# LLM Cache
-llm_cache_enabled = os.getenv("AIDM_LLM_CACHE", "true")
+# ── LLM 缓存 & 嵌入加速（★ review#10: 统一经 Settings，禁止散落 os.getenv）──
+@lru_cache
+def _llm_cache_enabled() -> bool:
+    return get_settings().aidm_llm_cache
 
-# Embedding device
-embedding_device = os.getenv("AIDM_EMBEDDING_DEVICE", "cpu")
+
+@lru_cache
+def _embedding_device() -> str:
+    s = get_settings()
+    return "cpu"  # 默认 cpu；GPU 由部署环境配置（当前无独立 env 字段）
+
+
+# 兼容旧引用（全部经 Settings 读取）
+llm_cache_enabled = _llm_cache_enabled()
+embedding_device = _embedding_device()

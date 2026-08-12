@@ -196,12 +196,19 @@ def test_equip_weapon_ownership_gate():
         from aidm.api.main import app
 
         client = TestClient(app)
+        camp = client.post("/campaign", json={"name": "门控"}).json()
         r = client.post("/character", json={
-            "name": "门控骑士", "race": "人类", "char_class": "战士", "level": 1})
+            "name": "门控骑士", "race": "人类", "char_class": "战士", "level": 1,
+            "campaign_id": camp["id"]})
         cid = r.json()["id"]
+        # ★ P0-4: 换会话令牌
+        tok = client.post("/auth/session", json={
+            "campaign_id": camp["id"], "character_id": cid}).json()["token"]
+        _H = {"Authorization": f"Bearer {tok}"}
 
         # 未拥有 → 400 not_owned
-        r2 = client.post(f"/character/{cid}/equip-weapon", json={"weapon_name": "巨剑"})
+        r2 = client.post(f"/character/{cid}/equip-weapon",
+                         json={"weapon_name": "巨剑"}, headers=_H)
         assert r2.status_code == 400
         assert r2.json()["detail"]["error"] == "not_owned"
 
@@ -209,12 +216,13 @@ def test_equip_weapon_ownership_gate():
         ch = store.get_character(cid)
         ch.add_to_inventory("巨剑")
         store.save_character(ch)
-        r3 = client.post(f"/character/{cid}/equip-weapon", json={"weapon_name": "巨剑"})
+        r3 = client.post(f"/character/{cid}/equip-weapon",
+                         json={"weapon_name": "巨剑"}, headers=_H)
         assert r3.status_code == 200
         assert r3.json()["equipped_weapon"] == "巨剑"
 
         # inventory 端点返回拥有武器（含 equipped 标记）
-        r4 = client.get(f"/character/{cid}/inventory")
+        r4 = client.get(f"/character/{cid}/inventory", headers=_H)
         weapons = {w["name"]: w for w in r4.json()["weapons"]}
         assert "巨剑" in weapons and weapons["巨剑"]["equipped"]
     finally:
@@ -230,15 +238,21 @@ def test_equip_weapon_legacy_backfill():
         from aidm.stats import models
 
         # 直接落库模拟历史角色（绕过 /character 的 _init_loadout）
-        ch = models.Character(name="老角色", race="人类", char_class="战士", level=3)
+        camp = store.create_campaign("老战役", db_path=db_path)
+        ch = models.Character(name="老角色", race="人类", char_class="战士",
+                              level=3, campaign_id=camp.id)
         ch.equipped_weapon = "长剑"
-        ch = store.save_character(ch)
+        ch = store.save_character(ch, db_path=db_path)
         assert ch.inventory == []
 
         client = TestClient(app)
-        r = client.post(f"/character/{ch.id}/equip-weapon", json={"weapon_name": "长剑"})
+        tok = client.post("/auth/session", json={
+            "campaign_id": camp.id, "character_id": ch.id}).json()["token"]
+        _H = {"Authorization": f"Bearer {tok}"}
+        r = client.post(f"/character/{ch.id}/equip-weapon",
+                        json={"weapon_name": "长剑"}, headers=_H)
         assert r.status_code == 200
-        ch2 = store.get_character(ch.id)
+        ch2 = store.get_character(ch.id, db_path=db_path)
         assert "长剑" in ch2.inventory           # 懒回填生效
     finally:
         _teardown_test_db(orig_default, orig_engines, store)

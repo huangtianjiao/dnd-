@@ -601,3 +601,73 @@ class TestConditionsBoundaries:
         assert m.attacker_advantage is True
         m2 = attack_modifiers(attacker, target, distance_ft=10)
         assert m2.attacker_disadvantage is True
+
+# ── review 修复回归: RngContext 优劣势抵消 / contextvars 隔离 ─────
+
+@pytest.mark.rule("engine.rng_context")
+class TestRngReviewFixes:
+    def test_rng_context_adv_dis_cancel(self):
+        """review#3: 优劣势同时存在 → 抵消只掷一骰（R-CHK-005）。"""
+        from aidm.engine.rng_context import create_rng_context
+        rng = create_rng_context(seed=42)
+        # 固定随机源：randbelow 返回 0 → roll=1
+        class _Fixed:
+            def __init__(self, vals):
+                self._v = iter(vals)
+            def randint(self, a, b):
+                return next(self._v)
+        rng._rng = _Fixed([5])  # 抵消 → 只消费一个值
+        rec = rng.roll_d20(advantage=True, disadvantage=True)
+        assert len(rec.results) == 1, "优劣势抵消必须只掷一骰"
+        assert rec.results[0] == 5
+
+    def test_adv_only_two_dice_max(self):
+        from aidm.engine.rng_context import create_rng_context
+        rng = create_rng_context(seed=1)
+        class _Fixed:
+            def __init__(self, vals):
+                self._v = iter(vals)
+            def randint(self, a, b):
+                return next(self._v)
+        rng._rng = _Fixed([4, 10])
+        rec = rng.roll_d20(advantage=True)
+        assert len(rec.results) == 2
+        assert rec.results[0] == 4 and rec.results[1] == 10
+        assert rec.total == 10  # 取高
+
+    def test_contextvars_rng_isolation(self):
+        """review#9: RNG 注入按上下文隔离，互不污染。"""
+        import contextvars
+        from aidm.engine import dice
+        orig = dice.get_active_rng()
+        try:
+            ctx_a = contextvars.copy_context()
+            ctx_b = contextvars.copy_context()
+
+            def set_a():
+                dice.set_active_rng(_FixedRngForCtx(20))
+            ctx_a.run(set_a)
+
+            def set_b():
+                dice.set_active_rng(_FixedRngForCtx(1))
+            ctx_b.run(set_b)
+
+            # 各自上下文内读取各自 RNG（互不相同，且与主上下文无关）
+            ra = ctx_a.run(dice.get_active_rng)
+            rb = ctx_b.run(dice.get_active_rng)
+            assert ra is not None and rb is not None
+            assert type(ra).__name__ == type(rb).__name__ == "_FixedRngForCtx"
+            assert ra._v != rb._v, "两个上下文必须持有不同 RNG"
+            # 主上下文不受 ctx_a/ctx_b 注入影响（保持原值）
+            assert dice.get_active_rng() is orig
+        finally:
+            dice.set_active_rng(orig)
+
+
+class _FixedRngForCtx:
+    def __init__(self, v):
+        self._v = v
+    def randbelow(self, upper):
+        return self._v - 1
+    def __repr__(self):
+        return f"_FixedRngForCtx({self._v})"

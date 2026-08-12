@@ -386,3 +386,41 @@ class TestRoomRegression:
         # 非房主不能踢
         r2 = rm.kick_player(room.room_id, "Alice", p1)
         assert not r2["ok"] and r2["error"] == "not_host"
+
+# ── review#4: REST IDOR 负向测试 ─────────────────────────────────
+
+class TestRESTIdor:
+    def test_cannot_read_other_characters_sheet(self):
+        """角色 A 的令牌不能读取角色 B 的卡（403）。"""
+        import tempfile
+        from fastapi.testclient import TestClient
+        from aidm.api.main import app
+        from aidm.stats import store
+        from aidm.stats.models import Character
+
+        tmp = tempfile.mkdtemp(prefix="idor_")
+        db = f"sqlite:///{tmp}/t.db"
+        store.DEFAULT_DB = db
+        store._engines.clear()
+        store.get_engine(db)
+        try:
+            camp = store.create_campaign("IDOR", db_path=db)
+            a = store.save_character(Character(
+                name="甲", race="人类", char_class="战士", level=1,
+                campaign_id=camp.id), db)
+            b = store.save_character(Character(
+                name="乙", race="人类", char_class="战士", level=1,
+                campaign_id=camp.id), db)
+            client = TestClient(app)
+            tok = client.post("/auth/session", json={
+                "campaign_id": camp.id, "character_id": a.id}).json()["token"]
+            # 读自己的 → 200
+            r = client.get(f"/character/{a.id}",
+                           headers={"Authorization": f"Bearer {tok}"})
+            assert r.status_code == 200
+            # 读别人的 → 403（IDOR 防护）
+            r2 = client.get(f"/character/{b.id}",
+                            headers={"Authorization": f"Bearer {tok}"})
+            assert r2.status_code == 403
+        finally:
+            store._engines.clear()

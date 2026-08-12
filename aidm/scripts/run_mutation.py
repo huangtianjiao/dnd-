@@ -1,4 +1,8 @@
-"""P1-10 Mutation Testing — 确定性规则核心的变异测试门禁（Windows 本机可运行）。
+"""P1-10 Mutation Testing — 确定性规则核心的轻量变异信号（Windows 本机可运行）。
+
+★ review#9 诚实措辞：这是 lightweight mutation signal（防回退基线），
+  不是强门禁——仅覆盖 7 个核心模块、每模块 25 个操作符变异；
+  待接入 Linux CI 后逐步提升 50%→60%→70%→80%。
 
 mutmut 不支持原生 Windows（见 mutmut#397），故实现轻量变异执行器：
   1. 将 src/ 整体复制到临时目录（相对导入完整可用）
@@ -29,6 +33,7 @@ AIDM = Path(__file__).resolve().parents[1]
 # 门禁阈值取当前达成基线（0.50）保证 CI 回归防护可用；
 # 提升路径: tests/test_mutation_guard.py 待补边界
 # （_d20_check_core 成败判定、spell_slots 表边界、rest 内部恢复公式）。
+# 当前基线 52%；随守护测试增强逐步上调（50→60→70→80）
 MIN_SCORE = 0.50
 
 # 目标: 确定性规则核心模块 → 守护测试文件（原文件 + tests/test_mutation_guard.py 边界测试）
@@ -154,7 +159,10 @@ def main() -> int:
             print(f"  {module}: {r['killed']}/{r['total']} killed "
                   f"(score {r['score']:.0%})")
         except Exception as e:  # noqa: BLE001
+            # ★ review#9: 任何 target 执行错误 = pipeline fail
             print(f"  {module}: 运行失败 {e}")
+            print("✗ P1-10 失败: target 执行错误必须 fail（不允许跳过继续）")
+            return 1
 
     if not results:
         print("✗ 无变异测试结果")

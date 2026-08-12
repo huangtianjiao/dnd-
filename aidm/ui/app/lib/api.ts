@@ -5,23 +5,39 @@
  * 2. 旧端点 200 + {"error": "..."}
  */
 
-/** API 基址：优先 NEXT_PUBLIC_API；未配置时按当前访问主机推导（后端默认 8080），
- *  局域网多人时其他设备无需改配置即可连上。 */
+/** API 基址（review 建议：生产全 same-origin）。
+ *  ★ 生产（Docker）：不配置 NEXT_PUBLIC_API → 返回 ""（相对路径），
+ *    前端与 API 由同一个后端（8000）提供，无端口错配/无 CORS。
+ *  ★ 本地开发：Next dev(3000) → 后端(8080)，需显式配置 NEXT_PUBLIC_API。 */
 function resolveApiBase(): string {
-  if (process.env.NEXT_PUBLIC_API) return process.env.NEXT_PUBLIC_API;
-  if (typeof window !== "undefined") {
-    return `${window.location.protocol}//${window.location.hostname}:8080`;
+  if (process.env.NEXT_PUBLIC_API !== undefined && process.env.NEXT_PUBLIC_API !== "") {
+    return process.env.NEXT_PUBLIC_API;
   }
-  return "";
+  return "";  // same-origin（生产默认）
 }
 
 const API = resolveApiBase();
 
-/** 后端启用 AIDM_API_KEY 时，前端用 NEXT_PUBLIC_API_KEY 配套（REST 走 X-API-Key 头，WS 走 query） */
+/** 后端启用 AIDM_API_KEY 时，前端用 NEXT_PUBLIC_API_KEY 配套（REST 走 X-API-Key 头）。
+ *  ★ 审查 P0-5：浏览器内密钥不是秘密——仅作局域网内网的门卫；
+ *    真正的权限边界是后端 session token（P0-4 ownership 校验）。 */
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
 
+/** 会话令牌（P0-4 ownership）：连接游戏后由 useSocket 设置，
+ *  REST 请求自动携带 Authorization: Bearer，供后端归属校验。 */
+let sessionToken = "";
+export function setSessionToken(token: string) {
+  sessionToken = token;
+}
+export function getSessionToken() {
+  return sessionToken;
+}
+
 function authHeaders(): Record<string, string> {
-  return API_KEY ? { "X-API-Key": API_KEY } : {};
+  const h: Record<string, string> = {};
+  if (API_KEY) h["X-API-Key"] = API_KEY;
+  if (sessionToken) h["Authorization"] = `Bearer ${sessionToken}`;
+  return h;
 }
 
 export class ApiError extends Error {

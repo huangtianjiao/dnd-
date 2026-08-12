@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import re
 
-from fastapi import HTTPException
-from pydantic import BaseModel, field_validator
+from fastapi import Header, HTTPException
+from pydantic import BaseModel, Field, field_validator
 
 
 # ── SEC-001: 输入校验常量 ────────────────────────────────────────────────
@@ -39,9 +39,10 @@ class CharIn(BaseModel):
     alignment: str = "绝对中立"
     level: int = 1
     abilities: dict = {"str": 10, "dex": 10, "con": 10, "int": 10, "wis": 10, "cha": 10}
-    hp_max: int = 10
-    ac: int = 10
-    speed: int = 30
+    # ★ P1-01/审查#13: 客户端提交值被服务器忽略（deprecated）
+    hp_max: int = Field(10, deprecated=True)
+    ac: int = Field(10, deprecated=True)
+    speed: int = Field(30, deprecated=True)
     equipped_weapon: str = ""
     campaign_id: int | None = None
     ability_method: str = "free"
@@ -160,9 +161,10 @@ class JoinIn(BaseModel):
     level: int = 5
     abilities: dict = {"str": 16, "dex": 10, "con": 15, "int": 10, "wis": 12, "cha": 10}
     ability_method: str = "free"
-    hp_max: int = 38
-    ac: int = 18
-    speed: int = 30
+    # ★ P1-01/审查#13: 客户端提交值被服务器忽略（deprecated）
+    hp_max: int = Field(38, deprecated=True)
+    ac: int = Field(18, deprecated=True)
+    speed: int = Field(30, deprecated=True)
     equipped_weapon: str = ""
     campaign_id: int
 
@@ -280,3 +282,53 @@ def init_loadout(ch, equipped_weapon: str = "") -> None:
     ch.equipped_weapon = equipped_weapon or default_weapon_for_class(ch.char_class)
     if ch.equipped_weapon:
         ch.add_to_inventory(ch.equipped_weapon)
+
+
+# ── P0-4: Session Ownership 校验（IDOR 防护）────────────────────────
+
+def require_session(authorization: str | None = Header(default=None)) -> dict:
+    """FastAPI 依赖：解析 Bearer 会话令牌，返回 claims（无效 → 401）。
+
+    规则: P0-4 — REST 角色/战役资源接口必须校验调用者归属，
+    防止 IDOR（仅凭 ID 访问/修改他人资源）。
+    """
+    from ..session_tokens import parse_session_token
+    claims = None
+    if authorization and authorization.lower().startswith("bearer "):
+        claims = parse_session_token(authorization[7:].strip())
+    if claims is None:
+        raise HTTPException(status_code=401, detail={
+            "error": "UNAUTHORIZED",
+            "message": "缺少或无效的会话令牌（请先连接游戏会话）"})
+    return claims
+
+
+def require_character_owner(cid: int, claims: dict) -> None:
+    """校验调用者对该角色卡的归属（本人 或 DM/房主）。
+
+    规则: P0-4 — character_id 与令牌绑定不一致 → 403（fail closed）。
+    """
+    from ..session_tokens import ROLE_DM, ROLE_HOST
+    # claims 为 SessionClaims dataclass（属性访问）
+    role = getattr(claims, "role", None)
+    if role in (ROLE_DM, ROLE_HOST):
+        return
+    if int(getattr(claims, "character_id", 0) or 0) != int(cid):
+        raise HTTPException(status_code=403, detail={
+            "error": "FORBIDDEN",
+            "message": "无权访问该角色（会话令牌与角色不匹配）"})
+
+
+def require_campaign_owner(campaign_id: int, claims: dict) -> None:
+    """校验调用者对该战役的归属（令牌 campaign 绑定一致 或 DM/房主）。
+
+    规则: P0-4 — 跨战役访问 → 403。
+    """
+    from ..session_tokens import ROLE_DM, ROLE_HOST
+    role = getattr(claims, "role", None)
+    if role in (ROLE_DM, ROLE_HOST):
+        return
+    if int(getattr(claims, "campaign_id", 0) or 0) != int(campaign_id):
+        raise HTTPException(status_code=403, detail={
+            "error": "FORBIDDEN",
+            "message": "无权访问该战役（会话令牌与战役不匹配）"})

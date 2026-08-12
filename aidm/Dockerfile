@@ -4,6 +4,9 @@ WORKDIR /app/ui
 COPY ui/package.json ui/package-lock.json* ./
 RUN npm ci --production=false
 COPY ui/ ./
+# ★ 审查 P0-1: 后端同源托管 → 前端用相对路径（避免 :8080/:8000 错配）
+ARG NEXT_PUBLIC_API=""
+ENV NEXT_PUBLIC_API=$NEXT_PUBLIC_API
 RUN npm run build
 
 # Stage 2: Production
@@ -25,6 +28,8 @@ COPY data/ ./data/
 
 # Copy built frontend
 COPY --from=frontend-builder /app/ui/out/ ./ui/out/
+# ★ 审查 P0-2: 同时复制旧版静态页（后端 /static 与 /legacy 仍引用 ui/static）
+COPY --from=frontend-builder /app/ui/static/ ./ui/static/
 
 # Create non-root user
 RUN useradd -m -u 1000 aidm

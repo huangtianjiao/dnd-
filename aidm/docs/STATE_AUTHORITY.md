@@ -38,3 +38,12 @@ ws.on_action / POST /chat
   → apply_node → store.save_character / store.save_combat（写权威库）
   → _broadcast_state（广播投影，不写库）
 ```
+## 补充（review#11）：物品栏唯一权威
+
+- **`inventory`（字符串列表）是唯一权威**——所有拥有性门控（装备/施法材料/
+  同调）都读它；`items_structured` 是派生视图。
+- `save_character` 前调用 `sync_inventory_views()`：清理 inventory 中已不存在的
+  结构化条目、回填缺失条目，杜绝双权威漂移。
+- 未来演进（方向）：`ItemInstance[]`（id/canonical_item_id/quantity/charges/
+  equipped_slot/attuned）成为唯一权威，`inventory`/`attuned_items`/
+  `equipped_weapon` 全部变为 derived view。

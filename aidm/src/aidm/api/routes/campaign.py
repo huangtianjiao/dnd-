@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from ...stats import store
-from .dependencies import CampaignIn
+from .dependencies import CampaignIn, require_campaign_owner, require_session
 
 router = APIRouter(tags=["campaign"])
 
@@ -29,8 +29,13 @@ def list_campaigns():
 
 
 @router.get("/campaign/{campaign_id}/state")
-def get_campaign_state(campaign_id: int):
-    """加载战役完整状态（继续游戏用）：战役信息+场景+角色列表+摘要+战斗。"""
+def get_campaign_state(campaign_id: int,
+                       claims: dict = Depends(require_session)):
+    """加载战役完整状态（继续游戏用）：战役信息+场景+角色列表+摘要+战斗。
+
+    ★ P0-4: 会话归属校验——只能访问令牌绑定的战役（或 DM/房主）。
+    """
+    require_campaign_owner(campaign_id, claims)
     from ...brain import world
     camp = store.get_campaign(campaign_id)
     if not camp:

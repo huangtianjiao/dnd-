@@ -25,22 +25,29 @@ from typing import Optional
 # TEST-003: 可注入的 RNG 上下文钩子。
 # 默认使用 secrets（密码学随机）；通过 set_active_rng() 注入 RngContext
 # 后可实现确定性回放（同一事件流重放得到完全相同状态）。
-_ACTIVE_RNG = None  # 持有 RngContext 实例
+# ★ 审查 P1-9: 用 contextvars 替代进程全局——多房间/多连接并发时
+#   每个异步任务/线程上下文持有独立 RNG，互不串扰。
+import contextvars
+
+_ACTIVE_RNG: "contextvars.ContextVar[object]" = contextvars.ContextVar(
+    "active_rng", default=None)
 
 
 def set_active_rng(rng: Optional["object"]) -> None:
-    """注入/清除全局 RNG 上下文（TEST-003）。
+    """注入/清除当前上下文的 RNG（TEST-003）。
+
+    每个 asyncio Task / 线程上下文独立；线程池（run_in_executor）会
+    自动复制调用方上下文，保证同一请求内注入的 RNG 不被其他房间污染。
 
     Args:
         rng: RngContext 实例，或 None 恢复默认 secrets 随机源。
     """
-    global _ACTIVE_RNG
-    _ACTIVE_RNG = rng
+    _ACTIVE_RNG.set(rng)
 
 
 def get_active_rng():
-    """获取当前 RNG 上下文（无则返回 None）。"""
-    return _ACTIVE_RNG
+    """获取当前上下文的 RNG（无则返回 None）。"""
+    return _ACTIVE_RNG.get()
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -52,8 +59,9 @@ def _randbelow(exclusive_upper: int) -> int:
 
     TEST-003: 若注入了 RngContext 则委托给它（确定性），否则用 secrets。
     """
-    if _ACTIVE_RNG is not None:
-        return _ACTIVE_RNG.randbelow(exclusive_upper)
+    rng = _ACTIVE_RNG.get()
+    if rng is not None:
+        return rng.randbelow(exclusive_upper)
     return secrets.randbelow(exclusive_upper)
 
 

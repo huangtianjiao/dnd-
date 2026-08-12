@@ -54,8 +54,17 @@ class RngContext:
 
     def roll_d20(self, advantage: bool = False,
                  disadvantage: bool = False) -> RollRecord:
-        """掷 d20。"""
+        """掷 d20。
+
+        ★ 审查 P0-3: 优劣势同时存在 → 抵消（R-CHK-005），只掷一骰，
+          与 engine.dice.roll_d20 行为一致（此前错误地取 max=优势赢，
+          导致回放结果与正常游戏不一致）。
+        """
         import uuid
+
+        # R-CHK-005: 优劣势抵消 → 仅掷一骰
+        if advantage and disadvantage:
+            advantage = disadvantage = False
 
         rolls: List[int] = []
         num_dice = 2 if (advantage or disadvantage) else 1

@@ -55,6 +55,13 @@ class InfrastructureError(Exception):
         self.cause = cause
 
 
+class SaveMigrationError(InfrastructureError):
+    """存档迁移失败（review#12: fail-closed——绝不静默回退旧数据）。"""
+
+    code = "save_migration_error"
+    status_code = 500
+
+
 class InvariantViolation(Exception):
     """状态不变量被破坏（乐观锁冲突/重复命令等，映射 409）。"""
 
@@ -110,6 +117,7 @@ __all__ = [
     "DomainError",
     "InfrastructureError",
     "InvariantViolation",
+    "SaveMigrationError",
     "log_error",
     "contextualize",
     "http_error_payload",

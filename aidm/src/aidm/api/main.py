@@ -100,8 +100,9 @@ _REACT_OUT_DIR = os.path.normpath(
     os.path.join(os.path.dirname(__file__), "..", "..", "..", "ui", "out")
 )
 
-# 挂载静态文件目录（CSS/JS）
-app.mount("/static", StaticFiles(directory=_UI_DIR), name="static")
+# 挂载静态文件目录（CSS/JS）— ★ 审查 P0-2: 目录不存在时跳过挂载（不崩溃）
+if os.path.isdir(_UI_DIR):
+    app.mount("/static", StaticFiles(directory=_UI_DIR), name="static")
 
 
 @app.get("/")

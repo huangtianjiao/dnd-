@@ -2,17 +2,18 @@
 
 import { useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
-import { API, API_KEY } from "../lib/api";
+import { API, API_KEY, setSessionToken as _setApiSessionToken } from "../lib/api";
 import type { LogEntry, SceneData, CombatData, PartyMember } from "../lib/types";
 
 /**
  * 会话令牌（P0-03/P0-05）：由 /auth/session 或 /room/create 签发，
  * WS 连接经 Socket.IO auth 载荷传递，不进 query string。
- * 提供 setter 供页面在换取令牌后调用。
+ * 同时写入 lib/api.ts 供 REST 请求携带 Authorization: Bearer（P0-4 ownership）。
  */
 let sessionToken = "";
 export function setSessionToken(token: string) {
   sessionToken = token;
+  _setApiSessionToken(token);
 }
 export function getSessionToken() {
   return sessionToken;

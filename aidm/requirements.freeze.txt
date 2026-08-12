@@ -1,6 +1,7 @@
-# Aidm 依赖锁（P2-04）— by pip freeze, pinned 供可复现构建
-# 用法: pip install -r requirements.lock
-
+# ⚠ 本文件是「当前开发环境快照」（pip freeze），不是可信构建锁（review#6）。
+# requirements.txt 才是依赖声明；两文件版本不一致属于已知状态。
+# 未来迁移路径: pyproject.toml + uv.lock（uv sync --frozen），届时删除本文件。
+#
 langchain==0.3.27
 langgraph==0.2.76
 langgraph-checkpoint-sqlite==3.1.0

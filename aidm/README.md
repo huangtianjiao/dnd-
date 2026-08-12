@@ -59,13 +59,13 @@ pip install -r requirements.txt          # 首次
 ./deploy/start.sh                         # Linux/macOS
 # 或 Windows: deploy\start.bat
 ```
-等价于 `PYTHONPATH=src python -m uvicorn aidm.api.main:app --port 8080 --reload`
+等价于 `PYTHONPATH=src python -m uvicorn aidm.api.main:combined_app --port 8080 --reload`（开发也建议 combined_app，否则 /ws 不可用）
 
 ### 前端启动（端口 4000）
 ```bash
 cd D:/game/dnd/aidm/ui
 npm install        # 首次
-npm run dev        # → http://localhost:4000
+npm run dev        # → http://localhost:3000（实际 package.json: next dev -p 3000）
 ```
 
 ### 规则库索引（首次必做）
@@ -98,6 +98,10 @@ PYTHONPATH=src python -m aidm.cli
 ## 5. 分支规范
 
 ### 分支说明
+
+> **现状（2026-08）**：仓库实际默认分支为 `master`（即下表 `main` 的角色），
+> 尚无 `dev` 分支。以下为推荐规范；启用 `dev` 前，`master` 充当生产分支。
+
 | 分支 | 用途 | 权限 |
 |------|------|------|
 | `main` | 生产环境，只放稳定代码 | 只能通过 PR 合并，禁止直接推送 |
@@ -177,7 +181,7 @@ git push origin feature/user-login
 详见 [`deploy/README.md`](deploy/README.md)。要点：
 
 - **免 Docker**：Qdrant 本地文件模式，嵌入模型本地运行，LLM 走外部 API。
-- 后端生产模式：`PYTHONPATH=src python -m uvicorn aidm.api.main:app --host 0.0.0.0 --port 8080`
+- 后端生产模式：`PYTHONPATH=src python -m uvicorn aidm.api.main:combined_app --host 0.0.0.0 --port 8000`（生产必须 combined_app 才能提供 Socket.IO）
 - 前端构建：`cd ui && npm run build`
 - 存档即文件：备份 `aidm/data/saves/save.db`（SQLite）即可。
 
@@ -193,7 +197,7 @@ A: 规则索引首次需下载 bge-small-zh-v1.5 嵌入模型（约 100MB，从 
 A: 默认 `D:\game\dnd\.env`（项目根目录上一级）。可设环境变量 `AIDM_ENV_FILE` 指向其他路径。
 
 **Q: 端口被占用？**
-A: 后端默认 8080，前端默认 4000。可改 `deploy/start.sh` 的 `--port`，及 `ui/package.json` 的 `next dev -p`。
+A: 后端默认 8080，前端 dev 默认 3000。可改 `deploy/start.sh` 的 `--port`，及 `ui/package.json` 的 `next dev -p`。
 
 **Q: 如何只跑规则引擎自检（不依赖 LLM/API）？**
 A: `PYTHONPATH=src python -m aidm.engine.dice`（及 check/damage/conditions/combat 等各模块自带 `_self_test()`）。

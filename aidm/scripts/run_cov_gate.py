@@ -124,7 +124,12 @@ def run_and_generate() -> dict[str, dict]:
 
 
 def main() -> int:
-    """入口：生成 CI 结果并断言门禁。"""
+    """入口：生成 CI 结果并断言门禁。
+
+    ★ review#8: 门禁必须是 regression gate——要求「声明为 VERIFIED 的
+      engine 模块」全部有 CI 确认的显式测试（100% 覆盖），
+      不再允许 75→20 的宽松阈值。
+    """
     if "--collect" in sys.argv:
         mapping = collect_rule_tests()
         print(f"rule 标记规则数: {len(mapping)}")
@@ -135,15 +140,24 @@ def main() -> int:
     ci = run_and_generate()
     passed = sum(1 for v in ci.values() if v["passed"])
     print(f"CI 结果: {passed}/{len(ci)} 规则通过 → {OUT_JSON}")
-    engine_passed = sum(1 for k, v in ci.items()
-                        if k.startswith("engine.") and v["passed"])
-    print(f"engine 模块 CI 通过: {engine_passed}")
+    ci_passed = {k for k, v in ci.items() if v["passed"]}
 
-    # 门禁：至少 20 个 engine 模块有 CI 确认的显式测试
-    if engine_passed < 20:
-        print("✗ 门禁失败: engine 模块 CI 确认 < 20")
+    # 期望集合 = CoverageManifest 中声明 VERIFIED 的 engine 模块
+    sys.path.insert(0, str(AIDM / "src"))
+    from aidm.engine.coverage import CoverageManifest, CoverageStatus
+    m = CoverageManifest(ruleset_revision="2024.1").apply_wired_status()
+    declared = {
+        cid for cid, e in m.entries.items()
+        if cid.startswith("engine.") and e.status == CoverageStatus.VERIFIED
+    }
+    missing = sorted(declared - ci_passed)
+    print(f"声明 VERIFIED 的 engine 模块: {len(declared)}")
+    print(f"CI 确认 engine 模块: {len(ci_passed & declared)}")
+
+    if missing:
+        print(f"✗ 门禁失败: {len(missing)} 个已声明 VERIFIED 的模块缺少 CI 确认: {missing[:10]}")
         return 1
-    print("✓ P1-08 门禁通过")
+    print("✓ P1-08 门禁通过（100% 声明模块 CI 确认）")
     return 0
 
 

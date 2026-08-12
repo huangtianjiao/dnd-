@@ -244,3 +244,38 @@ class TestVersionedMigrations:
                 store.get_engine(db)
         finally:
             store._MIGRATIONS = orig
+
+# ── review#11: inventory 双权威收敛 ───────────────────────────────
+
+class TestInventorySingleAuthority:
+    def test_sync_inventory_views_reconciles(self):
+        """保存后 items_structured 与 inventory 一致（inventory 权威）。"""
+        from aidm.stats import store
+        from aidm.stats.models import Character
+        db = _tmp_db()
+        ch = store.save_character(Character(
+            name="背包客", race="人类", char_class="战士", level=1), db)
+        ch.add_to_inventory("长剑")
+        ch.add_to_inventory("皮甲")
+        # 制造漂移：structured 里多一个已不存在的物品
+        ch.add_structured_item({"item_id": "item.ghost", "name": "幽灵物",
+                                "quantity": 1})
+        saved = store.save_character(ch, db)
+        names = {i["name"] for i in saved.items_structured}
+        assert "幽灵物" not in names, "漂移条目应被清理"
+        assert "长剑" in names and "皮甲" in names, "inventory 条目应回填"
+
+    def test_inventory_is_authority(self):
+        """inventory 是唯一权威：移除物品后 structured 同步消失。"""
+        from aidm.stats import store
+        from aidm.stats.models import Character
+        db = _tmp_db()
+        ch = store.save_character(Character(
+            name="清理者", race="人类", char_class="战士", level=1), db)
+        ch.add_to_inventory("匕首")
+        store.save_character(ch, db)
+        inv = ch.inventory
+        inv.remove("匕首")
+        ch.set_inventory(inv)
+        saved = store.save_character(ch, db)
+        assert all(i["name"] != "匕首" for i in saved.items_structured)
