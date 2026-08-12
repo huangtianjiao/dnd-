@@ -19,10 +19,6 @@ import sys
 import tempfile
 
 # 确保 src 在路径中
-_SRC = os.path.join(os.path.dirname(__file__), "..", "src")
-if _SRC not in sys.path:
-    sys.path.insert(0, _SRC)
-
 from aidm.brain import levelup as lu
 from aidm.data import feats as F
 from aidm.stats import store, models

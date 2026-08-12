@@ -5,15 +5,26 @@ services:
       - "8000:8000"
     environment:
       - AIDM_PROJECT_ROOT=/app
+      # ★ P0-09: 运行时数据统一落盘 /data（SQLite/checkpoints/qdrant/logs）
+      - AIDM_DATA_DIR=/data
       - AIDM_API_KEY=${AIDM_API_KEY:-}
       - AIDM_ALLOWED_ORIGINS=${AIDM_ALLOWED_ORIGINS:-*}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
+      - AIDM_ENV=${AIDM_ENV:-development}
+      # ★ P0-10: 统一 LLM 命名（AIDM_LLM_*），不再传 OPENAI_* 死变量
+      - AIDM_LLM_API_KEY=${AIDM_LLM_API_KEY:-}
+      - AIDM_LLM_BASE_URL=${AIDM_LLM_BASE_URL:-}
+      - AIDM_LLM_MODEL=${AIDM_LLM_MODEL:-deepseek-v4-flash}
+      # ★ P0-10: Redis 显式传给应用（离线消息队列/响应缓存）
+      - AIDM_REDIS_URL=redis://redis:6379/0
+      # ★ P0-03/P0-04: 会话令牌密钥与 DM 口令
+      - AIDM_SESSION_SECRET=${AIDM_SESSION_SECRET:-}
+      - AIDM_DM_TOKEN=${AIDM_DM_TOKEN:-}
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
       - AIDM_EMBEDDING_DEVICE=${AIDM_EMBEDDING_DEVICE:-cpu}
     volumes:
-      - aidm-data:/app/data
+      # ★ P0-09: 持久化卷挂载到统一数据目录
+      - aidm-data:/data
     depends_on:
       - redis
     restart: unless-stopped

@@ -115,11 +115,13 @@ def derive_source_class(edition: str) -> str:
     """根据版本推断来源分类。"""
     return f"rule_{edition}"
 
-# RAG-003: 路径由配置与项目根目录派生，不硬编码到 Windows 盘符
-_DB_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "data", "rules.db",
-)
+# RAG-003/P0-09: 路径由配置与数据目录派生，不硬编码到 Windows 盘符
+# Qdrant 落盘目录统一走 AIDM_DATA_DIR（Docker 挂载 /data/qdrant）
+def _qdrant_db_path() -> str:
+    from ..config import DATA_DIR
+    return str(DATA_DIR / "qdrant")
+
+
 _client: QdrantClient | None = None
 
 
@@ -127,7 +129,7 @@ def get_qdrant() -> QdrantClient:
     """本地 Qdrant 客户端（文件存储，单进程）。"""
     global _client
     if _client is None:
-        _client = QdrantClient(path=_DB_PATH)
+        _client = QdrantClient(path=_qdrant_db_path())
     return _client
 
 
@@ -181,7 +183,7 @@ def build_index(batch_size: int = 64, limit: int | None = None,
         total += len(points)
         if (i // batch_size) % 5 == 0:
             print(f"  已索引 {total}/{len(entries)} 条")
-    print(f"[indexer] 索引完成 {total} 条 → {_DB_PATH}")
+    print(f"[indexer] 索引完成 {total} 条 → {_qdrant_db_path()}")
     return total
 
 
@@ -444,8 +446,8 @@ def get_llamaindex_vector_index(collection: str | None = None):
 def _self_test() -> None:
     import os
     # 干净起见先删旧 db
-    if os.path.exists(_DB_PATH):
-        os.remove(_DB_PATH)
+    if os.path.exists(_qdrant_db_path()):
+        os.remove(_qdrant_db_path())
     global _client
     _client = None
     n = build_index(limit=80, rebuild=True)

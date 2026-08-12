@@ -1,13 +1,292 @@
 {
   "ruleset_revision": "2024.1",
   "entries": {
-    "engine.timing": {
-      "content_id": "engine.timing",
+    "engine.spell_trigger_window": {
+      "content_id": "engine.spell_trigger_window",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "spell_trigger_window"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.species_def": {
+      "content_id": "engine.species_def",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "species_def"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.actions": {
+      "content_id": "engine.actions",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "actions"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.scheduler": {
+      "content_id": "engine.scheduler",
       "ruleset_revision": "2024.1",
       "status": "VERIFIED",
       "source_spans": [],
       "handlers": [
-        "timing"
+        "scheduler"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.conditions": {
+      "content_id": "engine.conditions",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "conditions"
+      ],
+      "unit_tests": [
+        "test_conditions.py"
+      ],
+      "scenario_tests": []
+    },
+    "engine.damage": {
+      "content_id": "engine.damage",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "damage"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.component_check": {
+      "content_id": "engine.component_check",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "component_check"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.spell_targeting": {
+      "content_id": "engine.spell_targeting",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "spell_targeting"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.background_def": {
+      "content_id": "engine.background_def",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "background_def"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.travel": {
+      "content_id": "engine.travel",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "travel"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.canonical_id": {
+      "content_id": "engine.canonical_id",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "canonical_id"
+      ],
+      "unit_tests": [
+        "test_canonical_id.py"
+      ],
+      "scenario_tests": []
+    },
+    "engine.unit_of_work": {
+      "content_id": "engine.unit_of_work",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "unit_of_work"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.check": {
+      "content_id": "engine.check",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "check"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.resolution_trace_ext": {
+      "content_id": "engine.resolution_trace_ext",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "resolution_trace_ext"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.spell_slots": {
+      "content_id": "engine.spell_slots",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "spell_slots"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.opportunity_attack": {
+      "content_id": "engine.opportunity_attack",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "opportunity_attack"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.vision": {
+      "content_id": "engine.vision",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "vision"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.attack_sequence": {
+      "content_id": "engine.attack_sequence",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "attack_sequence"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.magic_item_def": {
+      "content_id": "engine.magic_item_def",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "magic_item_def"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.legendary_actions": {
+      "content_id": "engine.legendary_actions",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "legendary_actions"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.entity_lifecycle_ext": {
+      "content_id": "engine.entity_lifecycle_ext",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "entity_lifecycle_ext"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.material_cost": {
+      "content_id": "engine.material_cost",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "material_cost"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.resolution_trace": {
+      "content_id": "engine.resolution_trace",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "resolution_trace"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.reaction_window": {
+      "content_id": "engine.reaction_window",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "reaction_window"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.spell_sources": {
+      "content_id": "engine.spell_sources",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "spell_sources"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.spell_targeting_ext": {
+      "content_id": "engine.spell_targeting_ext",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "spell_targeting_ext"
       ],
       "unit_tests": [],
       "scenario_tests": []
@@ -23,13 +302,46 @@
       "unit_tests": [],
       "scenario_tests": []
     },
-    "engine.attack_sequence": {
-      "content_id": "engine.attack_sequence",
+    "engine.concentration": {
+      "content_id": "engine.concentration",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "concentration"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.spellcasting": {
+      "content_id": "engine.spellcasting",
       "ruleset_revision": "2024.1",
       "status": "VERIFIED",
       "source_spans": [],
       "handlers": [
-        "attack_sequence"
+        "spellcasting"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.command": {
+      "content_id": "engine.command",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "command"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.entity_lifecycle": {
+      "content_id": "engine.entity_lifecycle",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "entity_lifecycle"
       ],
       "unit_tests": [],
       "scenario_tests": []
@@ -37,7 +349,7 @@
     "engine.entity_state": {
       "content_id": "engine.entity_state",
       "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
+      "status": "FULL",
       "source_spans": [],
       "handlers": [
         "entity_state"
@@ -45,13 +357,332 @@
       "unit_tests": [],
       "scenario_tests": []
     },
-    "engine.item_instance": {
-      "content_id": "engine.item_instance",
+    "engine.multiclass": {
+      "content_id": "engine.multiclass",
       "ruleset_revision": "2024.1",
       "status": "VERIFIED",
       "source_spans": [],
       "handlers": [
-        "item_instance"
+        "multiclass"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.core_loop": {
+      "content_id": "engine.core_loop",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "core_loop"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.health_state": {
+      "content_id": "engine.health_state",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "health_state"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.subclass_progression": {
+      "content_id": "engine.subclass_progression",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "subclass_progression"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.downtime": {
+      "content_id": "engine.downtime",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "downtime"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.coverage": {
+      "content_id": "engine.coverage",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "coverage"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.timing": {
+      "content_id": "engine.timing",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "timing"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.battle_map": {
+      "content_id": "engine.battle_map",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "battle_map"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.aoe": {
+      "content_id": "engine.aoe",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "aoe"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.effects": {
+      "content_id": "engine.effects",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "effects"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.choice_record": {
+      "content_id": "engine.choice_record",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "choice_record"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.background_registry_data": {
+      "content_id": "engine.background_registry_data",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "background_registry_data"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.dice": {
+      "content_id": "engine.dice",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "dice"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.migration": {
+      "content_id": "engine.migration",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "migration"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.proficiency_service": {
+      "content_id": "engine.proficiency_service",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "proficiency_service"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.aggregate_cache": {
+      "content_id": "engine.aggregate_cache",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "aggregate_cache"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.downtime_craft": {
+      "content_id": "engine.downtime_craft",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "downtime_craft"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.subclass_registry_data": {
+      "content_id": "engine.subclass_registry_data",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "subclass_registry_data"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.multiray_spell": {
+      "content_id": "engine.multiray_spell",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "multiray_spell"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.combat": {
+      "content_id": "engine.combat",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "combat"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.visibility": {
+      "content_id": "engine.visibility",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "visibility"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.equipment_slots": {
+      "content_id": "engine.equipment_slots",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "equipment_slots"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.item_charges": {
+      "content_id": "engine.item_charges",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "item_charges"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.spell_duration": {
+      "content_id": "engine.spell_duration",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "spell_duration"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.species_registry_data": {
+      "content_id": "engine.species_registry_data",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "species_registry_data"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.hazards": {
+      "content_id": "engine.hazards",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "hazards"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.levelup_plan": {
+      "content_id": "engine.levelup_plan",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "levelup_plan"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.triggers": {
+      "content_id": "engine.triggers",
+      "ruleset_revision": "2024.1",
+      "status": "VERIFIED",
+      "source_spans": [],
+      "handlers": [
+        "triggers"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.intent_schema": {
+      "content_id": "engine.intent_schema",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "intent_schema"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.attunement": {
+      "content_id": "engine.attunement",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "attunement"
       ],
       "unit_tests": [],
       "scenario_tests": []
@@ -78,39 +709,6 @@
       "unit_tests": [],
       "scenario_tests": []
     },
-    "engine.spell_sources": {
-      "content_id": "engine.spell_sources",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "spell_sources"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.weapon_rules": {
-      "content_id": "engine.weapon_rules",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "weapon_rules"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.effect_dsl": {
-      "content_id": "engine.effect_dsl",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "effect_dsl"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
     "engine.mastery": {
       "content_id": "engine.mastery",
       "ruleset_revision": "2024.1",
@@ -122,314 +720,13 @@
       "unit_tests": [],
       "scenario_tests": []
     },
-    "engine.effects": {
-      "content_id": "engine.effects",
+    "engine.item_instance": {
+      "content_id": "engine.item_instance",
       "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
+      "status": "FULL",
       "source_spans": [],
       "handlers": [
-        "effects"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.multiclass": {
-      "content_id": "engine.multiclass",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "multiclass"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.combat": {
-      "content_id": "engine.combat",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "combat"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.ruleset_manifest": {
-      "content_id": "engine.ruleset_manifest",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "ruleset_manifest"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.intent_schema": {
-      "content_id": "engine.intent_schema",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "intent_schema"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.entity_lifecycle": {
-      "content_id": "engine.entity_lifecycle",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "entity_lifecycle"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.target_query": {
-      "content_id": "engine.target_query",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "target_query"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.canonical_id": {
-      "content_id": "engine.canonical_id",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "canonical_id"
-      ],
-      "unit_tests": [
-        "test_canonical_id.py"
-      ],
-      "scenario_tests": []
-    },
-    "engine.downtime_craft": {
-      "content_id": "engine.downtime_craft",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "downtime_craft"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.actions": {
-      "content_id": "engine.actions",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "actions"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.rng_context": {
-      "content_id": "engine.rng_context",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "rng_context"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.aggregate_cache": {
-      "content_id": "engine.aggregate_cache",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "aggregate_cache"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.conditions": {
-      "content_id": "engine.conditions",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "conditions"
-      ],
-      "unit_tests": [
-        "test_conditions.py"
-      ],
-      "scenario_tests": []
-    },
-    "engine.multiray_spell": {
-      "content_id": "engine.multiray_spell",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "multiray_spell"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.damage": {
-      "content_id": "engine.damage",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "damage"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.species_def": {
-      "content_id": "engine.species_def",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "species_def"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.component_check": {
-      "content_id": "engine.component_check",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "component_check"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.spell_trigger_window": {
-      "content_id": "engine.spell_trigger_window",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "spell_trigger_window"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.migration": {
-      "content_id": "engine.migration",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "migration"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.background_def": {
-      "content_id": "engine.background_def",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "background_def"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.coverage": {
-      "content_id": "engine.coverage",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "coverage"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.battle_map": {
-      "content_id": "engine.battle_map",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "battle_map"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.triggers": {
-      "content_id": "engine.triggers",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "triggers"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.scheduler": {
-      "content_id": "engine.scheduler",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "scheduler"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.visibility": {
-      "content_id": "engine.visibility",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "visibility"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.species_registry_data": {
-      "content_id": "engine.species_registry_data",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "species_registry_data"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.background_registry_data": {
-      "content_id": "engine.background_registry_data",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "background_registry_data"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.attunement": {
-      "content_id": "engine.attunement",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "attunement"
+        "item_instance"
       ],
       "unit_tests": [],
       "scenario_tests": []
@@ -445,325 +742,6 @@
       "unit_tests": [],
       "scenario_tests": []
     },
-    "engine.aoe": {
-      "content_id": "engine.aoe",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "aoe"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.resolution_trace": {
-      "content_id": "engine.resolution_trace",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "resolution_trace"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.spell_slots": {
-      "content_id": "engine.spell_slots",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "spell_slots"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.equipment_slots": {
-      "content_id": "engine.equipment_slots",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "equipment_slots"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.material_cost": {
-      "content_id": "engine.material_cost",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "material_cost"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.resolution_trace_ext": {
-      "content_id": "engine.resolution_trace_ext",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "resolution_trace_ext"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.hazards": {
-      "content_id": "engine.hazards",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "hazards"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.vision": {
-      "content_id": "engine.vision",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "vision"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.spell_targeting_ext": {
-      "content_id": "engine.spell_targeting_ext",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "spell_targeting_ext"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.spell_duration": {
-      "content_id": "engine.spell_duration",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "spell_duration"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.unit_of_work": {
-      "content_id": "engine.unit_of_work",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "unit_of_work"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.subclass_registry_data": {
-      "content_id": "engine.subclass_registry_data",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "subclass_registry_data"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.levelup_plan": {
-      "content_id": "engine.levelup_plan",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "levelup_plan"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.check": {
-      "content_id": "engine.check",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "check"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.objects": {
-      "content_id": "engine.objects",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "objects"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.core_loop": {
-      "content_id": "engine.core_loop",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "core_loop"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.reaction_window": {
-      "content_id": "engine.reaction_window",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "reaction_window"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.item_charges": {
-      "content_id": "engine.item_charges",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "item_charges"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.choice_record": {
-      "content_id": "engine.choice_record",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "choice_record"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.legendary_actions": {
-      "content_id": "engine.legendary_actions",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "legendary_actions"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.downtime": {
-      "content_id": "engine.downtime",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "downtime"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.command": {
-      "content_id": "engine.command",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "command"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.health_state": {
-      "content_id": "engine.health_state",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "health_state"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.magic_item_def": {
-      "content_id": "engine.magic_item_def",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "magic_item_def"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.proficiency_service": {
-      "content_id": "engine.proficiency_service",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "proficiency_service"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.dice": {
-      "content_id": "engine.dice",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "dice"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.rest_state": {
-      "content_id": "engine.rest_state",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "rest_state"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.entity_lifecycle_ext": {
-      "content_id": "engine.entity_lifecycle_ext",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "entity_lifecycle_ext"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
-    "engine.travel": {
-      "content_id": "engine.travel",
-      "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
-      "source_spans": [],
-      "handlers": [
-        "travel"
-      ],
-      "unit_tests": [],
-      "scenario_tests": []
-    },
     "engine.recharge_spec": {
       "content_id": "engine.recharge_spec",
       "ruleset_revision": "2024.1",
@@ -775,57 +753,79 @@
       "unit_tests": [],
       "scenario_tests": []
     },
-    "engine.spellcasting": {
-      "content_id": "engine.spellcasting",
+    "engine.rng_context": {
+      "content_id": "engine.rng_context",
       "ruleset_revision": "2024.1",
       "status": "VERIFIED",
       "source_spans": [],
       "handlers": [
-        "spellcasting"
+        "rng_context"
       ],
       "unit_tests": [],
       "scenario_tests": []
     },
-    "engine.spell_targeting": {
-      "content_id": "engine.spell_targeting",
+    "engine.target_query": {
+      "content_id": "engine.target_query",
       "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
+      "status": "FULL",
       "source_spans": [],
       "handlers": [
-        "spell_targeting"
+        "target_query"
       ],
       "unit_tests": [],
       "scenario_tests": []
     },
-    "engine.concentration": {
-      "content_id": "engine.concentration",
+    "engine.objects": {
+      "content_id": "engine.objects",
       "ruleset_revision": "2024.1",
-      "status": "VERIFIED",
+      "status": "FULL",
       "source_spans": [],
       "handlers": [
-        "concentration"
+        "objects"
       ],
       "unit_tests": [],
       "scenario_tests": []
     },
-    "engine.opportunity_attack": {
-      "content_id": "engine.opportunity_attack",
+    "engine.ruleset_manifest": {
+      "content_id": "engine.ruleset_manifest",
       "ruleset_revision": "2024.1",
       "status": "VERIFIED",
       "source_spans": [],
       "handlers": [
-        "opportunity_attack"
+        "ruleset_manifest"
       ],
       "unit_tests": [],
       "scenario_tests": []
     },
-    "engine.subclass_progression": {
-      "content_id": "engine.subclass_progression",
+    "engine.weapon_rules": {
+      "content_id": "engine.weapon_rules",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "weapon_rules"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.effect_dsl": {
+      "content_id": "engine.effect_dsl",
+      "ruleset_revision": "2024.1",
+      "status": "FULL",
+      "source_spans": [],
+      "handlers": [
+        "effect_dsl"
+      ],
+      "unit_tests": [],
+      "scenario_tests": []
+    },
+    "engine.rest_state": {
+      "content_id": "engine.rest_state",
       "ruleset_revision": "2024.1",
       "status": "VERIFIED",
       "source_spans": [],
       "handlers": [
-        "subclass_progression"
+        "rest_state"
       ],
       "unit_tests": [],
       "scenario_tests": []

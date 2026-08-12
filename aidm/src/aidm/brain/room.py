@@ -70,6 +70,13 @@ class Room:
                 return p
         return None
 
+    def find_player_by_character(self, character_id: int) -> dict | None:
+        """按角色卡 ID 查找玩家（P0-02：权限操作按 character_id 定位，防名字冒充）。"""
+        for p in self.players:
+            if p["character_id"] == character_id:
+                return p
+        return None
+
     def find_spectator_by_ws(self, ws: WebSocket) -> dict | None:
         for s in self.spectators:
             if s["ws"] is ws:
@@ -336,7 +343,9 @@ def _parse_dispose_delay(default: float = 120.0) -> float:
 
     非法值（非数字）或 <=0 时回退默认值，避免模块导入时直接崩溃。
     """
-    raw = os.getenv("ROOM_DISPOSE_DELAY", "")
+    # P2-01: 统一经 Settings 读取（ROOM_DISPOSE_DELAY）
+    from ..config import get_settings as _get_settings
+    raw = str(_get_settings().room_dispose_delay) if _get_settings().room_dispose_delay else ""
     try:
         val = float(raw) if raw.strip() else default
     except ValueError:

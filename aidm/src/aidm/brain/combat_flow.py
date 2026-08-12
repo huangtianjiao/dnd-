@@ -38,7 +38,9 @@ _reaction_controller = ReactionController()
 _ready_effects: dict[str, ReadyEffect] = {}  # entity_id → ReadyEffect
 
 # 士气系统（DMG 战斗或者逃跑）：P2 特性，默认关闭
-_MORALE_ENABLED = os.getenv("AIDM_MORALE", "0").lower() in ("1", "true")
+# P2-01: 统一经 Settings 读取（AIDM_MORALE）
+from ..config import get_settings as _get_settings
+_MORALE_ENABLED = _get_settings().aidm_morale
 
 
 # ──────────────────────────────────────────────────────────────────────────

@@ -11,7 +11,9 @@ _cache_enabled = False
 def init_cache():
     """Initialize Redis cache if available. Fails silently if Redis is not configured."""
     global _redis_client, _cache_enabled
-    redis_url = os.getenv("REDIS_URL", "")
+    # P0-10: 统一从配置读取 AIDM_REDIS_URL（兼容旧 REDIS_URL）
+    from ..config import get_settings
+    redis_url = get_settings().aidm_redis_url or os.getenv("REDIS_URL", "")
     if not redis_url:
         return
     try:

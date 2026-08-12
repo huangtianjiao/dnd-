@@ -19,8 +19,6 @@ import uuid
 import pytest
 
 # 添加 src 到 path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-
 from aidm.engine.rng import RngContext, RollRecord
 from aidm.engine.entity_state import EntityStateRegistry, EntityState, EntityType
 from aidm.engine.intent_schema import IntentSchema, ActionType, validate_intent

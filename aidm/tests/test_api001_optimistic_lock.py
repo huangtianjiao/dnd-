@@ -17,10 +17,6 @@ import os
 import sys
 import tempfile
 
-_SRC = os.path.join(os.path.dirname(__file__), "..", "src")
-if _SRC not in sys.path:
-    sys.path.insert(0, _SRC)
-
 import pytest
 
 from aidm.engine import combat as cmb

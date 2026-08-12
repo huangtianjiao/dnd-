@@ -6,6 +6,28 @@ import { API, API_KEY } from "../lib/api";
 import type { LogEntry, SceneData, CombatData, PartyMember } from "../lib/types";
 
 /**
+ * 会话令牌（P0-03/P0-05）：由 /auth/session 或 /room/create 签发，
+ * WS 连接经 Socket.IO auth 载荷传递，不进 query string。
+ * 提供 setter 供页面在换取令牌后调用。
+ */
+let sessionToken = "";
+export function setSessionToken(token: string) {
+  sessionToken = token;
+}
+export function getSessionToken() {
+  return sessionToken;
+}
+
+/** 房主令牌（P0-01）：/room/create 签发，供 HostControls 的 Bearer 管理操作使用。 */
+let hostToken = "";
+export function setHostToken(token: string) {
+  hostToken = token;
+}
+export function getHostToken() {
+  return hostToken;
+}
+
+/**
  * 按 dice.kind 分派格式化行动骰子日志。
  * 后端 graph.run 返回 20+ 种 kind（攻击/法术/检定/休息/升级/移动…），字段各异；
  * 统一在此分派，避免前端无脑按 d20/hit 渲染导致属性检定显示"未中"、
@@ -115,6 +137,8 @@ export function useSocket(opts: UseSocketOptions) {
       if (socketRef.current) socketRef.current.disconnect();
 
       const o = optsRef.current;
+      // ★ P0-05: 凭据走 Socket.IO auth 载荷（不进 query string，避免泄露到
+      //   代理日志/网络诊断/监控）。DM 权限由后端 /auth/session 签发的令牌决定。
       const socket = io(API || window.location.origin, {
         transports: ["websocket"],
         reconnection: true,
@@ -125,10 +149,9 @@ export function useSocket(opts: UseSocketOptions) {
           campaign_id: cid,
           character_id: chId,
           name,
-          ...(role ? { role } : {}),
-          // 后端握手鉴权（ws.connect）：AIDM_API_KEY / AIDM_DM_TOKEN 启用时校验
-          ...(API_KEY ? { api_key: API_KEY } : {}),
-          ...(dmToken ? { dm_token: dmToken } : {}),
+        },
+        auth: {
+          token: sessionToken,
         },
       });
 

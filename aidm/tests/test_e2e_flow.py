@@ -22,10 +22,6 @@ import os
 import sys
 import tempfile
 
-_SRC = os.path.join(os.path.dirname(__file__), "..", "src")
-if _SRC not in sys.path:
-    sys.path.insert(0, _SRC)
-
 
 def _setup_test_db():
     """创建临时数据库并 patch store 模块。"""
@@ -110,62 +106,65 @@ def test_attack_to_damage_pipeline():
     """
     from aidm.engine import damage, dice, check
 
-    # === 场景1: 普通命中 ===
-    # 战士 STR16(+3) 熟练+2 → 攻击加值 +5
-    # d20=15 → 15+5=20 ≥ AC15 → 命中
-    orig = dice.roll_d20
-    dice.roll_d20 = lambda advantage=False, disadvantage=False: \
-        type("R", (), {"used": 15, "rolls": [15], "mode": "normal"})()
+    # ★ 修复: 补丁必须 try/finally 还原（此前 roll_die 补丁泄漏到后续测试，
+    #   导致全量运行时其他测试的 d20 被固定为 4）
+    orig_roll_d20 = dice.roll_d20
+    orig_roll_die = dice.roll_die
+    try:
+        # === 场景1: 普通命中 ===
+        # 战士 STR16(+3) 熟练+2 → 攻击加值 +5
+        # d20=15 → 15+5=20 ≥ AC15 → 命中
+        dice.roll_d20 = lambda advantage=False, disadvantage=False: \
+            type("R", (), {"used": 15, "rolls": [15], "mode": "normal"})()
 
-    a = check.attack_roll(bonus=5, ac=15)
-    assert a.hit is True
-    assert a.crit is False
-    assert a.total == 20
+        a = check.attack_roll(bonus=5, ac=15)
+        assert a.hit is True
+        assert a.crit is False
+        assert a.total == 20
 
-    # 伤害: 长剑 1d8+3 (STR)
-    dice.roll_die = lambda s: 6   # d8=6
-    req = damage.DamageRequest(
-        dice_expr="1d8",
-        damage_type="slashing",
-        ability_mod=3,
-        add_mod=True,
-    )
-    rd = damage.roll_damage(req)
-    assert rd.final == 9   # 6+3=9
+        # 伤害: 长剑 1d8+3 (STR)
+        dice.roll_die = lambda s: 6   # d8=6
+        req = damage.DamageRequest(
+            dice_expr="1d8",
+            damage_type="slashing",
+            ability_mod=3,
+            add_mod=True,
+        )
+        rd = damage.roll_damage(req)
+        assert rd.final == 9   # 6+3=9
 
-    # HP扣减: 哥布林 HP7 受9伤 → 0
-    new_hp, new_temp = damage.apply_damage_to_hp(hp=7, temp_hp=0, max_hp=7, dmg=9)
-    assert new_hp == 0
+        # HP扣减: 哥布林 HP7 受9伤 → 0
+        new_hp, new_temp = damage.apply_damage_to_hp(hp=7, temp_hp=0, max_hp=7, dmg=9)
+        assert new_hp == 0
 
-    dice.roll_d20 = orig
+        # === 场景2: 天然20重击 ===
+        dice.roll_d20 = lambda advantage=False, disadvantage=False: \
+            type("R", (), {"used": 20, "rolls": [20], "mode": "normal"})()
 
-    # === 场景2: 天然20重击 ===
-    dice.roll_d20 = lambda advantage=False, disadvantage=False: \
-        type("R", (), {"used": 20, "rolls": [20], "mode": "normal"})()
+        a = check.attack_roll(bonus=5, ac=30)   # 即使AC30，天然20必出
+        assert a.hit is True
+        assert a.crit is True
 
-    a = check.attack_roll(bonus=5, ac=30)   # 即使AC30，天然20必出
-    assert a.hit is True
-    assert a.crit is True
+        # 重击伤害: 2d6+3 (大剑重击)
+        dice.roll_die = lambda s: 4   # d6=4
+        req2 = damage.DamageRequest(
+            dice_expr="2d6",
+            damage_type="slashing",
+            ability_mod=3,
+            add_mod=True,
+            crit=True,                # 重击！
+        )
+        rd2 = damage.roll_damage(req2)
+        # 2d6 重击 = 4d6 = 4*4=16, +3 STR = 19
+        assert rd2.final == 19
+        assert len(rd2.dice_rolls) == 4   # 2d6 翻倍为 4d6
 
-    # 重击伤害: 2d6+3 (大剑重击)
-    dice.roll_die = lambda s: 4   # d6=4
-    req2 = damage.DamageRequest(
-        dice_expr="2d6",
-        damage_type="slashing",
-        ability_mod=3,
-        add_mod=True,
-        crit=True,                # 重击！
-    )
-    rd2 = damage.roll_damage(req2)
-    # 2d6 重击 = 4d6 = 4*4=16, +3 STR = 19
-    assert rd2.final == 19
-    assert len(rd2.dice_rolls) == 4   # 2d6 翻倍为 4d6
-
-    dice.roll_d20 = orig
-
-    # === 场景3: 临时HP优先扣 ===
-    hp, temp = damage.apply_damage_to_hp(hp=10, temp_hp=5, max_hp=20, dmg=7)
-    assert hp == 8 and temp == 0   # 失5临时再失2HP
+        # === 场景3: 临时HP优先扣 ===
+        hp, temp = damage.apply_damage_to_hp(hp=10, temp_hp=5, max_hp=20, dmg=7)
+        assert hp == 8 and temp == 0   # 失5临时再失2HP
+    finally:
+        dice.roll_d20 = orig_roll_d20
+        dice.roll_die = orig_roll_die
 
 
 def test_death_save_full_cycle():
@@ -184,39 +183,40 @@ def test_death_save_full_cycle():
 
     # 场景1: 3次成功 → 稳定
     orig = dice.roll_die
-    t = damage.DeathTracker()
-    dice.roll_die = lambda s: 15   # ≥10 成功
-    r1 = damage.death_save(t); assert t.successes == 1, f"after 1st: {t.successes}"
-    r2 = damage.death_save(t); assert t.successes == 2, f"after 2nd: {t.successes}"
-    r3 = damage.death_save(t)
-    # 3次成功后 tracker.reset() 将计数归零并设 stable=True
-    assert r3.get("stable") or t.stable, f"r3={r3}, stable={t.stable}"
+    try:
+        t = damage.DeathTracker()
+        dice.roll_die = lambda s: 15   # ≥10 成功
+        r1 = damage.death_save(t); assert t.successes == 1, f"after 1st: {t.successes}"
+        r2 = damage.death_save(t); assert t.successes == 2, f"after 2nd: {t.successes}"
+        r3 = damage.death_save(t)
+        # 3次成功后 tracker.reset() 将计数归零并设 stable=True
+        assert r3.get("stable") or t.stable, f"r3={r3}, stable={t.stable}"
 
-    # 场景2: 天然1 → 两次失败
-    t2 = damage.DeathTracker()
-    dice.roll_die = lambda s: 1   # 天然1
-    damage.death_save(t2)
-    assert t2.failures == 2, f"failures={t2.failures}"
+        # 场景2: 天然1 → 两次失败
+        t2 = damage.DeathTracker()
+        dice.roll_die = lambda s: 1   # 天然1
+        damage.death_save(t2)
+        assert t2.failures == 2, f"failures={t2.failures}"
 
-    # 场景3: 天然20 → 恢复1HP
-    t3 = damage.DeathTracker()
-    t3.successes = 2   # 已有2成功
-    dice.roll_die = lambda s: 20   # 天然20
-    result = damage.death_save(t3)
-    assert result["regain_hp"] == 1, f"regain_hp={result.get('regain_hp')}"
-    assert t3.successes == 0   # 计数归零
-    assert t3.failures == 0
+        # 场景3: 天然20 → 恢复1HP
+        t3 = damage.DeathTracker()
+        t3.successes = 2   # 已有2成功
+        dice.roll_die = lambda s: 20   # 天然20
+        result = damage.death_save(t3)
+        assert result["regain_hp"] == 1, f"regain_hp={result.get('regain_hp')}"
+        assert t3.successes == 0   # 计数归零
+        assert t3.failures == 0
 
-    # 场景4: 3次失败 → 死亡
-    t4 = damage.DeathTracker()
-    dice.roll_die = lambda s: 5   # <10 失败
-    damage.death_save(t4); assert t4.failures == 1, f"after 1st: {t4.failures}"
-    damage.death_save(t4); assert t4.failures == 2, f"after 2nd: {t4.failures}"
-    damage.death_save(t4)
-    assert t4.failures >= 3, f"failures={t4.failures}"
-    assert t4.dead is True, f"dead={t4.dead}"
-
-    dice.roll_die = orig
+        # 场景4: 3次失败 → 死亡
+        t4 = damage.DeathTracker()
+        dice.roll_die = lambda s: 5   # <10 失败
+        damage.death_save(t4); assert t4.failures == 1, f"after 1st: {t4.failures}"
+        damage.death_save(t4); assert t4.failures == 2, f"after 2nd: {t4.failures}"
+        damage.death_save(t4)
+        assert t4.failures >= 3, f"failures={t4.failures}"
+        assert t4.dead is True, f"dead={t4.dead}"
+    finally:
+        dice.roll_die = orig
 
 
 def test_rest_and_recovery_engine():

@@ -27,6 +27,8 @@ from .auth import SecurityHeadersMiddleware
 from .cache import init_cache
 
 # ── 路由模块 ──────────────────────────────────────────────────────────────────
+from ..config import resolve_allowed_origins  # noqa: E402
+from .routes import auth as auth_router
 from .routes import campaign, character, chat, combat, feats, loot, magic_items, room, scene, stronghold
 
 app = FastAPI(title="AI DM", version="0.3.0")
@@ -34,23 +36,20 @@ app = FastAPI(title="AI DM", version="0.3.0")
 # ── 安全头中间件 ──────────────────────────────────────────────────────────────
 app.add_middleware(SecurityHeadersMiddleware)
 
-# CORS — 允许的源从环境变量 AIDM_ALLOWED_ORIGINS 读取（逗号分隔）
-# 未设置时默认 * （向后兼容），生产环境请设置具体域名
-_allowed_origins_raw = os.getenv("AIDM_ALLOWED_ORIGINS", "*")
-if _allowed_origins_raw.strip() == "*":
-    _origins = ["*"]
-else:
-    _origins = [o.strip() for o in _allowed_origins_raw.split(",") if o.strip()]
+# ★ P0-06: CORS 与 Socket.IO 统一从配置读取（AIDM_ALLOWED_ORIGINS）
+# production 模式禁止 "*"（fail closed）
+_origins = resolve_allowed_origins()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
-    allow_credentials=True,
+    allow_credentials=("*" not in _origins),
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # ── 全局 API Key 认证（可选，仅当 AIDM_API_KEY 环境变量存在时启用）────────────
-if os.getenv("AIDM_API_KEY"):
+from ..config import get_settings as _get_settings
+if _get_settings().aidm_api_key:
     @app.middleware("http")
     async def _enforce_api_key(request, call_next):  # noqa: ANN001
         """Lightweight global gate — checks X-API-Key header."""
@@ -77,6 +76,7 @@ async def startup():
 
 
 # ── 注册路由 ──────────────────────────────────────────────────────────────────
+app.include_router(auth_router.router)
 app.include_router(campaign.router)
 app.include_router(character.router)
 app.include_router(chat.router)
@@ -92,8 +92,12 @@ app.include_router(scene.router)
 from .ws import manager, sio  # noqa: E402
 
 # 静态前端（P5 交互层：Web 聊天界面）
+# P2-02: React 版产物（ui/out，静态导出）为正式前端；旧版静态页冻结并移至 /legacy
 _UI_DIR = os.path.normpath(
     os.path.join(os.path.dirname(__file__), "..", "..", "..", "ui", "static")
+)
+_REACT_OUT_DIR = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "ui", "out")
 )
 
 # 挂载静态文件目录（CSS/JS）
@@ -102,11 +106,27 @@ app.mount("/static", StaticFiles(directory=_UI_DIR), name="static")
 
 @app.get("/")
 def index():
-    """Web 跑团前端（HTML 聊天页，调 /chat）。"""
+    """Web 跑团前端（React 静态导出产物，正式入口）。
+
+    ★ P2-02: 维护单一正式前端——React（ui/out）。旧版静态页冻结。
+    """
+    p = os.path.join(_REACT_OUT_DIR, "index.html")
+    if os.path.exists(p):
+        return FileResponse(p)
+    # 未构建 React 产物时回退旧版静态页（开发/兼容）
+    legacy = os.path.join(_UI_DIR, "index.html")
+    if os.path.exists(legacy):
+        return FileResponse(legacy)
+    return {"status": "frontend not found", "path": p}
+
+
+@app.get("/legacy")
+def legacy_index():
+    """旧版静态前端（已冻结，仅保留兼容入口）。"""
     p = os.path.join(_UI_DIR, "index.html")
     if os.path.exists(p):
         return FileResponse(p)
-    return {"status": "frontend not found", "path": p}
+    return {"status": "legacy frontend not found", "path": p}
 
 
 @app.get("/health")

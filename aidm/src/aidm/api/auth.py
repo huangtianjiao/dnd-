@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -14,8 +12,12 @@ from starlette.responses import Response
 API_KEY_NAME = "X-API-Key"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 
-# Expected API key from environment variable
-EXPECTED_API_KEY = os.getenv("AIDM_API_KEY", "")
+# Expected API key from environment variable（P2-01: 统一经 Settings）
+def _expected_api_key() -> str:
+    from ..config import get_settings
+    return get_settings().aidm_api_key
+
+EXPECTED_API_KEY = _expected_api_key()
 
 
 async def verify_api_key(api_key: str = Security(api_key_header)):

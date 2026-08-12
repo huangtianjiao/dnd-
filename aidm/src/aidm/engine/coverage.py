@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional
@@ -151,6 +152,8 @@ class CoverageEntry:
     handlers: List[str] = field(default_factory=list)
     unit_tests: List[str] = field(default_factory=list)
     scenario_tests: List[str] = field(default_factory=list)
+    # P1-08: CI 已确认该模块的显式 rule 测试通过（load_ci_results 写入）
+    ci_passed: bool = False
 
 
 @dataclass
@@ -401,6 +404,9 @@ class CoverageManifest:
 
         # 收集测试引用的 engine 模块
         verified: set[str] = set()
+        # ★ P1-08: 测试显式声明其验证的规则/模块（@pytest.mark.rule("engine.X")）
+        #   VERIFIED 必须具备显式 rule 映射 + 生产引用 + CI 确认通过。
+        rule_mapped: set[str] = set()
         if os.path.isdir(tests_dir):
             for f in sorted(os.listdir(tests_dir)):
                 if not f.startswith("test_") or not f.endswith(".py"):
@@ -413,21 +419,60 @@ class CoverageManifest:
                     continue
                 verified |= {f"engine.{m}" for m in _find_engine_imports(src)}
                 verified |= {f"engine.{m}" for m in _engine_internal_imports(src)}
+                # P1-08: 解析 @pytest.mark.rule("engine.X") / rule('R-CMB-017')
+                for m in re.finditer(
+                        r'@pytest\.mark\.rule\(\s*["\']((?:engine\.)?[a-z_0-9.]+)["\']\s*\)',
+                        src):
+                    _rid = m.group(1)
+                    if _rid.startswith("engine."):
+                        rule_mapped.add(_rid)
+                    elif _rid in _ENGINE_SUBMODULES:
+                        rule_mapped.add(f"engine.{_rid}")
 
-        # 登记状态（TEST-002/DOC-001）：
-        #   - 仅生产引用（无测试）→ WIRED
+        # 登记状态（TEST-002/DOC-001 + P1-08）：
+        #   - 仅生产引用（无测试）→ WIRED（已接入生产，缺验收测试）
         #   - 仅测试引用（无生产调用）→ FULL（测试通过但未接入生产链路）
-        #   - 生产引用 + 测试引用 → VERIFIED（生产入口真实调用且有测试覆盖）
-        for cid in wired:
+        #   - 生产引用 + 测试引用（无显式 rule 映射）→ FULL（已实现且有测试，
+        #     但未显式声明验证的规则/模块——不再单凭 import 即 VERIFIED）
+        #   - 生产引用 + 测试引用 + 显式 rule 映射 → VERIFIED（生产入口真实调用，
+        #     且测试显式声明验证该模块；CI 确认见 load_ci_results）
+        wired_only = wired - verified
+        for cid in wired_only:
             self.register(content_id=cid, status=CoverageStatus.WIRED)
         for cid in verified:
             if cid in wired:
-                self.register(content_id=cid, status=CoverageStatus.VERIFIED)
+                if cid in rule_mapped:
+                    self.register(content_id=cid, status=CoverageStatus.VERIFIED)
+                else:
+                    self.register(content_id=cid, status=CoverageStatus.FULL)
             else:
                 self.register(content_id=cid, status=CoverageStatus.FULL)
 
         # 先扫描存在的 engine 模块（handler 存在性）
         self.scan_modules()
+        return self
+
+    def load_ci_results(self, ci_json: dict) -> "CoverageManifest":
+        """P1-08: 加载 CI 测试结果，仅对「CI 确认规则测试通过」的模块授予 VERIFIED。
+
+        ci_json 形态（由 scripts/run_cov_gate.py 生成）:
+          {"R-CMB-017": {"passed": true, "tests": ["tests/test_x.py::test_y"]},
+           "engine.combat": {"passed": true, "tests": [...]}}
+        规则: VERIFIED 的最终条件是「显式 rule 映射 + CI 确认通过」——
+        仅出现在源码 import 中不再是充分条件。
+        """
+        passed_modules: set[str] = set()
+        for rid, info in (ci_json or {}).items():
+            if not isinstance(info, dict) or not info.get("passed"):
+                continue
+            if rid.startswith("engine."):
+                passed_modules.add(rid)
+            elif rid in _ENGINE_SUBMODULES:
+                passed_modules.add(f"engine.{rid}")
+        for cid in passed_modules:
+            entry = self.entries.get(cid)
+            if entry is not None and entry.status == CoverageStatus.VERIFIED:
+                entry.ci_passed = True
         return self
 
     # 覆盖度等级排序（用于门禁比较）— 普通类属性

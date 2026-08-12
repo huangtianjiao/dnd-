@@ -288,6 +288,7 @@ def attack_roll(bonus: int, ac: int,
     说明: 优劣势下天然 20/1 判定基于"实际采用的骰值"（r.used）：
           优势取max→有一骰20则必出；劣势取min→两骰皆20才必出。
     """
+    print(f"DBGCHK dice_file={dice.__file__} id={id(dice)}")
     r = dice.roll_d20(advantage, disadvantage)        # R-CHK-004 优劣势
     nat = r.used                                       # 实际采用的 d20
     mod_total = bonus + circ

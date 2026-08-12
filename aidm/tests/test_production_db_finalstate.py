@@ -18,6 +18,7 @@ import pytest
 
 # ── REST-002: rest_state 接入 resolve_rest ──────────────────────
 
+@pytest.mark.rule("engine.rest_state")
 class TestRestStateProduction:
     def test_rest_session_tracked(self):
         """短休完成后返回 rest_session_id 与 phase=completed。"""
@@ -41,6 +42,7 @@ class TestRestStateProduction:
 
 # ── REST-003: recharge_spec 接入资源池恢复 ──────────────────────
 
+@pytest.mark.rule("engine.recharge_spec")
 class TestRechargeSpecProduction:
     def test_resource_pool_recharged_to_full(self):
         """短休后资源池恢复为满（经 engine.recharge_spec）。"""
@@ -63,6 +65,7 @@ class TestRechargeSpecProduction:
 
 # ── CHAR-008: choice_record 接入角色构建 ────────────────────────
 
+@pytest.mark.rule("engine.choice_record")
 class TestChoiceRecordProduction:
     def test_character_builder_records_log(self):
         """角色创建产出 build_log（含来源 Grant 与 ChoiceRecord）。"""
@@ -94,6 +97,8 @@ class TestChoiceRecordProduction:
 
 # ── OBS-001: resolution_trace 接入结算输出 ──────────────────────
 
+@pytest.mark.rule("engine.resolution_trace")
+@pytest.mark.rule("engine.resolution_trace_ext")
 class TestResolutionTraceProduction:
     def _char(self):
         class _Ch:
@@ -138,6 +143,7 @@ class TestResolutionTraceProduction:
 
 # ── EXP-003: downtime 接入生产分派 ──────────────────────────────
 
+@pytest.mark.rule("engine.downtime")
 class TestDowntimeProduction:
     def test_resolve_downtime(self):
         from aidm.brain.resolvers.actions import resolve_downtime
@@ -174,6 +180,9 @@ class _MockChar:
 
 # ── CHR-004/005/002: 注册表接入 CharacterBuilder ───────────────
 
+@pytest.mark.rule("engine.species_registry_data")
+@pytest.mark.rule("engine.background_registry_data")
+@pytest.mark.rule("engine.subclass_registry_data")
 class TestRegistryInBuilder:
     def _builder(self):
         from aidm.build.character_builder import CharacterBuilder

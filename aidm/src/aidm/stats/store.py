@@ -16,6 +16,7 @@ from contextlib import contextmanager, suppress
 from sqlmodel import Session, select
 
 from ..engine import combat as cmb
+from ..errors import InvariantViolation  # P2-05: 错误分类
 from ..engine import conditions as cond
 from . import models as M
 
@@ -23,24 +24,62 @@ from . import models as M
 # 引擎与会话
 # ──────────────────────────────────────────────────────────────────────────
 
-# RAG-003/可移植性: 存档路径由项目根目录派生，不硬编码 Windows 盘符。
-# 可用环境变量 AIDM_SAVE_DB 覆盖。
+# RAG-003/可移植性: 存档路径由项目根目录/数据目录派生，不硬编码 Windows 盘符。
+# 可用环境变量 AIDM_SAVE_DB 覆盖；P0-09: AIDM_DATA_DIR 统一数据根目录。
 def _default_db_path() -> str:
-    from ..config import PROJECT_ROOT
-    default = str(PROJECT_ROOT / "aidm" / "data" / "saves" / "save.db")
-    return os.getenv("AIDM_SAVE_DB", default)
+    from ..config import DATA_DIR, get_settings
+    default = str(DATA_DIR / "saves" / "save.db")
+    return get_settings().aidm_save_db or default
 
 
 DEFAULT_DB = "sqlite:///" + _default_db_path()
 
 
-def _migrate(engine) -> None:
-    """自动迁移：给已存在表补缺失列（SQLite ALTER TABLE ADD COLUMN）。
+# ──────────────────────────────────────────────────────────────────────────
+# P1-07: 版本化数据库迁移（替代 best-effort ALTER）
+# ──────────────────────────────────────────────────────────────────────────
+# - schema_migrations 表记录已应用版本
+# - 迁移按序执行，失败 → 抛错拒绝启动（不再 suppress 吞异常）
+# - 老库（无 schema_migrations）→ 基线迁移 001 补齐缺失列后标记
 
-    解决旧库缺 setting/atmosphere/situation/exits 等新列的问题。
+SCHEMA_VERSION = 1  # 当前 schema 版本（新增迁移时 +1）
+
+
+def _migrate(engine) -> None:
+    """版本化迁移入口：按 SCHEMA_VERSION 依次应用未执行的迁移。
+
+    规则: P1-07 — 迁移失败必须抛错（应用拒绝启动），
+    不再 best-effort 吞异常继续跑。
     """
     from sqlalchemy import inspect, text
     insp = inspect(engine)
+    # 建版本表（幂等）
+    with engine.begin() as conn:
+        conn.execute(text(
+            "CREATE TABLE IF NOT EXISTS schema_migrations ("
+            " version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT "
+            "(datetime('now')) )"))
+
+    # 读取已应用版本
+    applied = set()
+    with engine.begin() as conn:
+        rows = conn.execute(text("SELECT version FROM schema_migrations"))
+        applied = {r[0] for r in rows}
+
+    # 按序执行未应用的迁移
+    for version, fn in sorted(_MIGRATIONS.items()):
+        if version in applied:
+            continue
+        fn(engine, insp)          # 失败 → 抛错（拒绝启动）
+        with engine.begin() as conn:
+            conn.execute(text(
+                "INSERT INTO schema_migrations (version) VALUES (:v)"),
+                {"v": version})
+
+
+def _migration_001_add_missing_columns(engine, insp) -> None:
+    """基线迁移 001：给已存在表补缺失列（历史行为，纳入版本管理）。"""
+    from sqlalchemy import text
     for model in (M.Campaign, M.Scene, M.Character, M.CombatState, M.Log):
         tbl = model.__tablename__
         if not insp.has_table(tbl):
@@ -58,8 +97,14 @@ def _migrate(engine) -> None:
                 else:
                     tn = str(col.type).upper()
                     dv = " DEFAULT 0" if "INT" in tn or "BOOL" in tn else " DEFAULT ''"
-                with suppress(Exception):
-                    conn.execute(text(f'ALTER TABLE "{tbl}" ADD COLUMN "{col.name}" {coltype}{dv}'))
+                conn.execute(text(
+                    f'ALTER TABLE "{tbl}" ADD COLUMN "{col.name}" {coltype}{dv}'))
+
+
+# 迁移注册表: {version: 迁移函数}（有序）
+_MIGRATIONS: dict[int, object] = {
+    1: _migration_001_add_missing_columns,
+}
 
 
 _engines: dict[str, object] = {}
@@ -75,7 +120,7 @@ def get_engine(db_path: str = DEFAULT_DB):
                 os.makedirs(d, exist_ok=True)
         _engines[db_path] = M.get_engine(db_path)
         M.SQLModel.metadata.create_all(_engines[db_path])
-        _migrate(_engines[db_path])   # 老库补列
+        _migrate(_engines[db_path])   # P1-07: 版本化迁移（失败即抛错）
     return _engines[db_path]
 
 
@@ -320,10 +365,45 @@ def create_campaign(name: str, db_path: str = DEFAULT_DB) -> M.Campaign:
         return c
 
 
-def save_campaign(c: M.Campaign, db_path: str = DEFAULT_DB) -> M.Campaign:
-    with session(db_path) as s:
-        s.add(c); s.commit(); s.refresh(c)
-        return c
+def save_campaign(c: M.Campaign, db_path: str = DEFAULT_DB,
+                  expected_version: int | None = None) -> M.Campaign:
+    """保存战役（★ P1-05: 乐观锁）。
+
+    expected_version 提供时执行条件更新：
+      UPDATE ... SET version = version + 1
+      WHERE id = ? AND version = expected_version
+    0 rows → 抛 StaleVersionError（调用方转 409）。
+    expected_version=None 时向后兼容直接保存（旧调用方）。
+    """
+    if expected_version is None:
+        with session(db_path) as s:
+            s.add(c); s.commit(); s.refresh(c)
+            return c
+    from sqlalchemy import text
+    eng = get_engine(db_path)
+    with eng.begin() as conn:
+        result = conn.execute(
+            text("UPDATE campaign SET version = version + 1 "
+                 "WHERE id = :cid AND version = :expected"),
+            {"cid": c.id, "expected": int(expected_version)},
+        )
+        if result.rowcount == 0:
+            raise StaleVersionError(
+                f"战役 {c.id} 版本冲突：期望 {expected_version}")
+        conn.execute(
+            text("UPDATE campaign SET rolling_summary = :s, "
+                 "world_flags_json = :w, setting = :st, tone = :t, "
+                 "world_background = :wb, content_pack_versions_json = :cp "
+                 "WHERE id = :cid"),
+            {"s": c.rolling_summary, "w": c.world_flags_json,
+             "st": c.setting, "t": c.tone, "wb": c.world_background,
+             "cp": c.content_pack_versions_json, "cid": c.id},
+        )
+    return get_campaign(c.id, db_path)
+
+
+class StaleVersionError(InvariantViolation):
+    """P1-05: 乐观锁版本冲突（P2-05: 归类为状态不变量破坏 → 409）。"""
 
 
 def get_campaign(campaign_id: int, db_path: str = DEFAULT_DB) -> M.Campaign | None:

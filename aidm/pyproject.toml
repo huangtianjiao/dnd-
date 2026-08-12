@@ -29,3 +29,7 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short --cov=src/aidm --cov-report=term-missing --cov-report=html"
+# P1-08: rule marker — 测试显式声明其验证的规则/模块（CoverageManifest 据此判定 VERIFIED）
+markers = [
+    "rule(id): 显式声明该测试验证的规则ID或engine模块（如 rule('R-CMB-017') / rule('engine.combat')）",
+]

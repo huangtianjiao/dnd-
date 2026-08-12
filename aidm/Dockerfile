@@ -32,6 +32,7 @@ USER aidm
 
 # Environment variables
 ENV AIDM_PROJECT_ROOT=/app
+ENV AIDM_DATA_DIR=/data
 ENV PYTHONUNBUFFERED=1
 
 # Expose port
@@ -42,4 +43,5 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
 
 # Start command
-CMD ["uvicorn", "aidm.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# ★ P0-07: 必须启动 combined_app（Socket.IO + FastAPI 组合），否则 /ws 不可用
+CMD ["uvicorn", "aidm.api.main:combined_app", "--host", "0.0.0.0", "--port", "8000"]
