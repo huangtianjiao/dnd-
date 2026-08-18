@@ -9,7 +9,6 @@
 
 from __future__ import annotations
 
-import json
 import os
 import tempfile
 
@@ -48,36 +47,53 @@ class TestServerAuthoritativeStats:
     def test_create_character_ignores_client_stats(self):
         """P1-01: /character 提交 hp_max=999/ac=50 被忽略，服务器计算。"""
         from aidm.stats import store
-        from aidm.stats.models import Character
         db = _tmp_db()
-        store.create_campaign("S房", db_path=db)
-        from aidm.api.routes.character import create_character
-        from aidm.api.routes.dependencies import CharIn
-        c = CharIn(name="勇者", race="人类", char_class="战士", level=1,
-                   abilities={"str": 16, "dex": 14, "con": 14,
-                              "int": 10, "wis": 10, "cha": 10},
-                   hp_max=999, ac=50, speed=99)
-        r = create_character(c)
-        ch = store.get_character(r["id"])
-        assert ch.hp_max == 12, ch.hp_max   # 服务器推导，非客户端 999
-        assert ch.ac == 12
-        assert ch.speed == 30
+        # create_character 走 DEFAULT_DB —— 重定向到临时库保证隔离
+        _od, _oe = store.DEFAULT_DB, store._engines.copy()
+        store.DEFAULT_DB = db
+        store._engines.clear()
+        try:
+            store.create_campaign("S房")
+            from aidm.api.routes.character import create_character
+            from aidm.api.routes.dependencies import CharIn
+            c = CharIn(name="勇者", race="人类", char_class="战士", level=1,
+                       abilities={"str": 16, "dex": 14, "con": 14,
+                                  "int": 10, "wis": 10, "cha": 10},
+                       hp_max=999, ac=50, speed=99)
+            r = create_character(c)
+            ch = store.get_character(r["id"])
+            assert ch.hp_max == 12, ch.hp_max   # 服务器推导，非客户端 999
+            assert ch.ac == 12
+            assert ch.speed == 30
+        finally:
+            store.DEFAULT_DB = _od
+            store._engines.clear()
+            store._engines.update(_oe)
 
     def test_join_ignores_client_stats(self):
-        from aidm.stats import store
         from aidm.api.routes.character import join_campaign
         from aidm.api.routes.dependencies import JoinIn
+        from aidm.stats import store
         db = _tmp_db()
-        camp = store.create_campaign("J房", db_path=db)
-        r = join_campaign(JoinIn(name="冒险者", campaign_id=camp.id,
-                                 race="人类", char_class="战士", level=1,
-                                 abilities={"str": 16, "dex": 14, "con": 14,
-                                            "int": 10, "wis": 10, "cha": 10},
-                                 hp_max=500, ac=40, speed=120))
-        ch = store.get_character(r["character_id"])
-        assert ch.hp_max == 12
-        assert ch.ac == 12
-        assert ch.speed == 30
+        # join_campaign 走 DEFAULT_DB —— 重定向到临时库保证隔离
+        _od, _oe = store.DEFAULT_DB, store._engines.copy()
+        store.DEFAULT_DB = db
+        store._engines.clear()
+        try:
+            camp = store.create_campaign("J房")
+            r = join_campaign(JoinIn(name="冒险者", campaign_id=camp.id,
+                                     race="人类", char_class="战士", level=1,
+                                     abilities={"str": 16, "dex": 14, "con": 14,
+                                                "int": 10, "wis": 10, "cha": 10},
+                                     hp_max=500, ac=40, speed=120))
+            ch = store.get_character(r["character_id"])
+            assert ch.hp_max == 12
+            assert ch.ac == 12
+            assert ch.speed == 30
+        finally:
+            store.DEFAULT_DB = _od
+            store._engines.clear()
+            store._engines.update(_oe)
 
 
 # ── P1-02: HITL 线程身份 ──────────────────────────────────────────
@@ -109,9 +125,10 @@ class TestThreadIdentity:
 
 class TestResumeAuthz:
     def test_invalid_thread_id_rejected(self):
+        import asyncio
+
         from aidm.api.routes.chat import chat_resume
         from aidm.api.routes.dependencies import ResumeIn
-        import asyncio
         with pytest.raises(Exception) as ei:
             asyncio.run(chat_resume(ResumeIn(thread_id="default", answer="y",
                                              character_id=1)))
@@ -119,10 +136,11 @@ class TestResumeAuthz:
 
     def test_cross_character_resume_forbidden(self):
         """角色 A 不能恢复角色 B 的线程（ownership 校验）。"""
+        import asyncio
+
         from aidm.api.routes.chat import chat_resume
         from aidm.api.routes.dependencies import ResumeIn
         from aidm.brain.graph import make_thread_id
-        import asyncio
         tid = make_thread_id(1, 100)  # 线程绑定 character 100
         with pytest.raises(Exception) as ei:
             asyncio.run(chat_resume(ResumeIn(thread_id=tid, answer="y",
@@ -146,9 +164,10 @@ class TestIdempotency:
         assert st.idempotency_key == "cmd-1"
 
     def test_graph_run_passes_extra_state(self):
-        from aidm.brain.graph import run
         # 不实际 invoke（需 DB/Qdrant），仅验证签名接受 extra
         import inspect
+
+        from aidm.brain.graph import run
         sig = inspect.signature(run)
         assert "extra" in str(sig) or any(
             p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
@@ -216,6 +235,7 @@ class TestVersionedMigrations:
         """旧库（缺列）→ 迁移 001 补齐并记录版本。"""
         import sqlite3
         import tempfile
+
         from aidm.stats import store
         fd, path = tempfile.mkstemp(suffix=".db")
         os.close(fd)

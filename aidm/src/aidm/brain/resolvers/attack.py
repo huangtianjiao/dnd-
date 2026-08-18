@@ -207,6 +207,20 @@ def resolve_attack(ch, it, state=None) -> dict:
         mastery_effect = _resolve_weapon_mastery(wname, ch, it, atk)
         if mastery_effect:
             out["mastery"] = mastery_effect
+    # ★ P8（方案 §11.4）: 动作级 ResolutionTrace（Narrator 唯一输入）
+    try:
+        from ...rules.combat_trace import attack_trace
+        mname = ""
+        if out.get("mastery"):
+            mname = out["mastery"].get("mastery", "")
+        out["action_trace"] = attack_trace(
+            weapon=wname, attack_roll=atk.d20, attack_bonus=bonus,
+            target_ac=ac, hit=bool(out.get("hit")), damage_roll="",
+            damage=int(out.get("damage", 0)), mastery=mname,
+            resources_spent=it.get("resources_spent", []),
+        ).to_dict()
+    except Exception:
+        pass  # trace 为审计增强，失败不阻断结算
     return out
 
 
@@ -283,6 +297,9 @@ def _resolve_weapon_mastery(wname: str, ch, it, atk) -> dict | None:
 
     从武器数据表读取精通词条（如"推离"/"失衡"），命中后调用
     engine.mastery.resolve_mastery_with_grant 权威结算特效。
+
+    ★ P8（方案 §11.2）: 武器词条 ≠ 自动会用——只有角色持久化
+      mastery_grants 授权该精通（且本回合未超限）才会触发。
     """
     try:
         from ...engine.mastery import (
@@ -295,6 +312,14 @@ def _resolve_weapon_mastery(wname: str, ch, it, atk) -> dict | None:
             return None
         mastery_cn = entry.get("mastery")
         if not mastery_cn or mastery_cn not in MASTERY_NAME_MAP:
+            return None
+        # P8: 查询角色持久化授权（允许无该字段的旧实体降级为无授权）
+        authorized = True
+        try:
+            authorized = ch.has_mastery(mastery_cn)
+        except AttributeError:
+            authorized = False
+        if not authorized:
             return None
         grant = MasteryGrant(
             entity_id=str(getattr(ch, "id", "unknown")),

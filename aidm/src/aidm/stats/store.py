@@ -42,7 +42,7 @@ DEFAULT_DB = "sqlite:///" + _default_db_path()
 # - 迁移按序执行，失败 → 抛错拒绝启动（不再 suppress 吞异常）
 # - 老库（无 schema_migrations）→ 基线迁移 001 补齐缺失列后标记
 
-SCHEMA_VERSION = 1  # 当前 schema 版本（新增迁移时 +1）
+SCHEMA_VERSION = 3  # 当前 schema 版本（新增迁移时 +1）
 
 
 def _migrate(engine) -> None:
@@ -101,9 +101,60 @@ def _migration_001_add_missing_columns(engine, insp) -> None:
                     f'ALTER TABLE "{tbl}" ADD COLUMN "{col.name}" {coltype}{dv}'))
 
 
+def _migration_002_campaign_rules_mode(engine, insp) -> None:
+    """迁移 002（改造方案 §2.1/§2.2）: 为 campaign 表补 rules_mode/mechanics_baseline 列。
+
+    老库（仅有 ruleset_id/ruleset_revision）→ 默认 raw_2024 / srd_5.2.1，
+    保证启动后 Campaign 明确知道自身规则模式。
+    """
+    from sqlalchemy import text
+    if not insp.has_table("campaign"):
+        return
+    # 前序迁移（001 通用补列）可能已补过；Inspector 列信息有缓存，需刷新
+    insp.clear_cache()
+    existing = {c["name"] for c in insp.get_columns("campaign")}
+    with engine.begin() as conn:
+        if "rules_mode" not in existing:
+            conn.execute(text(
+                "ALTER TABLE campaign ADD COLUMN rules_mode TEXT NOT NULL "
+                "DEFAULT 'raw_2024'"))
+        if "mechanics_baseline" not in existing:
+            conn.execute(text(
+                "ALTER TABLE campaign ADD COLUMN mechanics_baseline TEXT NOT NULL "
+                "DEFAULT 'srd_5.2.1'"))
+
+
+def _migration_003_character_v2_columns(engine, insp) -> None:
+    """迁移 003（改造方案 §5.2/P6-P8）: character 表补 P6-P8 持久化列。
+
+    - resource_pools_json（§9.1 资源持久化）
+    - prepared/spellbook/always_prepared 法术来源（§10.3）
+    - mastery_grants_json（§11.2 精通授权）
+    老库打开时自动补齐；新库由 create_all 直接创建。
+    """
+    from sqlalchemy import text
+    if not insp.has_table("character"):
+        return
+    existing = {c["name"] for c in insp.get_columns("character")}
+    additions = {
+        "resource_pools_json": "VARCHAR DEFAULT '{}' NOT NULL",
+        "prepared_spells_json": "VARCHAR DEFAULT '[]' NOT NULL",
+        "spellbook_spells_json": "VARCHAR DEFAULT '[]' NOT NULL",
+        "always_prepared_spells_json": "VARCHAR DEFAULT '[]' NOT NULL",
+        "mastery_grants_json": "VARCHAR DEFAULT '[]' NOT NULL",
+    }
+    with engine.begin() as conn:
+        for col, ddl in additions.items():
+            if col not in existing:
+                conn.execute(text(
+                    f'ALTER TABLE character ADD COLUMN "{col}" {ddl}'))
+
+
 # 迁移注册表: {version: 迁移函数}（有序）
 _MIGRATIONS: dict[int, object] = {
     1: _migration_001_add_missing_columns,
+    2: _migration_002_campaign_rules_mode,
+    3: _migration_003_character_v2_columns,
 }
 
 
@@ -365,19 +416,30 @@ def get_character_xp(character_id: int,
 # 战役 / rolling summary
 # ──────────────────────────────────────────────────────────────────────────
 
-def create_campaign(name: str, db_path: str | None = None) -> M.Campaign:
+def create_campaign(name: str, db_path: str | None = None,
+                    rules_mode: str = "raw_2024") -> M.Campaign:
     db_path = db_path or DEFAULT_DB
-    """创建战役，固定规则集标识（ARC-001）。
+    """创建战役，固定规则集标识（ARC-001）与规则模式（方案 §2.1）。
 
-    从默认 ruleset_manifest.json 加载 ruleset_id / revision / content_packs，
-    写入 Campaign，运行中只允许显式迁移。
+    从默认 ruleset_manifest.json 加载 ruleset_id / revision / content_packs /
+    mechanics_baseline，写入 Campaign；规则模式默认 raw_2024，
+    非法模式 fail closed（拒绝创建，不允许伪装成 RAW）。
+    运行中只允许显式迁移。
     """
-    from ..engine.ruleset_manifest import load_default_manifest
+    from ..engine.ruleset_manifest import RulesMode, load_default_manifest
+    try:
+        RulesMode(rules_mode)
+    except ValueError:
+        raise ValueError(
+            f"未知规则模式 {rules_mode!r}，可选: {[m.value for m in RulesMode]}"
+        ) from None
     manifest = load_default_manifest()
     c = M.Campaign(
         name=name,
         ruleset_id=manifest.ruleset_id,
         ruleset_revision=manifest.revision,
+        mechanics_baseline=manifest.mechanics_baseline,
+        rules_mode=rules_mode,
     )
     # 固定内容包版本
     pack_versions = {}
@@ -579,6 +641,84 @@ def load_combat(campaign_id: int, db_path: str | None = None) -> cmb.Combat:
         combat.active = cs.active
         combat.version = getattr(cs, "version", 0)  # ★ API-001: 乐观锁版本
         return combat
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# CharacterAggregate provenance（改造方案 §5.3）— Grant/Choice 持久化
+# ──────────────────────────────────────────────────────────────────────────
+
+def add_character_grant(ch: M.Character, grant: M.CharacterGrant,
+                        db_path: str | None = None) -> M.CharacterGrant:
+    """保存一条授予记录（按 grant_id 幂等：重复写入返回已有记录）。"""
+    db_path = db_path or DEFAULT_DB
+    with session(db_path) as s:
+        existing = s.exec(select(M.CharacterGrant).where(
+            M.CharacterGrant.character_id == ch.id,
+            M.CharacterGrant.grant_id == grant.grant_id)).first()
+        if existing is not None:
+            return existing
+        grant.character_id = ch.id
+        s.add(grant)
+        s.commit()
+        s.refresh(grant)
+        return grant
+
+
+def add_character_choice(ch: M.Character, choice: M.CharacterChoice,
+                         db_path: str | None = None) -> M.CharacterChoice:
+    """保存一条选择记录（按 choice_id 幂等：重复写入返回已有记录）。"""
+    db_path = db_path or DEFAULT_DB
+    with session(db_path) as s:
+        existing = s.exec(select(M.CharacterChoice).where(
+            M.CharacterChoice.character_id == ch.id,
+            M.CharacterChoice.choice_id == choice.choice_id)).first()
+        if existing is not None:
+            return existing
+        choice.character_id = ch.id
+        s.add(choice)
+        s.commit()
+        s.refresh(choice)
+        return choice
+
+
+def list_character_grants(character_id: int,
+                          db_path: str | None = None) -> list[M.CharacterGrant]:
+    db_path = db_path or DEFAULT_DB
+    with session(db_path) as s:
+        stmt = (select(M.CharacterGrant).where(M.CharacterGrant.character_id == character_id)
+                .order_by(M.CharacterGrant.id))
+        return list(s.exec(stmt))
+
+
+def list_character_choices(character_id: int,
+                           db_path: str | None = None) -> list[M.CharacterChoice]:
+    db_path = db_path or DEFAULT_DB
+    with session(db_path) as s:
+        stmt = (select(M.CharacterChoice).where(M.CharacterChoice.character_id == character_id)
+                .order_by(M.CharacterChoice.id))
+        return list(s.exec(stmt))
+
+
+def resolve_character_choice(character_id: int, choice_id: str,
+                             value: str, db_path: str | None = None):
+    """解决一个选择：更新 selected_values 并标记 validated。
+
+    Returns:
+        更新后的 CharacterChoice；choice_id 不存在返回 None。
+    """
+    db_path = db_path or DEFAULT_DB
+    with session(db_path) as s:
+        rec = s.exec(select(M.CharacterChoice).where(
+            M.CharacterChoice.character_id == character_id,
+            M.CharacterChoice.choice_id == choice_id)).first()
+        if rec is None:
+            return None
+        rec.set_selected_values([value] if value else [])
+        rec.validated = True
+        s.add(rec)
+        # 注意: 不要在这里 s.refresh(rec) —— refresh 会先从 DB 重载
+        #（autoflush 未提交时拿到旧值）把已修改的属性覆盖回去。
+        return rec
 
 
 # ──────────────────────────────────────────────────────────────────────────

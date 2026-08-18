@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-import json
+import contextlib
 import os
 import tempfile
 
@@ -22,6 +22,28 @@ def _tmp_db() -> str:
     fd, path = tempfile.mkstemp(suffix=".db")
     os.close(fd)
     return f"sqlite:///{path}"
+
+
+@pytest.fixture(autouse=True)
+def _isolated_db():
+    """隔离数据库：本文件部分测试直接调用路由函数（不经 TestClient），
+    此前落在生产默认 save.db 上——隔离后既不污染真实库，也不会因
+    schema 演进（新列）而失败。
+    """
+    from aidm.stats import store as S
+    fd, path = tempfile.mkstemp(suffix=".db")
+    os.close(fd)
+    os.unlink(path)
+    od, oe = S.DEFAULT_DB, S._engines.copy()
+    S.DEFAULT_DB = f"sqlite:///{path}"
+    S._engines.clear()
+    S.get_engine(S.DEFAULT_DB)
+    yield
+    S.DEFAULT_DB = od
+    S._engines.clear()
+    S._engines.update(oe)
+    with contextlib.suppress(OSError):
+        os.unlink(path)
 
 
 # ── P0-03: 签名会话令牌 ─────────────────────────────────────────────
@@ -87,7 +109,7 @@ class TestSessionToken:
 class TestHostPrivilege:
     def _fresh_room(self):
         """创建临时战役+房间，返回 (room_manager, room dict)。"""
-        from aidm.api.routes.room import room_manager, create_room, RoomCreateIn
+        from aidm.api.routes.room import RoomCreateIn, create_room, room_manager
         from aidm.stats import store
         # 清理同名房间避免相互污染
         resp = create_room(RoomCreateIn(campaign_name="测试房", password="pw",
@@ -102,8 +124,7 @@ class TestHostPrivilege:
 
     def test_wrong_password_cannot_become_host(self):
         """错误密码 + 任意参数 → 无法成为房主（房间加入失败）。"""
-        from aidm.api.routes.room import room_manager, create_room, join_room, RoomCreateIn, RoomJoinIn
-        from aidm.stats import store
+        from aidm.api.routes.room import RoomCreateIn, RoomJoinIn, create_room, join_room, room_manager
         resp = create_room(RoomCreateIn(campaign_name="P房", password="pw", max_players=4))
         room_manager.add_host(resp["room_id"], "房东", 1, type("WS", (), {})())
         with pytest.raises(Exception) as ei:
@@ -115,10 +136,10 @@ class TestHostPrivilege:
     def test_fake_host_token_rejected(self):
         """伪造 host_token 无法成为房主（验签失败 → 403）。"""
         from aidm.api.routes.room import (
-            create_room,
-            join_room,
             RoomCreateIn,
             RoomJoinIn,
+            create_room,
+            join_room,
         )
         resp = create_room(RoomCreateIn(campaign_name="F房", max_players=4))
         with pytest.raises(Exception) as ei:
@@ -129,10 +150,10 @@ class TestHostPrivilege:
     def test_room_creator_is_only_initial_host(self):
         """P0-01: 创建者持 host_token 加入 → 唯一房主。"""
         from aidm.api.routes.room import (
-            create_room,
-            join_room,
             RoomCreateIn,
             RoomJoinIn,
+            create_room,
+            join_room,
         )
         resp = create_room(RoomCreateIn(campaign_name="H房", password="pw",
                                         max_players=4))
@@ -155,10 +176,10 @@ class TestHostPrivilege:
 class TestKickTransferAuthz:
     def _hosted_room(self):
         from aidm.api.routes.room import (
-            create_room,
-            join_room,
             RoomCreateIn,
             RoomJoinIn,
+            create_room,
+            join_room,
         )
         resp = create_room(RoomCreateIn(campaign_name="K房", password="pw", max_players=6))
         host = join_room(RoomJoinIn(room_id=resp["room_id"], password="pw",
@@ -170,7 +191,7 @@ class TestKickTransferAuthz:
 
     def test_name_spoof_cannot_kick(self):
         """知道房主名字但无令牌 → 无法 kick（403）。"""
-        from aidm.api.routes.room import kick_player, KickIn
+        from aidm.api.routes.room import KickIn, kick_player
         resp, host, member = self._hosted_room()
         with pytest.raises(Exception) as ei:
             kick_player(resp["room_id"], KickIn(target_character_id=member["character_id"]),
@@ -179,12 +200,12 @@ class TestKickTransferAuthz:
 
     def test_member_cannot_kick_with_player_token(self):
         """普通成员令牌（role=player）不能 kick（403）。"""
+        from aidm.api.routes.room import KickIn, kick_player
         from aidm.api.session_tokens import (
             ROLE_PLAYER,
             create_session_token,
             new_session_sub,
         )
-        from aidm.api.routes.room import kick_player, KickIn
         resp, host, member = self._hosted_room()
         player_token, _ = create_session_token(
             new_session_sub(), resp["campaign_id"], role=ROLE_PLAYER,
@@ -197,15 +218,15 @@ class TestKickTransferAuthz:
     def test_host_token_kick_succeeds(self):
         """房主持有效 host_token 可 kick（目标按 character_id）。"""
         from aidm.api.routes.room import (
-            create_room,
-            join_room,
-            kick_player,
             KickIn,
             RoomCreateIn,
             RoomJoinIn,
+            create_room,
+            join_room,
+            kick_player,
         )
         resp = create_room(RoomCreateIn(campaign_name="K2房", password="pw", max_players=6))
-        host = join_room(RoomJoinIn(room_id=resp["room_id"], password="pw",
+        join_room(RoomJoinIn(room_id=resp["room_id"], password="pw",
                                     name="房主", host_token=resp["host_token"],
                                     hp_max=20, ac=12, speed=30))
         member = join_room(RoomJoinIn(room_id=resp["room_id"], password="pw",
@@ -219,12 +240,12 @@ class TestKickTransferAuthz:
     def test_cross_room_kick_forbidden(self):
         """A 房 host 令牌不能管理 B 房（目标不在 A 房 → 403/404，绝不放行）。"""
         from aidm.api.routes.room import (
-            create_room,
-            join_room,
-            kick_player,
             KickIn,
             RoomCreateIn,
             RoomJoinIn,
+            create_room,
+            join_room,
+            kick_player,
         )
         ra = create_room(RoomCreateIn(campaign_name="A房", max_players=6))
         rb = create_room(RoomCreateIn(campaign_name="B房", max_players=6))
@@ -251,7 +272,6 @@ def _get_room(room_id):
 class TestWsAuth:
     def test_dm_role_query_ignored_without_token(self):
         """仅 query role=dm 无法获得 DM 权限（无有效令牌 → 非 DM）。"""
-        from aidm.api import ws as ws_mod
         # 直接验证 connect 逻辑：无 auth 令牌时 is_dm 恒为 False
         # （通过 session_tokens 解析：无令牌 → claims=None → is_dm=False）
         from aidm.api.session_tokens import parse_session_token
@@ -259,12 +279,13 @@ class TestWsAuth:
 
     def test_dm_token_endpoint(self, monkeypatch):
         """/auth/session 持正确 dm_token → role=dm；否则 player。"""
-        from aidm.api.routes.auth import create_session, SessionRequest
+        from aidm.api.routes.auth import SessionRequest, create_session
         from aidm.api.session_tokens import parse_session_token
         from aidm.config import get_settings
         from aidm.stats import store
-        db = _tmp_db()
-        camp = store.create_campaign("AUTH战役", db_path=db)
+        # 战役建在隔离库（autouse fixture 的 DEFAULT_DB），
+        # 与 create_session 的默认查询路径一致
+        camp = store.create_campaign("AUTH战役")
         monkeypatch.setattr(get_settings(), "aidm_dm_token", "dm-secret-1")
         # 正确口令 → dm
         r = create_session(SessionRequest(campaign_id=camp.id, dm_token="dm-secret-1"))
@@ -277,8 +298,9 @@ class TestWsAuth:
 
     def test_ws_connect_requires_auth_not_query(self):
         """握手只读 auth 载荷；query 中 role/dm_token/api_key 不参与权限。"""
-        from aidm.api.ws import connect
         import asyncio
+
+        from aidm.api.ws import connect
 
         # 无 auth 令牌 + query 声称 role=dm → 权限仍为 player（DM 操作被拒）
         async def scenario():
@@ -297,13 +319,13 @@ class TestWsAuth:
 
 class TestCorsUnified:
     def test_dev_wildcard_allowed(self, monkeypatch):
-        from aidm.config import resolve_allowed_origins, get_settings
+        from aidm.config import get_settings, resolve_allowed_origins
         monkeypatch.setattr(get_settings(), "aidm_allowed_origins", "*")
         monkeypatch.setattr(get_settings(), "aidm_env", "development")
         assert resolve_allowed_origins() == ["*"]
 
     def test_production_forbids_wildcard(self, monkeypatch):
-        from aidm.config import resolve_allowed_origins, get_settings
+        from aidm.config import get_settings, resolve_allowed_origins
         monkeypatch.setattr(get_settings(), "aidm_allowed_origins", "*")
         monkeypatch.setattr(get_settings(), "aidm_env", "production")
         origins = resolve_allowed_origins()
@@ -311,7 +333,7 @@ class TestCorsUnified:
         assert origins  # fail closed 到 localhost
 
     def test_explicit_origins_parsed(self, monkeypatch):
-        from aidm.config import resolve_allowed_origins, get_settings
+        from aidm.config import get_settings, resolve_allowed_origins
         monkeypatch.setattr(get_settings(), "aidm_allowed_origins",
                             "https://a.example, https://b.example")
         monkeypatch.setattr(get_settings(), "aidm_env", "production")
@@ -350,11 +372,12 @@ class TestCrossCampaignAuthz:
 
     def test_resume_cross_campaign_forbidden(self):
         """B 战役角色不能恢复绑定 A 战役的线程（chat_resume ownership 校验）。"""
+        import asyncio
+
         from aidm.api.routes.chat import chat_resume
         from aidm.api.routes.dependencies import ResumeIn
         from aidm.brain.graph import make_thread_id
         from aidm.stats import store
-        import asyncio
         db = _tmp_db()
         camp_b = store.create_campaign("B战役", db_path=db)
         from aidm.stats.models import Character
@@ -393,7 +416,9 @@ class TestRESTIdor:
     def test_cannot_read_other_characters_sheet(self):
         """角色 A 的令牌不能读取角色 B 的卡（403）。"""
         import tempfile
+
         from fastapi.testclient import TestClient
+
         from aidm.api.main import app
         from aidm.stats import store
         from aidm.stats.models import Character

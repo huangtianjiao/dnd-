@@ -89,6 +89,14 @@ class _MockChar:
         from aidm.engine.conditions import ConditionState
         return ConditionState(conditions=[], exhaustion=0)
 
+    def has_mastery(self, mastery_name: str) -> bool:
+        """P8（方案 §11.2）: mock 默认拥有所有词条精通（模拟已授权角色）。"""
+        return True
+
+    @property
+    def mastery_grants(self) -> list:
+        return []
+
 
 # ── travel / exploration_clock / encumbrance / hazards / core_loop → actions ──
 
@@ -413,7 +421,14 @@ class TestEntityLifecycleExtWiring:
             "state_changes": [],
             "combat": {"active": False},
         }
-        out = apply_mod.apply_node(state)
+        # 重定向到临时库（apply_node 内部走 DEFAULT_DB）
+        _og_get, _og_save = store.get_character, store.save_character
+        store.get_character = lambda cid, dbp=None: _og_get(cid, db)
+        store.save_character = lambda c, dbp=None: _og_save(c, db)
+        try:
+            apply_mod.apply_node(state)
+        finally:
+            store.get_character, store.save_character = _og_get, _og_save
         # P1-09: 确定性断言——召唤法术必须注册实体（不再 `or True` 恒真）
         assert state["dice"].get("summoned_entity_id"), \
             "召唤法术必须在 apply_node 中注册 entity_lifecycle_ext 实体"

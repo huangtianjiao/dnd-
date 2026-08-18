@@ -1,11 +1,15 @@
 {
   "ruleset_id": "dnd5e_2024_core",
   "revision": "2024.1",
+  "mechanics_baseline": "srd_5.2.1",
+  "content_packs": ["srd_5.2.1_core"],
+  "house_rule_pack": null,
+  "schema_revision": 3,
   "source_books": [
     {"book_id": "PHB2024", "edition": "2024", "title": "Player's Handbook 2024", "content_hash": "", "authority_level": "core"},
+    {"book_id": "SRD521", "edition": "2024", "title": "SRD v5.2.1 (mechanics baseline)", "content_hash": "", "authority_level": "core"},
     {"book_id": "DMG2024", "edition": "2024", "title": "Dungeon Master's Guide 2024", "content_hash": "", "authority_level": "core"},
     {"book_id": "MM2025", "edition": "2024", "title": "Monster Manual 2025", "content_hash": "", "authority_level": "core"}
   ],
-  "content_packs": [],
   "policies": {"allow_homebrew": false, "allow_2014": false}
 }

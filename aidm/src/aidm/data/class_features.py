@@ -291,9 +291,9 @@ fighter_extra_attack = FeatureDefinition(
 
 indomitable = FeatureDefinition(
     feature_id="fighter_indomitable", name="不屈", feature_type=FeatureType.RESOURCE,
-    source_class="fighter", source_level=5,
+    source_class="fighter", source_level=9,
     description="重掷一次失败的豁免。",
-    resource_pool={"name": "indomitable", "max": 1, "recharge": "long_rest",
+    resource_pool={"name": "indomitable", "max": 3, "recharge": "long_rest",
                    "pool_type": PoolType.REGEN.value,
                    "resource_type": ResourceType.GENERAL.value},
 )
@@ -693,7 +693,8 @@ CLASS_FEATURES: Dict[str, Dict[int, List[FeatureDefinition]]] = {
         1: [second_wind, fighter_fighting_style],
         2: [action_surge],
         3: [],  # 子职特性
-        5: [fighter_extra_attack, indomitable],
+        5: [fighter_extra_attack],
+        9: [indomitable],  # 2024: 不屈 9 级获得（13/17 级次数由公式表驱动）
     },
     "monk": {
         1: [martial_arts, monk_unarmored_defense],

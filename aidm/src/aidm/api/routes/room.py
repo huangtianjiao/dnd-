@@ -81,6 +81,8 @@ class RoomJoinIn(BaseModel):
     ac: int = Field(10, deprecated=True)
     speed: int = Field(30, deprecated=True)
     equipped_weapon: str = ""
+    # ★ P3（方案 §6.3）: 背景技能选择（英文 key；省略时跳过背景技能数量校验）
+    skills: list[str] = []
     # 房主令牌：由 /room/create 签发（role=host、绑定 room_id），
     # 服务器验签通过才创建 host 成员身份
     host_token: str = ""
@@ -209,8 +211,11 @@ def join_room(req: RoomJoinIn):
             raise _room_http_error("not_host")
 
     # 先创建角色卡（关联到房间对应的战役；与 /character 同口径校验属性）
-    from .dependencies import validate_abilities
+    from .dependencies import validate_abilities, validate_build_plan
     validate_abilities(req.abilities, req.ability_method)
+    # ★ P3: CharacterBuilder 校验（方案 §6.1 唯一构建服务）
+    validate_build_plan(req.race, req.char_class, req.subclass,
+                        req.background, req.abilities, req.skills)
     ch = models.Character(name=req.name, race=req.race,
                           char_class=req.char_class, level=req.level,
                           subclass=req.subclass, background=req.background,
@@ -222,7 +227,14 @@ def join_room(req: RoomJoinIn):
     apply_server_stats(ch, req.char_class, req.race, req.level, req.abilities)
     # 统一初始化拥有物（与 /character 一致）：法术位 + 已学法术 + 起始武器入包
     init_loadout(ch, req.equipped_weapon)
+    # P6: 持久化资源池初始化
+    from .dependencies import init_resource_pools
+    init_resource_pools(ch)
     ch = store.save_character(ch)
+    # ★ P3: Grant/Choice provenance 落库（幂等，方案 5.3）
+    from .dependencies import persist_build_provenance
+    persist_build_provenance(ch, req.race, req.char_class, req.subclass,
+                             req.background, req.abilities, req.skills)
 
     # 加入房间（用假 ws 占位；真实连接由 WebSocket 端点建立）
     fake_ws = type("FakeWS", (), {})()

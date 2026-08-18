@@ -358,10 +358,21 @@ def _hp_gain_for_level(
 # 专长选择 Feat Selection — PHB 2024 第五章「专长」
 # ──────────────────────────────────────────────────────────────────────────
 
-# 角色达到这些等级时，可以选择一个专长或提升属性值。
-# 出处: topics/玩家手册2024/创建角色/等级提升.htm "获得新的等级" Step 3
-#       topics/玩家手册2024/专长/专长概述.htm
+# ★ P5（方案 §8.2）: 生产路径不再以全局 FEAT_LEVELS 作为唯一 feat 机会判断；
+#   ASI/专长 entitlement 由 rules.feat_entitlement（标准节点 + 职业额外节点
+#   Fighter 6/14、Rogue 10）计算。此常量仅保留供旧测试/兼容展示引用。
 FEAT_LEVELS: frozenset[int] = frozenset({4, 8, 12, 16, 19})
+
+
+def _entitlement_for(character: dict) -> set[int]:
+    """按角色 class_levels 计算已获得的 ASI/专长 entitlement 节点。
+
+    方案 §8.2: 标准节点按总等级、职业额外节点（战士 6/14 等）按职业等级。
+    class_levels 缺失时回退总等级标准节点（与旧 FEAT_LEVELS 行为一致）。
+    """
+    from ..rules.feat_entitlement import entitled_asi_levels
+    class_levels = character.get("class_levels") or {}
+    return entitled_asi_levels(class_levels, character.get("level", 1))
 
 
 def available_feats(character: dict) -> list[dict]:
@@ -370,13 +381,14 @@ def available_feats(character: dict) -> list[dict]:
     规则出处:
       - PHB 2024 第五章「专长」: 专长分为起源/通用/战斗风格/传奇恩惠四类。
       - 起源专长仅在 1 级创建角色时选取（背景给予），升级时不可选。
-      - 通用/战斗风格专长: 达到 4/8/12/16 级时可选。
+      - 通用/战斗风格专长: 仅在 ASI/专长 entitlement 节点开放
+        （标准 4/8/12/16 + 战士 6/14、游荡者 10 等职业额外节点——方案 §8.2）。
       - 传奇恩惠专长: 达到 19 级时可选（先决「等级19+」）。
       - 非复选专长（repeatable=False）不可重复选择。
       - 复选专长（repeatable=True，名字带 *）可多次选取。
 
     Args:
-        character: 角色字典，需含 level 与已选专长列表 feats。
+        character: 角色字典，需含 level、feats、可选 class_levels。
 
     Returns:
         可选专长字典列表（浅拷贝），按数据表原顺序排列。
@@ -385,6 +397,7 @@ def available_feats(character: dict) -> list[dict]:
     """
     level = character.get("level", 1)
     taken: set[str] = set(character.get("feats", []))
+    entitled = _entitlement_for(character)
 
     result: list[dict] = []
     for feat in feat_db.FEATS:
@@ -395,9 +408,9 @@ def available_feats(character: dict) -> list[dict]:
         # 传奇恩惠专长先决条件为「等级19+」
         if cat == "传奇恩惠" and level < 19:
             continue
-        # 通用与战斗风格专长：4/8/12/16 级开放
-        if cat in ("通用", "战斗风格") and level not in FEAT_LEVELS:
-            # 若当前等级不是专长等级，仍允许查询（返回空由调用方处理）
+        # 通用与战斗风格专长：仅在 entitlement 节点等级开放
+        if cat in ("通用", "战斗风格") and level not in entitled:
+            # 若当前等级不是专长节点，仍允许查询（返回空由调用方处理）
             continue
 
         entry = dict(feat)
@@ -595,10 +608,22 @@ def level_up(
     # 记录本次升级是否已选择ASI（供 select_feat 校验二选一约束）
     character["asi_taken"] = asi_taken
 
-    # 专长选择提示：达到 4/8/12/16/19 级时，角色可选择一个专长。
-    # 但若本次升级已应用ASI，则不可再选专长（ASI与专长二选一）。
-    # 出处: PHB 2024 第五章「专长」; topics/玩家手册2024/创建角色/等级提升.htm Step 3
-    feat_available = (next_level in FEAT_LEVELS) and not asi_taken
+    # 专长选择提示（方案 §8.2）: 达到 ASI/专长 entitlement 节点时，
+    # 角色可选择一个专长；但若本次升级已应用ASI，则不可再选专长
+    # （ASI与专长二选一）。节点由 entitlement 服务计算——标准 4/8/12/16/19
+    # + 职业额外节点（战士 6/14、游荡者 10 等，按职业等级）。
+    # 出处: PHB 2024 第五章「专长」; 等级提升.htm Step 3
+    if not asi_taken:
+        from ..rules.feat_entitlement import is_entitled_at
+        # 升级后的 class_levels：兼职时新职业为 1 级，其余不变
+        cls_levels = dict(character.get("class_levels") or {})
+        if new_class:
+            cls_levels[new_class] = max(int(cls_levels.get(new_class, 0)), 1)
+        else:
+            cls_levels[chosen_class or character.get("class_name", "")] = next_level
+        feat_available = is_entitled_at(next_level, cls_levels)
+    else:
+        feat_available = False
     available_feat_list = available_feats(character) if feat_available else []
 
     return {
@@ -640,143 +665,59 @@ def level_up_outside_rest(character: dict, hp_gain: int) -> dict:
 
 
 # ──────────────────────────────────────────────────────────────────────────
-# 兼职规则（Multiclass）
-# 出处: topics/玩家手册2024/创建角色/兼职.htm
+# 兼职规则（Multiclass）— P5 收敛（方案 §8.4）
 # ──────────────────────────────────────────────────────────────────────────
+# ★ P5: 兼职先决/熟练/法术位合并的规则权威收敛到 engine.multiclass
+#   （brain 与 engine 不得再分别维护完整规则）。以下仅保留兼容委托壳，
+#   已删除重复数据表 _MULTICLASS_PREREQ/_MULTICLASS_PROFICIENCIES/
+#   _MULTICLASS_SPELL_SLOTS 等——历史版本曾把魔契师按 0.5 权重参与合并，
+#   违反「Pact Magic 独立」（方案 §8.4），engine 实现不做该合并。
 
-# 兼职先决条件：新职业的主属性需≥13（出处: 兼职.htm「先决条件」）
-_MULTICLASS_PREREQ = {
-    "野蛮人":   ["STR"],
-    "吟游诗人": ["DEX", "CHA"],
-    "牧师":     ["WIS"],
-    "德鲁伊":   ["WIS"],
-    "战士":     ["STR", "DEX"],
-    "武僧":     ["DEX", "WIS"],
-    "圣武士":   ["STR", "CHA"],
-    "游侠":     ["DEX", "WIS"],
-    "游荡者":   ["DEX"],
-    "术士":     ["CHA"],
-    "魔契师":   ["CHA"],
-    "法师":     ["INT"],
-}
+_ABILITIES_UPPER = {"STR", "DEX", "CON", "INT", "WIS", "CHA"}
 
 
 def check_multiclass_prerequisite(character: dict, new_class: str) -> dict:
-    """检查兼职先决条件：新职业主属性≥13。
+    """检查兼职先决条件（委托 engine.multiclass 权威实现）。
 
-    规则: 兼职.htm「先决条件」— 要兼职一个职业，你和原职业的主属性都需≥13。
-    出处: topics/玩家手册2024/创建角色/兼职.htm
+    规则: R-MC-001 兼职前置属性值（当前职业与新职业的主属性都需≥13）
     """
-    prereqs = _MULTICLASS_PREREQ.get(new_class, [])
+    from ..engine.multiclass import MulticlassService
     scores = character.get("scores", {})
-    failures = []
-    for ab in prereqs:
-        score = scores.get(ab, 10)
-        if score < 13:
-            failures.append(f"{ab}({score})<13")
+    abilities = {ab.lower(): int(v) for ab, v in scores.items()
+                 if ab in _ABILITIES_UPPER}
+    res = MulticlassService().validate_multiclass(
+        {}, new_class, abilities)
+    failures = [] if res["valid"] else [f"先决条件未满足: {res['reason']}"]
     return {
-        "eligible": len(failures) == 0,
+        "eligible": res["valid"],
         "new_class": new_class,
-        "prerequisites": prereqs,
+        "prerequisites": [],
         "failures": failures,
     }
 
 
-# 兼职熟练度（新职业第1级只得部分熟练，出处: 兼职.htm「熟练度」）
-_MULTICLASS_PROFICIENCIES = {
-    "野蛮人":   {"armor": "轻甲、中甲和盾牌", "weapons": "简易和军用武器", "skills": 1, "skill_pool": ["驯兽", "运动", "威吓", "自然", "察觉", "求生"]},
-    "吟游诗人": {"armor": "轻甲", "weapons": "简易武器", "skills": 1, "skill_pool": "任意"},
-    "牧师":     {"armor": "轻甲、中甲和盾牌", "weapons": "简易武器", "skills": 0, "skill_pool": []},
-    "德鲁伊":   {"armor": "轻甲、中甲和盾牌（金属限制除外）", "weapons": "简易武器", "skills": 0, "skill_pool": []},
-    "战士":     {"armor": "轻甲、中甲和盾牌", "weapons": "简易和军用武器", "skills": 0, "skill_pool": []},
-    "武僧":     {"armor": "无", "weapons": "简易武器和短剑", "skills": 1, "skill_pool": ["运动", "洞悉", "历史", "威吓", "宗教"]},
-    "圣武士":   {"armor": "轻甲、中甲和盾牌", "weapons": "简易和军用武器", "skills": 0, "skill_pool": []},
-    "游侠":     {"armor": "轻甲、中甲和盾牌", "weapons": "简易和军用武器", "skills": 1, "skill_pool": ["驯兽", "运动", "洞悉", "自然", "察觉", "隐匿", "求生"]},
-    "游荡者":   {"armor": "轻甲", "weapons": "简易武器和短剑", "skills": 1, "skill_pool": ["运动", "杂技", "欺瞒", "洞悉", "威吓", "调查", "察觉", "表演", "游说", "巧手", "隐匿"]},
-    "术士":     {"armor": "无", "weapons": "简易武器", "skills": 0, "skill_pool": []},
-    "魔契师":   {"armor": "轻甲", "weapons": "简易武器", "skills": 0, "skill_pool": []},
-    "法师":     {"armor": "无", "weapons": "无", "skills": 0, "skill_pool": []},
-}
-
-
 def multiclass_proficiencies(class_name: str) -> dict:
-    """取兼职时该职业第1级获得的熟练度（缩减版，非完整起始熟练）。
+    """取兼职时该职业第 1 级获得的熟练（委托 engine.multiclass 权威实现）。
 
-    规则: 兼职.htm「熟练度」— 你只获得该职业熟练度的一部分。
-    出处: topics/玩家手册2024/创建角色/兼职.htm
+    规则: R-MC-003 兼职获得的熟练（不含豁免熟练）
     """
-    return _MULTICLASS_PROFICIENCIES.get(class_name, {
-        "armor": "无", "weapons": "无", "skills": 0, "skill_pool": []})
-
-
-# 兼职施法者法术位表（出处: 兼职.htm「施法」）
-# 将各施法职业等级求和后查此表，得出可用法术位
-_MULTICLASS_SPELL_SLOTS = {
-    # 总施法者等级 → {环阶: 法术位数}
-    1:  {1: 2},
-    2:  {1: 3},
-    3:  {1: 4, 2: 2},
-    4:  {1: 4, 2: 3},
-    5:  {1: 4, 2: 3, 3: 2},
-    6:  {1: 4, 2: 3, 3: 3},
-    7:  {1: 4, 2: 3, 3: 3, 4: 1},
-    8:  {1: 4, 2: 3, 3: 3, 4: 2},
-    9:  {1: 4, 2: 3, 3: 3, 4: 3, 5: 1},
-    10: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2},
-    11: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1},
-    12: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1},
-    13: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1},
-    14: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1},
-    15: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1},
-    16: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1},
-    17: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1},
-    18: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1},
-    19: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1},
-    20: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1},
-}
-
-# 各施法职业的施法等级权重（魔契师折半向下取整，圣武士/游侠折半向下取整）
-_MULTICLASS_SPELL_WEIGHT = {
-    "吟游诗人": 1.0, "牧师": 1.0, "德鲁伊": 1.0, "术士": 1.0,
-    "魔契师": 0.5, "法师": 1.0, "圣武士": 0.5, "游侠": 0.5,
-}
+    from ..engine.multiclass import MulticlassService
+    granted = MulticlassService().get_proficiencies_granted(class_name, set())
+    return {
+        "armor": "、".join(granted["armor"]) or "无",
+        "weapons": "、".join(granted["weapons"]) or "无",
+        "skills": 0,
+        "skill_pool": [],
+    }
 
 
 def multiclass_spell_slots(class_levels: dict[str, int]) -> dict:
-    """计算兼职施法者的法术位。
+    """计算兼职施法者合并法术位（委托 engine.multiclass 权威实现）。
 
-    规则: 兼职.htm「施法」— 各施法职业等级按权重求和后查表。
-          魔契师/圣武士/游侠 等级折半向下取整。
-    出处: topics/玩家手册2024/创建角色/兼职.htm
-
-    参数:
-      class_levels: {职业名: 该职业等级}，如 {"法师": 5, "战士": 3}
-    返回:
-      {环阶(int→str): 法术位数}
+    规则: R-MC-002 兼职法术位合并（全/半施法者；魔契师 Pact 独立不合并）
     """
-    total = 0
-    for cls, lv in class_levels.items():
-        weight = _MULTICLASS_SPELL_WEIGHT.get(cls, 0)
-        if weight > 0:
-            total += int(lv * weight)  # 向下取整
-    if total <= 0:
-        return {}
-    total = min(total, 20)
-    return _MULTICLASS_SPELL_SLOTS.get(total, {})
-
-
-def extra_attack_stacks(class_levels: dict[str, int]) -> int:
-    """额外攻击不叠加：多源额外攻击只取最高。
-
-    规则: 兼职.htm「额外攻击」— 多个职业给予的额外攻击不叠加。
-    出处: topics/玩家手册2024/创建角色/兼职.htm
-    """
-    max_attacks = 0
-    for cls, lv in class_levels.items():
-        attacks = get_extra_attacks(cls, lv)
-        if attacks > max_attacks:
-            max_attacks = attacks
-    return max_attacks
+    from ..engine.multiclass import multiclass_spell_slots as _engine_slots
+    return _engine_slots(class_levels)
 
 
 # ──────────────────────────────────────────────────────────────────────────

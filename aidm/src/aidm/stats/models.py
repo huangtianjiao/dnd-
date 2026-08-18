@@ -69,6 +69,10 @@ class Character(SQLModel, table=True):
     abilities_json: str = Field(default=json.dumps(DEFAULT_ABILITIES))
     spell_slots_json: str = Field(default="{}")     # {环阶:剩余}
     known_spells_json: str = Field(default="[]")
+    # P7（方案 §10.3）: Known/Prepared/Spellbook/Always-Prepared 分离
+    prepared_spells_json: str = Field(default="[]")     # 当前准备列表（准备制）
+    spellbook_spells_json: str = Field(default="[]")    # 法术书（法师）
+    always_prepared_spells_json: str = Field(default="[]")  # 来源永久准备
     inventory_json: str = Field(default="[]")
     conditions_json: str = Field(default="[]")     # 状态集合
     attuned_items_json: str = Field(default="[]")  # 已同调魔法物品名称列表（最多3个）
@@ -87,6 +91,9 @@ class Character(SQLModel, table=True):
     # 当前手持武器（武器中文名）；攻击时优先于"徒手"兆底，由 /equip-weapon 或创建时按职业设默认。
     # 详见 docs/GRAPH_DYNAMIC_REFACTOR.md 阶段A。
     equipped_weapon: str = ""
+    # P8（方案 §11.2）: 持久化武器精通授权 — [{source_id, mastery_name,
+    #   weapon_type, acquired_level, replace_policy}]；战斗解析只认此列表。
+    mastery_grants_json: str = Field(default="[]")
     # 当前穿戴的护甲（护甲中文名）；"" = 无甲。穿卸护甲时更新此字段并调用 recompute_ac()。
     equipped_armor: str = ""
     # 数值
@@ -100,6 +107,10 @@ class Character(SQLModel, table=True):
     # 生命骰追踪（R-GLS-014 短休消耗 / R-GLS-015 长休恢复）
     hit_dice_current: int = 0   # 可用生命骰数量
     hit_dice_max: int = 0       # 生命骰上限（=等级）
+    # P6（方案 §9.1/§5.4）: 资源池持久化权威
+    # {"second_wind": {"current": 2, "max": 2, "recharge": "short_rest",
+    #                  "source_feature_id": "...", "resource_type": "..."}}
+    resource_pools_json: str = Field(default="{}")
     # 死亡豁免计数（R-DMG-017）
     death_successes: int = 0
     death_failures: int = 0
@@ -136,6 +147,28 @@ class Character(SQLModel, table=True):
 
     def set_known_spells(self, spells: list) -> None:
         self.known_spells_json = json.dumps(spells)
+
+    # —— 法术准备/法术书桥接（P7，方案 §10.3）——
+    @property
+    def prepared_spells(self) -> list:
+        return json.loads(self.prepared_spells_json)
+
+    def set_prepared_spells(self, spells: list) -> None:
+        self.prepared_spells_json = json.dumps(spells)
+
+    @property
+    def spellbook_spells(self) -> list:
+        return json.loads(self.spellbook_spells_json)
+
+    def set_spellbook_spells(self, spells: list) -> None:
+        self.spellbook_spells_json = json.dumps(spells)
+
+    @property
+    def always_prepared_spells(self) -> list:
+        return json.loads(self.always_prepared_spells_json)
+
+    def set_always_prepared_spells(self, spells: list) -> None:
+        self.always_prepared_spells_json = json.dumps(spells)
 
     @property
     def equipment_slots(self) -> dict:
@@ -348,6 +381,50 @@ class Character(SQLModel, table=True):
         """判断角色是否熟练某技能。"""
         return skill_name in self.skill_proficiencies
 
+    # —— 武器精通授权桥接（P8，方案 §11.2）——
+    @property
+    def mastery_grants(self) -> list:
+        """持久化精通授权列表 [{source_id, mastery_name, acquired_level, ...}]。"""
+        return json.loads(self.mastery_grants_json)
+
+    def set_mastery_grants(self, grants: list) -> None:
+        self.mastery_grants_json = json.dumps(grants)
+
+    def add_mastery_grant(self, mastery_name: str, *, source_id: str = "",
+                          acquired_level: int = 1,
+                          weapon_type: str = "", replace_policy: str = "") -> None:
+        grants = self.mastery_grants
+        if any(g.get("mastery_name") == mastery_name for g in grants):
+            return  # 幂等
+        grants.append({
+            "source_id": source_id,
+            "mastery_name": mastery_name,
+            "weapon_type": weapon_type,
+            "acquired_level": acquired_level,
+            "replace_policy": replace_policy,
+        })
+        self.set_mastery_grants(grants)
+
+    def has_mastery(self, mastery_name: str) -> bool:
+        """角色是否拥有该精通授权（战斗解析唯一查询入口）。"""
+        return any(g.get("mastery_name") == mastery_name
+                   for g in self.mastery_grants)
+
+    # —— 资源池持久化桥接（P6，方案 §9.1/§5.4）——
+    @property
+    def resource_pools(self) -> dict:
+        """持久化资源池：{池名: {current, max, recharge, source_feature_id, ...}}。"""
+        return json.loads(self.resource_pools_json)
+
+    def set_resource_pools(self, pools: dict) -> None:
+        self.resource_pools_json = json.dumps(pools)
+
+    def pool_current(self, name: str) -> int:
+        return int(self.resource_pools.get(name, {}).get("current", 0))
+
+    def pool_max(self, name: str) -> int:
+        return int(self.resource_pools.get(name, {}).get("max", 0))
+
     # —— 专注状态桥接 ——
     def start_concentration(self, spell_name: str, dc: int = 10) -> None:
         """开始专注一个法术。规则: R-GLS-036 专注"""
@@ -408,20 +485,15 @@ class Character(SQLModel, table=True):
         规则: R-ITM-004 AC计算公式 + 野蛮人/武僧无甲防御
         出处: topics/玩家手册2024/装备/护甲.htm
         说明: 穿卸护甲、升级、属性变化等场景后调用，自动写入 self.ac。
-              盾牌判定通过 equipment_slots 检查（ITEM-002）。
+              ★ 方案 §5.1: Derived State 唯一入口 —— 复用 build.derive_stats
+              （服务器权威推导，禁止在模型内出现第二套 AC 公式）。
         """
-        from ..data.equipment import compute_character_ac
-        dex = self.ability_mod("dex")
-        con = self.ability_mod("con")
-        wis = self.ability_mod("wis")
+        from ..build.derive_stats import derive_ac
         # ITEM-002: 盾牌必须装备在 off_hand 槽位才加 AC，背包中的盾牌不计入
         off_hand_item = self.equipment_slots.get(EquipmentSlots.OFF_HAND.value, "") or ""
         has_shield = "盾牌" in off_hand_item
-        unarmored = self.char_class if self.char_class in ("野蛮人", "武僧") else None
-        self.ac = compute_character_ac(
-            self.equipped_armor or None, dex, has_shield,
-            unarmored_class=unarmored, con_mod=con, wis_mod=wis,
-        )
+        self.ac = derive_ac(self.char_class, self.abilities,
+                            self.equipped_armor or "", has_shield)
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -443,6 +515,9 @@ class Campaign(SQLModel, table=True):
     # ARC-001: 不可变规则集标识 — 创建战役时固化，运行中只允许显式迁移
     ruleset_id: str = Field(default="dnd5e_2024_core")
     ruleset_revision: str = Field(default="2024.1")
+    mechanics_baseline: str = Field(default="srd_5.2.1")  # 机械基线（方案 §2.2）
+    # 规则模式（方案 §2.1）: raw_2024 / raw_2024_optional / house_rule / freeform
+    rules_mode: str = Field(default="raw_2024")
     content_pack_versions_json: str = Field(default="{}")  # {pack_name: version}
     # P1-05: 乐观锁版本（与 CombatState.version 同构）— 防并发丢失更新
     version: int = Field(default=0)
@@ -547,6 +622,96 @@ class CombatState(SQLModel, table=True):
 
     def set_initiative_order(self, order: list) -> None:
         self.initiative_order_json = json.dumps(order)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# CharacterAggregate provenance（改造方案 §5.3）
+# ──────────────────────────────────────────────────────────────────────────
+# Grant / ChoiceRecord 从「角色构建日志工具」升级为角色领域的 provenance
+# 核心：可回答「某能力从何而来、何时获得、依据哪个 ruleset revision」。
+
+class CharacterGrant(SQLModel, table=True):
+    """角色授予记录（持久化）— 追踪每个能力/资源的来源。
+
+    grant_type: species/background/class/subclass/feat/item/skill/tool/
+                language/spell/mastery/resource
+    """
+    id: int | None = Field(default=None, primary_key=True)
+    character_id: int = Field(default=0, foreign_key="character.id")
+    grant_id: str = Field(default="")         # 唯一授予 ID（生成或外部传入）
+    grant_type: str = Field(default="")
+    source_id: str = Field(default="")        # 来源 ID（物种/职业/背景 ID 等）
+    source_name: str = Field(default="")
+    source_revision: str = Field(default="")  # 来源定义版本（方案 §5.3）
+    granted_item_id: str = Field(default="")
+    level_acquired: int = Field(default=1)
+    ruleset_revision: str = Field(default="2024.1")
+    metadata_json: str = Field(default="{}")
+
+    @property
+    def meta(self) -> dict:
+        """授予附加元数据（属性名避开 SQLModel 保留的 metadata）。"""
+        return json.loads(self.metadata_json)
+
+    def set_meta(self, data: dict) -> None:
+        self.metadata_json = json.dumps(data)
+
+    def to_dict(self) -> dict:
+        return {
+            "grant_id": self.grant_id,
+            "grant_type": self.grant_type,
+            "source_id": self.source_id,
+            "source_name": self.source_name,
+            "source_revision": self.source_revision,
+            "granted_item_id": self.granted_item_id,
+            "level_acquired": self.level_acquired,
+            "ruleset_revision": self.ruleset_revision,
+            "metadata": self.meta,
+        }
+
+
+class CharacterChoice(SQLModel, table=True):
+    """角色选择记录（持久化）— 选择来源与合法选项快照。
+
+    choice_type: species/background/class/subclass/feat/asi/skill/tool/
+                 language/mastery/spell/metamagic/invocation/expertise
+    """
+    id: int | None = Field(default=None, primary_key=True)
+    character_id: int = Field(default=0, foreign_key="character.id")
+    choice_id: str = Field(default="")
+    choice_type: str = Field(default="")
+    source_id: str = Field(default="")           # 触发该选择的来源
+    selected_values_json: str = Field(default="[]")
+    legal_options_json: str = Field(default="[]")  # 选择时的合法选项快照
+    level_at_choice: int = Field(default=1)
+    ruleset_revision: str = Field(default="2024.1")
+    validated: bool = Field(default=False)
+
+    @property
+    def selected_values(self) -> list:
+        return json.loads(self.selected_values_json)
+
+    def set_selected_values(self, values: list) -> None:
+        self.selected_values_json = json.dumps(values)
+
+    @property
+    def legal_options(self) -> list:
+        return json.loads(self.legal_options_json)
+
+    def set_legal_options(self, options: list) -> None:
+        self.legal_options_json = json.dumps(options)
+
+    def to_dict(self) -> dict:
+        return {
+            "choice_id": self.choice_id,
+            "choice_type": self.choice_type,
+            "source_id": self.source_id,
+            "selected_values": self.selected_values,
+            "legal_options_snapshot": self.legal_options,
+            "level_at_choice": self.level_at_choice,
+            "ruleset_revision": self.ruleset_revision,
+            "validated": self.validated,
+        }
 
 
 class Log(SQLModel, table=True):

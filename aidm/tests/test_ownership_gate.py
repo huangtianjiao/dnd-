@@ -19,8 +19,6 @@
 
 from __future__ import annotations
 
-import os
-import sys
 import tempfile
 
 
@@ -85,10 +83,11 @@ def test_default_known_spells_class_gate():
 # ──────────────────────────────────────────────────────────────────────────
 
 def test_character_creation_initializes_loadout():
-    """POST /character：施法者获得 known_spells；起始武器写入 inventory。"""
+    """POST /character：施法者获得法术来源（P7 按模型分来源）；起始武器入包。"""
     db_path, orig_default, orig_engines, store = _setup_test_db()
     try:
         from fastapi.testclient import TestClient
+
         from aidm.api.main import app
 
         client = TestClient(app)
@@ -98,7 +97,9 @@ def test_character_creation_initializes_loadout():
         cid = r.json()["id"]
 
         ch = store.get_character(cid)
-        assert len(ch.known_spells) > 0                     # 已学法术已初始化
+        # P7（方案 §10.3）: 法师 seed 进法术书（spellbook），不自动准备
+        assert len(ch.spellbook_spells) > 0
+        assert ch.known_spells == []
         assert ch.equipped_weapon                           # 有起始武器
         assert ch.equipped_weapon in ch.inventory           # 起始武器已入包
 
@@ -117,8 +118,8 @@ def test_character_creation_initializes_loadout():
 # ──────────────────────────────────────────────────────────────────────────
 
 def _make_char(char_class="法师", level=5, known=None, inventory=None, weapon=""):
-    from aidm.stats import models
     from aidm.data import spells as sp
+    from aidm.stats import models
 
     ch = models.Character(name="测试者", race="人类", char_class=char_class, level=level)
     if char_class in ("法师", "牧师", "术士", "吟游诗人", "德鲁伊", "圣武士", "游侠", "魔契师"):
@@ -193,6 +194,7 @@ def test_equip_weapon_ownership_gate():
     db_path, orig_default, orig_engines, store = _setup_test_db()
     try:
         from fastapi.testclient import TestClient
+
         from aidm.api.main import app
 
         client = TestClient(app)
@@ -234,6 +236,7 @@ def test_equip_weapon_legacy_backfill():
     db_path, orig_default, orig_engines, store = _setup_test_db()
     try:
         from fastapi.testclient import TestClient
+
         from aidm.api.main import app
         from aidm.stats import models
 

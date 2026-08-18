@@ -14,14 +14,13 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
-import sys
 import tempfile
 
 # 确保 src 在路径中
 from aidm.brain import levelup as lu
-from aidm.data import feats as F
-from aidm.stats import store, models
+from aidm.stats import models, store
 
 
 def _make_char(level: int = 4) -> models.Character:
@@ -34,8 +33,7 @@ def _make_char(level: int = 4) -> models.Character:
     ch.set_abilities({"str": 16, "dex": 12, "con": 14,
                       "int": 10, "wis": 10, "cha": 10})
     ch.hp_max = 30; ch.hp_current = 30; ch.ac = 16; ch.speed = 30
-    ch = store.save_character(ch)
-    return ch
+    return store.save_character(ch)
 
 
 def test_available_feats_at_level_4():
@@ -112,10 +110,8 @@ def test_select_feat_updates_feats_json():
         eng = store._engines.pop(db, None)
         if eng is not None:
             eng.dispose()
-        try:
+        with contextlib.suppress(PermissionError):
             os.unlink(tmp.name)
-        except PermissionError:
-            pass
 
 
 def test_no_duplicate_non_repeatable_feat():
@@ -164,6 +160,7 @@ def test_api_endpoints_e2e():
     print("\n[Test 5] API 端点端到端测试...")
 
     from fastapi.testclient import TestClient
+
     from aidm.api.main import app
 
     # 使用临时数据库
@@ -179,7 +176,9 @@ def test_api_endpoints_e2e():
 
         client = TestClient(app)
 
-        # 创建一个4级角色
+        # 创建一个4级角色（附战役，换取会话令牌——P5 起 feat 路由与
+        # character 路由同等 owner guard）
+        camp = client.post("/campaign", json={"name": "专长测试战役"}).json()
         resp = client.post("/character", json={
             "name": "API测试角色",
             "race": "人类",
@@ -190,13 +189,17 @@ def test_api_endpoints_e2e():
             "hp_max": 30,
             "ac": 16,
             "speed": 30,
+            "campaign_id": camp["id"],
         })
         assert resp.status_code == 200, f"创建角色失败: {resp.text}"
         cid = resp.json()["id"]
+        tok = client.post("/auth/session", json={
+            "campaign_id": camp["id"], "character_id": cid}).json()["token"]
+        _H = {"Authorization": f"Bearer {tok}"}
         print(f"  创建角色 id={cid}")
 
-        # GET available-feats
-        resp2 = client.get(f"/character/{cid}/available-feats")
+        # GET available-feats（P5: entitlement 驱动——4 级标准节点）
+        resp2 = client.get(f"/character/{cid}/available-feats", headers=_H)
         assert resp2.status_code == 200, f"获取可选专长失败: {resp2.text}"
         data2 = resp2.json()
         assert data2["level"] == 4
@@ -207,7 +210,7 @@ def test_api_endpoints_e2e():
         # POST select-feat
         resp3 = client.post(f"/character/{cid}/select-feat", json={
             "feat_name": "演员"
-        })
+        }, headers=_H)
         assert resp3.status_code == 200, f"选择专长失败: {resp3.text}"
         data3 = resp3.json()
         assert data3["feat"] == "演员"
@@ -217,7 +220,7 @@ def test_api_endpoints_e2e():
         # 再次选择同一非复选专长应返回 400 + 统一错误形态
         resp4 = client.post(f"/character/{cid}/select-feat", json={
             "feat_name": "演员"
-        })
+        }, headers=_H)
         assert resp4.status_code == 400
         detail = resp4.json().get("detail", {})
         assert "error" in detail, "重复选择非复选专长应返回 error"
@@ -231,10 +234,8 @@ def test_api_endpoints_e2e():
         eng = store._engines.pop(db, None)
         if eng is not None:
             eng.dispose()
-        try:
+        with contextlib.suppress(PermissionError):
             os.unlink(tmp.name)
-        except PermissionError:
-            pass
 
 
 def main():

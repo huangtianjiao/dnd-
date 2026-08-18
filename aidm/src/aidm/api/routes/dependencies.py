@@ -7,7 +7,6 @@ import re
 from fastapi import Header, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
-
 # ── SEC-001: 输入校验常量 ────────────────────────────────────────────────
 
 # 骰式表达式白名单: NdM+K / NdM-K / NdM 格式
@@ -28,6 +27,30 @@ _ABILITY_MIN, _ABILITY_MAX = 1, 30
 
 class CampaignIn(BaseModel):
     name: str
+    # 规则模式（方案 §2.1）: 默认 raw_2024；house_rule 必须有显式 house_rule_pack
+    rules_mode: str = "raw_2024"
+
+    @field_validator("name")
+    @classmethod
+    def _validate_name(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("名称不能为空")
+        if len(v) > 50:
+            raise ValueError("名称不能超过50字符")
+        if _NAME_INJECT_RE.search(v):
+            raise ValueError("名称包含非法字符")
+        return v.strip()
+
+    @field_validator("rules_mode")
+    @classmethod
+    def _validate_rules_mode(cls, v: str) -> str:
+        from ...engine.ruleset_manifest import RulesMode
+        try:
+            return RulesMode(v).value
+        except ValueError:
+            raise ValueError(
+                f"未知规则模式 {v!r}，可选: {[m.value for m in RulesMode]}"
+            ) from None
 
 
 class CharIn(BaseModel):
@@ -46,6 +69,8 @@ class CharIn(BaseModel):
     equipped_weapon: str = ""
     campaign_id: int | None = None
     ability_method: str = "free"
+    # ★ P3（方案 §6.3）: 背景技能选择（英文 key；省略时跳过背景技能数量校验）
+    skills: list[str] = []
 
     # SEC-001: 输入校验
     @field_validator("name")
@@ -167,6 +192,8 @@ class JoinIn(BaseModel):
     speed: int = Field(30, deprecated=True)
     equipped_weapon: str = ""
     campaign_id: int
+    # ★ P3（方案 §6.3）: 背景技能选择（英文 key；省略时跳过背景技能数量校验）
+    skills: list[str] = []
 
     # SEC-001: 输入校验（与 CharIn 同口径）
     @field_validator("name")
@@ -260,28 +287,134 @@ def validate_abilities(abilities: dict, method: str) -> None:
             "message": "掷骰属性：6项各3-18"})
 
 
+# ── P3（方案 §6.1）: 唯一构建服务接入点 ────────────────────────────────
+
+def validate_build_plan(race: str, char_class: str, subclass: str,
+                        background: str, abilities: dict,
+                        skills: list[str] | None = None) -> None:
+    """所有创建入口共用 CharacterBuilder 校验，非法选择 → 422（fail closed）。
+
+    规则: 方案 §2.1 RAW_2024 — 非法创建拒绝，任何入口不得绕过。
+    """
+    from ...build.character_builder import CharacterBuilder, build_plan_from_request
+    from ...rules.choice import ChoiceManager
+    from ...rules.grant import GrantManager
+    from ...rules.resource import ResourceManager
+
+    plan = build_plan_from_request(
+        name="", race=race, char_class=char_class, subclass=subclass,
+        background=background, abilities=abilities, skills=skills)
+    builder = CharacterBuilder(GrantManager(), ChoiceManager(), ResourceManager())
+    errors = builder.validate_build(plan)
+    if errors:
+        raise HTTPException(status_code=422, detail={
+            "error": "invalid_character_build",
+            "message": "角色创建非法: " + "; ".join(errors[:5]),
+            "reasons": errors[:10],
+        })
+
+
+def persist_build_provenance(ch, race: str, char_class: str, subclass: str,
+                             background: str, abilities: dict,
+                             skills: list[str] | None = None,
+                             db_path: str | None = None) -> None:
+    """创建落库后写入 Grant/Choice provenance（方案 §5.3，幂等）。"""
+    from ...build.character_builder import build_plan_from_request
+    from ...build.character_builder import persist_build_provenance as _persist
+    plan = build_plan_from_request(
+        name="", race=race, char_class=char_class, subclass=subclass,
+        background=background, abilities=abilities, skills=skills)
+    _persist(ch, plan, db_path)
+
+
+def init_resource_pools(ch) -> None:
+    """创建时初始化持久化资源池与生命骰（P6，方案 §9.1）。
+
+    - 生命骰: 1 级 = 1 枚（hit_dice_max/current = 等级，R-GLS-014 语义）
+    - 资源池: 上限来自 class level 公式表（目前覆盖战士回气、野蛮人狂暴）
+    """
+    # 生命骰初始化（短休消耗的基础；旧角色由 migration 兜底）
+    if ch.hit_dice_max <= 0:
+        ch.hit_dice_max = ch.level
+        ch.hit_dice_current = ch.level
+    pools: dict = {}
+    if ch.char_class == "战士":
+        from ...data.classes import FIGHTER_SECOND_WIND_BY_LEVEL
+        pools["second_wind"] = {
+            "current": FIGHTER_SECOND_WIND_BY_LEVEL.get(ch.level, 2),
+            "max": FIGHTER_SECOND_WIND_BY_LEVEL.get(ch.level, 2),
+            "recharge": "short_rest",
+            "source_feature_id": "fighter_second_wind",
+        }
+    elif ch.char_class == "野蛮人":
+        from ...data.classes import get_rage_uses
+        pools["rage"] = {
+            "current": get_rage_uses(ch.level),
+            "max": get_rage_uses(ch.level),
+            "recharge": "short_rest",
+            "source_feature_id": "barbarian_rage",
+        }
+    if pools:
+        ch.set_resource_pools(pools)
+
+
+def _mastery_seed(count: int) -> list:
+    """战士初始精通 seed（P8: 演示；具体选择待 choice API 重选）。"""
+    from ...engine.mastery import MASTERY_NAME_MAP
+    names = list(MASTERY_NAME_MAP.keys())
+    return names[:max(0, int(count))]
+
+
 def init_loadout(ch, equipped_weapon: str = "") -> None:
-    """角色创建时统一初始化拥有物：法术位/已学法术/起始武器入包。
+    """角色创建时统一初始化拥有物：法术位/法术来源/起始武器入包。
 
     拥有性门控（R-SPL-036 职业法术列表 / R-ITM-012 武器表）：
-      - 施法职业按等级初始化法术位（R-SPL-002）与 known_spells；
-      - 起始武器写入 equipped_weapon 并加入 inventory（后续
-        /equip-weapon 与攻击结算只认 inventory 内的武器）。
+      - 施法职业按等级初始化法术位（R-SPL-002）；
+      - 法术按 P7（方案 §10.2/§10.3）施法模型分来源初始化：
+          * 已知制（吟游诗人/术士/魔契师）→ known_spells（demo seed 截断到数量表）
+          * 法术书制（法师）→ spellbook_spells（seed 进法术书，不自动准备）
+          * 准备制（牧师/德鲁伊/圣武士/游侠）→ prepared_spells（seed 前 N 个，
+            N=prepared_spells_count）——N 由 cast 服务强制校验
+        default_known_spells 保留为 demo/seed 工具（方案 §10.1 允许），
+        不再作为 API 读取的生产 fallback。
+      - 起始武器写入 equipped_weapon 并加入 inventory。
     三处创建入口（/character、/join、/room/join）共用，避免漏初始化。
     """
     from ...data import classes as _cls
-    from ...data import spells as _sp
     from ...data.equipment import default_weapon_for_class
+    from ...rules.spellcasting import (
+        known_spells_count, model_for, prepared_spells_count)
     try:
         _cdef = _cls.get_class(ch.char_class)
         if _cdef and _cdef.get("spellcasting"):
+            from ...data import spells as _sp
             ch.set_spell_slots(_sp.max_spell_slots(ch.level))
-            ch.set_known_spells(_sp.default_known_spells(ch.char_class, ch.level))
+            m = model_for(ch.char_class)
+            if m is not None:
+                # demo seed（方案 §10.1: 保留为创建演示工具）
+                seed = _sp.default_known_spells(ch.char_class, ch.level)
+                if m.preparation_model.value in ("known", "pact"):
+                    limit = known_spells_count(ch.char_class, ch.level)
+                    ch.set_known_spells(seed[:limit])
+                elif m.preparation_model.value == "spellbook":
+                    ch.set_spellbook_spells(seed)
+                else:  # prepared
+                    limit = prepared_spells_count(
+                        ch.char_class, ch.level, ch.ability_mod(m.casting_ability))
+                    ch.set_prepared_spells(seed[:limit])
     except Exception:
-        pass
+        pass  # spellcasting 初始化失败不阻断角色创建（后续可经 choice API 补齐）
     ch.equipped_weapon = equipped_weapon or default_weapon_for_class(ch.char_class)
     if ch.equipped_weapon:
         ch.add_to_inventory(ch.equipped_weapon)
+    # P8（方案 §11.2）: MasteryGrant 持久化——战士 1 级武器精通授权
+    # （数量按公式表；具体精通演示 seed，之后经 choice API 重选）
+    if ch.char_class == "战士":
+        from ...data.classes import FIGHTER_MASTERY_BY_LEVEL
+        count = FIGHTER_MASTERY_BY_LEVEL.get(ch.level, 3)
+        for mc in _mastery_seed(count):
+            ch.add_mastery_grant(mc, source_id="class.fighter.level1",
+                                 acquired_level=1)
 
 
 # ── P0-4: Session Ownership 校验（IDOR 防护）────────────────────────

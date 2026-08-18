@@ -89,3 +89,7 @@ jobs:
 
       - name: Coverage CI gate (P1-08)
         run: python scripts/run_cov_gate.py
+
+      # 改造方案 §13.2: 规则一致性矩阵最小 CI 输出（规则可追溯，登记即门禁）
+      - name: RuleConformanceMatrix gate (CON-001)
+        run: python scripts/run_conformance_report.py --check

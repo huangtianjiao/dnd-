@@ -12,8 +12,9 @@ router = APIRouter(tags=["campaign"])
 
 @router.post("/campaign")
 def create_campaign(c: CampaignIn):
-    camp = store.create_campaign(c.name)
-    return {"id": camp.id, "name": camp.name}
+    camp = store.create_campaign(c.name, rules_mode=c.rules_mode)
+    return {"id": camp.id, "name": camp.name,
+            "ruleset_id": camp.ruleset_id, "rules_mode": camp.rules_mode}
 
 
 @router.get("/campaigns")
